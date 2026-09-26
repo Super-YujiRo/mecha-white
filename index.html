@@ -21,6 +21,7 @@
   .lb.big{font-size:24px;-webkit-text-stroke-width:5px}.lb.sm{font-size:12px;-webkit-text-stroke-width:3px}
   .lb.note{font-family:var(--body);font-weight:900;font-size:11.5px;-webkit-text-stroke:0;color:var(--brown);background:rgba(255,250,240,.92);border-radius:999px;padding:4px 10px;box-shadow:0 2px 0 rgba(91,70,54,.18);text-shadow:none}
   .lb.warnbox{font-family:var(--body);font-weight:900;font-size:12px;-webkit-text-stroke:0;color:#fff;background:var(--sky);border-radius:999px;padding:5px 11px;box-shadow:0 2px 0 var(--sky-d);text-shadow:none}
+  .lb .wg{display:flex;align-items:center;gap:4px;justify-content:center;margin:2px 0;font-size:11px;font-weight:900;color:#fff;-webkit-text-stroke:0;background:rgba(40,52,70,.72);border-radius:99px;padding:2px 7px 2px 8px}.lb .wg em{font-style:normal;font-size:10px;min-width:30px}.lb .wg strong{min-width:20px;text-align:right}.lb .wg .bar.wide{width:70px;height:9px}.lb .wg.cold{background:rgba(214,64,64,.85);animation:wgb .5s infinite alternate}@keyframes wgb{to{transform:scale(1.08)}}.lb .wg.warmup{background:rgba(150,90,20,.7)}.lb .wg.hpg{background:rgba(120,40,40,.7)}
   .lb .bar{display:block;width:38px;height:8px;border-radius:99px;background:rgba(91,70,54,.55);box-shadow:0 0 0 2px #fffaf0;overflow:hidden;-webkit-text-stroke:0;margin:0 auto}
   .lb .bar b{display:block;height:100%;border-radius:99px;background:var(--coral)}
   .lb .bar.ice b{background:#8fd0ec}.lb .bar.gold b{background:var(--gold)}.lb .bar.hp b{background:var(--coral)}.lb .bar.blue b{background:var(--sky)}.lb .bar.wide{width:64px;height:10px}
@@ -239,7 +240,7 @@
   <div class="card">
     <h1 class="logo">めちゃ<em>ホワイト</em></h1><div class="tagline">しろくまの町の冬ぐらし</div>
     <div class="seg" id="pSeg" role="group" aria-label="プレイ人数"><button id="p1" aria-pressed="true">1人で遊ぶ</button><button id="p2" aria-pressed="false">友達とオンライン</button></div>
-    <div class="seg dseg" id="bSeg" role="group" aria-label="拠点" style="grid-template-columns:1fr 1fr"></div>
+    <div class="seg dseg" id="bSeg" role="group" aria-label="拠点" style="display:none"></div>
     <div class="seg dseg" id="dSeg" role="group" aria-label="難易度"></div>
     <div class="key" id="ctrlHint"></div>
     <div class="key" id="netLine" hidden></div>
@@ -895,7 +896,7 @@ const STN={
 const SPA={x:1200,y:2070,pile:{x:1030,y:1960},boiler:{x:1390,y:2030}};
 const HOLES=[[1950,980],[2080,1060],[1980,1200],[2130,1260],[2000,1400],[2100,1500]];
 const ORES=[];
-const MON={x:1200,y:880};const WOOD={x:1070,y:1090};
+const MON={x:1200,y:880};const ROAD={x:2215,y:190};const WOOD={x:1070,y:1090};
 function inZone(x,y,r){for(const z of ZONES){const [x0,y0,x1,y1]=z.rect;if(x>x0-(r||0)&&x<x1+(r||0)&&y>y0-(r||0)&&y<y1+(r||0))return z}return null}
 function zoneOpen(id){return !id||G.zones[id]}
 
@@ -997,9 +998,9 @@ function newGame(np,opts){opts=opts||{};CUR_BIO=opts.biome||0;let RS=(opts.seed|
   // trees
   let guard=0;const trees=[];
   while(trees.length<Math.round(360*G.mod.trees)&&guard++<30000){const x=sr(60,WORLD-60),y=sr(60,WORLD-60);const d=dist(x,y,CX,CY);if(d<FR+70)continue;if(x>900&&x<1700&&y>1580&&y<1840)continue;
-    if(dist(x,y,2020,1210)<470&&x>1720)continue;if(dist(x,y,SPA.x,SPA.y)<260)continue;if(Math.abs(x-CX)<60&&y<CY)continue;if(Math.abs(y-CY)<60&&(x<CX||x>CX))continue;
+    if(dist(x,y,2020,1210)<470&&x>1720)continue;if(dist(x,y,ROAD.x,ROAD.y)<230)continue;if(dist(x,y,SPA.x,SPA.y)<260)continue;if(Math.abs(x-CX)<60&&y<CY)continue;if(Math.abs(y-CY)<60&&(x<CX||x>CX))continue;
     if(trees.some(t=>dist(t.x,t.y,x,y)<54))continue;trees.push({x,y,s:sr(.85,1.25),ry:sr(0,TAU),hp:4,alive:true,regrow:0,shake:0,fall:0,fallDir:0,grow:1,zone:(inZone(x,y)||{}).id||null})}
-  G.trees=trees;forest=new Forest(trees);makeSecrets(trees,sr);applyBiome();
+  G.trees=trees;forest=new Forest(trees);makeSecrets(trees,sr);makeRoad();applyBiome();
   // ores (zone C? no — rocky outcrops in the east of the north field feed coal)
   // fishing holes (zone B)
   for(const [x,y] of HOLES){const m=makeHole();m.position.set(x,0,y);world.add(m);const fish=itemMesh('fish');fish.visible=false;world.add(fish);G.holes.push({x,y,m,fish,t:0,user:null,jump:0})}
@@ -1320,7 +1321,7 @@ function sendSnap(){
     ho:G.holes.map(h=>r2(h.t)+(h.jump>0?.001:0)),hl:G.hauls.map(h=>[h.id,r1(h.x),r1(h.y),h.big,h.carried?1:0])});
   safeEmit('s.b',{c:G.customers.map(c=>[c.id,r1(c.x),r1(c.y),r2(c.dir),STIDS.indexOf(c.st.id),c.state==='leave'?1:0,c.hold.visible?1:0,r2(Math.max(0,c.happy||0)),r2(Math.max(0,c.angry||0)),c.state==='queue'?r2(c.wait/c.patience):0,c.pal,r2(c.fade==null?1:c.fade)]),
     s:G.surv.map(v=>[v.id,r1(v.x),r1(v.y),r2(v.dir),r1(v.warm),v.frozen?1:0,v.arrived?1:0,r2(Math.max(0,v.happy||0)),r2(v.freezeAnim),v.pal]),
-    w:G.workers.map(w=>[w.id,ROLES.indexOf(w.role),r1(w.x),r1(w.y),r2(w.dir),enc(w.bag),(w.chop?1:0)|(w.flash>0?2:0),w.st?STIDS.indexOf(w.st.id):-1,w.hole?G.holes.indexOf(w.hole):-1,r2(w.t),r1(w.warm==null?100:w.warm),(w.frozen?1:0)|(w.hurt>0?2:0)|(w.goWarm?4:0)])})}
+    w:G.workers.map(w=>[w.id,ROLES.indexOf(w.role),r1(w.x),r1(w.y),r2(w.dir),enc(w.bag),(w.chop?1:0)|(w.flash>0?2:0),w.st?STIDS.indexOf(w.st.id):-1,w.hole?G.holes.indexOf(w.hole):-1,r2(w.t),r1(w.warm==null?100:w.warm),(w.frozen?1:0)|(w.hurt>0?2:0)|(w.goWarm?4:0)|(w.shelter?8:0)])})}
 function recon(list,rows,make,apply,kill){if(!list._map)list._map=new Map();const map=list._map,seen=new Set();
   for(const row of rows||[]){const id=row[0];seen.add(id);let o=map.get(id);if(!o){o=make(row);map.set(id,o);list.push(o)}apply(o,row)}
   for(let i=list.length-1;i>=0;i--){const o=list[i];if(!seen.has(o.id)){kill(o);map.delete(o.id);list.splice(i,1)}}}
@@ -1355,12 +1356,13 @@ function applyInbox(){const I=NET.inbox;
     recon(G.surv,b.s,r=>{const s={id:r[0],x:r[1],y:r[2],dir:r[3],pal:r[9]||0,step:0,breath:1,freezeAnim:0,happy:0,warm:100};survMesh(s);G.surv.pop();return s},
       (s,r)=>{s.nx=r[1];s.ny=r[2];s.dirT=r[3];s.warm=r[4];s.frozen=!!r[5];s.arrived=!!r[6];s.happy=r[7];s.freezeAnim=r[8]},s=>world.remove(s.m.g));
     recon(G.workers,b.w,r=>{const w={id:r[0],role:ROLES[r[1]]||'hunter',x:r[2],y:r[3],dir:r[4],step:0,bag:[],t:0,flash:0,st:r[7]>=0?G.stations[STIDS[r[7]]]:null};workerMesh(w);return w},
-      (w,r)=>{w.nx=r[2];w.ny=r[3];w.dirT=r[4];w.bag=dec(r[5]);w.chop=!!(r[6]&1);if(r[6]&2)w.flash=.07;w.hole=r[8]>=0?G.holes[r[8]]:null;w.t=r[9];w.warm=r[10];w.frozen=!!(r[11]&1);w.hurt=r[11]&2?1:0;w.goWarm=!!(r[11]&4)},w=>world.remove(w.m.g));
+      (w,r)=>{w.nx=r[2];w.ny=r[3];w.dirT=r[4];w.bag=dec(r[5]);w.chop=!!(r[6]&1);if(r[6]&2)w.flash=.07;w.hole=r[8]>=0?G.holes[r[8]]:null;w.t=r[9];w.warm=r[10];w.frozen=!!(r[11]&1);w.hurt=r[11]&2?1:0;w.goWarm=!!(r[11]&4);w.shelter=!!(r[11]&8)},w=>world.remove(w.m.g));
     for(const id of STIDS){const st=G.stations[id];st.cashier=G.workers.find(w=>w.role==='cashier'&&w.st===st)||null}}}
 function glide(o,dt,k){if(o.nx==null)return;const px=o.x,py=o.y;const f=Math.min(1,dt*(k||10));o.x=lerp(o.x,o.nx,f);o.y=lerp(o.y,o.ny,f);const sp=Math.hypot(o.x-px,o.y-py)/Math.max(dt,.001);o.moving=sp>12;if(o.moving)o.step+=dt*Math.min(12,sp*.08)}
 function guestTick(dt){
   // leave if the host is gone
-  const hp=hostPeerNow();if(!hp||hp.peer!==NET.hostPeer||hp.presence.seed!==NET.hostSeed){NET.hostMiss+=dt;if(NET.hostMiss>3){banner('','ホストが抜けた','タイトルに戻ります','cold',true);toTitle();return}}else NET.hostMiss=0;
+  const hp=hostPeerNow();if(hp&&hp.peer===NET.hostPeer&&hp.presence.seed!==NET.hostSeed&&hp.presence.trip&&hp.presence.seed){NET.hostSeed=hp.presence.seed;NET.hostMiss=0;NET.inbox={};newGame(2,{seed:hp.presence.seed,guest:true,chars:[hp.presence.ch||'Rogue_Hooded',altCh(hp.presence.ch||'Rogue_Hooded',meta.pick)],diff:hp.presence.df||0,biome:hp.presence.bi||0});NET.room.presence({role:'guest',x:G.players[1].x|0,y:G.players[1].y|0,d:0,ch:meta.pick||'Knight'}).catch(()=>{});updateCam(0,true);hudInit();banner('砂漠の町に着いた','','ここは雪原より過酷','r-SSR');return}
+  if(!hp||hp.peer!==NET.hostPeer||hp.presence.seed!==NET.hostSeed){NET.hostMiss+=dt;if(NET.hostMiss>3){banner('','ホストが抜けた','タイトルに戻ります','cold',true);toTitle();return}}else NET.hostMiss=0;
   G.t+=dt;G.day=1+Math.floor(G.t/G.DAY);const night=isNight();G.wave=waveDayN(G.day)&&night;G.wind=Math.sin(G.t*.3)*.5+Math.sin(G.t*.11)*.5+(G.wave?1.2:0);
   applyInbox();if(!running)return;
   const me=G.players[G.me];const px=me.x,py=me.y;
@@ -1404,7 +1406,7 @@ function update(dt){
   if(G.fuel<=0&&!G.outWarned){G.outWarned=true;banner('かまどの火が消えた！','町の人が凍っていく','薪をくべて火を戻せ。凍った町人が5人でゲームオーバー','cold');SFX.wave()}if(G.fuel>5)G.outWarned=false;
   // stations frozen state
   for(const id in G.stations){const st=G.stations[id];const d=dist(st.def.conv.x,st.def.conv.y,CX,CY);const fz=st.open&&d>R;if(fz&&!st.frozen){toast(`${st.def.name}が凍った！ かまどを強化・燃料を`,'cold')}st.frozen=fz}
-  updateWoodpile(dt);updateTrees(dt);updateBears(dt);updateRaid(dt);tickTowers(dt,true);updateHauls(dt);updatePickups(dt);updateWorkers(dt);updateStations(dt);updateSurvivors(dt,R);updateSpa(dt);updateHoles(dt);updateRescue(dt);updateTax(dt);updateSecrets(dt);
+  updateWoodpile(dt);updateTrees(dt);updateBears(dt);updateRaid(dt);tickTowers(dt,true);updateHauls(dt);updatePickups(dt);updateWorkers(dt);updateStations(dt);updateSurvivors(dt,R);updateSpa(dt);updateHoles(dt);updateRescue(dt);updateTax(dt);updateSecrets(dt);updateRoad(dt);
   checkMission(dt);G.achT-=dt;if(G.achT<=0){G.achT=.5;checkAch()}
   if(G.pendingLv>0&&!G.paused)openPerk();
   if(G.frozen>=5&&!G.endless)endGame(false,'freeze');
@@ -1576,6 +1578,23 @@ const _sandMat=new Map();
 function applyBiome(){const dz=DES();window.SNOWU.value=dz?0:1;G._dm=calcDM();
   if(KK)for(const k in KK.kit){KK.kit[k].traverse(o=>{if(!o.isMesh)return;const ms=Array.isArray(o.material)?o.material:[o.material];for(const m of ms){if(!m.userData.c0)m.userData.c0=m.color.clone();m.color.copy(m.userData.c0);if(dz)m.color.multiply(new T.Color(1,.86,.66))}})}
   if(!dz)return;world.traverse(o=>{if(!o.isMesh)return;const m=o.material;if(!m||Array.isArray(m)||!m.isMeshStandardMaterial||m.map||m.vertexColors||m.transparent)return;const c=m.color;if(c.r>.7&&c.g>.75&&c.b>.8&&c.b>=c.r-.02){let t=_sandMat.get(m);if(!t){t=m.clone();t.color.copy(lin('#e9c690'));_sandMat.set(m,t)}o.material=t}})}
+function makeRoad(){G.road=null;if(G.biome!==0)return;const g=new T.Group();g.position.set(ROAD.x,0,ROAD.y);
+  const sand=std('#e2b877',{r:1}),wood=std('#8a5a32',{map:TEX.wood}),red=std('#c9553d',{r:.7});
+  for(let i=0;i<9;i++){const t=M_(geo('roadT',()=>new T.CircleGeometry(34,12)),sand,false,true);t.rotation.x=-Math.PI/2;t.position.set(-i*26,.6+i*.01,i*34);t.scale.set(1,1.3,1);g.add(t)}
+  g.add(at(box(8,78,8,wood),-36,39,0),at(box(8,78,8,wood),36,39,0),at(box(92,12,12,red),0,80,0));
+  const sign=at(new T.Group(),-58,0,40);sign.add(at(box(4,40,4,wood),0,20,0),at(box(40,16,3,std('#f4e2bf')),0,40,0),at(rot(box(12,12,3,red),0,0,Math.PI/4),16,40,2));g.add(sign);
+  const pile=grp(at(scl(sph(40,std('#f5f9fd',{r:1}),false,12,8),1.4,.7,.8),0,8,0),at(scl(sph(26,std('#eef4fa',{r:1}),false,10,6),1,.8,1),30,6,10));g.add(pile);
+  const ring=at(rot(M_(new T.RingGeometry(50,58,40),basic('#ffd166',{transparent:true,opacity:.8,side:T.DoubleSide,depthWrite:false}),false),-Math.PI/2,0,0),0,1.4,0);g.add(ring);
+  world.add(g);G.road={g,pile,ring,t:0}}
+function roadOpen(){return G.biome===0&&G.year>=2}
+function roadFx(){if(!G.road)return;const R=G.road,op=roadOpen();R.pile.visible=!op;R.ring.visible=op;if(op)R.ring.scale.setScalar(1+Math.sin(G.t*3)*.05);
+  const me=G.players[G.me]||G.players[0];if(me&&dist(me.x,me.y,ROAD.x,ROAD.y)<320)label(ROAD.x,ROAD.y,110,op?`<b>砂漠の町へ続く道</b><br>${G.players.length>1?'全員で':''}ここに立つと出発（雪原より過酷）${R.t>0?'<br>'+bar(100*R.t/3,'gold wide'):''}`:'<b>砂漠へ続く道</b><br>雪でふさがっている（2年目から通れる）','')}
+function updateRoad(dt){if(!G.road||!roadOpen()||NET.mode==='guest')return;const R=G.road;const all=G.players.every(p=>!(p.down>0)&&dist(p.x,p.y,ROAD.x,ROAD.y)<70);
+  if(all){R.t+=dt;if(R.t>=3)startTrip()}else R.t=Math.max(0,R.t-dt*2)}
+function startTrip(){const gain=settleShards(true),carry=Math.round(G.cash*.3)+300,chars=G.charOf.slice(),np=G.players.length,diff=G.diff;const seed=1+((Math.random()*1e9)|0);
+  if(NET.mode==='host'){NET.guestPeer=null;NET.endInfo=null;newGame(1,{seed,diff,biome:1,chars});NET.room.presence({role:'host',seed,ch:meta.pick||'Rogue_Hooded',df:diff,bi:1,trip:1}).catch(()=>{})}
+  else newGame(1,{seed,diff,biome:1,chars});
+  G.cash+=carry;updateCam(0,true);hudInit();banner('砂漠の町に着いた',`旅の資金 $${carry} ・ ★+${gain}`,'ここは雪原より過酷。昼は照りつけ、夜は凍える','r-SSR');SFX.ssr()}
 function makeSecrets(TR,sr){G.secrets=[];G.stele=0;G.secretS=0;const R=(r)=>({x:sr(r[0],r[2]),y:sr(r[1],r[3])});
   const A=[300,140,2100,640],Cz=[90,680,640,1720],Bz=[1760,660,2320,1740];
   const add=(t,r)=>{let q,g=0;do{q=R(r);g++}while(g<40&&(TR.some(tr=>dist(tr.x,tr.y,q.x,q.y)<40)||HOLES.some(h=>dist(h[0],h[1],q.x,q.y)<90)));G.secrets.push({id:G.secrets.length,t,x:q.x,y:q.y,found:false,p:0})};
@@ -1671,7 +1690,7 @@ function updateSurvivors(dt,R){
   let frozen=0;
   for(const s of G.surv){const inR=dist(s.x,s.y,CX,CY)<R||spaWarm(s.x,s.y);
     if(!s.frozen&&!s.arrived){const n=nav(s,s.tx,s.ty);const dd=moveTo(s,n.x,n.y,85,dt);if(dist(s.x,s.y,s.tx,s.ty)<5){s.arrived=true;s.happy=1.4;float(s.x,s.y,60,'到着！','');gainXP(5);addCombo(4);SFX.pop()}}else s.moving=false;
-    const byP=G.players.some(p=>dist(s.x,s.y,p.x,p.y)<38);
+    const byP=G.players.some(p=>!(p.down>0)&&dist(s.x,s.y,p.x,p.y)<70);
     if(s.frozen){s.freezeAnim=Math.min(1,s.freezeAnim+dt*3);if(inR)s.warm+=9*dt;if(byP)s.warm+=16*G.pm.thaw*dt;
       if((inR||byP)&&Math.random()<dt*10)psN.emit({x:s.x+rnd(-14,14),y:rnd(10,44),z:s.y+rnd(-14,14),vx:0,vy:-30,vz:0,g:60,life:.5,max:.5,r:4,c:C('#bfe6f7'),fade:.2});
       if(s.warm>35){s.frozen=false;s.freezeAnim=0;s.happy=1.2;G.stats.thawed++;addCombo(12);SFX.rare();if(Math.random()<.35+G.luck)spawnChest(s.x+20,s.y+20);burst(s.x,s.y,24,26,{c:['#e8f7ff','#bfe6f7','#8fd0ec'],s0:60,s1:200,u0:100,u1:260,l0:.5,l1:.9,r0:5,r1:9});float(s.x,s.y,70,'解凍！','gold');gainXP(12,s.x,s.y)}}
@@ -1740,14 +1759,16 @@ function jobPos(w){if(w.role==='guard'){const tw=TOWERS.find(t=>t.id===w.tw)||TO
 function updateWorkers(dt){
   const HR=heatR(),OUT=['hunter','lumber','fisher','stoker'];
   for(const w of G.workers){w.flash=Math.max(0,w.flash-dt);w.aimDir=null;w.chop=false;let goal=null;if(w.warm==null)w.warm=100;
-    const inH=dist(w.x,w.y,CX,CY)<HR||spaWarm(w.x,w.y),byP=G.players.some(p=>dist(w.x,w.y,p.x,p.y)<40);
+    const inH=dist(w.x,w.y,CX,CY)<HR||spaWarm(w.x,w.y),byP=G.players.some(p=>!(p.down>0)&&dist(w.x,w.y,p.x,p.y)<70);
     if(w.hurt>0){w.hurt-=dt;w.moving=false;if(w.hole&&w.hole.user===w){w.hole.user=null}w.chop=false;if(w.hurt<=0)float(w.x,w.y,70,'治った！','gold');continue}
-    if(w.frozen){w.moving=false;if(inH)w.warm+=9*dt;if(byP)w.warm+=16*G.pm.thaw*dt;if(w.warm>40){w.frozen=false;w.goWarm=true;float(w.x,w.y,70,'解凍！','gold');SFX.rare()}continue}
+    if(w.frozen){w.moving=false;if(inH)w.warm+=15*dt;if(byP)w.warm+=22*G.pm.thaw*dt;if(w.warm>40){w.frozen=false;w.goWarm=true;float(w.x,w.y,70,'解凍！','gold');SFX.rare()}continue}
     if(OUT.includes(w.role)){const cool=(1.1+G.day*.06)*coolMul()*G.mod.cold*(wxIs('blizzard')?2.4:wxIs('snap')?1.7:1)*(1-mlv('warm')*.06);
       w.warm=clamp(w.warm+(inH?30:-cool)*dt,0,100);
       if(w.warm<=0){w.frozen=true;w.goWarm=false;if(w.hole&&w.hole.user===w)w.hole.user=null;float(w.x,w.y,80,`${SPECN[w.role]||'仲間'}が凍えた！`,'ice',true);toast(`${SPECN[w.role]||'仲間'}が外で凍りついた！ そばに立って溶かそう`,'cold');SFX.bad();continue}
-      if(w.warm<28&&!w.goWarm){w.goWarm=true;if(w.hole&&w.hole.user===w)w.hole.user=null;w.hole=null;float(w.x,w.y,70,'さむい…','ice')}
-      if(w.goWarm){if(inH&&w.warm>=95)w.goWarm=false;else{const n=nav(w,CX,CY+95);if(!inH)moveTo(w,n.x,n.y,120,dt);else w.moving=false;continue}}}
+      const night=isNight(),bliz=wxIs('blizzard');w.shelter=bliz;
+      if(bliz&&!w.goWarm&&!inH){w.goWarm=true;if(w.hole&&w.hole.user===w)w.hole.user=null;w.hole=null;float(w.x,w.y,70,'吹雪だ、戻ろう','ice')}
+      if(w.warm<(night?55:45)&&!w.goWarm){w.goWarm=true;if(w.hole&&w.hole.user===w)w.hole.user=null;w.hole=null;float(w.x,w.y,70,'さむい…','ice')}
+      if(w.goWarm){if(inH&&w.warm>=95&&!bliz)w.goWarm=false;else{const n=nav(w,CX,CY+95);if(!inH)moveTo(w,n.x,n.y,120,dt);else w.moving=false;continue}}}
     if(w.role==='guard'){const q=jobPos(w);w.x=q.x;w.y=q.y;const tw=TOWERS.find(t=>t.id===w.tw);w.dirT=tw&&G.towerV[tw.id]?G.towerV[tw.id].gun.rotation.y:0;if(tw&&tw.cd>0&&tw.cd<.1)w.flash=.07;continue}
     if(w.role==='splitter'){const q=jobPos(w);w.x=q.x;w.y=q.y;w.dirT=Math.atan2(WOOD.x-w.x,WOOD.y-w.y);w.t+=dt;w.chop=w.t%1.1<.55;if(w.t>=3.3){w.t=0;G.woodpile++;SFX.chop();burst(WOOD.x,WOOD.y,20,5,{c:['#c9955b','#e7c08e'],s0:30,s1:90,u0:60,u1:160,l0:.3,l1:.6,r0:3,r1:5});if(Math.random()<.3)float(WOOD.x,WOOD.y,50,'+1本','gold')}continue}
     if(w.role==='cashier'){w.x=w.st.def.stand.x;w.y=w.st.def.stand.y;w.dirT=Math.PI;continue}
@@ -1801,8 +1822,10 @@ function sync(dt){
     m.g.visible=p.down>0||!(p.inv>0&&Math.floor(G.t*20)%2);
     const top=58+p.stack.h*0;
     if(two)label(p.x,p.y,78,`<span class="tag" style="background:${HERO[p.id].tag}">${HERO[p.id].tagText}</span>`,'');
-    if(p.hp<100)label(p.x,p.y,-2,bar(p.hp,'hp'),'');
-    if(!p.down&&!p.inHeat)label(p.x,p.y,two?98:82,bar(p.warm,p.warm<25?'':'ice')+(p.warm<25?'<span class="lb ice sm" style="position:static;display:block;margin-top:2px">さむい！</span>':''),'');
+    {const showW=!p.down&&(!p.inHeat||p.warm<99),cold=p.warm<25;let h='';
+      if(showW)h+=`<span class="wg${cold?' cold':''}${p.inHeat?' warmup':''}"><em>${cold?'さむい！':p.inHeat?'ぽかぽか':'体温'}</em><i class="bar wide ${cold?'':p.inHeat?'gold':'ice'}"><b style="width:${Math.max(4,Math.min(100,p.warm))}%"></b></i><strong>${Math.round(p.warm)}</strong></span>`;
+      if(p.hp<100)h+=`<span class="wg hpg"><em>体力</em><i class="bar wide hp"><b style="width:${Math.max(4,Math.min(100,p.hp))}%"></b></i><strong>${Math.round(p.hp)}</strong></span>`;
+      if(h)label(p.x,p.y,0,`<div style="transform:translateY(${h.includes('hpg')&&showW?40:30}px)">${h}</div>`,'')}
     if(p.bag.length>=cap(p))label(p.x,p.y,34+p.stack.h,'MAX','gold sm');
     if(p.fishing){label(p.fishing.x,p.fishing.y,70,bar(100*p.fishing.t/2.2,'blue wide'),'')}}
   // bears
@@ -1825,7 +1848,7 @@ function sync(dt){
     if(w.role==='fisher'&&w.hole&&!w.moving&&w.hole.user===w){m.armR.rotation.set(-.9,0,0);m._armR=true;label(w.hole.x,w.hole.y,64,bar(100*w.hole.t/2.2,'blue'),'')}
     if(w.frozen&&!w.ice){w.ice=M_(geo('ice',()=>new T.IcosahedronGeometry(22,0)),new T.MeshStandardMaterial({color:lin('#bfe9ff'),transparent:true,opacity:.62,roughness:.08,metalness:.1,flatShading:true}),false);w.ice.scale.set(1,1.35,1);w.ice.position.y=24;m.g.add(w.ice)}
     if(w.ice)w.ice.visible=!!w.frozen;if(m.kk){if(w.frozen)m.kk.paused=true;else m.kk.paused=false;if(w.hurt>0)m.kk.want='Sit_Floor_Idle'}
-    if(w.frozen)label(w.x,w.y,78,'<b>凍えた</b>','ice');else if(w.hurt>0)label(w.x,w.y,70,'<b>けが</b>','red');else if(w.warm!=null&&w.warm<60)label(w.x,w.y,70,bar(w.warm,'blue'),'')}
+    if(w.frozen)label(w.x,w.y,82,`<b>凍えた！</b><br><small>そばに立つと溶ける</small><br>${bar(100*Math.min(1,w.warm/40),'gold wide')}`,'ice');else if(w.hurt>0)label(w.x,w.y,70,'<b>けが</b>','red');else if(w.shelter&&w.goWarm)label(w.x,w.y,70,'<small>吹雪で休憩中</small>','ice');else if(w.warm!=null&&w.warm<99&&['hunter','lumber','fisher','stoker'].includes(w.role))label(w.x,w.y,70,bar(w.warm,w.warm<50?'':'ice'),'')}
   // survivors
   for(const s of G.surv){const m=s.m;const warmPose=s.arrived&&!s.frozen&&s.warm>55;if(warmPose)s.dirT=Math.atan2(CX-s.x,CY-s.y);if(s.dirT!=null&&!s.frozen)turnTo(s,s.dirT,dt,6);m.g.rotation.y=s.dir;
     tintCold(m,s.frozen?1:1-Math.min(1,s.warm/100*1.5));const shiv=!s.frozen&&s.warm<40?Math.sin(G.t*55+s.x)*1.4*(1-s.warm/40):0;m.g.position.set(s.x+shiv,s.happy>0?Math.abs(Math.sin(s.happy*9))*7:0,s.y);
@@ -1916,10 +1939,11 @@ function updateCam(dt,snap){const ps=NET.mode==='solo'?G.players:[G.players[G.me
   let z=1;if(ps.length>1)z=clamp(Math.min(1,700/(Math.hypot(x1-x0,y1-y0)+300)),.5,1);
   if(G.camPan&&G.camPan.t<2.2){G.camPan.t+=dt;const k=G.camPan.t<.5?G.camPan.t/.5:G.camPan.t>1.7?1-(G.camPan.t-1.7)/.5:1;cx=lerp(cx,G.camPan.x,k*.85);cy=lerp(cy,G.camPan.y,k*.85);z=lerp(z,.62,k)}
   cam.z=snap?z:lerp(cam.z,z,Math.min(1,dt*3));if(snap){cam.x=cx;cam.y=cy}else{cam.x=lerp(cam.x,cx,Math.min(1,dt*6));cam.y=lerp(cam.y,cy,Math.min(1,dt*6))}}
-function hideIdleFx(dt){secretFx(dt||.016)}
+function hideIdleFx(dt){secretFx(dt||.016);roadFx()}
 function monBar(){if(G.raid&&G.raid.on&&G.raid.final&&G.monMax&&G.monV&&G.monV.visible)label(G.monV.position.x,G.monV.position.z,170,bar(100*Math.max(0,G.monHP)/G.monMax,'red'),'')}
+function frozenFx(){for(const v of G.surv)if(v.frozen&&v.m&&v.m.g.visible)label(v.x,v.y,82,`<b>凍えた町人</b><br><small>そばに立つと溶ける</small><br>${bar(100*Math.min(1,v.warm/35),'gold wide')}`,'ice')}
 function hideIdle(){let shown=0;for(const v of G.surv){const idle=v.arrived&&!v.frozen;const vis=!idle||shown++<5;if(v.m&&v.m.g.visible!==vis)v.m.g.visible=vis}}
-function frame(dt){hideIdle();monBar();hideIdleFx(dt);
+function frame(dt){hideIdle();monBar();frozenFx();hideIdleFx(dt);
   const phase=(G.t%G.DAY)/G.DAY,nk=phase>.72?Math.min(1,(phase-.72)/.06):phase<.04?1-phase/.04:0;nightK=lerp(nightK,nk*(running?1:0)+(G.wave?.2:0),Math.min(1,dt*2));
   const K=Math.min(1,nightK);const dz=DES();scene.fog.color.copy(dz?FOG_DES:FOG_DAY).lerp(FOG_NIGHT,K);sky.material.uniforms.top.value.copy(lin(dz?'#5aa3e6':'#6fa9d8')).lerp(lin('#0b1530'),K);sky.material.uniforms.mid.value.copy(lin(dz?'#f2d6a4':'#bcd0e2')).lerp(lin('#1b2a44'),K);sky.material.uniforms.bot.value.copy(lin(dz?'#f5ddb0':'#c9d7e4')).lerp(lin('#24344f'),K);
   {const wt=G.wx&&G.wx.type,k=wt?Math.min(1,G.wx.t/2,(G.wx.max-G.wx.t)/2+.001):0;$('wxFx').style.opacity=running&&wt==='blizzard'?.85*k:0;
@@ -1964,19 +1988,20 @@ function show(el,on){$(el).hidden=!on}
 function startGame(){audioOn();
   if(nPlayers===2){if(!NET.room){toast('オンラインはこの環境では使えないので、1人で始めます','cold',true);NET.mode='solo';newGame(1)}
     else{const hp=hostPeerNow();if(hp&&hp.presence.seed){NET.mode='guest';NET.hostPeer=hp.peer;NET.hostSeed=hp.presence.seed;NET.hostMiss=0;newGame(2,{seed:hp.presence.seed,guest:true,chars:[hp.presence.ch||'Rogue_Hooded',altCh(hp.presence.ch||'Rogue_Hooded',meta.pick)],diff:hp.presence.df||0,biome:hp.presence.bi||0});NET.room.presence({role:'guest',x:G.players[1].x|0,y:G.players[1].y|0,d:0,ch:meta.pick||'Knight'}).catch(()=>{})}
-      else{NET.mode='host';NET.guestPeer=null;NET.endInfo=null;const seed=1+((Math.random()*1e9)|0);newGame(1,{seed,diff:gameDiff,biome:gameBio});NET.room.presence({role:'host',seed,ch:meta.pick||'Rogue_Hooded',df:gameDiff,bi:gameBio}).catch(()=>{})}}}
-  else{NET.mode='solo';newGame(1,{diff:gameDiff,biome:gameBio})}
+      else{NET.mode='host';NET.guestPeer=null;NET.endInfo=null;const seed=1+((Math.random()*1e9)|0);newGame(1,{seed,diff:gameDiff,biome:0});NET.room.presence({role:'host',seed,ch:meta.pick||'Rogue_Hooded',df:gameDiff,bi:0}).catch(()=>{})}}}
+  else{NET.mode='solo';newGame(1,{diff:gameDiff,biome:0})}
   running=true;updateCam(0,true);show('title',false);show('end',false);show('perk',false);show('hud',true);show('bottom',true);show('side',true);hudInit();tq.length=0;checkAch();
   if(DES())setTimeout(()=>{if(running)toast('砂漠の町：雪原より過酷。昼は照りつけ、夜は凍える','cold',true)},6000);
   banner(DES()?'砂漠の町':'今回の町',`${G.mods[0].t}／${G.mods[1].t}`,`◎${G.mods[0].d}　✕${G.mods[1].d}`,'',true);setTimeout(()=>{if(running)toast('目標：町のシンボル像を建てろ','gold',true)},3200);
   if(NET.mode==='host')toast('部屋を作った！ 友達がこのページを開くと参加できる','gold',true);if(NET.mode==='guest')toast('友達の部屋に参加した！','gold',true)}
+function settleShards(cleared){const earnedS=Math.round(Math.max(1,Math.floor(Math.sqrt(Math.max(0,G.earned))/7)+G.day+G.raidWins*2+(G.stats.haul||0)+(cleared?15*YR():0)+(G.yearBonus||0)+(G.secretS||0))*DM().sh),gainS=Math.max(0,earnedS-G.metaGiven);G.metaGiven=earnedS;meta.shards+=gainS;store.set('mw2-meta',meta);return gainS}
 function endGame(cleared,why){if(NET.mode==='host'&&NET.guestPeer){NET.endInfo={c:cleared?1:0,w:why||''};sendSnap()}running=false;for(const j of joys)j.on=false;show('perk',false);
   best={day:Math.max(best.day,G.day),earned:Math.max(best.earned,Math.round(G.earned)),cleared:best.cleared||cleared,area:Math.max(best.area,1+Object.values(G.zones).filter(Boolean).length)};store.set('mw2-best',best);
-  if(cleared&&NET.mode!=='guest')meta.diffOpen=Math.max(meta.diffOpen||0,Math.min(2,(G.diff||0)+1));meta.bioOpen=Math.max(meta.bioOpen||0,Math.min(BIOS.length-1,(G.biome||0)+1));if(cleared&&NET.mode==='guest')NET.yearWait=true;
+  if(cleared&&NET.mode!=='guest')meta.diffOpen=Math.max(meta.diffOpen||0,Math.min(2,(G.diff||0)+1));if(cleared&&NET.mode==='guest')NET.yearWait=true;
   $('endTitle').innerHTML=cleared?`${YR()}年目<em>クリア！</em>`:why==='rep'?'お店が<em>閉店…</em>':'町が<em>凍りついた…</em>';
   $('endMsg').textContent=cleared?`${goalOf(YR()).n}が完成し、最後の夜を守りきった（${DM().n}）。次の冬はもっと厳しい…`:why==='rep'?'お客さんを待たせすぎて評判が0に。肉を切らさず、レジを空けないように。':'5人の生存者が凍りついた。燃料を切らさず、かまどを強化しよう。';
   $('endStats').innerHTML=[[`DAY ${G.day}`,'生き延びた日数'],[`$${Math.round(G.earned).toLocaleString()}`,'総売上'],[`${1+Object.values(G.zones).filter(Boolean).length}/4`,'解放エリア']].map(([v,l])=>`<div><b>${v}</b><small>${l}</small></div>`).join('');
-  const earnedS=Math.round(Math.max(1,Math.floor(Math.sqrt(Math.max(0,G.earned))/7)+G.day+G.raidWins*2+(G.stats.haul||0)+(cleared?15*YR():0)+(G.yearBonus||0)+(G.secretS||0))*DM().sh),gainS=Math.max(0,earnedS-G.metaGiven);G.metaGiven=earnedS;meta.shards+=gainS;store.set('mw2-meta',meta);
+  const gainS=settleShards(cleared);
   $('endShard').textContent=`★ 星のかけら +${gainS}（合計 ${meta.shards}）タイトルで強化できる`;
   $('endBest').textContent=`ベスト：DAY ${best.day}・$${best.earned.toLocaleString()}${best.cleared?'・町完成':''}`;$('endBadges').innerHTML=badgesHtml(G.newAch);show('cont',cleared&&NET.mode!=='guest');$('cont').textContent=`${YR()+1}年目へ（${DM().n}）`;if(cleared&&NET.mode==='guest')$('endBest').textContent='ホストが次の年に進むのを待っています…';show('end',true);show('hud',false);show('bottom',false);show('side',false);$('combo').hidden=true;$('feverFx').classList.remove('on')}
 function toTitle(){if(NET.room&&NET.mode!=='solo')NET.room.presence({role:'idle',seed:null,x:null,y:null,d:null}).catch(()=>{});NET.mode='solo';NET.guestPeer=null;NET.hostPeer=null;running=false;for(const j of joys)j.on=false;show('end',false);show('perk',false);show('hud',false);show('bottom',false);show('side',false);$('combo').hidden=true;$('feverFx').classList.remove('on');$('banner').hidden=true;
