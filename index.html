@@ -242,6 +242,7 @@
     <div class="seg" id="pSeg" role="group" aria-label="プレイ人数"><button id="p1" aria-pressed="true">1人で遊ぶ</button><button id="p2" aria-pressed="false">友達とオンライン</button></div>
     <div class="seg dseg" id="bSeg" role="group" aria-label="拠点" style="display:none"></div>
     <div class="seg dseg" id="dSeg" role="group" aria-label="難易度"></div>
+    <div class="key" id="dbgLine" hidden style="color:#c0392b"></div>
     <div class="key" id="ctrlHint"></div>
     <div class="key" id="netLine" hidden></div>
     <div class="netbox" id="netBox" hidden><button class="linkbtn" id="mkRoom">部屋を作る</button><span class="or">または</span><input id="roomIn" maxlength="4" placeholder="コード" autocomplete="off"><button class="linkbtn" id="joinRoom">参加</button></div>
@@ -2029,8 +2030,8 @@ function show(el,on){$(el).hidden=!on}
 function startGame(){audioOn();
   if(nPlayers===2){if(!NET.room){toast('オンラインはこの環境では使えないので、1人で始めます','cold',true);NET.mode='solo';newGame(1)}
     else{const hp=hostPeerNow();if(hp&&hp.presence.seed){NET.mode='guest';NET.hostPeer=hp.peer;NET.hostSeed=hp.presence.seed;NET.hostMiss=0;newGame(2,{seed:hp.presence.seed,guest:true,chars:[hp.presence.ch||'Rogue_Hooded',altCh(hp.presence.ch||'Rogue_Hooded',meta.pick)],diff:hp.presence.df||0,biome:hp.presence.bi||0});NET.room.presence({role:'guest',x:G.players[1].x|0,y:G.players[1].y|0,d:0,ch:meta.pick||'Knight'}).catch(()=>{})}
-      else{NET.mode='host';NET.guestPeer=null;NET.endInfo=null;const seed=1+((Math.random()*1e9)|0);newGame(1,{seed,diff:gameDiff,biome:0});NET.room.presence({role:'host',seed,ch:meta.pick||'Rogue_Hooded',df:gameDiff,bi:0}).catch(()=>{})}}}
-  else{NET.mode='solo';newGame(1,{diff:gameDiff,biome:0})}
+      else{NET.mode='host';NET.guestPeer=null;NET.endInfo=null;const seed=1+((Math.random()*1e9)|0);newGame(1,{seed,diff:gameDiff,biome:dbgBio});NET.room.presence({role:'host',seed,ch:meta.pick||'Rogue_Hooded',df:gameDiff,bi:dbgBio}).catch(()=>{})}}}
+  else{NET.mode='solo';newGame(1,{diff:gameDiff,biome:dbgBio})}
   running=true;updateCam(0,true);show('title',false);show('end',false);show('perk',false);show('hud',true);show('bottom',true);show('side',true);hudInit();tq.length=0;checkAch();
   if(DES())setTimeout(()=>{if(running)toast('砂漠：昼は動くほどのどが渇く。夜のうちに湧き水をくみ、キャラバンの注文に応えよう','cold',true)},6000);
   banner(DES()?'砂漠の町':'今回の町',`${G.mods[0].t}／${G.mods[1].t}`,`◎${G.mods[0].d}　✕${G.mods[1].d}`,'',true);setTimeout(()=>{if(running)toast('目標：町のシンボル像を建てろ','gold',true)},3200);
@@ -2059,7 +2060,9 @@ $('mlist').addEventListener('click',e=>{const b=e.target.closest('button');if(!b
   if(b.dataset.u){const u=META_UP.find(q=>q.id===b.dataset.u),id=u.id,l=mlv(id),mx=u.max||5,c=(u.cost||META_COST)[l];if(l>=mx||meta.shards<c)return;meta.shards-=c;meta.up[id]=l+1}
   else if(b.dataset.c){const c=META_CHARS.find(q=>q.id===b.dataset.c);if(!meta.chars.includes(c.id)){if(meta.shards<c.c)return;meta.shards-=c.c;meta.chars.push(c.id)}meta.pick=c.id}
   store.set('mw2-meta',meta);audioOn();SFX.build();renderMeta()});
-let gameBio=0;function renderBio(){const el=$('bSeg');if(!el)return;const op=meta.bioOpen||0;el.innerHTML=BIOS.map((b,i)=>`<button data-b="${i}" aria-pressed="${i===gameBio}" ${i>op?'disabled':''}>${i>op?'🔒 ':''}${b.n}</button>`).join('')}
+let gameBio=0,dbgBio=new URLSearchParams(location.search).get('start')==='desert'?1:0;
+function dbgLine(){const el=$('dbgLine');if(el){el.hidden=!dbgBio;el.textContent='テスト：砂漠から始める（Shift+Dで切替）'}}
+addEventListener('keydown',e=>{if(e.code==='KeyD'&&e.shiftKey&&!running){dbgBio=dbgBio?0:1;dbgLine();toast(dbgBio?'テスト：砂漠から始めます':'テスト：通常スタートに戻しました','gold')}});function renderBio(){const el=$('bSeg');if(!el)return;const op=meta.bioOpen||0;el.innerHTML=BIOS.map((b,i)=>`<button data-b="${i}" aria-pressed="${i===gameBio}" ${i>op?'disabled':''}>${i>op?'🔒 ':''}${b.n}</button>`).join('')}
 function renderDiff(){renderBio();const el=$('dSeg');if(!el)return;el.innerHTML=DIFFS.map((d,i)=>`<button data-d="${i}" aria-pressed="${i===gameDiff}" ${i>meta.diffOpen?'disabled':''}>${i>meta.diffOpen?'🔒 ':''}${d.n}</button>`).join('')}
 $('bSeg').addEventListener('click',e=>{const b=e.target.closest('button[data-b]');if(!b||b.disabled)return;gameBio=+b.dataset.b;renderBio()});
 $('dSeg').addEventListener('click',e=>{const b=e.target.closest('button[data-d]');if(!b||b.disabled)return;gameDiff=+b.dataset.d;renderDiff()});
@@ -2089,6 +2092,7 @@ function checkPerf(){tickFps(Math.min(.25,(performance.now()-(checkPerf.l||perfo
 $('gfx').addEventListener('click',()=>{const order=['auto',2,1,0];GQ.mode=order[(order.indexOf(GQ.mode)+1)%4];store.set('mw2-gfx',GQ.mode);applyGfx(GQ.mode==='auto'?2:GQ.mode);perf={t0:0,f:0,skip:0};toast(GQ.mode==='auto'?'画質：自動（重いと自動で下げます）':'画質：'+QL[GQ.tier].n,'gold')});
 function gpuWarn(){if(!SOFTGL)return;const el=$('gpuWarn');el.hidden=false;el.innerHTML='⚠ ブラウザの<b>グラフィックアクセラレーションがオフ</b>になっていて、とても重くなります。<br>Chromeの「設定 → システム →<br>グラフィック アクセラレーションが使用可能な場合は使用する」をオンにして再起動してね';setTimeout(()=>toast('グラフィックアクセラレーションがオフなので重いです（タイトル画面に直し方）','cold',true),1500)}
 addEventListener('keydown',e=>{if(e.code!=='KeyF'||e.repeat||!running)return;if(e.target&&e.target.tagName==='INPUT')return;if(NET.mode==='guest'){NET.fCount=(NET.fCount||0)+1}else{const me=G.players[G.me]||G.players[0];if(me)me.fPress=true}});
+setTimeout(()=>dbgLine(),0);
 function boot(){gpuWarn();setPlayers(new URLSearchParams(location.search).get('room')?2:1);toTitle();applyGfx(GQ.mode==='auto'?2:GQ.mode);$('loading').hidden=true;if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(G&&G.pads)for(const q of G.pads)q._key=null});requestAnimationFrame(loop)}
 $('loading').textContent='町を組み立てています…';loadKK().catch(e=>{console.warn('assets',e);KK=null;window.__kkErr=String(e&&e.message||e)}).then(()=>{boot();if(!KK){$('credit').textContent='3D素材を読み込めませんでした（'+(window.__kkErr||'ローダーなし')+'）';setTimeout(()=>toast('3D素材を読み込めなかったので簡易表示です','cold',true),800)}});
 let last=performance.now();
