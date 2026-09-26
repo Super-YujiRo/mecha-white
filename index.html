@@ -846,7 +846,7 @@ function makeCounter(o){ // wooden stall with striped awning
   for(const s of [-1,1]){k2.add(at(cyl(1.6,1.6,60,std('#c9a24a',{m:.8,r:.3}),6),s*(w/2+16),128,-26));k2.add(at(box(18,11,1,std(o.c1,{side:T.DoubleSide}),false),s*(w/2+16)+s*10,152,-26))}
   k2.add(at(cone(8,14,std('#ffcf4a',{m:.85,r:.25,e:'#a86a00',ei:.4}),5),0,162,-20));
   const tiers=[k1,k2];tiers.forEach(t=>{t.visible=false;g.add(t)});
-  if(KK&&KK.kit.market){kkSkin(g,[reg,price]);g.add(kkP(o.c1==='#2f8fd6'||o.c1==='#8a3fb0'?'market_blue':'market',w*1.05,0,0,-4,Math.PI));
+  if(false&&KK&&KK.kit.market){kkSkin(g,[reg,price]);g.add(kkP(o.c1==='#2f8fd6'||o.c1==='#8a3fb0'?'market_blue':'market',w*1.05,0,0,-4,Math.PI));
     kkSkin(k1,[]);k1.add(kkP('d_crates',30,-w/2-22,0,4),kkP('d_barrel',18,-w/2-20,0,-26),kkP('crate_steak',24,w/2+20,0,6));kkSkin(k2,[]);k2.add(kkP('d_banner_r',22,-w/2+6,40,-30),kkP('d_banner_b',22,w/2-6,40,-30),kkP('h_lantern',10,-w/2-6,0,20),kkP('h_lantern',10,w/2+6,0,20))}
   return{g,lamp,price,tiers}
 }
@@ -856,14 +856,14 @@ function makeGrill(){const g=new T.Group();
   g.add(at(rbox(40,20,30,3,std('#3a3f48',{m:.5,r:.45})),-18,44,-8));g.add(at(cyl(4,4,40,std('#3a3f48',{m:.5,r:.45}),10),-30,70,-14));
   const coal=at(box(70,2,36,stdU('#ff5a1a',{e:'#ff5a1a',ei:1.8,r:.5}),false),0,29.6,0);g.add(coal);
   const on=grp(at(itemMesh('meat'),-10,31,0),at(itemMesh('meat'),12,31,4));const done=grp(at(itemMesh('steak'),-10,31,0),at(itemMesh('steak'),12,31,4));g.add(on,done);
-  if(KK&&KK.kit.stove_multi){kkSkin(g,[on,done,coal]);coal.visible=false;g.add(kkP('stove_multi',80,0,0,0,0),kkP('crate_steak',30,-58,0,4));on.position.y=done.position.y=20}
+  if(false&&KK&&KK.kit.stove_multi){kkSkin(g,[on,done,coal]);coal.visible=false;g.add(kkP('stove_multi',80,0,0,0,0),kkP('crate_steak',30,-58,0,4));on.position.y=done.position.y=20}
   return{g,coal,on,done}}
 function makeFishGrill(){const g=new T.Group();
   g.add(at(rbox(72,14,36,3,std('#7c8794',{map:TEX.stone})),0,7,0));const coal=at(box(58,2,26,stdU('#ff5a1a',{e:'#ff5a1a',ei:1.8,r:.5}),false),0,15,0);g.add(coal);
   for(const s of [-1,1])g.add(at(cyl(1.6,1.6,40,std('#8a5a30',{map:TEX.wood}),6),s*32,26,0));g.add(at(rot(cyl(1.2,1.2,70,std('#8a5a30'),6),0,0,Math.PI/2),0,44,0));
   const on=new T.Group();for(let i=0;i<5;i++){const f=itemMesh('fish');f.rotation.set(0,0,Math.PI/2);f.position.set(-24+i*12,34,0);on.add(f)}g.add(on);
   const done=new T.Group();for(let i=0;i<5;i++){const f=itemMesh('grfish');f.rotation.set(0,0,Math.PI/2);f.position.set(-24+i*12,34,0);done.add(f)}g.add(done);
-  if(KK&&KK.kit.stove_single){kkSkin(g,[on,done]);coal.visible=false;g.add(kkP('stove_single',48,-18,0,0),kkP('pot_large',30,26,0,0),kkP('d_barrel',18,52,0,-10));on.position.set(-18,-12,0);done.position.set(-18,-12,0);on.scale.setScalar(.6);done.scale.setScalar(.6)}
+  if(false&&KK&&KK.kit.stove_single){kkSkin(g,[on,done]);coal.visible=false;g.add(kkP('stove_single',48,-18,0,0),kkP('pot_large',30,26,0,0),kkP('d_barrel',18,52,0,-10));on.position.set(-18,-12,0);done.position.set(-18,-12,0);on.scale.setScalar(.6);done.scale.setScalar(.6)}
   return{g,coal,on,done}}
 function makeTailor(){const g=new T.Group(),woodM=std('#9a6536',{map:TEX.wood});
   g.add(at(rbox(80,22,40,3,woodM),0,11,0));g.add(at(rbox(24,14,16,3,std('#3a3f48',{m:.4,r:.4})),-16,29,0));g.add(at(cyl(6,6,4,std('#c9a24a',{m:.8,r:.3}),12),-16,38,0));
@@ -871,7 +871,7 @@ function makeTailor(){const g=new T.Group(),woodM=std('#9a6536',{map:TEX.wood});
   const man=new T.Group();man.add(at(cyl(1.4,1.4,30,'#5a3a22',6),0,15,0));man.add(at(scl(M_(coatGeo(),std('#b03a48')),.75,.9,.75),0,24,0));man.add(at(rot(tor(8,2,std(FUR,{r:1}),false,6,14),Math.PI/2,0,0),0,42,0));man.position.set(48,0,-10);g.add(man);
   const on=at(itemMesh('fur'),16,23,10);const done=at(itemMesh('coat'),16,23,10);g.add(on,done);
   const coal=at(sph(2.4,stdU('#ffd166',{e:'#ffd166',ei:2,r:.5}),false,8,6),-16,42,0);g.add(coal);
-  if(KK&&KK.kit.d_table){kkSkin(g,[on,done,man,coal]);g.add(kkP('d_table',80,0,0,0),kkP('d_crates',26,-54,0,-6));on.position.y=done.position.y=42}
+  if(false&&KK&&KK.kit.d_table){kkSkin(g,[on,done,man,coal]);g.add(kkP('d_table',80,0,0,0),kkP('d_crates',26,-54,0,-6));on.position.y=done.position.y=42}
   return{g,coal,on,done}}
 function makeCabin(roofC,signTxt){const g=new T.Group(),woodM=std('#a86f3c',{map:TEX.wood});
   g.add(at(rbox(70,40,50,2,woodM),0,20,0));
@@ -899,8 +899,8 @@ function makeMonument(){const g=new T.Group(),goldM=std('#ffcf4a',{m:.85,r:.25})
   const b=makeBear('normal');b.g.scale.setScalar(2.2);b.g.position.y=50;b.g.traverse(o=>{if(o.isMesh&&o.material&&o.material.color&&!o.material.transparent)o.material=goldM});b.head.rotation.x=-.4;b.ring.visible=false;g.add(b.g);
   const fl=at(cone(10,30,std('#ffa23d',{e:'#ffa23d',ei:2.5,t:true,op:.95}),10,false),0,150,40);g.add(fl);g.userData.flame=fl;return g}
 function makeLamp(){if(KK&&KK.kit.h_post_lantern){const g=new T.Group();g.add(kkP('h_post_lantern',16,0,0,0,rnd(0,TAU)));g.add(at(sph(3,glow('#ffcf7a',3),false,8,6),0,58,6));return g}const g=new T.Group();g.add(at(cyl(2,2.6,60,std('#2b3440',{m:.5,r:.4}),8),0,30,0));g.add(at(rbox(12,14,12,2,std('#2b3440',{m:.5,r:.4})),0,64,0));g.add(at(sph(4.6,glow('#ffcf7a',3),false,10,8),0,64,0));g.add(at(cone(9,7,std('#2b3440',{m:.5,r:.4}),4),0,74,0));g.add(blob(8));return g}
-function kkInst(name,w,list){const src=KK.kit[name];if(!src||!list.length)return;src.updateMatrixWorld(true);const sc=w/(KK.kitW[name]||1),o3=new T.Object3D(),m4=new T.Matrix4();
-  src.traverse(o=>{if(!o.isMesh)return;const im=new T.InstancedMesh(o.geometry,o.material,list.length);im.castShadow=true;im.receiveShadow=true;list.forEach(([x,z,ry],i)=>{o3.position.set(x,0,z);o3.rotation.set(0,ry,0);o3.scale.setScalar(sc);o3.updateMatrix();m4.multiplyMatrices(o3.matrix,o.matrixWorld);im.setMatrixAt(i,m4)});world.add(im)})}
+function kkInst(name,w,list){const src=KK.kit[name];const _ims=[];if(!src||!list.length)return _ims;src.updateMatrixWorld(true);const sc=w/(KK.kitW[name]||1),o3=new T.Object3D(),m4=new T.Matrix4();
+  src.traverse(o=>{if(!o.isMesh)return;const im=new T.InstancedMesh(o.geometry,o.material,list.length);im.castShadow=true;im.receiveShadow=true;list.forEach(([x,z,ry],i)=>{o3.position.set(x,0,z);o3.rotation.set(0,ry,0);o3.scale.setScalar(sc);o3.updateMatrix();m4.multiplyMatrices(o3.matrix,o.matrixWorld);im.setMatrixAt(i,m4)});world.add(im);_ims.push(im)});return _ims}
 function kkSkin(g,keep){const ks=new Set();for(const k of keep)if(k)k.traverse(o=>ks.add(o));g.traverse(o=>{if(o.isMesh&&!ks.has(o))o.visible=false})}
 function kkP(name,w,x,y,z,ry){if(!KK||!KK.kit[name])return new T.Group();const o=kkProp(name,w);o.position.set(x||0,y||0,z||0);o.rotation.y=ry||0;o.traverse(q=>{if(q.isMesh){q.castShadow=true;q.receiveShadow=true}});return o}
 function makeTower(){const g=new T.Group(),wood=std('#a8743f',{map:TEX.wood}),dark=std('#5a3a20',{map:TEX.bark}),iron=std('#3a3f48',{m:.6,r:.45});
@@ -925,6 +925,61 @@ function makeManor(i){const g=new T.Group(),stone=std('#c9ced6',{map:TEX.stone})
   g.add(at(rot(box(80,5,36,roof),-.6,0,0),0,82,-13));g.add(at(rot(box(80,5,36,roof),.6,0,0),0,82,13));g.add(at(rot(box(74,4,30,snowM),-.6,0,0),0,86,-13));g.add(at(rot(box(74,4,30,snowM),.6,0,0),0,86,13));
   for(const x of [-22,0,22]){g.add(at(box(11,13,1.5,glow('#ffcf7a',2.2),false),x,24,26.5));g.add(at(box(10,11,1.5,glow('#ffcf7a',2.2),false),x,56,23.5))}
   g.add(at(box(76,3,4,gold),0,40.5,26));g.add(at(box(66,3,3,gold),0,70,23.5));g.add(at(cone(5,14,gold,6),0,100,0));g.add(at(box(10,26,10,stone),24,96,-10));bake(g);inkOutline(g);g.add(blob(54));return g}
+
+// ================================================================ the town grows with the furnace level
+const TOWN={1:{n:'野営地',d:''},2:{n:'灯りの集落',d:'道ができて、飾り電球が灯った'},3:{n:'きこりの村',d:'製材所と街灯が建った'},4:{n:'広場のある村',d:'石畳の広場とベンチができた'},5:{n:'風車の町',d:'石畳の道・風車・旗が並んだ'},6:{n:'教会の町',d:'教会の鐘が鳴る'},7:{n:'石壁の街',d:'柵が石の城壁になり、酒場ができた'},8:{n:'光の都',d:'黄金の門と、夜空に花火'}};
+const TSPOTS=[[760,770],[1640,770],[780,1650],[1655,1690]];
+let _roadTex=null,_cobTex=null;
+function roadTex(cob){const make=(cob)=>canvasTex(128,512,(g,w,h)=>{h=h||512;g.clearRect(0,0,w,h);
+  for(let y=0;y<h;y+=2)for(let x=0;x<w;x+=2){const e=Math.min(x,w-x)/(w*.5);const a=Math.min(1,e*2.6);if(a<=0)continue;let r,gg,b;
+    if(cob){const cx=(x+(Math.floor(y/16)%2)*8)%16,cy=y%16;const edge=cx<2||cy<2;const v=edge?-38:Math.random()*22-8;r=158+v;gg=164+v;b=172+v}else{const v=Math.random()*30-12;r=176+v;gg=160+v*.9;b=138+v*.8;if(Math.random()<.18){r=gg=b=236}}
+    g.fillStyle=`rgba(${r|0},${gg|0},${b|0},${a*(cob?.97:.85)})`;g.fillRect(x,y,2,2)}});
+  if(cob)return _cobTex||(_cobTex=make(true));return _roadTex||(_roadTex=make(false))}
+function makeTownStages(){const S=[];for(let i=0;i<8;i++){const g=new T.Group();g.visible=false;world.add(g);S.push(g)}
+  const rv=makeRankVisuals();const mv=(src,dst,fx)=>{for(const c of [...src.children]){if(fx)fx(c);dst.add(c)}world.remove(src)};
+  const roads=[[-Math.PI/2,FR+10],[0,FR+10],[Math.PI,FR+10],[Math.PI/2,380]];
+  const strip=(a,len,wd,cob,y)=>{const t=roadTex(cob).clone();t.needsUpdate=true;t.wrapS=T.ClampToEdgeWrapping;t.wrapT=T.RepeatWrapping;t.repeat.set(1,len/(cob?110:200));
+    const m=M_(new T.PlaneGeometry(wd,len),new T.MeshStandardMaterial({map:t,transparent:true,depthWrite:false,roughness:.95}),false,true);m.rotation.set(-Math.PI/2,0,-a+Math.PI/2);const r0=100,mid=r0+len/2;m.position.set(CX+Math.cos(a)*mid,y,CY+Math.sin(a)*mid);m.renderOrder=1;return m};
+  // Lv2 灯りの集落: trampled roads + string lights and gate flags
+  for(const [a,r] of roads)S[1].add(strip(a,r-100,86,false,.32));mv(rv[0],S[1]);
+  // Lv3 きこりの村: lamps along the roads + lumber mill
+  const padNear=(x,y)=>G.pads.some(p=>Math.abs(p.x-x)<62&&Math.abs(p.y-y)<62)||Object.values(STN).some(q=>dist(q.conv.x,q.conv.y,x,y)<70||dist(q.counter.x,q.counter.y,x,y)<90);
+  for(const [a,r] of roads.slice(0,3))for(let d=190,k=0;d<r-50;d+=105,k++){const sd=k%2?1:-1,x=CX+Math.cos(a)*d-Math.sin(a)*sd*62,y=CY+Math.sin(a)*d+Math.cos(a)*sd*62;if(padNear(x,y))continue;const l=makeLamp();l.position.set(x,0,y);S[2].add(l)}
+  if(KK){const [x,y]=TSPOTS[0];S[2].add(kkP('lumbermill',120,x,0,y,Math.PI*.75),kkP('lumber',44,x+70,0,y+40,.4),kkP('wheelbarrow',30,x+40,0,y+80,1.2),kkP('crate',24,x-60,0,y+50,.3))}
+  // Lv4 広場のある村: paved plaza + benches
+  mv(rv[1],S[3]);
+  // Lv5 風車の町: cobblestone roads, windmill, banners on the fence
+  for(const [a,r] of roads)S[4].add(strip(a,r-100,70,true,.42));
+  if(KK){const [x,y]=TSPOTS[1];S[4].add(kkP('windmill',120,x,0,y,Math.PI*.25),kkP('sack',22,x-60,0,y+60,.5),kkP('sack',22,x-44,0,y+72,1.1),kkP('barrel',22,x+60,0,y+50,0))}
+  {const cols=['#e5483d','#2f7de0','#ffcf4a','#3fc157'];let i=0;for(let a=-Math.PI;a<Math.PI;a+=.2){const gap=GATE_ANG.some(g=>Math.abs(Math.atan2(Math.sin(a-g),Math.cos(a-g)))<.2)||(a>SOUTH[0]-.05&&a<SOUTH[1]+.05);if(gap)continue;const x=CX+Math.cos(a)*(FR+16),y=CY+Math.sin(a)*(FR+16);const f=new T.Group();f.position.set(x,0,y);f.rotation.y=-a;
+    f.add(at(cyl(1.4,1.6,74,std('#5a3a20',{map:TEX.bark}),6),0,37,0));const cl=M_(new T.PlaneGeometry(22,30),std(cols[i++%4],{side:T.DoubleSide,r:.8}),false);cl.position.set(0,58,11);cl.rotation.y=Math.PI/2;f.add(cl);f.add(at(sph(2.2,std('#ffcf4a',{m:.8,r:.3}),false,6,4),0,75,0));S[4].add(f)}}
+  // Lv6 教会の町: church (moved out to the south-west corner)
+  mv(rv[2],S[5],c=>{c.position.set(TSPOTS[2][0],0,TSPOTS[2][1]);c.rotation.y=-Math.PI*.25;c.scale.multiplyScalar(1.15)});
+  // Lv7 石壁の街: stone wall replaces the wooden fence + tavern
+  {const seg=[],pil=[];const L=64,step=L/FR;for(let a=-Math.PI;a<Math.PI-step/2;a+=step){const an=a+step/2;const gap=q=>GATE_ANG.some(g=>Math.abs(Math.atan2(Math.sin(q-g),Math.cos(q-g)))<.13)||(q>SOUTH[0]&&q<SOUTH[1]);if(gap(an))continue;seg.push(an);pil.push(a);if(gap(a+step))pil.push(a+step)}
+    const stone=std('#aeb6c0',{map:TEX.stone,r:.9}),cap=std('#f4f8fc',{r:.9}),o=new T.Object3D();const mk=(geo,mat,list,f)=>{const im=new T.InstancedMesh(geo,mat,list.length);im.castShadow=im.receiveShadow=true;list.forEach((a,i)=>{f(o,a);o.updateMatrix();im.setMatrixAt(i,o.matrix)});im.visible=false;world.add(im);return im};
+    const wallW=mk(new T.BoxGeometry(L+2,44,14),stone,seg,(o,a)=>{o.position.set(CX+Math.cos(a)*FR,22,CY+Math.sin(a)*FR);o.rotation.set(0,-a-Math.PI/2,0)});
+    const wallC=mk(new T.BoxGeometry(L+4,4,18),cap,seg,(o,a)=>{o.position.set(CX+Math.cos(a)*FR,46,CY+Math.sin(a)*FR);o.rotation.set(0,-a-Math.PI/2,0)});
+    const tw=mk(new T.CylinderGeometry(12,14,62,8),stone,pil,(o,a)=>{o.position.set(CX+Math.cos(a)*FR,31,CY+Math.sin(a)*FR);o.rotation.set(0,a,0)});
+    const twc=mk(new T.ConeGeometry(15,18,8),std('#2f5f8f',{r:.6}),pil,(o,a)=>{o.position.set(CX+Math.cos(a)*FR,71,CY+Math.sin(a)*FR);o.rotation.set(0,a,0)});
+    G.wallIM=[wallW,wallC,tw,twc]}
+  if(KK){const [x,y]=TSPOTS[3];S[6].add(kkP('tavern',110,x,0,y,-Math.PI*.75),kkP('barrel',22,x-66,0,y-30,0),kkP('barrel',22,x-60,0,y-10,.6),kkP('crate',24,x-40,0,y-62,.2))}
+  // Lv8 光の都: golden gate + light pillars at the landmarks
+  mv(rv[3],S[7]);for(const [x,y] of TSPOTS){const b=M_(new T.CylinderGeometry(16,16,700,12,1,true),new T.MeshBasicMaterial({color:lin('#ffe38a'),transparent:true,opacity:.14,blending:T.AdditiveBlending,depthWrite:false,side:T.DoubleSide}),false);b.position.set(x,350,y);S[7].add(b)}
+  for(const g of S)for(const c of g.children)c.userData.s0=c.scale.clone();
+  return{list:S,lv:null}}
+function setWall(k){if(!G.wallIM)return;const on=k>0;for(const m of G.wallIM){m.visible=on;m.scale.y=Math.max(.001,k)}for(const m of G.fenceIM||[]){if(m.userData.hid)continue;m.scale.y=Math.max(.001,1-k);m.visible=k<1}}
+function syncStages(dt){const TS=G.townS;if(!TS)return;const L=clamp(G.level||1,1,8);
+  if(TS.lv==null){TS.lv=L;TS.list.forEach((g,i)=>g.visible=i<L);setWall(L>=7?1:0);for(const m of G.fenceIM||[])if(!m.visible&&L<7)m.userData.hid=1;return}
+  if(L>TS.lv){for(let i=TS.lv;i<L;i++){const g=TS.list[i];g.visible=true;g.userData.t=0;for(const c of g.children){c.userData.dl=.7+dist(c.position.x,c.position.z,CX,CY)/800;c.scale.setScalar(.001)}}
+    if(TS.lv<7&&L>=7)TS.wallT=0;TS.lv=L;townFx(L)}
+  for(const g of TS.list){const u=g.userData;if(!g.visible||u.t==null||u.t>4)continue;u.t+=dt;for(const c of g.children){const q=c.userData,k=clamp((u.t-q.dl)/.5,0,1),e=k<=0?.001:Math.max(.001,easeOutBack(k));c.scale.set(q.s0.x*e,q.s0.y*e,q.s0.z*e);
+      if(k>0&&!q.pf){q.pf=1;if(Math.random()<.5)burst(c.position.x,c.position.z,10,6,{c:['#ffffff','#ffd23f','#dff3ff'],s0:30,s1:110,u0:60,u1:160,l0:.4,l1:.8,r0:3,r1:6})}}}
+  if(TS.wallT!=null&&TS.wallT<1){TS.wallT=Math.min(1,TS.wallT+dt*.45);setWall(TS.wallT<.3?0:(TS.wallT-.3)/.7);if(TS.wallT>.3&&Math.random()<dt*20){const a=rnd(-Math.PI,Math.PI);puff(CX+Math.cos(a)*FR,CY+Math.sin(a)*FR,10,{c:'#c9d3dd',r:14,life:1.2,a:.6,vy:30,grow:2})}}}
+function townFx(L){const t=TOWN[L];if(!t)return;G.camPan={x:CX,y:CY+40,t:0,z:.4,d:4.2};SFX.area();G.shake=Math.max(G.shake||0,8);
+  setTimeout(()=>{if(running)burst(CX,CY,80,60,{c:['#ffd23f','#ffffff','#ff8ad8','#9fe0ff'],s0:120,s1:380,u0:260,u1:520,l0:.9,l1:1.6,add:true,r0:6,r1:12})},500);
+  setTimeout(()=>{if(running)float(CX,CY,170,`町のすがた「${t.n}」`,'gold',true)},900)}
+
 function makeRankVisuals(){const out=[];
   // 村: string lights + gate flags
   const r1=new T.Group();const pairs=[[[1030,1400],[1240,1400]],[[1240,1400],[1450,1400]],[[1030,1700],[1450,1700]],[[800,1400],[1030,1400]]];const bc=['#ffd166','#ff8ad8','#7fe3ff','#8ff08f'];
@@ -1043,10 +1098,10 @@ function newGame(np,opts){opts=opts||{};CUR_BIO=opts.biome||0;zoneNames();let RS
   const bulbN=Math.ceil(posts.length/3),bI=new T.InstancedMesh(new T.SphereGeometry(2.2,8,6),glow('#ffffff',2.6),bulbN);let bi=0;const bc=[lin('#ffd166'),lin('#ff8ad8'),lin('#7fe3ff'),lin('#8ff08f')];
   posts.forEach(([x,y,h],i)=>{o.rotation.set(0,0,0);o.position.set(x,h/2,y);o.scale.set(1,h,1);o.updateMatrix();pI.setMatrixAt(i,o.matrix);o.position.set(x,h+5.5,y);o.scale.set(1,1,1);o.updateMatrix();tI.setMatrixAt(i,o.matrix);o.position.set(x,h+7,y);o.scale.set(1,.6,1);o.updateMatrix();cI.setMatrixAt(i,o.matrix);
     if(i%3===0&&bi<bulbN){o.position.set(x,h-4,y);o.scale.set(1,1,1);o.updateMatrix();bI.setMatrixAt(bi,o.matrix);bI.setColorAt(bi,bc[bi%4]);bi++}});
-  world.add(pI,tI,cI,bI);
+  world.add(pI,tI,cI,bI);G.fenceIM=[pI,tI,cI,bI];
   if(KK&&KK.kit.h_fence){pI.visible=tI.visible=cI.visible=bI.visible=false;const seg=[],pil=[];const L=58,step=L/FR;
     for(let a=-Math.PI;a<Math.PI-step/2;a+=step){const an=a+step/2;const gap=q=>GATE_ANG.some(g=>Math.abs(Math.atan2(Math.sin(q-g),Math.cos(q-g)))<.13)||(q>SOUTH[0]&&q<SOUTH[1]);if(gap(an))continue;seg.push([CX+Math.cos(an)*FR,CY+Math.sin(an)*FR,-an-Math.PI/2]);pil.push([CX+Math.cos(a)*FR,CY+Math.sin(a)*FR,-a]);if(gap(a+step))pil.push([CX+Math.cos(a+step)*FR,CY+Math.sin(a+step)*FR,-a])}
-    kkInst('h_fence',L,seg);kkInst('h_fence_p',L*.125*1.3,pil)}
+    G.fenceIM=[...kkInst('h_fence',L,seg),...kkInst('h_fence_p',L*.125*1.3,pil)]}
   for(const a of GATE_ANG){for(const s of [-1,1]){const aa=a+s*.13;if(KK&&KK.kit.d_pillar)world.add(kkP('d_pillar',22,CX+Math.cos(aa)*FR,0,CY+Math.sin(aa)*FR,-aa));else world.add(at(cyl(9,9,80,std('#7a4a2a',{map:TEX.bark}),10),CX+Math.cos(aa)*FR,40,CY+Math.sin(aa)*FR))}}
   // lamps around the plaza
   for(const [x,y] of [[1030,1400],[1240,1400],[1450,1400],[1030,1700],[1450,1700],[1600,1600],[800,1400]]){const l=makeLamp();l.position.set(x,0,y);world.add(l)}
@@ -1070,7 +1125,7 @@ function newGame(np,opts){opts=opts||{};CUR_BIO=opts.biome||0;zoneNames();let RS
     for(let i=0;i<14;i++){const x=sr(120,WORLD-120),y=sr(120,WORLD-120);if(dist(x,y,CX,CY)<FR+140||inZone(x,y))continue;const rk=['rock1','rock2','rock3'][i%3];const m=KK.nat&&KK.nat[rk]?(()=>{const g=new T.Group(),o=KK.nat[rk].clone(true);o.scale.setScalar(sr(34,60)/(KK.natH[rk]||1));g.add(o);return g})():kkProp(i%2?'rockA':'rockC',sr(40,70));m.position.set(x,0,y);m.rotation.y=sr(0,TAU);world.add(m)}}
   // decor: bushes, grass tufts, dead trees and pebbles (instanced, no collision)
   G.decor=[];if(KK&&KK.nat&&KK.nat.bush){const o3=new T.Object3D();for(const [k,n,s0,s1] of (DES()?[['dead',34,80,120],['peb',260,12,24]]:[['bush',160,34,60],['grass',420,26,44],['dead',12,90,130],['peb',140,10,20]])){const src=KK.nat[k];if(!src)continue;src.updateMatrixWorld(true);const H=KK.natH[k]||1;const list=[];
-      let g2=0;while(list.length<n&&g2++<n*20){const x=sr(40,WORLD-40),y=sr(40,WORLD-40);const d=dist(x,y,CX,CY);if(d<FR+(k==='dead'?140:60))continue;if(x>900&&x<1700&&y>1580&&y<1840)continue;if(dist(x,y,SPA.x,SPA.y)<260)continue;list.push([x,y,sr(s0,s1)/H,sr(0,TAU)])}
+      let g2=0;while(list.length<n&&g2++<n*20){const x=sr(40,WORLD-40),y=sr(40,WORLD-40);const d=dist(x,y,CX,CY);if(d<FR+(k==='dead'?140:60))continue;if(x>900&&x<1700&&y>1580&&y<1840)continue;if(dist(x,y,SPA.x,SPA.y)<260)continue;if(!DES()&&TSPOTS.some(q=>dist(x,y,q[0],q[1])<130))continue;list.push([x,y,sr(s0,s1)/H,sr(0,TAU)])}
       const byC=new Map();for(const it of list){const key=chunkKey(it[0],it[1]);if(!byC.has(key))byC.set(key,[]);byC.get(key).push(it)}
       for(const [key,cl] of byC){const box=chunkBox(key,k==='dead'?200:90);src.traverse(o=>{if(!o.isMesh)return;const im=new T.InstancedMesh(o.geometry,o.material,cl.length);im.frustumCulled=false;im.castShadow=k==='bush'||k==='dead';im.receiveShadow=true;im.userData.n=cl.length;im.userData.box=box;im.count=Math.floor(cl.length*QL[GQ.tier].decor*(k==='dead'&&GQ.tier<2?0:1));im.visible=im.count>0;G.decor.push(im);
         cl.forEach(([x,y,sc,r],i)=>{o3.position.set(x,0,y);o3.rotation.set(0,r,0);o3.scale.setScalar(sc);o3.updateMatrix();const m4=new T.Matrix4().multiplyMatrices(o3.matrix,o.matrixWorld);im.setMatrixAt(i,m4)});world.add(im)})}}}
@@ -1087,7 +1142,7 @@ function newGame(np,opts){opts=opts||{};CUR_BIO=opts.biome||0;zoneNames();let RS
   // trees
   let guard=0;const trees=[];
   while(trees.length<Math.round(360*G.mod.trees)&&guard++<30000){const x=sr(60,WORLD-60),y=sr(60,WORLD-60);const d=dist(x,y,CX,CY);if(d<FR+70)continue;if(x>900&&x<1700&&y>1580&&y<1840)continue;
-    if(!DES()&&dist(x,y,2020,1210)<470&&x>1720)continue;if(DES()&&DHOLES.some(h=>dist(h[0],h[1],x,y)<110))continue;if(dist(x,y,ROAD.x,ROAD.y)<230)continue;if(dist(x,y,SPA.x,SPA.y)<260)continue;if(Math.abs(x-CX)<60&&y<CY)continue;if(Math.abs(y-CY)<60&&(x<CX||x>CX))continue;
+    if(!DES()&&dist(x,y,2020,1210)<470&&x>1720)continue;if(DES()&&DHOLES.some(h=>dist(h[0],h[1],x,y)<110))continue;if(dist(x,y,ROAD.x,ROAD.y)<230)continue;if(dist(x,y,SPA.x,SPA.y)<260)continue;if(Math.abs(x-CX)<60&&y<CY)continue;if(!DES()&&TSPOTS.some(q=>dist(x,y,q[0],q[1])<150))continue;if(Math.abs(y-CY)<60&&(x<CX||x>CX))continue;
     if(trees.some(t=>dist(t.x,t.y,x,y)<54))continue;trees.push({x,y,s:sr(.85,1.25),ry:sr(0,TAU),hp:4,alive:true,regrow:0,shake:0,fall:0,fallDir:0,grow:1,zone:(inZone(x,y)||{}).id||null})}
   G.trees=trees;forest=new Forest(trees);makeSecrets(trees,sr);makeRoad();applyBiome();
   // ores (zone C? no — rocky outcrops in the east of the north field feed coal)
@@ -1102,6 +1157,7 @@ function newGame(np,opts){opts=opts||{};CUR_BIO=opts.biome||0;zoneNames();let RS
   for(let i=0;i<np;i++)addPlayer(i);G.me=opts.guest?1:0;G.guest=!!opts.guest;if(opts.guest)G.players[0].remote=true;
   // pads
   buildPads();
+  G.townS=DES()?null:makeTownStages();
   G.sledV=[];
   if(!opts.guest&&mlv('sled'))G.sleds.push({id:++G.nid,x:1500,y:1300,rider:null});
   G.baseCap=Math.max(6,5+mlv('folk')+1);
@@ -1117,7 +1173,7 @@ function padDef(d){d.paid=0;d.pulse=0;d.shown=false;d.rise=0;return d}
 function buildPads(){
   const P=[];
   const need=(pad)=>pad.pop?1:0;
-  P.push(padDef({id:'furnace',mp:{fish:0,fur:0},mix:()=>{const sm=G.players.length>1?1:.85,t=[[0,0],[0,0],[8,0],[10,6],[12,10],[15,12],[18,15],[20,20]][G.level]||[0,0];return{fish:Math.round(t[0]*sm),fur:Math.round(t[1]*sm)}},x:1200,y:1020,name:'かまど強化',k:'炉',pay:'log',vis:()=>G.level<8,cost:()=>Math.round([12,20,30,45,60,80,100][G.level-1]*(G.players.length>1?1:.85)),lvText:()=>`Lv${G.level}→${G.level+1}`,buy:()=>{G.level++;G.waveFx=0;G.fuel=Math.min(100,G.fuel+30);banner('かまど強化！',`Lv${G.level}`,`熱の範囲が広がった${G.level===2?'・氷の湖を解放できる':G.level===3?'・奥地の森を解放できる':G.level===4?'・温泉郷を解放できる':''}`);G.shake=10}}));
+  P.push(padDef({id:'furnace',mp:{fish:0,fur:0},mix:()=>{const sm=G.players.length>1?1:.85,t=[[0,0],[0,0],[8,0],[10,6],[12,10],[15,12],[18,15],[20,20]][G.level]||[0,0];return{fish:Math.round(t[0]*sm),fur:Math.round(t[1]*sm)}},x:1200,y:1020,name:'かまど強化',k:'炉',pay:'log',vis:()=>G.level<8,cost:()=>Math.round([12,20,30,45,60,80,100][G.level-1]*(G.players.length>1?1:.85)),lvText:()=>`Lv${G.level}→${G.level+1}`,buy:()=>{G.level++;G.waveFx=0;G.fuel=Math.min(100,G.fuel+30);banner('かまど強化！ 町が育った',`Lv${G.level}「${(TOWN[G.level]||TOWN[8]).n}」`,`${DES()?'':(TOWN[G.level]||TOWN[8]).d+'・'}熱の範囲が広がった${G.level===2?'・氷の湖を解放できる':G.level===3?'・奥地の森を解放できる':G.level===4?'・温泉郷を解放できる':''}`);G.shake=10}}));
   P.push(padDef({id:'hunter',x:990,y:1110,name:'猟師',k:'猟',pay:'cash',pop:true,vis:()=>G.workers.filter(w=>w.role==='hunter').length<5,cost:()=>[60,140,260,420,600][G.workers.filter(w=>w.role==='hunter').length],lvText:()=>`${G.workers.filter(w=>w.role==='hunter').length}人`,buy:(pad)=>hire('hunter',pad)}));
   P.push(padDef({id:'lumber',x:990,y:1220,name:'木こり',k:'斧',pay:'cash',pop:true,vis:()=>G.workers.filter(w=>w.role==='lumber').length<4,cost:()=>[40,100,200,340][G.workers.filter(w=>w.role==='lumber').length],lvText:()=>`${G.workers.filter(w=>w.role==='lumber').length}人`,buy:(pad)=>hire('lumber',pad)}));
   P.push(padDef({id:'price_steak',x:990,y:1330,name:'肉の値上げ',k:'値',pay:'cash',vis:()=>G.lv.price_steak<3,cost:()=>[60,150,300][G.lv.price_steak],lvText:()=>`$${price('steak')}`,buy:()=>{G.lv.price_steak++;toast(`肉 1個 $${price('steak')}`,'cash')}}));
@@ -2040,8 +2096,8 @@ function syncTown(dt){syncRescue(dt);syncSleds(dt);const v=G.v;v.f._pos={x:CX,y:
   for(const tw of TOWERS){const m=G.towerV[tw.id],lv=G.lv['tw_'+tw.id];m.g.visible=lv>0;m._pos={x:tw.mx,y:tw.my};tierPop(m,lv,m.tiers,dt)}
   G.trapV.forEach(m=>{m.visible=G.lv.trap>0;m.scale.setScalar(.75+G.lv.trap*.15)});
   const pop=G.surv.filter(s=>!s.frozen).length+G.workers.length;
-  const rk=G.rank||0;G.rankO._pos={x:CX,y:CY};tierPop(G.rankO,rk,G.rankV,dt);
-  if(rk>=4&&isNight()&&Math.random()<dt*1.2){const x=rnd(900,1500),y=rnd(900,1500),c=['#ffd23f','#ff8ad8','#7fe3ff','#8ff08f'][Math.floor(rnd(0,4))];burst(x,y,rnd(260,380),40,{c:[c,'#ffffff'],s0:80,s1:200,u0:-40,u1:60,g:60,l0:.8,l1:1.4,add:true,r0:5,r1:9});if(Math.random()<.5)tone(rnd(300,500),.15,'triangle',.02,-.5)}
+  const rk=G.rank||0;syncStages(dt);
+  if((G.level||1)>=8&&isNight()&&Math.random()<dt*1.2){const x=rnd(900,1500),y=rnd(900,1500),c=['#ffd23f','#ff8ad8','#7fe3ff','#8ff08f'][Math.floor(rnd(0,4))];burst(x,y,rnd(260,380),40,{c:[c,'#ffffff'],s0:80,s1:200,u0:-40,u1:60,g:60,l0:.8,l1:1.4,add:true,r0:5,r1:9});if(Math.random()<.5)tone(rnd(300,500),.15,'triangle',.02,-.5)}
   for(const [hi,h] of G.houses.entries()){const lv=houseLv(hi);h._pos={x:h.x,y:h.y};tierPop(h,lv,[h.tent,h.cab,h.man],dt);if(lv===3){h.tent.visible=h.cab.visible=false}if(lv===2){h.tent.visible=false;if(Math.random()<dt*1.5){const a=h.g.rotation.y;puff(h.x+Math.cos(a)*17-Math.sin(a)*8*0,h.y-Math.sin(a)*17,72,{c:'#c9d3dd',r:6,life:1.8,a:.5,vy:26,vx:G.wind*14,grow:2.2})}}}}
 // ================================================================ guide arrow
 const guide=(()=>{const g=new T.Group();const gm=glow('#ffd23f',1.2);const arrow=grp(at(rot(cone(10,18,gm,4,false),Math.PI,0,0),0,0,0),at(box(8,14,8,gm,false),0,15,0));
@@ -2055,7 +2111,7 @@ const cam={x:CX,y:CY+80,z:1};let nightK=0;
 function updateCam(dt,snap){const ps=NET.mode==='solo'?G.players:[G.players[G.me]||G.players[0]];let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9,cx=0,cy=0;
   for(const p of ps){x0=Math.min(x0,p.x);x1=Math.max(x1,p.x);y0=Math.min(y0,p.y);y1=Math.max(y1,p.y);cx+=p.x/ps.length;cy+=p.y/ps.length}
   let z=1;if(ps.length>1)z=clamp(Math.min(1,700/(Math.hypot(x1-x0,y1-y0)+300)),.5,1);
-  if(G.camPan&&G.camPan.t<2.2){G.camPan.t+=dt;const k=G.camPan.t<.5?G.camPan.t/.5:G.camPan.t>1.7?1-(G.camPan.t-1.7)/.5:1;cx=lerp(cx,G.camPan.x,k*.85);cy=lerp(cy,G.camPan.y,k*.85);z=lerp(z,.62,k)}
+  if(G.camPan&&G.camPan.t<(G.camPan.d||2.2)){const D=G.camPan.d||2.2;G.camPan.t+=dt;const k=G.camPan.t<.5?G.camPan.t/.5:G.camPan.t>D-.5?Math.max(0,1-(G.camPan.t-(D-.5))/.5):1;cx=lerp(cx,G.camPan.x,k*.85);cy=lerp(cy,G.camPan.y,k*.85);z=lerp(z,G.camPan.z||.62,k)}
   cam.z=snap?z:lerp(cam.z,z,Math.min(1,dt*3));if(snap){cam.x=cx;cam.y=cy}else{cam.x=lerp(cam.x,cx,Math.min(1,dt*6));cam.y=lerp(cam.y,cy,Math.min(1,dt*6))}}
 function hideIdleFx(dt){secretFx(dt||.016);roadFx();caravanFx();const me=G.players[G.me]||G.players[0];if(me&&G.sleds){if(me.riding)label(me.x,me.y,120,'<small>Fキーで降りる</small>','');else{const q=G.sleds.find(q=>q.rider==null&&dist(me.x,me.y,q.x,q.y)<90);if(q)label(q.x,q.y,50,'<b>Fキーで乗る</b>','gold')}}}
 function monBar(){if(G.raid&&G.raid.on&&G.raid.final&&G.monMax&&G.monV&&G.monV.visible)label(G.monV.position.x,G.monV.position.z,170,bar(100*Math.max(0,G.monHP)/G.monMax,'red'),'')}
