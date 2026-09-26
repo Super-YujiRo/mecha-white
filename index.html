@@ -228,7 +228,7 @@
   <div class="fever" id="fever"><i></i><span>FEVER</span></div>
 </div>
 <div class="bottom" id="bottom" hidden></div>
-<div class="side" id="side" hidden><button id="quit">タイトルへ</button><button id="mute">音 ON</button><div class="modp" id="hModTxt"></div></div>
+<div class="side" id="side" hidden><button id="quit">タイトルへ</button><button id="mute">音 ON</button><button id="gfx">画質：自動</button><div class="modp" id="hModTxt"></div></div>
 <div id="combo" hidden></div>
 <div id="sosArrow" hidden><i></i><b id="sosTxt">SOS</b></div>
 <div class="toast" id="toast"></div>
@@ -469,7 +469,7 @@ const snow=(()=>{const N=2400,pos=new Float32Array(N*3),col=new Float32Array(N*3
   const m=new T.ShaderMaterial({uniforms:{uScale:{value:1}},vertexShader:PS_V,fragmentShader:PS_F,transparent:true,depthWrite:false});const pts=new T.Points(g,m);pts.frustumCulled=false;pts.renderOrder=9;scene.add(pts);
   return{update(dt,cx,cz,wind,storm,scale){const t=performance.now()/900;for(let i=0;i<N;i++){pos[i*3+1]-=v[i]*70*dt*(1+storm);pos[i*3]+=(20+wind*70)*v[i]*dt*(1+storm);pos[i*3+2]+=Math.sin(i+t)*9*dt;
       if(pos[i*3+1]<0)pos[i*3+1]+=700;const dx=pos[i*3]-cx,dz=pos[i*3+2]-cz;if(dx>900)pos[i*3]-=1800;if(dx<-900)pos[i*3]+=1800;if(dz>900)pos[i*3+2]-=1800;if(dz<-900)pos[i*3+2]+=1800}
-    g.setDrawRange(0,Math.floor(N*storm));g.attributes.position.needsUpdate=true;m.uniforms.uScale.value=scale}}})();
+    g.setDrawRange(0,Math.floor(N*storm*GQ.snow));g.attributes.position.needsUpdate=true;m.uniforms.uScale.value=scale}}})();
 
 // ================================================================ DOM labels
 const labelsEl=$('labels'),lpool=[];let lused=0;const pv=new T.Vector3();
@@ -944,9 +944,9 @@ function newGame(np,opts){opts=opts||{};let RS=(opts.seed||((Math.random()*1e9)|
   if(KK){for(let i=0;i<16;i++){const a=i/16*TAU+.2,r=1650+(i%3)*180;const m=kkProp(i%4===3?'hill':'mountain',420+(i%3)*120);m.position.set(CX+Math.cos(a)*r,-6,CY+Math.sin(a)*r);m.rotation.y=i*1.7;world.add(m)}
     for(let i=0;i<14;i++){const x=sr(120,WORLD-120),y=sr(120,WORLD-120);if(dist(x,y,CX,CY)<FR+140||inZone(x,y))continue;const rk=['rock1','rock2','rock3'][i%3];const m=KK.nat&&KK.nat[rk]?(()=>{const g=new T.Group(),o=KK.nat[rk].clone(true);o.scale.setScalar(sr(34,60)/(KK.natH[rk]||1));g.add(o);return g})():kkProp(i%2?'rockA':'rockC',sr(40,70));m.position.set(x,0,y);m.rotation.y=sr(0,TAU);world.add(m)}}
   // decor: bushes, grass tufts, dead trees and pebbles (instanced, no collision)
-  if(KK&&KK.nat&&KK.nat.bush){const o3=new T.Object3D();for(const [k,n,s0,s1] of [['bush',160,34,60],['grass',420,26,44],['dead',26,90,130],['peb',140,10,20]]){const src=KK.nat[k];if(!src)continue;src.updateMatrixWorld(true);const H=KK.natH[k]||1;const list=[];
+  G.decor=[];if(KK&&KK.nat&&KK.nat.bush){const o3=new T.Object3D();for(const [k,n,s0,s1] of [['bush',160,34,60],['grass',420,26,44],['dead',26,90,130],['peb',140,10,20]]){const src=KK.nat[k];if(!src)continue;src.updateMatrixWorld(true);const H=KK.natH[k]||1;const list=[];
       let g2=0;while(list.length<n&&g2++<n*20){const x=sr(40,WORLD-40),y=sr(40,WORLD-40);const d=dist(x,y,CX,CY);if(d<FR+(k==='dead'?140:60))continue;if(x>900&&x<1700&&y>1580&&y<1840)continue;if(dist(x,y,SPA.x,SPA.y)<260)continue;list.push([x,y,sr(s0,s1)/H,sr(0,TAU)])}
-      src.traverse(o=>{if(!o.isMesh)return;const im=new T.InstancedMesh(o.geometry,o.material,list.length);im.castShadow=k!=='grass'&&k!=='peb';im.receiveShadow=true;
+      src.traverse(o=>{if(!o.isMesh)return;const im=new T.InstancedMesh(o.geometry,o.material,list.length);im.castShadow=k!=='grass'&&k!=='peb';im.receiveShadow=true;im.userData.n=list.length;im.count=Math.floor(list.length*QL[GQ.tier].decor);im.visible=im.count>0;(G.decor=G.decor||[]).push(im);
         list.forEach(([x,y,sc,r],i)=>{o3.position.set(x,0,y);o3.rotation.set(0,r,0);o3.scale.setScalar(sc);o3.updateMatrix();const m4=new T.Matrix4().multiplyMatrices(o3.matrix,o.matrixWorld);im.setMatrixAt(i,m4)});world.add(im)})}}
   // watchtowers, gate traps and house slots (they appear as the town grows)
   G.towerV={};for(const tw of TOWERS){const m=makeTower();m.g.position.set(tw.mx,0,tw.my);m.g.visible=false;m.lv=0;m.pop=1;world.add(m.g);G.towerV[tw.id]=m}
@@ -1860,10 +1860,20 @@ function nextYear(){G.yearBonus=(G.yearBonus||0)+30*G.year;G.year++;G.monument=f
   const g=goalOf(G.year);banner(`${G.year}年目`,'もっと厳しい冬が来る',`寒さ・燃料・襲撃・食費が強くなった。目標：${g.n}（$${g.c.toLocaleString()}・町人${g.pop}人・かまどLv${g.lv}）`,'cold');SFX.wave()}
 $('cont').addEventListener('click',()=>{nextYear();running=true;show('end',false);show('hud',true);show('bottom',true);show('side',true)});
 // adaptive quality: drop bloom and shadow resolution on slow devices
-let perf={t:0,f:0,done:false};
-function checkPerf(dt){if(perf.done||!running)return;perf.t+=dt;perf.f++;if(perf.t>4){perf.done=true;const fps=perf.f/perf.t;if(fps<38){composer=null;renderer.outputEncoding=T.sRGBEncoding;PR=1;renderer.setPixelRatio(1);sun.shadow.mapSize.set(1024,1024);sun.shadow.map&&sun.shadow.map.dispose();sun.shadow.map=null;resize()}}}
+const QL=[{n:'低',pr:.7,sh:0,fx:0,decor:0,snow:.3},{n:'中',pr:1,sh:2048,fx:0,decor:.45,snow:.55},{n:'高',pr:Math.min(devicePixelRatio||1,2),sh:4096,fx:1,decor:1,snow:1}];
+const GQ={mode:store.get('mw2-gfx','auto'),tier:2,snow:1};const FX0=composer;
+function applyGfx(i){i=clamp(i,0,2);GQ.tier=i;const q=QL[i];GQ.snow=q.snow;PR=q.pr;renderer.setPixelRatio(PR);
+  composer=q.fx&&FX0?FX0:null;renderer.outputEncoding=composer?T.LinearEncoding:T.sRGBEncoding;
+  sun.castShadow=q.sh>0;if(q.sh){sun.shadow.mapSize.set(q.sh,q.sh);if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null}}
+  if(G&&G.decor)for(const im of G.decor){im.count=Math.floor(im.userData.n*q.decor);im.visible=im.count>0}
+  resize();gfxLabel()}
+function gfxLabel(){const b=$('gfx');if(b)b.textContent='画質：'+(GQ.mode==='auto'?'自動（'+QL[GQ.tier].n+'）':QL[GQ.tier].n)}
+let perf={t0:0,f:0,skip:0};
+function checkPerf(){if(!running||GQ.mode!=='auto'||GQ.tier===0){perf.t0=0;return}const now=performance.now();if(!perf.t0){perf.t0=now;perf.f=0;perf.skip=now+2000;return}if(now<perf.skip){perf.t0=now;perf.f=0;return}perf.f++;
+  if(now-perf.t0>=3000){const fps=perf.f*1000/(now-perf.t0);perf.t0=now;perf.f=0;if(fps<46){applyGfx(GQ.tier-1);perf.skip=now+2000;toast(`重そうなので画質を「${QL[GQ.tier].n}」に下げました`,'cold')}}}
 
-function boot(){setPlayers(new URLSearchParams(location.search).get('room')?2:1);toTitle();$('loading').hidden=true;if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(G&&G.pads)for(const q of G.pads)q._key=null});requestAnimationFrame(loop)}
+$('gfx').addEventListener('click',()=>{const order=['auto',2,1,0];GQ.mode=order[(order.indexOf(GQ.mode)+1)%4];store.set('mw2-gfx',GQ.mode);applyGfx(GQ.mode==='auto'?2:GQ.mode);perf={t0:0,f:0,skip:0};toast(GQ.mode==='auto'?'画質：自動（重いと自動で下げます）':'画質：'+QL[GQ.tier].n,'gold')});
+function boot(){setPlayers(new URLSearchParams(location.search).get('room')?2:1);toTitle();applyGfx(GQ.mode==='auto'?2:GQ.mode);$('loading').hidden=true;if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(G&&G.pads)for(const q of G.pads)q._key=null});requestAnimationFrame(loop)}
 $('loading').textContent='町を組み立てています…';loadKK().catch(e=>{console.warn('assets',e);KK=null;window.__kkErr=String(e&&e.message||e)}).then(()=>{boot();if(!KK){$('credit').textContent='3D素材を読み込めませんでした（'+(window.__kkErr||'ローダーなし')+'）';setTimeout(()=>toast('3D素材を読み込めなかったので簡易表示です','cold',true),800)}});
 let last=performance.now();
 function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;
