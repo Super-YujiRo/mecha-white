@@ -1216,7 +1216,9 @@ function guestPeerNow(){if(!NET.room)return null;return NET.room.peers().find(p=
 // ---- PeerJS room (works on any plain URL; used when not inside claude.ai)
 const PJ={on:false,code:null,peer:null,conns:new Map(),pres:{},me:{role:'idle'},subs:{},peerSubs:[],state:''};
 const PJ_PRE='mecha-white-v1-',PJ_ICE={config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:global.stun.twilio.com:3478'},{urls:['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443','turn:openrelay.metered.ca:443?transport=tcp'],username:'openrelayproject',credential:'openrelayproject'}]}};
-function pjRoom(){return{peers:()=>[...PJ.conns.keys()].filter(k=>{const c=PJ.conns.get(k);return c.open&&performance.now()-(c._seen||0)<7000}).map(k=>({peer:k,presence:PJ.pres[k]||{},sameTab:false})),
+function netWire(r){for(const tp of ['s.core','s.a','s.b'])r.on(tp,m=>{if(NET.mode!=='guest'||m.sameTab)return;if(NET.hostPeer&&m.peer!==NET.hostPeer)return;NET.inbox[tp]=m.data},()=>{})}
+function pjRoom(){const r=pjRoomRaw();netWire(r);return r}
+function pjRoomRaw(){return{peers:()=>[...PJ.conns.keys()].filter(k=>{const c=PJ.conns.get(k);return c.open&&performance.now()-(c._seen||0)<7000}).map(k=>({peer:k,presence:PJ.pres[k]||{},sameTab:false})),
   presence:patch=>{PJ.me=patch;for(const c of PJ.conns.values())if(c.open)try{c.send({p:patch})}catch(e){}return Promise.resolve()},
   onPeers:fn=>{PJ.peerSubs.push(fn)},on:(tp,fn)=>{(PJ.subs[tp]=PJ.subs[tp]||[]).push(fn)},
   emit:(tp,d)=>{for(const c of PJ.conns.values())if(c.open)try{c.send({t:tp,d})}catch(e){}return Promise.resolve()}}}
@@ -1226,7 +1228,7 @@ function pjWire(c){c._seen=performance.now();c.on('open',()=>{c._seen=performanc
   const bye=()=>{PJ.conns.delete(c.peer);delete PJ.pres[c.peer];pjPeers()};c.on('close',bye);c.on('error',bye)}
 setInterval(()=>{for(const [k,c] of PJ.conns){if(c.open)try{c.send({k:1})}catch(e){}if(performance.now()-(c._seen||0)>9000){try{c.close()}catch(e){}PJ.conns.delete(k);delete PJ.pres[k];pjPeers()}}},2000);
 window.addEventListener('beforeunload',()=>{try{PJ.peer&&PJ.peer.destroy()}catch(e){}});
-function pjReset(){try{PJ.peer&&PJ.peer.destroy()}catch(e){}PJ.peer=null;PJ.conns.clear();PJ.pres={};PJ.code=null;NET.room=null}
+function pjReset(){try{PJ.peer&&PJ.peer.destroy()}catch(e){}PJ.peer=null;PJ.conns.clear();PJ.pres={};PJ.code=null;PJ.subs={};NET.room=null}
 function pjCreate(){if(!window.Peer){PJ.state='nolib';netLine();return}pjReset();const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';const code=Array.from({length:4},()=>A[Math.random()*A.length|0]).join('');
   PJ.state='making';netLine();const pe=new Peer(PJ_PRE+code,Object.assign({},PJ_ICE,window.MW_PEER));PJ.peer=pe;
   pe.on('open',()=>{PJ.code=code;PJ.host=true;NET.room=pjRoom();PJ.state='wait';netLine()});
@@ -1251,7 +1253,7 @@ function pjInit(){PJ.on=true;const q=new URLSearchParams(location.search).get('r
   if(q){setPlayers(2);$('roomIn').value=q;setTimeout(()=>pjJoin(q),600)}netLine()}
 (async()=>{try{const u=window.claude&&window.claude.use;if(!u){pjInit();return}const r=await window.claude.use('room');if(!r)return;NET.room=r;r.presence({role:'idle'}).catch(()=>{});
   r.onPeers(()=>netLine(),()=>{});
-  for(const tp of ['s.core','s.a','s.b'])r.on(tp,m=>{if(NET.mode!=='guest'||m.sameTab)return;if(NET.hostPeer&&m.peer!==NET.hostPeer)return;NET.inbox[tp]=m.data},()=>{});
+  netWire(r);
   netLine()}catch(e){}})();
 function followNet(p,dt){const px=p.x,py=p.y;if(p.nx!=null){const k=Math.min(1,dt*12);p.x=lerp(p.x,p.nx,k);p.y=lerp(p.y,p.ny,k)}
   const sp=Math.hypot(p.x-px,p.y-py)/Math.max(dt,.001);p.moving=sp>20;if(p.moving){p.step+=dt*sp*.06;p.dirT=Math.atan2(p.x-px,p.y-py)}else if(p.dirN!=null)p.dirT=p.dirN;
