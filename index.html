@@ -219,7 +219,7 @@
   </div>
   <div class="right col">
     <div class="cardS popc" id="hPopBox"><span class="rank" id="hRank">集落</span><svg class="icon" viewBox="0 0 26 22"><circle cx="13" cy="7" r="5" fill="#8a7058"/><path d="M3 21c0-6 4-9 10-9s10 3 10 9z" fill="#8a7058"/></svg><span class="num sm"><span id="hIdle">0</span>/<span id="hPop">0</span></span></div>
-    <div class="cardS" id="hFrzBox"><svg class="icon" viewBox="0 0 26 22"><path d="M13 1l8 5v10l-8 5-8-5V6z" fill="#bfe6f7" stroke="#6fb7e6" stroke-width="1.5"/></svg><span class="tiny">凍った町人</span><span class="num sm"><span id="hFrz">0</span>/5</span></div>
+    <div class="cardS" id="hFrzBox"><svg class="icon" viewBox="0 0 26 22"><path d="M13 1l8 5v10l-8 5-8-5V6z" fill="#bfe6f7" stroke="#6fb7e6" stroke-width="1.5"/></svg><span class="tiny" id="hFrzN">凍った町人</span><span class="num sm"><span id="hFrz">0</span>/5</span></div>
     <div class="chip wx" id="hWx" hidden><span class="tiny" id="hWxN"></span><span class="num sm"><span id="hWxT">0</span>秒</span></div>
     <div class="chip raid" id="hSos" hidden><span class="tiny">SOS</span><span class="num sm">残り <span id="hSosN">0</span>秒</span></div>
     <div class="chip raid" id="hRaid" hidden><span class="tiny">襲撃</span><span class="num sm">残り <span id="hRaidN">0</span></span></div>
@@ -430,9 +430,28 @@ function paintGround(g,S){
 }
 function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
 let groundTex=null;
+let groundTexD=null;
+function paintDesert(g,S){const k=S/WORLD;g.save();g.scale(k,k);
+  const bg=g.createRadialGradient(CX,CY,100,CX,CY,WORLD*.8);bg.addColorStop(0,'#f3d9a4');bg.addColorStop(1,'#e2b36e');g.fillStyle=bg;g.fillRect(0,0,WORLD,WORLD);
+  g.lineWidth=5;for(let i=0;i<260;i++){const x=rnd(0,WORLD),y=rnd(0,WORLD),w=rnd(120,320);g.strokeStyle=Math.random()<.5?'rgba(180,120,60,.18)':'rgba(255,240,210,.35)';g.beginPath();for(let t=0;t<=1;t+=.1){const px=x+t*w,py=y+Math.sin(t*6+i)*10;t?g.lineTo(px,py):g.moveTo(px,py)}g.stroke()}
+  for(let i=0;i<6000;i++){g.fillStyle=Math.random()<.5?'rgba(160,100,50,.12)':'rgba(255,245,220,.4)';g.fillRect(rnd(0,WORLD),rnd(0,WORLD),rnd(1,3),rnd(1,2))}
+  // salt flat (zone B)
+  g.fillStyle='#f4eee8';g.beginPath();g.ellipse(2040,1200,360,500,0,0,TAU);g.fill();g.strokeStyle='rgba(190,170,160,.55)';g.lineWidth=3;
+  for(let j=0;j<140;j++){const cx=2040+rnd(-320,320),cy=1200+rnd(-450,450);g.beginPath();for(let q=0;q<6;q++){const a=q/6*TAU;const px=cx+Math.cos(a)*34,py=cy+Math.sin(a)*34;q?g.lineTo(px,py):g.moveTo(px,py)}g.closePath();g.stroke()}
+  // red canyon floor (zone C)
+  const cg2=g.createLinearGradient(40,0,680,0);cg2.addColorStop(0,'#a8502e');cg2.addColorStop(1,'#cf8a52');g.fillStyle=cg2;g.globalAlpha=.75;g.fillRect(40,640,640,1120);g.globalAlpha=1;
+  for(let j=0;j<40;j++){g.strokeStyle='rgba(90,40,20,.35)';g.lineWidth=rnd(2,6);g.beginPath();let x=rnd(60,660),y=rnd(660,1740);g.moveTo(x,y);for(let q=0;q<5;q++){x+=rnd(-50,50);y+=rnd(-40,40);g.lineTo(x,y)}g.stroke()}
+  // oasis (zone D): grass ring
+  const og=g.createRadialGradient(1200,2070,60,1200,2070,330);og.addColorStop(0,'#6fae4a');og.addColorStop(.7,'#9cc45e');og.addColorStop(1,'rgba(200,190,110,0)');g.fillStyle=og;g.beginPath();g.ellipse(1200,2070,340,260,0,0,TAU);g.fill();
+  // town: packed earth + adobe plaza
+  const tg=g.createRadialGradient(CX,CY,40,CX,CY,FR+10);tg.addColorStop(0,'#c69866');tg.addColorStop(.5,'#dcb482');tg.addColorStop(1,'rgba(230,200,150,0)');g.fillStyle=tg;g.beginPath();g.arc(CX,CY,FR+10,0,TAU);g.fill();
+  for(let x=1020;x<1580;x+=34)for(let y=1420;y<1700;y+=24){g.fillStyle=`rgba(${190+rnd(-15,15)|0},${130+rnd(-15,15)|0},${80+rnd(-10,10)|0},.4)`;rr(g,x+((y/24|0)%2)*17,y,30,20,4);g.fill()}
+  // dry riverbeds from the gates
+  g.strokeStyle='rgba(150,95,50,.35)';g.lineWidth=60;g.lineCap='round';g.beginPath();g.moveTo(CX,CY-FR+30);g.lineTo(CX,420);g.moveTo(CX+FR-30,CY);g.lineTo(1800,CY);g.moveTo(CX-FR+30,CY);g.lineTo(600,CY);g.moveTo(1300,1700);g.lineTo(1300,2000);g.stroke();
+  g.restore()}
 function makeGround(){
-  if(!groundTex)groundTex=canvasTex(2048,2048,(g,w)=>paintGround(g,w));
-  const plane=M_(new T.PlaneGeometry(WORLD,WORLD),new T.MeshStandardMaterial({map:groundTex,roughness:.95,color:lin(DES()?'#f0c688':'#b9cbdb')}),false,true);plane.rotation.x=-Math.PI/2;plane.position.set(CX,0,CY);
+  if(DES()){if(!groundTexD)groundTexD=canvasTex(2048,2048,(g,w)=>paintDesert(g,w))}else if(!groundTex)groundTex=canvasTex(2048,2048,(g,w)=>paintGround(g,w));
+  const plane=M_(new T.PlaneGeometry(WORLD,WORLD),new T.MeshStandardMaterial({map:DES()?groundTexD:groundTex,roughness:.95,color:lin(DES()?'#ffffff':'#b9cbdb')}),false,true);plane.rotation.x=-Math.PI/2;plane.position.set(CX,0,CY);
   const outer=M_(new T.PlaneGeometry(WORLD*5,WORLD*5),new T.MeshStandardMaterial({color:lin(DES()?'#e0b273':'#a9bccd'),roughness:1}),false,true);outer.rotation.x=-Math.PI/2;outer.position.set(CX,-.6,CY);
   return grp(plane,outer);
 }
@@ -731,7 +750,7 @@ class Forest{
     else{const L=VP[0]=[];const add=(g,m,x,y,z,sx,sy,sz)=>L.push({g,m,l:new T.Matrix4().compose(new T.Vector3(x,y,z),new T.Quaternion(),new T.Vector3(sx||1,sy||1,sz||1))});add(new T.CylinderGeometry(3.6,5,20,8),bark,0,10,0);
     [[30,26,14,leaf],[25,24,31,leaf2],[19,22,47,leaf],[12,18,61,leaf2]].forEach(([r,h,y,m])=>{add(new T.ConeGeometry(r,h,8),m,0,y+h/2-2,0);add(new T.ConeGeometry(r*.74,h*.5,8),snowM,0,y+h*.7,0)})}
     // bucket trees by map chunk and variant so off-screen chunks can be skipped entirely
-    const bk=new Map();trees.forEach((t,i)=>{t.i=i;const v=i%VP.length;t.item=(DES()&&v===2)?'salt':'log';const key=chunkKey(t.x,t.y)+'|'+v;let B=bk.get(key);if(!B){B={key,v,ids:[],box:chunkBox(chunkKey(t.x,t.y),120)};bk.set(key,B)}t.bk=B;t.slot=B.ids.length;B.ids.push(i)});
+    const bk=new Map();trees.forEach((t,i)=>{t.i=i;const v=i%VP.length;const v2=(DES()&&t.x>1720&&t.y>620&&t.y<1780)?2:v;t.item=(DES()&&v2===2)?'salt':'log';const key=chunkKey(t.x,t.y)+'|'+v2;let B=bk.get(key);if(!B){B={key,v:v2,ids:[],box:chunkBox(chunkKey(t.x,t.y),120)};bk.set(key,B)}t.bk=B;t.slot=B.ids.length;B.ids.push(i)});
     this.B=[...bk.values()];this.all=[];for(const B of this.B){B.ims=VP[B.v].map(p=>{const im=new T.InstancedMesh(p.g,p.m,B.ids.length);im.frustumCulled=false;im.castShadow=true;im.receiveShadow=false;scene.add(im);this.all.push(im);return im});B.ls=VP[B.v].map(p=>p.l)}
     this.stumps=new T.InstancedMesh(new T.CylinderGeometry(9,10,6,10),std('#8a5a32'),N);scene.add(this.stumps);this.m4=new T.Matrix4();this.b=new T.Matrix4();this.q=new T.Quaternion();this.e=new T.Euler();this.v=new T.Vector3();this.s=new T.Vector3();this.zero=new T.Matrix4().makeScale(0,0,0);
     trees.forEach(t=>this.upd(t))}
@@ -752,6 +771,30 @@ function cullWorld(){camera.updateMatrixWorld();FRM.multiplyMatrices(camera.proj
 function makeTextPlate(text,w,h,bg,fg,fs){const c=document.createElement('canvas');c.width=w*4;c.height=h*4;const tex=new T.CanvasTexture(c);tex.encoding=T.sRGBEncoding;const m=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshBasicMaterial({map:tex,transparent:true}));
   m.userData.draw=t=>{const g=c.getContext('2d');g.clearRect(0,0,c.width,c.height);if(bg!=='none'){g.fillStyle=bg;rr(g,4,4,c.width-8,c.height-8,26);g.fill();g.strokeStyle=fg;g.lineWidth=8;g.stroke()}g.fillStyle=fg;g.font=`900 ${c.height*(fs||.58)}px "M PLUS Rounded 1c",sans-serif`;g.textAlign='center';g.textBaseline='middle';g.fillText(t,c.width/2,c.height/2+4);tex.needsUpdate=true};
   m.userData.draw(text);return m}
+function makeWell(){const g=new T.Group(),sand=std('#d8a86a',{r:.9,flat:true}),brick=std('#b8703f',{r:.85}),wood=std('#8a5a32',{map:TEX.wood});
+  for(let i=0;i<18;i++){const a=i/18*TAU;const b=at(rbox(24,26,14,2,i%2?sand:brick),Math.cos(a)*44,13,Math.sin(a)*44);b.rotation.y=-a;g.add(b)}
+  const coals=at(rot(M_(new T.CircleGeometry(40,32),std('#1f78c0',{e:'#1f78c0',ei:.5,r:.1,m:.2}),false),-Math.PI/2,0,0),0,22,0);g.add(coals);
+  g.add(at(box(6,80,6,wood),-46,40,0),at(box(6,80,6,wood),46,40,0),at(box(104,6,8,wood),0,80,0),at(rot(cyl(4,4,70,wood,8),0,0,Math.PI/2),0,68,0));
+  const roof=at(rot(cone(62,26,std('#c9553d',{r:.8}),4),0,Math.PI/4,0),0,96,0);g.add(roof);const bucket=at(cyl(7,5.5,10,std('#7a5234'),10),0,48,0);g.add(bucket);g.add(at(cyl(.6,.6,20,std('#d9c49a'),4,false),0,60,0));
+  const flames=['#2f8fd6','#6fc3f0','#e4f6ff'].map((c,i)=>{const f=at(cyl(3+i*2,6+i*3,20,std(c,{e:c,ei:.5,t:true,op:.55}),10,false),Math.cos(i*2)*18,32,Math.sin(i*2)*18);g.add(f);return f});
+  const light=new T.PointLight(lin('#bfe6ff'),1.6,600,1.4);light.position.set(0,90,0);g.add(light);
+  const plate=makeTextPlate('Lv1',70,28,'#5b4636','#ffe38a');plate.position.set(0,2,78);plate.rotation.set(-Math.PI/2,0,YAW);g.add(plate);
+  const tiers=[0,1,2].map(i=>{const t=new T.Group();for(let k=0;k<3+i*2;k++){const a=k/(3+i*2)*TAU+i;t.add(at(scl(sph(8,std('#5f9446'),true,8,6),1,1.4,1),Math.cos(a)*(70+i*14),10,Math.sin(a)*(70+i*14)))}return t});tiers.forEach(t=>{t.visible=false;g.add(t)});
+  return{g,flames,light,coals,plate,tiers}}
+function makeOasis(){const g=new T.Group();const water=M_(new T.CircleGeometry(1,40),std('#3fb4d8',{e:'#1f86b0',ei:.35,r:.1,m:.2,t:true,op:.92}),false,true);water.rotation.x=-Math.PI/2;water.scale.set(118,88,1);water.position.y=3;g.add(water);
+  const trunk=std('#8a5a32',{r:.9}),leaf=std('#4f8f3a',{r:.8,flat:true});
+  for(let i=0;i<9;i++){const a=i/9*TAU+.3,r=150+(i%3)*18;const p=new T.Group();p.position.set(Math.cos(a)*r,0,Math.sin(a)*r*.8);const h=70+(i%3)*12;const tr=at(rot(cyl(3.5,5,h,trunk,7),0,0,.12),4,h/2,0);p.add(tr);for(let k=0;k<6;k++){const la=k/6*TAU;const l=at(rot(scl(sph(14,leaf,true,6,4),1.8,.18,.6),0,-la,-.35),Math.cos(la)*18+8,h+2,Math.sin(la)*18);p.add(l)}g.add(p)}
+  const guests=[];for(let i=0;i<9;i++){const a=i/9*TAU,h=grp(sph(9.6,std(SKIN,{r:.6})),at(scl(sph(6,std('#ffffff',{r:1}),false,10,8),1.2,.6,1.2),0,9,0));face(h,9.6);h.position.set(Math.cos(a)*72,4,Math.sin(a)*52);h.rotation.y=Math.atan2(-Math.cos(a),-Math.sin(a))+Math.PI;h.visible=false;g.add(h);guests.push(h)}
+  const pump=new T.Group();pump.add(at(box(30,40,24,std('#b8703f',{r:.8})),0,20,0),at(cyl(3,3,50,std('#6b6f78',{m:.5}),8),0,55,0));const bFire=at(box(14,8,1,stdU('#7fd4ff',{e:'#7fd4ff',ei:1.6,r:.5}),false),0,12,12.5);pump.add(bFire);pump.position.set(190,0,-40);g.add(pump);
+  const sign=makeTextPlate('オアシス',70,24,'#fbf3e6','#2f8f6a');sign.position.set(0,60,-100);g.add(sign);g.add(at(cyl(2,2,50,'#6e4524',6),-24,25,-102),at(cyl(2,2,50,'#6e4524',6),24,25,-102));
+  return{g,water,guests,bFire}}
+function desertDecor(){const sand=std('#e7bf82',{r:1}),rock=std('#b86a3e',{r:.95,flat:true}),rock2=std('#9a5634',{r:.95,flat:true}),stone=std('#d9c3a0',{r:.9,flat:true});
+  // dunes
+  for(let i=0;i<26;i++){const x=rnd(100,2300),y=rnd(80,2320);if(dist(x,y,CX,CY)<FR+220||inZone(x,y))continue;const d=scl(sph(1,sand,false,16,8),rnd(120,260),rnd(18,40),rnd(70,150));d.position.set(x,-6,y);d.rotation.y=rnd(0,TAU);d.receiveShadow=true;world.add(d)}
+  // canyon mesas in zone C
+  for(let i=0;i<16;i++){const x=rnd(70,650),y=rnd(680,1740);const h=rnd(60,150),w=rnd(40,90);const m=grp(at(cyl(w*.8,w,h,i%2?rock:rock2,7),0,h/2,0),at(cyl(w*.85,w*.8,8,rock2,7),0,h+2,0));m.position.set(x,0,y);m.rotation.y=rnd(0,TAU);world.add(m)}
+  // ancient ruins
+  for(let i=0;i<10;i++){const x=rnd(300,2100),y=rnd(140,640);const r=new T.Group();r.position.set(x,0,y);for(let k=0;k<4;k++){const h=rnd(20,70);r.add(at(cyl(7,8,h,stone,10),Math.cos(k*1.6)*40,h/2,Math.sin(k*1.6)*40))}r.add(at(rot(box(60,8,14,stone),0,0,.15),10,6,-20));world.add(r)}}
 function makeFurnace(){
   const g=new T.Group(),stoneM=std('#7c8794',{map:TEX.stone,r:.9});
   g.add(at(cyl(56,62,14,stoneM,24),0,7,0));g.add(at(rot(tor(56,5,std('#6a7582',{r:.9}),true,8,32),Math.PI/2,0,0),0,14,0));
@@ -901,7 +944,9 @@ const ZONES=[
   {id:'B',pop:6,name:'氷の湖',sub:'魚はかまどLv3の材料にも・焼き魚屋台',rect:[1720,620,2360,1780],cost:400,lv:2,pad:{x:1580,y:1070},col:'#2f8fd6'},
   {id:'C',pop:10,name:'奥地の森',sub:'毛皮はかまどLv4の材料にも・ボスも出る',rect:[40,620,680,1780],cost:1600,lv:3,pad:{x:820,y:1070},col:'#5a7a3a'},
   {id:'D',pop:14,name:'温泉郷',sub:'沸かすとまわりが暖かい第2のかまどに（放置でも稼ぐ）',rect:[660,1820,1740,2370],cost:4000,lv:4,pad:{x:1235,y:1760},col:'#c24f7a'}];
-const HUNT_A=[260,100,2140,690];
+const HUNT_A=[260,100,2140,690];for(const z of ZONES)z.o={name:z.name,sub:z.sub};
+const DZN={B:{name:'塩の湖',sub:'塩の結晶がたくさん・キャラバンが高く買う'},C:{name:'岩の渓谷',sub:'大サソリの巣・甲殻がとれる'},D:{name:'オアシス',sub:'泉のまわりは涼しく、放っておいても稼ぐ'}};
+function zoneNames(){for(const z of ZONES){const n=DES()?DZN[z.id]:z.o;z.name=n.name;z.sub=n.sub}}
 const GATE_ANG=[-Math.PI/2,0,Math.PI];const SOUTH=[.64,2.5];
 const STN={
   steak:{conv:{x:1110,y:1310},counter:{x:1090,y:1452},lane:1138,pile:{x:1172,y:1452},stand:{x:1138,y:1414},in:'meat',out:'steak',time:1.3,base:7,step:3,zone:null,name:'肉屋',c1:'#e5483d',c2:'#fff4ea',maker:makeGrill},
@@ -953,7 +998,7 @@ const coolMul=()=>DM().cold*(1+(YR()-1)*.18)*(DES()?(isNight()?.4:1.9):(isNight(
 function mult(){return (1+Math.min(2,Math.floor(G.combo/5)*.25))*(G.feverT>0?2:1)}
 
 let CUR_BIO=0;
-function newGame(np,opts){opts=opts||{};CUR_BIO=opts.biome||0;let RS=(opts.seed||((Math.random()*1e9)|0))|0;const srng=()=>{RS=RS+0x6D2B79F5|0;let t=Math.imul(RS^RS>>>15,1|RS);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};const sr=(a,b)=>a+srng()*(b-a);
+function newGame(np,opts){opts=opts||{};CUR_BIO=opts.biome||0;zoneNames();let RS=(opts.seed||((Math.random()*1e9)|0))|0;const srng=()=>{RS=RS+0x6D2B79F5|0;let t=Math.imul(RS^RS>>>15,1|RS);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};const sr=(a,b)=>a+srng()*(b-a);
   if(world){scene.remove(world)}if(forest)forest.dispose();psN.clear();psA.clear();
   world=new T.Group();scene.add(world);world.add(makeGround(),makeMountains());
   G={rank:0,year:1,biome:opts.biome||0,diff:opts.diff||0,charOf:opts.chars||[meta.pick||'Rogue_Hooded','Knight'],t:0,DAY:75,day:1,wave:false,waveWarned:0,players:[],floats:[],flying:[],shake:0,paused:false,mission:0,missionCd:0,endless:false,newAch:[],achT:0,wind:0,
@@ -980,10 +1025,10 @@ function newGame(np,opts){opts=opts||{};CUR_BIO=opts.biome||0;let RS=(opts.seed|
   // lamps around the plaza
   for(const [x,y] of [[1030,1400],[1240,1400],[1450,1400],[1030,1700],[1450,1700],[1600,1600],[800,1400]]){const l=makeLamp();l.position.set(x,0,y);world.add(l)}
   // furnace
-  const f=makeFurnace();f.g.position.set(CX,0,CY);world.add(f.g);
-  const heat=M_(new T.CircleGeometry(1,64),new T.MeshBasicMaterial({map:radialTex('rgba(255,170,90,.42)','rgba(255,130,60,0)'),transparent:true,depthWrite:false}),false);heat.rotation.x=-Math.PI/2;heat.position.set(CX,.8,CY);heat.renderOrder=1;world.add(heat);
+  const f=DES()?makeWell():makeFurnace();f.g.position.set(CX,0,CY);world.add(f.g);
+  const heat=M_(new T.CircleGeometry(1,64),new T.MeshBasicMaterial({map:DES()?radialTex('rgba(120,200,240,.38)','rgba(90,170,230,0)'):radialTex('rgba(255,170,90,.42)','rgba(255,130,60,0)'),transparent:true,depthWrite:false}),false);heat.rotation.x=-Math.PI/2;heat.position.set(CX,.8,CY);heat.renderOrder=1;world.add(heat);
   const ring=M_(new T.RingGeometry(.985,1,128),new T.MeshBasicMaterial({color:lin('#ffa04d'),transparent:true,opacity:.85,side:T.DoubleSide,depthWrite:false}),false);ring.rotation.x=-Math.PI/2;ring.position.set(CX,1.1,CY);world.add(ring);
-  const embers=[];for(let i=0;i<30;i++){const e=M_(geo('emb',()=>new T.OctahedronGeometry(3.4,0)),glow('#ffb347',2.2),false);world.add(e);embers.push(e)}
+  const embers=[];for(let i=0;i<30;i++){const e=M_(geo('emb',()=>new T.OctahedronGeometry(3.4,0)),glow(DES()?'#7fd4ff':'#ffb347',2.2),false);world.add(e);embers.push(e)}
   G.v={f,heat,ring,embers};
   // stations
   for(const id in STN){const s=STN[id];const conv=s.maker();conv.g.position.set(s.conv.x,0,s.conv.y);conv.g.rotation.y=Math.PI*.12;world.add(conv.g);
@@ -1009,7 +1054,7 @@ function newGame(np,opts){opts=opts||{};CUR_BIO=opts.biome||0;let RS=(opts.seed|
   G.rankV=makeRankVisuals();G.rankO={};
   G.houses=HOUSES.map(([x,y],i)=>{const tent=KK?kkProp('tent',54):makeTent(i),cab=KK?kkProp(['home_A_red','home_B_blue','home_A_blue','home_B_red','home_A_red'][i],66):makeHouse(i),man=KK?kkProp('tavern',80):makeManor(i);man.visible=false;const g=grp(tent,cab,man);g.position.set(x,0,y);g.rotation.y=Math.atan2(CX-x,CY-y);tent.visible=cab.visible=false;world.add(g);return{x,y,g,tent,cab,man,lv:0,pop:1,need:[7,10,13,17,21][i]}});
   // zone fog curtains
-  for(const z of ZONES){const [x0,y0,x1,y1]=z.rect;const fogM=new T.MeshStandardMaterial({color:lin('#eef5fb'),transparent:true,opacity:.93,roughness:1});
+  for(const z of ZONES){const [x0,y0,x1,y1]=z.rect;const fogM=new T.MeshStandardMaterial({color:lin(DES()?'#ecc98f':'#eef5fb'),transparent:true,opacity:.93,roughness:1});
     const m=M_(new T.BoxGeometry(x1-x0,240,y1-y0),fogM,false);m.position.set((x0+x1)/2,120,(y0+y1)/2);world.add(m);
     const sign=makeTextPlate(`${z.name}`,140,40,'#fffaf0','#5b4636',.55);sign.position.set(z.pad.x,120,z.pad.y);sign.userData.bb=true;world.add(sign);
     G.zones[z.id]=false;z.fog=m;z.sign=sign;z.fogT=-1}
@@ -1023,7 +1068,7 @@ function newGame(np,opts){opts=opts||{};CUR_BIO=opts.biome||0;let RS=(opts.seed|
   // fishing holes (zone B)
   for(const [x,y] of (DES()?DHOLES:HOLES)){const m=makeHole();m.position.set(x,0,y);world.add(m);const fish=itemMesh(DES()?'water':'fish');fish.visible=false;world.add(fish);G.holes.push({x,y,m,fish,t:0,user:null,jump:0})}
   // spa
-  const spa=makeSpa();spa.g.position.set(SPA.x,0,SPA.y);world.add(spa.g);G.spaV=spa;const spaPile=new T.Group();spaPile.position.set(SPA.pile.x,0,SPA.pile.y);world.add(spaPile);G.spaStack=new Stack(spaPile,'pile');
+  const spa=DES()?makeOasis():makeSpa();spa.g.position.set(SPA.x,0,SPA.y);world.add(spa.g);G.spaV=spa;const spaPile=new T.Group();spaPile.position.set(SPA.pile.x,0,SPA.pile.y);world.add(spaPile);G.spaStack=new Stack(spaPile,'pile');
   const wp=new T.Group();wp.position.set(WOOD.x,0,WOOD.y);wp.add(at(rbox(60,4,40,2,std('#6e4524',{map:TEX.wood})),0,2,0));world.add(wp);G.woodStack=new Stack(wp,'pair');G.woodStack.g.position.y=4;
   // monument placeholder plinth
   const mon=makeMonument();mon.position.set(MON.x,0,MON.y);mon.visible=false;world.add(mon);G.monV=mon;
@@ -1421,7 +1466,7 @@ function update(dt){
   // furnace
   const burn=(.6+G.level*.14+G.day*.05)*(night?1.4:1)*(G.wave?1.8:1)*G.pm.burn*(wxIs('snap')?1.3:1)*(DES()&&!isNight()?1.25:1)*DM().burn*(1+(YR()-1)*.12);G.fuel=Math.max(0,G.fuel-burn*dt);
   if(G.fuel<20&&!G.lowWarned){G.lowWarned=true;toast('かまどの燃料が少ない！ 薪をくべろ','cold');SFX.bad()}if(G.fuel>35)G.lowWarned=false;
-  if(G.fuel<=0&&!G.outWarned){G.outWarned=true;banner('かまどの火が消えた！','町の人が凍っていく','薪をくべて火を戻せ。凍った町人が5人でゲームオーバー','cold');SFX.wave()}if(G.fuel>5)G.outWarned=false;
+  if(G.fuel<=0&&!G.outWarned){G.outWarned=true;banner(DES()?'井戸が干上がった！':'かまどの火が消えた！',DES()?'町の人が倒れていく':'町の人が凍っていく',DES()?'湧き水をくんで井戸を満たせ。倒れた町人が5人でゲームオーバー':'薪をくべて火を戻せ。凍った町人が5人でゲームオーバー','cold');SFX.wave()}if(G.fuel>5)G.outWarned=false;
   // stations frozen state
   for(const id in G.stations){const st=G.stations[id];const d=dist(st.def.conv.x,st.def.conv.y,CX,CY);const fz=st.open&&d>R;if(fz&&!st.frozen){toast(`${st.def.name}が凍った！ かまどを強化・燃料を`,'cold')}st.frozen=fz}
   updateWoodpile(dt);updateTrees(dt);updateBears(dt);updateRaid(dt);tickTowers(dt,true);updateHauls(dt);updatePickups(dt);updateWorkers(dt);updateStations(dt);updateSurvivors(dt,R);updateSpa(dt);updateHoles(dt);updateRescue(dt);updateTax(dt);updateSecrets(dt);updateRoad(dt);updateCaravan(dt);
@@ -1596,8 +1641,7 @@ function spawnRaider(boss){const a=rnd(-2.5,-.65),r=rnd(600,660);const x=CX+Math
 const SEC_N={dig:'埋もれた宝',stele:'いにしえの石碑',trav:'凍った旅人',nushi:'森のヌシ'};
 const _sandMat=new Map();
 function applyBiome(){const dz=DES();window.SNOWU.value=dz?0:1;G._dm=calcDM();
-  if(dz){G.carV=makeCaravan();G.car={state:'away',t:14,order:{},got:{}};G.mission=MISSIONS.length;
-    if(G.v&&G.v.f){G.v.f.flames.forEach((fl,i)=>{fl.material=fl.material.clone();const c=['#2f8fd6','#6fc3f0','#e4f6ff'][i];fl.material.color.copy(lin(c));fl.material.emissive.copy(lin(c));fl.material.emissiveIntensity=.6});G.v.f.coals.material=G.v.f.coals.material.clone();G.v.f.coals.material.color.copy(lin('#1f78c0'));G.v.f.coals.material.emissive.copy(lin('#1f78c0'));G.v.f.light.color.copy(lin('#bfe6ff'))}}
+  if(dz){G.carV=makeCaravan();G.car={state:'away',t:14,order:{},got:{}};G.mission=MISSIONS.length;desertDecor()}
   if(KK)for(const k in KK.kit){KK.kit[k].traverse(o=>{if(!o.isMesh)return;const ms=Array.isArray(o.material)?o.material:[o.material];for(const m of ms){if(!m.userData.c0)m.userData.c0=m.color.clone();m.color.copy(m.userData.c0);if(dz)m.color.multiply(new T.Color(1,.86,.66))}})}
   if(!dz)return;world.traverse(o=>{if(!o.isMesh)return;const m=o.material;if(!m||Array.isArray(m)||!m.isMeshStandardMaterial||m.map||m.vertexColors||m.transparent)return;const c=m.color;if(c.r>.7&&c.g>.75&&c.b>.8&&c.b>=c.r-.02){let t=_sandMat.get(m);if(!t){t=m.clone();t.color.copy(lin('#e9c690'));_sandMat.set(m,t)}o.material=t}})}
 function makeRoad(){G.road=null;if(G.biome!==0)return;const g=new T.Group();g.position.set(ROAD.x,0,ROAD.y);
@@ -1736,7 +1780,7 @@ function updateSurvivors(dt,R){
       if((inR||byP)&&Math.random()<dt*10)psN.emit({x:s.x+rnd(-14,14),y:rnd(10,44),z:s.y+rnd(-14,14),vx:0,vy:-30,vz:0,g:60,life:.5,max:.5,r:4,c:C('#bfe6f7'),fade:.2});
       if(s.warm>35){s.frozen=false;s.freezeAnim=0;s.happy=1.2;G.stats.thawed++;addCombo(12);SFX.rare();if(Math.random()<.35+G.luck)spawnChest(s.x+20,s.y+20);burst(s.x,s.y,24,26,{c:['#e8f7ff','#bfe6f7','#8fd0ec'],s0:60,s1:200,u0:100,u1:260,l0:.5,l1:.9,r0:5,r1:9});float(s.x,s.y,70,'解凍！','gold');gainXP(12,s.x,s.y)}}
     else{const cool=(.8+G.day*.11)*coolMul()*G.mod.cold*(s.arrived?1:.35);s.warm+=(inR?14:-cool)*dt;
-      if(s.warm<=0){s.warm=0;s.frozen=true;s.freezeAnim=0;G.shake=Math.max(G.shake,4);toast('生存者が凍りついた… そばに立つと解凍','cold');SFX.bad();burst(s.x,s.y,24,14,{c:['#ffffff','#bfe6f7'],s0:30,s1:100,l0:.4,l1:.8})}}
+      if(s.warm<=0){s.warm=0;s.frozen=true;s.freezeAnim=0;G.shake=Math.max(G.shake,4);toast(DES()?'町人が暑さで倒れた… そばに立つと助け起こせる':'生存者が凍りついた… そばに立つと解凍','cold');SFX.bad();burst(s.x,s.y,24,14,{c:['#ffffff','#bfe6f7'],s0:30,s1:100,l0:.4,l1:.8})}}
     s.warm=clamp(s.warm,0,100);if(s.happy>0)s.happy-=dt;
     s.breath-=dt;if(s.breath<=0&&!s.frozen&&!inR){s.breath=rnd(1,1.6);puff(s.x+Math.sin(s.dir)*8,s.y+Math.cos(s.dir)*8,32,{r:5,life:1,a:.8,vy:10,grow:1.4})}
     if(s.frozen)frozen++}
@@ -1805,7 +1849,7 @@ function updateWorkers(dt){
     if(w.frozen){w.moving=false;if(inH)w.warm+=15*dt;if(byP)w.warm+=22*G.pm.thaw*dt;if(w.warm>40){w.frozen=false;w.goWarm=true;float(w.x,w.y,70,'解凍！','gold');SFX.rare()}continue}
     if(OUT.includes(w.role)){const cool=(1.1+G.day*.06)*coolMul()*G.mod.cold*(wxIs('blizzard')?2.4:wxIs('snap')?1.7:1)*(1-mlv('warm')*.06);
       w.warm=clamp(w.warm+(inH?30:-cool)*dt,0,100);
-      if(w.warm<=0){w.frozen=true;w.goWarm=false;if(w.hole&&w.hole.user===w)w.hole.user=null;float(w.x,w.y,80,`${SPECN[w.role]||'仲間'}が凍えた！`,'ice',true);toast(`${SPECN[w.role]||'仲間'}が外で凍りついた！ そばに立って溶かそう`,'cold');SFX.bad();continue}
+      if(w.warm<=0){w.frozen=true;w.goWarm=false;if(w.hole&&w.hole.user===w)w.hole.user=null;float(w.x,w.y,80,`${SPECN[w.role]||'仲間'}が凍えた！`,'ice',true);toast(`${SPECN[w.role]||'仲間'}${DES()?'が暑さで倒れた！ そばに立って助け起こそう':'が外で凍りついた！ そばに立って溶かそう'}`,'cold');SFX.bad();continue}
       const night=isNight(),bliz=wxIs('blizzard');w.shelter=bliz;
       if(bliz&&!w.goWarm&&!inH){w.goWarm=true;if(w.hole&&w.hole.user===w)w.hole.user=null;w.hole=null;float(w.x,w.y,70,'吹雪だ、戻ろう','ice')}
       if(w.warm<(night?55:45)&&!w.goWarm){w.goWarm=true;if(w.hole&&w.hole.user===w)w.hole.user=null;w.hole=null;float(w.x,w.y,70,'さむい…','ice')}
@@ -1846,7 +1890,7 @@ function sync(dt){
   v.f.light.intensity=G.fuel>0?(1.4+f*2.2)*(1+Math.sin(G.t*13)*.06)*(nightK>.3?1.6:1):0;v.f.light.distance=R*2.4+200;v.f.coals.material.emissiveIntensity=G.fuel>0?2.2:.1;
   if(v.f.plate._lv!==G.level){v.f.plate._lv=G.level;v.f.plate.userData.draw('Lv'+G.level)}
   syncTown(dt);
-  const fl=1+Math.sin(G.t*9)*.01;v.heat.visible=v.ring.visible=R>0;v.heat.scale.setScalar(R*fl*1.12);v.ring.scale.setScalar(R*fl);v.ring.material.color.copy(C(G.fuel<20&&Math.sin(G.t*10)>0?'#ff4d5a':'#ffa04d'));
+  const fl=1+Math.sin(G.t*9)*.01;v.heat.visible=v.ring.visible=R>0;v.heat.scale.setScalar(R*fl*1.12);v.ring.scale.setScalar(R*fl);v.ring.material.color.copy(C(G.fuel<20&&Math.sin(G.t*10)>0?'#ff4d5a':DES()?'#5fc3f0':'#ffa04d'));
   v.embers.forEach((e,i)=>{const a=i/v.embers.length*TAU+G.t*.25;e.position.set(CX+Math.cos(a)*R*fl,3+Math.sin(G.t*4+i)*1.5,CY+Math.sin(a)*R*fl);e.visible=R>0;e.rotation.y=G.t*2+i});
   // players
   for(const p of G.players){const m=p.m;m.g.position.set(p.x,p.riding?6:0,p.y);if(p.aimDir!=null)turnTo(p,p.aimDir,dt,16);else if(p.dirT!=null)turnTo(p,p.dirT,dt);m.g.rotation.y=p.dir;
@@ -1889,8 +1933,8 @@ function sync(dt){
     if(w.role==='guard'){m.armR.rotation.set(-1.3,0,0);m.armL.rotation.set(-1.1,0,0);m._armR=m._armL=true;if(m.tool&&m.tool.userData.flash)m.tool.userData.flash.visible=w.flash>0}
     if(w.role==='fisher'&&w.hole&&!w.moving&&w.hole.user===w){m.armR.rotation.set(-.9,0,0);m._armR=true;label(w.hole.x,w.hole.y,64,bar(100*w.hole.t/2.2,'blue'),'')}
     if(w.frozen&&!w.ice){w.ice=M_(geo('ice',()=>new T.IcosahedronGeometry(22,0)),new T.MeshStandardMaterial({color:lin('#bfe9ff'),transparent:true,opacity:.62,roughness:.08,metalness:.1,flatShading:true}),false);w.ice.scale.set(1,1.35,1);w.ice.position.y=24;m.g.add(w.ice)}
-    if(w.ice)w.ice.visible=!!w.frozen;if(m.kk){if(w.frozen)m.kk.paused=true;else m.kk.paused=false;if(w.hurt>0)m.kk.want='Sit_Floor_Idle'}
-    if(w.frozen)label(w.x,w.y,82,`<b>凍えた！</b><br><small>そばに立つと溶ける</small><br>${bar(100*Math.min(1,w.warm/40),'gold wide')}`,'ice');else if(w.hurt>0)label(w.x,w.y,70,'<b>けが</b>','red');else if(w.shelter&&w.goWarm)label(w.x,w.y,70,'<small>吹雪で休憩中</small>','ice');else if(w.warm!=null&&w.warm<99&&['hunter','lumber','fisher','stoker'].includes(w.role))label(w.x,w.y,70,bar(w.warm,w.warm<50?'':'ice'),'')}
+    if(w.ice)w.ice.visible=!!w.frozen&&!DES();if(m.kk){if(w.frozen&&!DES())m.kk.paused=true;else m.kk.paused=false;if(w.frozen&&DES())m.kk.want='Sit_Floor_Idle';if(w.hurt>0)m.kk.want='Sit_Floor_Idle'}
+    if(w.frozen)label(w.x,w.y,82,`<b>${DES()?'倒れた！':'凍えた！'}</b><br><small>${DES()?'そばに立つと助け起こせる':'そばに立つと溶ける'}</small><br>${bar(100*Math.min(1,w.warm/40),'gold wide')}`,'ice');else if(w.hurt>0)label(w.x,w.y,70,'<b>けが</b>','red');else if(w.shelter&&w.goWarm)label(w.x,w.y,70,'<small>吹雪で休憩中</small>','ice');else if(w.warm!=null&&w.warm<99&&['hunter','lumber','fisher','stoker'].includes(w.role))label(w.x,w.y,70,bar(w.warm,w.warm<50?'':'ice'),'')}
   // survivors
   for(const s of G.surv){const m=s.m;const warmPose=s.arrived&&!s.frozen&&s.warm>55;if(warmPose)s.dirT=Math.atan2(CX-s.x,CY-s.y);if(s.dirT!=null&&!s.frozen)turnTo(s,s.dirT,dt,6);m.g.rotation.y=s.dir;
     tintCold(m,s.frozen?1:1-Math.min(1,s.warm/100*1.5));const shiv=!s.frozen&&s.warm<40?Math.sin(G.t*55+s.x)*1.4*(1-s.warm/40):0;m.g.position.set(s.x+shiv,s.happy>0?Math.abs(Math.sin(s.happy*9))*7:0,s.y);
@@ -1898,7 +1942,7 @@ function sync(dt){
     if(warmPose){m.armL.rotation.set(-1.4+Math.sin(G.t*2+s.x)*.15,0,0);m.armR.rotation.set(-1.4+Math.sin(G.t*2+s.x+1)*.15,0,0);m._armL=m._armR=true}
     if(m.kk){m.kk.paused=s.frozen;m.kk.want=s.happy>0?'Cheer':null}
     else if(!s.moving&&!s.frozen){m.armL.rotation.set(-.5,0,.9);m.armR.rotation.set(-.5,0,-.9);m._armL=m._armR=true}
-    s.ice.visible=s.frozen;if(s.frozen){const k=easeOutBack(s.freezeAnim);s.ice.scale.set(k,1.35*k,k);s.ice.rotation.y=G.t*.2;label(s.x,s.y,72,bar(100*Math.min(1,s.warm/35),'gold'),'')}
+    s.ice.visible=s.frozen&&!DES();if(s.frozen&&DES()&&s.m.kk){s.m.kk.paused=false;s.m.kk.want='Sit_Floor_Idle'}if(s.frozen){const k=easeOutBack(s.freezeAnim);s.ice.scale.set(k,1.35*k,k);s.ice.rotation.y=G.t*.2;label(s.x,s.y,72,bar(100*Math.min(1,s.warm/35),'gold'),'')}
     else if(s.warm<60)label(s.x,s.y,58,(s.warm<25?`<span class="alert">!</span>`:bar(s.warm,'ice'))+`<span class="lb ice sm" style="position:static;display:block;margin-top:2px">${s.arrived?'火がない…':'寒い…'}</span>`,'');
     if(s.happy>0&&!s.frozen)label(s.x,s.y,68,'♥','red',Math.min(1,s.happy))}
   // customers
@@ -1911,7 +1955,7 @@ function sync(dt){
     if(!st.open)continue;if(st.unlockT!=null&&st.unlockT<=1){const k=easeOutBack(Math.min(1,st.unlockT));st.parts.forEach(o=>{o.visible=true;o.scale.setScalar(Math.max(.01,k))});if(st.sign)st.sign.visible=false}
     st.inStack.set(st.q);st.shelfStack.fill(d.out,Math.min(st.shelf,40));st.pileStack.fill('cash',Math.min(220,Math.ceil(st.pile/5)));
     const cooking=st.q.length>0&&!st.frozen;st.conv.on.visible=cooking&&st.cookT<.5*d.time;st.conv.done.visible=cooking&&!st.conv.on.visible;st.conv.coal.material.emissiveIntensity=st.frozen?0:cooking?2.2:.8;
-    st.ice.visible=st.frozen;if(st.frozen){st.ice.material.opacity=.45+Math.sin(G.t*3)*.08;label(d.conv.x,d.conv.y,90,'凍結中！ 熱が届いてない','warnbox')}
+    st.ice.visible=st.frozen&&!DES();if(st.frozen&&!DES()){st.ice.material.opacity=.45+Math.sin(G.t*3)*.08;label(d.conv.x,d.conv.y,90,'凍結中！ 熱が届いてない','warnbox')}
     st.ct.lamp.material.emissive.copy(C(st.staffed?'#6be07a':'#ff6b6b'));if(st.ct.price._p!==price(id)){st.ct.price._p=price(id);st.ct.price.userData.draw(`$${price(id)}`)}
     if(st.pile>0)label(d.pile.x,d.pile.y,30+st.pileStack.h,`$${st.pile|0}`,'cash');
     if(st.shelf===0&&!st.frozen)label(d.counter.x-50,d.counter.y,50,'在庫なし','red sm');
@@ -1929,7 +1973,7 @@ function sync(dt){
   // spa
   if(G.zones.D){const s=G.spaV,on=G.spa.fuel>0;s.water.material.emissiveIntensity=on?.45+Math.sin(G.t*2)*.08:.05;s.bFire.material.emissiveIntensity=on?2.4:0;const n=on?Math.min(9,3+G.lv.spa*2):1;s.guests.forEach((g,i)=>{g.visible=i<n;g.position.y=5+Math.sin(G.t*1.4+i)*.8});
     G.spaStack.fill('cash',Math.min(220,Math.ceil(G.spa.pile/5)));if(G.spa.pile>1)label(SPA.pile.x,SPA.pile.y,30+G.spaStack.h,`$${G.spa.pile|0}`,'cash');
-    label(SPA.boiler.x,SPA.boiler.y,90,on?bar(G.spa.fuel,'gold'):'<span class="lb warnbox" style="position:static">薪を入れて沸かす（沸くとまわりが暖かい）</span>','');if(on)label(SPA.x,SPA.y,150,'♨ ここも暖かい','gold sm')}
+    label(SPA.boiler.x,SPA.boiler.y,90,on?bar(G.spa.fuel,'gold'):'<span class="lb warnbox" style="position:static">'+(DES()?'薪でポンプを動かす（動くとまわりが涼しい）':'薪を入れて沸かす（沸くとまわりが暖かい）')+'</span>','');if(on)label(SPA.x,SPA.y,150,'♨ ここも暖かい','gold sm')}
   {const mp=G.pads.find(q=>q.id==='monument');if(mp){mp.name=goalOf(YR()).n;const ox=YR()>1?150:0;if(mp.x!==MON.x+ox){mp.x=MON.x+ox;mp.mesh.mesh.position.x=mp.x;mp.mesh.icon.position.x=mp.x;mp._key=null}}}
   if(G.monument||YR()>1){G.monPop=Math.min(1,(G.monPop||0)+dt*.8);G.monV.visible=true;G.monV.scale.setScalar(easeOutBack(G.monPop)*(1+(YR()-(G.monument?1:2))*.3));G.monV.userData.flame.scale.set(1,1+Math.sin(G.t*9)*.15,1)}
   for(const h of G.hauls){h.m.position.set(h.x,h.carried?10+Math.abs(Math.sin(G.t*9))*4:0,h.y);h.m.rotation.y=h.carried?Math.sin(G.t*4)*.15:0;if(!h.carried)label(h.x,h.y,64,G.players.length>1?'巨大肉：2人で運ぶ':'巨大肉','gold sm')}
@@ -1983,7 +2027,7 @@ function updateCam(dt,snap){const ps=NET.mode==='solo'?G.players:[G.players[G.me
   cam.z=snap?z:lerp(cam.z,z,Math.min(1,dt*3));if(snap){cam.x=cx;cam.y=cy}else{cam.x=lerp(cam.x,cx,Math.min(1,dt*6));cam.y=lerp(cam.y,cy,Math.min(1,dt*6))}}
 function hideIdleFx(dt){secretFx(dt||.016);roadFx();caravanFx();const me=G.players[G.me]||G.players[0];if(me&&G.sleds){if(me.riding)label(me.x,me.y,120,'<small>Fキーで降りる</small>','');else{const q=G.sleds.find(q=>q.rider==null&&dist(me.x,me.y,q.x,q.y)<90);if(q)label(q.x,q.y,50,'<b>Fキーで乗る</b>','gold')}}}
 function monBar(){if(G.raid&&G.raid.on&&G.raid.final&&G.monMax&&G.monV&&G.monV.visible)label(G.monV.position.x,G.monV.position.z,170,bar(100*Math.max(0,G.monHP)/G.monMax,'red'),'')}
-function frozenFx(){for(const v of G.surv)if(v.frozen&&v.m&&v.m.g.visible)label(v.x,v.y,82,`<b>凍えた町人</b><br><small>そばに立つと溶ける</small><br>${bar(100*Math.min(1,v.warm/35),'gold wide')}`,'ice')}
+function frozenFx(){for(const v of G.surv)if(v.frozen&&v.m&&v.m.g.visible)label(v.x,v.y,82,`<b>${DES()?'倒れた町人':'凍えた町人'}</b><br><small>${DES()?'そばに立つと助け起こせる':'そばに立つと溶ける'}</small><br>${bar(100*Math.min(1,v.warm/35),'gold wide')}`,'ice')}
 function hideIdle(){let shown=0;for(const v of G.surv){const idle=v.arrived&&!v.frozen;const vis=!idle||shown++<5;if(v.m&&v.m.g.visible!==vis)v.m.g.visible=vis}}
 function frame(dt){hideIdle();monBar();frozenFx();hideIdleFx(dt);
   const phase=(G.t%G.DAY)/G.DAY,nk=phase>.72?Math.min(1,(phase-.72)/.06):phase<.04?1-phase/.04:0;nightK=lerp(nightK,nk*(running?1:0)+(G.wave?.2:0),Math.min(1,dt*2));
@@ -2009,7 +2053,7 @@ function frame(dt){hideIdle();monBar();frozenFx();hideIdleFx(dt);
   joys.forEach((j,i)=>{const el=$('joy'+i);if(!j.on){el.hidden=true;return}el.hidden=false;el.style.left=j.ox+'px';el.style.top=j.oy+'px';const dx=j.x-j.ox,dy=j.y-j.oy,m=Math.hypot(dx,dy),k=m>50?50/m:1;el.firstChild.style.transform=`translate(${dx*k}px,${dy*k}px)`;el.firstChild.style.background=nPlayers===2?HERO[i].tag:'#fff'});
 }
 // ================================================================ HUD
-function hudInit(){const fn=$('hFurnN');if(fn)fn.textContent=DES()?'井戸':'かまど';const ft=$('hFuelTxt');if(ft)ft.textContent=DES()?'水位':'燃料';$('hBody').innerHTML=[G.players[G.me]||G.players[0]].map(p=>`<div class="bodyt" id="bt${p.id}"><i id="bti${p.id}"></i><span><span id="btt${p.id}">体温</span></span></div>`).join('');$('bottom').innerHTML=`<div class="pill" id="lvBox"><span class="lvb">Lv <span id="hPlv">1</span></span><span class="xpb"><i id="hXp"></i></span></div>`+G.players.map(p=>`<div class="pill pc" id="pc${p.id}">${G.players.length>1?`<span class="tg" style="background:${HERO[p.id].tag}">${HERO[p.id].tagText}</span>`:''}<svg class="icon" viewBox="0 0 26 22"><path d="M4 8h18l-2 12H6z" fill="#c98a4b"/><path d="M4 8h18" stroke="#8a5a30" stroke-width="2.4" stroke-linecap="round"/><path d="M8 8c0-5 10-5 10 0" fill="none" stroke="#8a5a30" stroke-width="2"/><path d="M7 12h12M7.5 16h11" stroke="#a8743f" stroke-width="1.4"/></svg><span class="num sm" id="pcv${p.id}"></span><span class="hpb"><i id="hp${p.id}"></i></span></div>`).join('')}
+function hudInit(){const fn=$('hFurnN');if(fn)fn.textContent=DES()?'井戸':'かまど';const ft=$('hFuelTxt');if(ft)ft.textContent=DES()?'水位':'燃料';const fz=$('hFrzN');if(fz)fz.textContent=DES()?'倒れた町人':'凍った町人';$('hBody').innerHTML=[G.players[G.me]||G.players[0]].map(p=>`<div class="bodyt" id="bt${p.id}"><i id="bti${p.id}"></i><span><span id="btt${p.id}">体温</span></span></div>`).join('');$('bottom').innerHTML=`<div class="pill" id="lvBox"><span class="lvb">Lv <span id="hPlv">1</span></span><span class="xpb"><i id="hXp"></i></span></div>`+G.players.map(p=>`<div class="pill pc" id="pc${p.id}">${G.players.length>1?`<span class="tg" style="background:${HERO[p.id].tag}">${HERO[p.id].tagText}</span>`:''}<svg class="icon" viewBox="0 0 26 22"><path d="M4 8h18l-2 12H6z" fill="#c98a4b"/><path d="M4 8h18" stroke="#8a5a30" stroke-width="2.4" stroke-linecap="round"/><path d="M8 8c0-5 10-5 10 0" fill="none" stroke="#8a5a30" stroke-width="2"/><path d="M7 12h12M7.5 16h11" stroke="#a8743f" stroke-width="1.4"/></svg><span class="num sm" id="pcv${p.id}"></span><span class="hpb"><i id="hp${p.id}"></i></span></div>`).join('')}
 function hud(){G.cashShow+=(G.cash-G.cashShow)*.2;if(Math.abs(G.cash-G.cashShow)<1)G.cashShow=G.cash;$('hCash').textContent=Math.round(G.cashShow).toLocaleString();
   $('hDay').textContent=G.day;$('hTemp').textContent=tempC()+'℃';$('hDayIco').textContent=isNight()?'☾':'☀';$('hDayBox').classList.toggle('night',isNight());
   $('hLv').textContent=G.level;$('hFuel').style.width=G.fuel+'%';$('hFuelBar').classList.toggle('low',G.fuel<20);$('hFuelTxt').textContent=DES()?(G.fuel<20?'水がない！':'水位'):G.wave?'大寒波！':G.fuel<20?'燃料がない！':'燃料';
