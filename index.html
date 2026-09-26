@@ -530,17 +530,23 @@ const SFX={
 $('mute').addEventListener('click',()=>{muted=!muted;$('mute').textContent=muted?'音 OFF':'音 ON'});
 
 // ================================================================ models: items
+let _meatM=null;const MEATM=()=>_meatM||(_meatM=new T.MeshStandardMaterial({vertexColors:true,roughness:.45}));
+function meatGeo(ck){const ex=(sh,d,bv)=>{const g=new T.ExtrudeGeometry(sh,{depth:d,bevelEnabled:true,bevelThickness:bv,bevelSize:bv,bevelSegments:2,curveSegments:10});g.rotateX(-Math.PI/2);g.translate(0,bv,0);return g};
+  const L=[],paint=(g,hex)=>{g=g.index?g.toNonIndexed():g;for(const k of Object.keys(g.attributes))if(k!=='position'&&k!=='normal')g.deleteAttribute(k);const c=lin(hex),n=g.attributes.position.count,a=new Float32Array(n*3);for(let i=0;i<n;i++){a[i*3]=c.r;a[i*3+1]=c.g;a[i*3+2]=c.b}g.setAttribute('color',new T.BufferAttribute(a,3));L.push(g)};
+  // body: top face and sides in different reds (group 0 = caps, 1 = sides)
+  const body=ex(meatShape(),2.9,.75).toNonIndexed();const top=ck?lin('#8c4521'):lin('#d8303e'),side=ck?lin('#5e2c14'):lin('#a51e2d');const n=body.attributes.position.count,ca=new Float32Array(n*3);
+  for(const gr of body.groups){const c=gr.materialIndex===0?top:side;for(let i=gr.start;i<gr.start+gr.count;i++){ca[i*3]=c.r;ca[i*3+1]=c.g;ca[i*3+2]=c.b}}
+  for(const k of Object.keys(body.attributes))if(k!=='position'&&k!=='normal')body.deleteAttribute(k);body.setAttribute('color',new T.BufferAttribute(ca,3));body.clearGroups();L.push(body);
+  const fat=ex(meatFatShape(),3.1,.72);fat.scale(1.03,1,1.03);fat.translate(0,-.1,0);paint(fat,ck?'#d9a052':'#f6e3d2');
+  const b1=new T.CylinderGeometry(1.25,1.4,7,8);b1.rotateZ(Math.PI/2);b1.translate(-12.5,2.2,1);paint(b1,'#f4ecdc');const b2=new T.SphereGeometry(2.1,10,6);b2.scale(1,.9,1.25);b2.translate(-16.2,2.2,1);paint(b2,'#f4ecdc');
+  if(ck){for(const x of[-6,-1.5,3]){const g=new T.BoxGeometry(1.3,.3,10);g.rotateY(.55);g.translate(x,4.45,0);paint(g,'#2e1406')}}
+  else{for(const [x,z,sx,sz,r] of[[-3.5,-.5,3.6,.8,.4],[2.5,-2.6,3,.6,-.3],[-.5,2.6,2.2,.55,.1]]){const g=new T.SphereGeometry(1,8,4);g.scale(sx,.12,sz);g.rotateY(r);g.translate(x,4.42,z);paint(g,'#f7d0cb')}}
+  return T.BufferGeometryUtils.mergeBufferGeometries(L)}
 function meatFatShape(){const s=new T.Shape();s.moveTo(1.2,7.25);s.bezierCurveTo(8.5,6.4,11.5,2.5,10.4,-1.6);s.bezierCurveTo(10,-3.4,9,-4.6,8,-5.2);s.bezierCurveTo(8.6,-2,8.2,2.4,5.4,4.6);s.bezierCurveTo(4,5.6,2.6,6,1.2,7.25);return s}
 function meatShape(){const s=new T.Shape();s.moveTo(-10.5,-1);s.bezierCurveTo(-11,5,-4,8,2.5,7.2);s.bezierCurveTo(8.5,6.4,11.5,2.5,10.4,-1.6);s.bezierCurveTo(9.4,-5.6,4.8,-7.4,-.4,-6.6);s.bezierCurveTo(-5.5,-5.8,-10,-5,-10.5,-1);return s}
 const ITEM_H={meat:4.6,steak:4.6,fish:5,grfish:5,fur:5.2,coat:6,log:8.5,coal:7,cash:3};
 function itemMesh(k){
-  if(k==='meat'||k==='steak'){const ck=k==='steak';
-    const ex=(sh,d,bv)=>{const g=new T.ExtrudeGeometry(sh,{depth:d,bevelEnabled:true,bevelThickness:bv,bevelSize:bv,bevelSegments:3,curveSegments:16});g.rotateX(-Math.PI/2);g.translate(0,bv,0);return g};
-    const body=M_(geo('meatBody',()=>ex(meatShape(),2.9,.75)),[std(ck?'#8c4521':'#d8303e',{r:ck?.55:.3}),std(ck?'#5e2c14':'#a51e2d',{r:.45})]);
-    const fat=M_(geo('meatFat',()=>{const g=ex(meatFatShape(),3.1,.72);g.scale(1.03,1,1.03);g.translate(0,-.1,0);return g}),std(ck?'#d9a052':'#f6e3d2',{r:.5}),false);
-    const bone=M_(geo('meatBone',()=>{const a=new T.CylinderGeometry(1.25,1.4,7,10);a.rotateZ(Math.PI/2);a.translate(-12.5,2.2,1);const b=new T.SphereGeometry(2.1,12,8);b.scale(1,.9,1.25);b.translate(-16.2,2.2,1);return T.BufferGeometryUtils.mergeBufferGeometries([a.toNonIndexed(),b.toNonIndexed()])}),std('#f4ecdc',{r:.6}),false);
-    const top=M_(geo(ck?'meatGrill':'meatMarb',()=>{const L=[];if(ck){for(const x of[-6,-1.5,3]){const g=new T.BoxGeometry(1.3,.3,10);g.rotateY(.55);g.translate(x,4.45,0);L.push(g.toNonIndexed())}}else{for(const [x,z,sx,sz,r] of[[-3.5,-.5,3.6,.8,.4],[2.5,-2.6,3,.6,-.3],[-.5,2.6,2.2,.55,.1],[-6.5,-2.8,1.8,.45,.8]]){const g=new T.SphereGeometry(1,10,6);g.scale(sx,.12,sz);g.rotateY(r);g.translate(x,4.42,z);L.push(g.toNonIndexed())}}return T.BufferGeometryUtils.mergeBufferGeometries(L)}),std(ck?'#2e1406':'#f7d0cb',{r:.5}),false);
-    return grp(body,fat,bone,top)}
+  if(k==='meat'||k==='steak')return M_(geo(k==='steak'?'steakAll':'meatAll',()=>meatGeo(k==='steak')),MEATM());
   if(k==='fish'||k==='grfish'){const c=k==='grfish'?'#d38a3a':'#6f93b0';const b=scl(sph(6,c,true,14,10),1.6,.7,1);b.position.y=2.6;return grp(b,at(rot(cone(4,6,c,4),0,0,Math.PI/2),-11,2.6,0),at(sph(1,'#16283a',false,6,4),7,3.6,3.5),k==='grfish'?at(rot(cyl(.6,.6,26,'#d9b27a',5),0,0,Math.PI/2),0,2.6,0):null)}
   if(k==='fur')return grp(at(rbox(20,5,16,2.4,std('#f3ece0',{r:1})),0,2.6,0),at(sph(3,std('#e6dccb',{r:1}),false,8,6),7,4,5));
   if(k==='coat')return grp(at(rbox(20,5,15,1.6,'#b03a48'),0,2.5,0),at(box(20.4,1.6,4,std('#f6efe4',{r:1}),false),0,4.6,-5.5),at(box(1,.6,10,'#ffd166',false),0,5.2,1));
@@ -550,7 +556,7 @@ function itemMesh(k){
 }
 // stack of mixed items (on backs, shelves, piles)
 class Stack{constructor(parent,layout){this.g=new T.Group();parent.add(this.g);this.items=[];this.layout=layout||'col';this.h=0}
-  set(kinds,wob){const n=Math.min(kinds.length,70);let y=0;
+  set(kinds,wob){const n=Math.min(kinds.length,36);let y=0;
     for(let i=0;i<n;i++){const k=kinds[i];let it=this.items[i];if(!it||it.k!==k){if(it)this.g.remove(it.m);const m=itemMesh(k);this.g.add(m);it=this.items[i]={k,m}}
       it.m.visible=true;
       if(this.layout==='col'){it.m.position.set(Math.sin(i*.6)*.6+(wob||0)*i*.22,k==='log'?y+4.4:y,0);it.m.rotation.set(0,k==='log'?Math.PI/2:Math.sin(i*1.7)*.08,0);y+=ITEM_H[k]}
@@ -902,6 +908,8 @@ const spaWarm=(x,y)=>!!(G.zones.D&&G.spa.fuel>0&&dist(x,y,SPA.x,SPA.y)<280);
 const RANKS=[{n:'集落',p:0},{n:'村',p:8},{n:'町',p:14},{n:'街',p:20},{n:'都',p:28}];
 const rankOf=n=>RANKS.reduce((a,r,i)=>n>=r.p?i:a,0);
 const popNow=()=>G.surv.filter(s=>!s.frozen).length+G.workers.length;
+const HCAP=[0,3,6,10],HNAME=['','テント','小屋','宿屋'],HCOST=[[100,380,1100],[140,450,1250],[180,520,1400],[220,600,1600],[260,700,1800]];
+const houseLv=i=>G.lv['house_'+i]||0,nextHouse=()=>{for(let l=0;l<3;l++)for(let i=0;i<HOUSES.length;i++)if(houseLv(i)===l)return i;return -1},houseCap=()=>Math.max(6,G.baseCap||6)+HOUSES.reduce((a,_,i)=>a+HCAP[houseLv(i)],0),houseFull=()=>popNow()>=houseCap();
 const tempC=()=>Math.round((G.mod?G.mod.temp:0)-(G.wx&&G.wx.type==='snap'?15:G.wx&&G.wx.type==='clear'?-8:0)-12-G.day*2.5-(isNight()?10:0)-(G.wave?15:0));
 const price=id=>Math.round((STN[id].base+STN[id].step*G.lv['price_'+id]+G.pm.price*(id==='steak'?1:id==='fish'?2.5:6))*(G.mod?G.mod.price:1));
 const logFuel=()=>9+G.level*1.2+G.pm.wood+(G.mod?G.mod.wood:0);
@@ -989,6 +997,7 @@ function newGame(np,opts){opts=opts||{};let RS=(opts.seed||((Math.random()*1e9)|
   buildPads();
   G.sledV=[];
   if(!opts.guest&&mlv('sled'))G.sleds.push({id:++G.nid,x:1500,y:1300,rider:null});
+  G.baseCap=Math.max(6,5+mlv('folk')+1);
   if(!opts.guest){for(let i=0;i<5+mlv('folk');i++)spawnSurvivor(true);for(let i=0;i<6;i++)spawnBear('A',true)}
   return G;
 }
@@ -1005,7 +1014,10 @@ function buildPads(){
   P.push(padDef({id:'price_steak',x:990,y:1330,name:'肉の値上げ',k:'値',pay:'cash',vis:()=>G.lv.price_steak<3,cost:()=>[60,150,300][G.lv.price_steak],lvText:()=>`$${price('steak')}`,buy:()=>{G.lv.price_steak++;toast(`肉 1個 $${price('steak')}`,'cash')}}));
   P.push(padDef({id:'gun',x:1410,y:1110,name:'銃',k:'銃',pay:'cash',vis:()=>G.lv.gun<6,cost:()=>[40,100,200,380,600,900][G.lv.gun],lvText:()=>`Lv${G.lv.gun+1}`,buy:()=>{G.lv.gun++;toast(`銃 Lv${G.lv.gun+1}！ 威力と連射アップ`,'cash')}}));
   P.push(padDef({id:'bag',x:1410,y:1220,name:'背負いかご',k:'籠',pay:'cash',vis:()=>G.lv.bag<5,cost:()=>[30,80,160,300,500][G.lv.bag],lvText:()=>`${cap()}個`,buy:()=>{G.lv.bag++;toast(`${cap()}個まで運べる`,'cash')}}));
-  for(const tw of TOWERS)P.push(padDef({id:'tw_'+tw.id,x:tw.x,y:tw.y,name:`見張り台(${tw.n})`,k:'塔',pay:'cash',vis:()=>G.lv['tw_'+tw.id]<3,cost:()=>[80,240,600][G.lv['tw_'+tw.id]],lvText:()=>`Lv${G.lv['tw_'+tw.id]+1}`,buy:()=>{G.lv['tw_'+tw.id]++;toast(`見張り台(${tw.n}) Lv${G.lv['tw_'+tw.id]}！ 襲ってくるシロクマを自動で撃つ`,'cash')}}));
+  P.push(padDef({id:'house',x:850,y:1420,name:'家を建てる',k:'家',pay:'cash',vis:()=>nextHouse()>=0,
+    req:()=>{const i=nextHouse();return i>=0&&houseLv(i)===2&&G.rank<2?'「町」になると宿屋を建てられる':null},cost:()=>{const i=nextHouse();return HCOST[i][houseLv(i)]},lvText:()=>{const i=nextHouse(),l=houseLv(i);return `${HNAME[l+1]}（住める人 +${HCAP[l+1]-HCAP[l]}）`},
+    buy:()=>{const i=nextHouse();G.lv['house_'+i]=houseLv(i)+1;const h=G.houses[i];float(h.x,h.y,90,HNAME[houseLv(i)]+'が建った！','gold',false,true);toast(`${HNAME[houseLv(i)]}が建った！ 住める人数 ${houseCap()}人`,'cash');SFX.build()}}));
+for(const tw of TOWERS)P.push(padDef({id:'tw_'+tw.id,x:tw.x,y:tw.y,name:`見張り台(${tw.n})`,k:'塔',pay:'cash',vis:()=>G.lv['tw_'+tw.id]<3,cost:()=>[80,240,600][G.lv['tw_'+tw.id]],lvText:()=>`Lv${G.lv['tw_'+tw.id]+1}`,buy:()=>{G.lv['tw_'+tw.id]++;toast(`見張り台(${tw.n}) Lv${G.lv['tw_'+tw.id]}！ 襲ってくるシロクマを自動で撃つ`,'cash')}}));
   P.push(padDef({id:'guard',x:JOBPAD.guard.x,y:JOBPAD.guard.y,name:'見張り番',k:'番',pay:'cash',pop:true,vis:()=>{const b=TOWERS.filter(t=>G.lv['tw_'+t.id]>0).length;return b>0&&wc('guard')<b*2},cost:()=>[60,90,130,180,240,300][wc('guard')]||300,lvText:()=>`${wc('guard')}人`,
     buy:(pad)=>{const built=TOWERS.filter(t=>G.lv['tw_'+t.id]>0);const tw=built.reduce((a,t)=>guardsAt(t.id)<guardsAt(a.id)?t:a);if(!hire('guard',pad))return false;const w=G.workers[G.workers.length-1];w.tw=tw.id;w.slot=guardsAt(tw.id)-1;toast(`見張り台(${tw.n})に見張り番！ 射撃が強くなる`,'cash')}}));
   P.push(padDef({id:'split',x:JOBPAD.split.x,y:JOBPAD.split.y,name:'薪割り',k:'割',pay:'cash',pop:true,vis:()=>wc('splitter')<3,cost:()=>[50,100,160][wc('splitter')],lvText:()=>`${wc('splitter')}人`,
@@ -1275,7 +1287,7 @@ function netHost(dt){const gp=guestPeerNow();
   const p=G.players[1];if(p&&gp){const pr=gp.presence;if(typeof pr.x==='number'&&typeof pr.y==='number'){p.nx=clamp(pr.x,30,WORLD-30);p.ny=clamp(pr.y,30,WORLD-30);p.dirN=typeof pr.d==='number'?pr.d:null}}
   NET.sendT+=dt;if(NET.guestPeer&&NET.sendT>=.12){NET.sendT=0;sendSnap()}}
 function dropRemote(){const p=G.players[1];if(!p)return;for(const k of p.bag)dropItem(p.x,p.y,k,20);world.remove(p.m.g);G.players.length=1;for(const h of G.holes)if(h.user===p)h.user=null;hudInit()}
-function safeEmit(tp,d){if(!NET.room)return;let s=JSON.stringify(d);let guard=0;while(s.length>3800&&guard++<8){let big=null,bl=0;for(const k in d)if(Array.isArray(d[k])){const l=JSON.stringify(d[k]).length;if(l>bl){bl=l;big=k}}if(!big)break;d[big]=d[big].slice(0,Math.floor(d[big].length*.7));s=JSON.stringify(d)}
+function safeEmit(tp,d){if(!NET.room)return;let s=JSON.stringify(d);let guard=0;const LIM=PJ.on?200000:3800;while(s.length>LIM&&guard++<8){let big=null,bl=0;for(const k in d)if(Array.isArray(d[k])){const l=JSON.stringify(d[k]).length;if(l>bl){bl=l;big=k}}if(!big)break;d[big]=d[big].slice(0,Math.floor(d[big].length*.7));s=JSON.stringify(d)}
   NET.room.emit(tp,d).catch(e=>{if(e&&e.code==='not_permitted'&&!NET.warned){NET.warned=true;toast('この権限では部屋を作れません（編集できる人が部屋を作ってください）','cold',true)}})}
 function sendSnap(){
   safeEmit('s.core',{t:r2(G.t),c:Math.floor(G.cash),e:Math.floor(G.earned),f:r1(G.fuel*10)/10,l:G.level,w:G.woodpile,r:r2(G.rep),fz:G.frozen,pl:G.plv,x:r1(G.xp),mi:G.mission,fv:r1(G.fever),ft:r2(G.feverT),cb:G.combo,ct:r2(G.comboT),
@@ -1285,7 +1297,7 @@ function sendSnap(){
     ps:G.players.map(p=>[r1(p.x),r1(p.y),r2(p.dir),enc(p.bag),r1(p.warm),r1(p.hp),p.down>0?r2(p.down):0,p.inHeat?1:0,(p.shooting?1:0)|(p.chopping?2:0)|(p.fishing?4:0)|(p.flash>0?8:0)|(p.buddy?16:0),r2(p.actT),p.fishing?G.holes.indexOf(p.fishing):-1]),
     fl:NET.outF.splice(0),bn:NET.outB.splice(0),tq:NET.outT.splice(0),end:NET.endInfo});
   safeEmit('s.a',{b:G.bears.map(b=>[b.id,r1(b.x),r1(b.y),r2(b.rot),Math.max(0,Math.ceil(b.hp)),b.max,BK.indexOf(b.kind),b.state==='chase'?1:0,b.dead?r2(b.deadT):-1,b.hit>0?1:0,b.roar>0?1:0,b.moving?1:0,b.raid?1:b.flee?2:0]),
-    k:G.pickups.map(m=>[m.id,r1(m.x),r1(m.y),r1(m.h),KC[m.k]]),h:G.chests.map(c=>[c.id,r1(c.x),r1(c.y),r1(c.h),c.open<0?-1:r2(c.open),c.rar?RAR.indexOf(c.rar):-1]),
+    k:G.pickups.map(m=>[m.id,r1(m.x),r1(m.y),r1(m.h),KC[m.k],m.n||1]),h:G.chests.map(c=>[c.id,r1(c.x),r1(c.y),r1(c.h),c.open<0?-1:r2(c.open),c.rar?RAR.indexOf(c.rar):-1]),
     ho:G.holes.map(h=>r2(h.t)+(h.jump>0?.001:0)),hl:G.hauls.map(h=>[h.id,r1(h.x),r1(h.y),h.big,h.carried?1:0])});
   safeEmit('s.b',{c:G.customers.map(c=>[c.id,r1(c.x),r1(c.y),r2(c.dir),STIDS.indexOf(c.st.id),c.state==='leave'?1:0,c.hold.visible?1:0,r2(Math.max(0,c.happy||0)),r2(Math.max(0,c.angry||0)),c.state==='queue'?r2(c.wait/c.patience):0,c.pal,r2(c.fade==null?1:c.fade)]),
     s:G.surv.map(v=>[v.id,r1(v.x),r1(v.y),r2(v.dir),r1(v.warm),v.frozen?1:0,v.arrived?1:0,r2(Math.max(0,v.happy||0)),r2(v.freezeAnim),v.pal]),
@@ -1313,7 +1325,7 @@ function applyInbox(){const I=NET.inbox;
   const a=I['s.a'];if(a){I['s.a']=null;
     recon(G.bears,a.b,r=>{const kind=BK[r[6]]||'normal';const b={id:r[0],x:r[1],y:r[2],kind,rot:r[3],step:0,hit:0,roar:0,dead:false,deadT:0};b.m=makeBear(kind);b.m.g.position.set(b.x,0,b.y);world.add(b.m.g);return b},
       (b,r)=>{b.nx=r[1];b.ny=r[2];b.dirT=r[3];b.hp=r[4];b.max=r[5];b.state=r[7]?'chase':'wander';if(r[8]>=0&&!b.dead){b.dead=true;SFX.kill()}if(b.dead)b.deadT=Math.max(b.deadT,r[8]);if(r[9])b.hit=.14;if(r[10])b.roar=.5;b.moving=!!r[11];const rf=r[12]||0;if(rf!==b._rf){b._rf=rf;b.raid=rf===1;b.m.ring.material.color.copy(lin(rf?'#ff8a1a':'#ff3b4a'))}},b=>world.remove(b.m.g));
-    recon(G.pickups,a.k,r=>{const m={id:r[0],x:r[1],y:r[2],h:r[3],k:KR[r[4]]||'meat',spin:rnd(0,TAU)};m.mesh=itemMesh(m.k);m.mesh.scale.setScalar(1.1);world.add(m.mesh);return m},(m,r)=>{m.nx=r[1];m.ny=r[2];m.h=r[3]},m=>{world.remove(m.mesh);SFX.coin(3)});
+    recon(G.pickups,a.k,r=>{const m={id:r[0],x:r[1],y:r[2],h:r[3],k:KR[r[4]]||'meat',spin:rnd(0,TAU)};m.mesh=itemMesh(m.k);world.add(m.mesh);return m},(m,r)=>{m.nx=r[1];m.ny=r[2];m.h=r[3];if(m.n!==(r[5]||1)){m.n=r[5]||1;m.mesh.scale.setScalar(1.1*(1+Math.min(m.n-1,6)*.14))}},m=>{world.remove(m.mesh);SFX.coin(3)});
     recon(G.chests,a.h,r=>{const c={id:r[0],x:r[1],y:r[2],h:r[3],open:-1,t:0};c.m=makeChest();world.add(c.m);SFX.pop();return c},(c,r)=>{c.x=r[1];c.y=r[2];c.h=r[3];if(r[4]>=0&&c.open<0)SFX.chest();c.open=r[4];if(r[5]>=0)c.rar=RAR[r[5]]},c=>world.remove(c.m));
     recon(G.hauls,a.hl,r=>{const h={id:r[0],x:r[1],y:r[2],big:r[3],carried:false};h.m=makeHaul(h.big);world.add(h.m);return h},(h,r)=>{h.nx=r[1];h.ny=r[2];h.carried=!!r[4]},h=>world.remove(h.m));
     (a.ho||[]).forEach((v,i)=>{const h=G.holes[i];if(!h)return;if(v%1>0&&!(h.jump>0)){h.jump=.6;SFX.splash()}h.t=Math.floor(v*100)/100})}
@@ -1411,7 +1423,7 @@ function playerActions(p,dt,R){updateSled(p);updateKettle(p,dt);p.riding=G.sleds
   p.fishing=null;if(!tgt&&!p.chopping&&!p.riding&&G.zones.B&&p.bag.length<cap()){for(const h of G.holes){if(dist(p.x,p.y,h.x,h.y)<24&&(!h.user||h.user===p)){p.fishing=h;h.user=p;break}}}
   for(const h of G.holes)if(h.user===p&&p.fishing!==h)h.user=null;
   // pickups (magnet)
-  for(const m of G.pickups){if(m.h>3||p.bag.length>=cap())continue;const d=dist(p.x,p.y,m.x,m.y);if(d<90+G.pm.magnet){m.x+=(p.x-m.x)*Math.min(1,dt*9);m.y+=(p.y-m.y)*Math.min(1,dt*9)}if(d<22){m.taken=true;give(p,m.k,1);SFX.coin(p.bag.length%12);if(m.k==='fur')G.stats.fur++}}
+  for(const m of G.pickups){if(m.h>3||p.bag.length>=cap())continue;const d=dist(p.x,p.y,m.x,m.y);if(d<90+G.pm.magnet){m.x+=(p.x-m.x)*Math.min(1,dt*9);m.y+=(p.y-m.y)*Math.min(1,dt*9)}if(d<22){const got=give(p,m.k,m.n||1);m.n=(m.n||1)-got;if(m.n<=0)m.taken=true;SFX.coin(p.bag.length%12);if(m.k==='fur')G.stats.fur+=got}}
   // deliveries
   p.depT+=dt;
   if(p.depT>.06){let did=false;
@@ -1444,7 +1456,7 @@ function updateWoodpile(dt){G.woodT=(G.woodT||0)+dt;if(G.woodpile<=0||G.woodT<.2
   const pad=G.pads.find(q=>q.id==='furnace');if(!pad||!pad.shown)return;const c=pad.cost();if(c==null)return;
   if(pad.paid>=c){if(mixDone(pad))finishPad(pad);return}G.woodpile--;pad.paid++;flyItem('log',WOOD.x,WOOD.y,G.woodStack.h,pad.x,pad.y,4,null,2.6);if(pad.paid>=c&&mixDone(pad))finishPad(pad)}
 function collectPile(p,obj,key,pos,dt){p.cashT+=dt;let n=0;while(p.cashT>.02&&obj[key]>0){p.cashT-=.02;const t=Math.min(obj[key],Math.max(5,Math.ceil(obj[key]*.05)));obj[key]-=t;G.cash+=t;n++}if(n){G._cf=(G._cf||0)+1;if(G._cf%3===0)flyCoins(p.x,40,p.y,2,'cashIco','cash');if(Math.random()<.4)flyItem('cash',pos.x,pos.y,30,p.x,p.y,30,null,4)}}
-function dropItem(x,y,k,h){const a=rnd(0,TAU),s=rnd(40,120),m={id:++G.nid,x,y,k,h:h??14,vh:rnd(120,220),vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:45,spin:rnd(0,TAU)};m.mesh=itemMesh(k);m.mesh.scale.setScalar(1.1);world.add(m.mesh);G.pickups.push(m)}
+function dropItem(x,y,k,h,n){const a=rnd(0,TAU),s=rnd(40,120),m={id:++G.nid,x,y,k,n:n||1,h:h??14,vh:rnd(120,220),vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:45,spin:rnd(0,TAU)};m.mesh=itemMesh(k);m.mesh.scale.setScalar(1.1*(1+Math.min(m.n-1,6)*.14));world.add(m.mesh);G.pickups.push(m)}
 function updatePickups(dt){for(const m of G.pickups){m.life-=dt;if(m.h>0||m.vh>0){m.vh-=600*dt;m.h=Math.max(0,m.h+m.vh*dt);m.x+=m.vx*dt;m.y+=m.vy*dt;if(m.h===0){m.vh=m.vh<-80?-m.vh*.35:0;m.vx*=.5;m.vy*=.5}}}
   for(const m of G.pickups)if(m.taken||m.life<=0)world.remove(m.mesh);G.pickups=G.pickups.filter(m=>!m.taken&&m.life>0)}
 function hitTree(t,fx,fy,big){t.hp--;t.shake=.25;burst(t.x,t.y,18,big?7:3,{c:['#c9955b','#a8743f','#e7c08e'],s0:40,s1:140,u0:80,u1:200,l0:.5,l1:.8,r0:4,r1:6});
@@ -1463,7 +1475,7 @@ function killBear(b,byPlayer){b.dead=true;b.deadT=0;G.stats.bears++;SFX.kill();
   if(b.raid){G.raid.kills++;G.stats.raidKills++}
   const haul=G.players.length>1&&NET.mode==='host'&&(b.kind==='boss'||(b.kind==='big'&&Math.random()<.45));if(haul)spawnHaul(b.x,b.y,b.kind==='boss'?2:1);
   const meat=((b.kind==='boss'?12:b.kind==='big'?6:3+(Math.random()<.5?1:0))+G.mod.meat)>>(haul?1:0),fur=b.zone==='C'?(b.kind==='boss'?8:b.kind==='big'?2:1):0;
-  for(let i=0;i<meat;i++)dropItem(b.x,b.y,'meat');for(let i=0;i<fur;i++)dropItem(b.x,b.y,'fur');
+  for(let r=meat;r>0;r-=4)dropItem(b.x,b.y,'meat',undefined,Math.min(4,r));for(let r=fur;r>0;r-=4)dropItem(b.x,b.y,'fur',undefined,Math.min(4,r));
   if(b.kind==='boss'){G.stats.boss++;for(let i=0;i<2;i++)spawnChest(b.x+rnd(-40,40),b.y+rnd(-40,40));banner('BOSS撃破！','ボスシロクマ','大量ドロップ！','r-SSR');SFX.ssr();G.shake=16}
   else if(b.kind==='big'||Math.random()<.14+G.luck)spawnChest(b.x+rnd(-20,20),b.y+rnd(-20,20));
   if(byPlayer){addCombo(9);gainXP(b.kind==='boss'?80:b.kind==='big'?14:6,b.x,b.y)}
@@ -1560,7 +1572,7 @@ function updateStations(dt){
   for(const c of G.customers){if(c.state!=='leave')continue;if(c.happy>0)c.happy-=dt;if(c.angry>0)c.angry-=dt;const lx=c.st.def.lane+36;moveTo(c,lx,Math.abs(c.x-lx)>4?c.y:1830,82,dt);if(c.y>1820){c.gone=true}}
   for(const c of G.customers)if(c.gone)world.remove(c.m.g);G.customers=G.customers.filter(c=>!c.gone)}
 function updateSurvivors(dt,R){
-  G.survT-=dt;if(G.survT<=0){G.survT=Math.max(12,20-G.day*.6)*G.mod.surv;spawnSurvivor(false)}
+  G.survT-=dt;if(G.survT<=0){G.survT=Math.max(22,34-G.day*.6)*G.mod.surv;if(popNow()+G.surv.filter(s=>!s.arrived).length<houseCap())spawnSurvivor(false)}
   let frozen=0;
   for(const s of G.surv){const inR=dist(s.x,s.y,CX,CY)<R||spaWarm(s.x,s.y);
     if(!s.frozen&&!s.arrived){const n=nav(s,s.tx,s.ty);const dd=moveTo(s,n.x,n.y,85,dt);if(dist(s.x,s.y,s.tx,s.ty)<5){s.arrived=true;s.happy=1.4;float(s.x,s.y,60,'到着！','');gainXP(5);addCombo(4);SFX.pop()}}else s.moving=false;
@@ -1584,7 +1596,8 @@ function rescueSpot(){const rects=[HUNT_A].concat(ZONES.filter(z=>G.zones[z.id])
   if(d<FR+120||d>1000)continue;if(ZONES.some(z=>!G.zones[z.id]&&x>z.rect[0]-30&&x<z.rect[2]+30&&y>z.rect[1]-30&&y<z.rect[3]+30))continue;return{x,y}}return{x:CX,y:CY-FR-260}}
 function addWorker(role,x,y){const w={id:++G.nid,role,x,y,dir:0,step:0,bag:[],t:0,target:null,flash:0,moving:false,st:null};workerMesh(w);G.workers.push(w);float(x,y,90,`${SPECN[role]}が仲間に！`,'gold',true);return w}
 function updateRescue(dt){G.rescueCd=(G.rescueCd??40)-dt;const R=G.rescue;
-  if(!R){if(G.rescueCd<=0){const sp=rescueSpot();const big_=popNow()>=RANKS[4].p;
+  if(!R){if(G.rescueCd<=0&&popNow()+2>houseCap()){G.rescueCd=6;if(!G._fullT||G.t-G._fullT>45){G._fullT=G.t;toast('家が満員で救助依頼を受けられない！ 家を建てよう','cold',true)}}
+    if(G.rescueCd<=0){const sp=rescueSpot();const big_=popNow()>=RANKS[4].p;
       const kinds=['walk','hot','hot'];if(G.sleds.length)kinds.push('sled','sled');if(G.day>=2)kinds.push('bears','bears');const kind=kinds[Math.floor(Math.random()*kinds.length)];
       let n=big_?2:Math.min(6,2+(Math.random()<.5?1:0)+Math.floor(G.day/4)+G.mod.sos);if(kind==='sled')n=Math.min(n,4);
       const d0=dist(sp.x,sp.y,CX,CY);const tt=Math.round((kind==='sled'?50+n*18:kind==='hot'?55:kind==='bears'?60:40)+d0*.03);
@@ -1775,7 +1788,7 @@ function syncTown(dt){syncRescue(dt);syncSleds(dt);const v=G.v;v.f._pos={x:CX,y:
   const pop=G.surv.filter(s=>!s.frozen).length+G.workers.length;
   const rk=G.rank||0;G.rankO._pos={x:CX,y:CY};tierPop(G.rankO,rk,G.rankV,dt);
   if(rk>=4&&isNight()&&Math.random()<dt*1.2){const x=rnd(900,1500),y=rnd(900,1500),c=['#ffd23f','#ff8ad8','#7fe3ff','#8ff08f'][Math.floor(rnd(0,4))];burst(x,y,rnd(260,380),40,{c:[c,'#ffffff'],s0:80,s1:200,u0:-40,u1:60,g:60,l0:.8,l1:1.4,add:true,r0:5,r1:9});if(Math.random()<.5)tone(rnd(300,500),.15,'triangle',.02,-.5)}
-  for(const h of G.houses){const lv=rk>=3&&pop>=h.need+7?3:pop>=h.need+7?2:pop>=h.need?1:0;h._pos={x:h.x,y:h.y};if(h._lv!==lv&&lv>(h._lv||0)&&h._lv!=null)float(h.x,h.y,90,lv===3?'豪邸になった！':lv===2?'家が建った！':'テントが増えた！','gold',false,true);tierPop(h,lv,[h.tent,h.cab,h.man],dt);if(lv===3){h.tent.visible=h.cab.visible=false}if(lv===2){h.tent.visible=false;if(Math.random()<dt*1.5){const a=h.g.rotation.y;puff(h.x+Math.cos(a)*17-Math.sin(a)*8*0,h.y-Math.sin(a)*17,72,{c:'#c9d3dd',r:6,life:1.8,a:.5,vy:26,vx:G.wind*14,grow:2.2})}}}}
+  for(const [hi,h] of G.houses.entries()){const lv=houseLv(hi);h._pos={x:h.x,y:h.y};tierPop(h,lv,[h.tent,h.cab,h.man],dt);if(lv===3){h.tent.visible=h.cab.visible=false}if(lv===2){h.tent.visible=false;if(Math.random()<dt*1.5){const a=h.g.rotation.y;puff(h.x+Math.cos(a)*17-Math.sin(a)*8*0,h.y-Math.sin(a)*17,72,{c:'#c9d3dd',r:6,life:1.8,a:.5,vy:26,vx:G.wind*14,grow:2.2})}}}}
 // ================================================================ guide arrow
 const guide=(()=>{const g=new T.Group();const gm=glow('#ffd23f',1.2);const arrow=grp(at(rot(cone(10,18,gm,4,false),Math.PI,0,0),0,0,0),at(box(8,14,8,gm,false),0,15,0));
   const ring=rot(M_(new T.RingGeometry(22,28,32),basic('#ffd23f',{transparent:true,opacity:.85,side:T.DoubleSide,depthWrite:false}),false),-Math.PI/2,0,0);g.add(arrow,ring);scene.add(g);
@@ -1790,7 +1803,8 @@ function updateCam(dt,snap){const ps=NET.mode==='solo'?G.players:[G.players[G.me
   let z=1;if(ps.length>1)z=clamp(Math.min(1,700/(Math.hypot(x1-x0,y1-y0)+300)),.5,1);
   if(G.camPan&&G.camPan.t<2.2){G.camPan.t+=dt;const k=G.camPan.t<.5?G.camPan.t/.5:G.camPan.t>1.7?1-(G.camPan.t-1.7)/.5:1;cx=lerp(cx,G.camPan.x,k*.85);cy=lerp(cy,G.camPan.y,k*.85);z=lerp(z,.62,k)}
   cam.z=snap?z:lerp(cam.z,z,Math.min(1,dt*3));if(snap){cam.x=cx;cam.y=cy}else{cam.x=lerp(cam.x,cx,Math.min(1,dt*6));cam.y=lerp(cam.y,cy,Math.min(1,dt*6))}}
-function frame(dt){
+function hideIdle(){let shown=0;for(const v of G.surv){const idle=v.arrived&&!v.frozen;const vis=!idle||shown++<5;if(v.m&&v.m.g.visible!==vis)v.m.g.visible=vis}}
+function frame(dt){hideIdle();
   const phase=(G.t%G.DAY)/G.DAY,nk=phase>.72?Math.min(1,(phase-.72)/.06):phase<.04?1-phase/.04:0;nightK=lerp(nightK,nk*(running?1:0)+(G.wave?.2:0),Math.min(1,dt*2));
   const K=Math.min(1,nightK);scene.fog.color.copy(FOG_DAY).lerp(FOG_NIGHT,K);sky.material.uniforms.top.value.copy(lin('#6fa9d8')).lerp(lin('#0b1530'),K);sky.material.uniforms.mid.value.copy(lin('#bcd0e2')).lerp(lin('#1b2a44'),K);sky.material.uniforms.bot.value.copy(lin('#c9d7e4')).lerp(lin('#24344f'),K);
   {const wt=G.wx&&G.wx.type,k=wt?Math.min(1,G.wx.t/2,(G.wx.max-G.wx.t)/2+.001):0;$('wxFx').style.opacity=running&&wt==='blizzard'?.85*k:0;
@@ -1818,7 +1832,7 @@ function hudInit(){$('hBody').innerHTML=[G.players[G.me]||G.players[0]].map(p=>`
 function hud(){G.cashShow+=(G.cash-G.cashShow)*.2;if(Math.abs(G.cash-G.cashShow)<1)G.cashShow=G.cash;$('hCash').textContent=Math.round(G.cashShow).toLocaleString();
   $('hDay').textContent=G.day;$('hTemp').textContent=tempC()+'℃';$('hDayIco').textContent=isNight()?'☾':'☀';$('hDayBox').classList.toggle('night',isNight());
   $('hLv').textContent=G.level;$('hFuel').style.width=G.fuel+'%';$('hFuelBar').classList.toggle('low',G.fuel<20);$('hFuelTxt').textContent=G.wave?'大寒波！':G.fuel<20?'燃料がない！':'燃料';
-  const idle=idleSurvivors().length;$('hIdle').textContent=idle;$('hPop').textContent=G.surv.length+G.workers.length;$('hFrz').textContent=G.frozen;$('hFrzBox').classList.toggle('warn',G.frozen>=3);
+  const idle=idleSurvivors().length;$('hIdle').textContent=popNow();$('hPop').textContent=houseCap();$('hPopBox').classList.toggle('warn',popNow()>=houseCap());$('hFrz').textContent=G.frozen;$('hFrzBox').classList.toggle('warn',G.frozen>=3);
   const r=Math.round(G.rep);$('hRep').textContent='★'.repeat(r)+'☆'.repeat(5-r);$('hRepBox').classList.toggle('warn',G.rep<=1.5);
   {const R=G.rescue,on=!!R&&R.state==='wait';$('hSos').hidden=!on;if(on)$('hSosN').textContent=Math.ceil(R.t)}
   if(G.mods&&$('hModTxt')._m!==G.mods[0].id+G.mods[1].id){$('hModTxt')._m=G.mods[0].id+G.mods[1].id;$('hModTxt').innerHTML=`今回の町<br>◎${G.mods[0].t}<br>✕${G.mods[1].t}`}
