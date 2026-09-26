@@ -21,6 +21,7 @@
   .lb.big{font-size:24px;-webkit-text-stroke-width:5px}.lb.sm{font-size:12px;-webkit-text-stroke-width:3px}
   .lb.note{font-family:var(--body);font-weight:900;font-size:11.5px;-webkit-text-stroke:0;color:var(--brown);background:rgba(255,250,240,.92);border-radius:999px;padding:4px 10px;box-shadow:0 2px 0 rgba(91,70,54,.18);text-shadow:none}
   .lb.warnbox{font-family:var(--body);font-weight:900;font-size:12px;-webkit-text-stroke:0;color:#fff;background:var(--sky);border-radius:999px;padding:5px 11px;box-shadow:0 2px 0 var(--sky-d);text-shadow:none}
+  #vig{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:0;transition:opacity .5s}#vig.raid{opacity:1;box-shadow:inset 0 0 120px 20px rgba(220,40,40,.45);animation:vigp 1.1s ease-in-out infinite alternate}#vig.frost{opacity:1;box-shadow:inset 0 0 160px 40px rgba(170,220,255,.75)}#vig.heat{opacity:1;box-shadow:inset 0 0 160px 40px rgba(255,170,80,.6)}#vig.dim{opacity:1;box-shadow:inset 0 0 200px 60px rgba(20,40,90,.55)}@keyframes vigp{from{box-shadow:inset 0 0 90px 10px rgba(220,40,40,.35)}to{box-shadow:inset 0 0 150px 30px rgba(220,40,40,.6)}}
   .lb .wg{display:flex;align-items:center;gap:4px;justify-content:center;margin:2px 0;font-size:11px;font-weight:900;color:#fff;-webkit-text-stroke:0;background:rgba(40,52,70,.72);border-radius:99px;padding:2px 7px 2px 8px}.lb .wg em{font-style:normal;font-size:10px;min-width:30px}.lb .wg strong{min-width:20px;text-align:right}.lb .wg .bar.wide{width:70px;height:9px}.lb .wg.cold{background:rgba(214,64,64,.85);animation:wgb .5s infinite alternate}@keyframes wgb{to{transform:scale(1.08)}}.lb .wg.warmup{background:rgba(150,90,20,.7)}.lb .wg.hpg{background:rgba(120,40,40,.7)}
   .lb .bar{display:block;width:38px;height:8px;border-radius:99px;background:rgba(91,70,54,.55);box-shadow:0 0 0 2px #fffaf0;overflow:hidden;-webkit-text-stroke:0;margin:0 auto}
   .lb .bar b{display:block;height:100%;border-radius:99px;background:var(--coral)}
@@ -203,7 +204,7 @@
   @media (prefers-reduced-motion: reduce){.card,.perk,.mission.done,.badge.new,.lb .alert,.banner{animation:none}}
 </style>
 
-<canvas id="c"></canvas>
+<canvas id="c"></canvas><div id="vig"></div>
 <div id="labels"></div>
 <div id="feverFx"></div><div id="coldFx"></div><div id="wxFx"></div>
 <div class="loading" id="loading">雪を積もらせています…</div>
@@ -1191,10 +1192,11 @@ function workerMesh(w){const role=w.role,stId=w.st&&w.st.id;
 const MISSIONS=[
   {t:'柵の外でシロクマをたおせ',f:()=>[G.stats.bears,1],cash:20,tg:p=>nearestBear(p)},
   {t:'肉をグリルに入れろ',f:()=>[G.stats.grilled,8],cash:25,tg:p=>has(p,'meat')?stT('steak'):nearestMeat(p)},
-  {t:'レジに立って肉を売れ',f:()=>[G.stats.sold,5],cash:30,tg:p=>flow(p)},
+  {t:'レジに立って肉を売れ',f:()=>[G.stats.sold,5],cash:30,tg:p=>{const st=G.stations.steak;if(st.shelf>0)return{x:st.def.stand.x,y:st.def.stand.y,h:70};return has(p,'meat')?stT('steak'):nearestMeat(p)}},
   {t:'木を切って薪を集めろ',f:()=>[G.stats.chopped,10],cash:30,tg:p=>nearestTree(p)},
   {t:'かまどに薪をくべろ（燃料が熱の範囲）',f:()=>[G.stats.fed,15],cash:30,tg:p=>has(p,'log')?{x:CX,y:CY,h:110}:nearestTree(p)},
   {t:'猟師を雇え（生存者を1人使う）',f:()=>[wc('hunter'),1],cash:40,tg:p=>padT('hunter',p)},
+  {t:'家を建てろ（住める人数が増える）',f:()=>[houseLv(0)>0?1:0,1],cash:50,tg:p=>padT('house',p)},
   {t:'SOSの遭難者を助けて町人を増やせ',f:()=>[G.stats.rescued||0,1],cash:60,tg:p=>rescueT()||flow(p)},
   {t:'見張り台を建てろ（夜、シロクマが村を襲う）',f:()=>[TOWERS.filter(t=>G.lv['tw_'+t.id]>0).length,1],cash:50,tg:p=>padT('tw_N',p)},
   {t:'薪でかまどをLv2にしろ',f:()=>[G.level,2],cash:60,tg:p=>logPad('furnace',p)},
@@ -1759,7 +1761,7 @@ function updateStations(dt){
       burst(d.conv.x,d.conv.y,34,5,{c:['#ffd166','#ff8a3d'],s0:20,s1:60,u0:60,u1:140,l0:.3,l1:.5,add:true,r0:4,r1:6})}}
     if(Math.random()<dt*(st.q.length&&!st.frozen?6:1.2))puff(d.conv.x+rnd(-16,16),d.conv.y+rnd(-8,8),48,{c:'#9aa3ad',r:12,life:1.6,a:.4,vy:30,grow:2});
     // customers
-    st.custT-=dt;if(st.custT<=0&&st.queue.length<(id==='steak'?6:10)){st.custT=Math.max(1.2,(3.6-G.t/260)*(1.5-G.rep*.14))/(1+(G.rank||0)*.1)/(wxIs('clear')?1.5:1)*(id==='coat'?1.6:id==='fish'?1.2:1);spawnCustomer(st)}
+    st.custT-=dt;if(st.custT<=0&&st.queue.length<(id==='steak'?6:10)){st.custT=Math.max(2.7,(3.8-G.t/800)*(1.5-G.rep*.12))/(1+(G.rank||0)*.1)/(wxIs('clear')?1.5:1)*(id==='coat'?1.6:id==='fish'?1.2:1);spawnCustomer(st)}
     const staffed=!!st.cashier||G.players.some(p=>dist(p.x,p.y,d.stand.x,d.stand.y)<40);st.staffed=staffed;
     st.queue.forEach((c,i)=>{c.fade=Math.min(1,c.fade+dt*2);const dd=moveTo(c,d.lane,d.counter.y+44+i*25,72,dt);c.arrived=dd<=3;if(c.arrived)c.dirT=Math.PI;
       if(c.y<1760){c.wait+=dt;if(c.wait>c.patience){c.state='leave';c.angry=1.6;G.rep=Math.max(1,G.rep-.5);SFX.bad();float(c.x,c.y,64,'プンプン！','red',true);toast('お客さんが帰っちゃった…','cold')}}});
@@ -1823,10 +1825,10 @@ function rescueOk(R){R.state='done';for(const b of G.bears)if(b.guardOf===R.id)b
 // hot water: pick up at the furnace while a "hot" SOS is open; it cools down over time
 function updateKettle(p,dt){const R=G.rescue;if(p.kettle>0){p.kettle-=dt;if(p.kettle<=0){p.kettle=0;float(p.x,p.y,80,'お湯が冷めた…','ice',true);SFX.bad()}}
   else if(R&&R.state==='wait'&&R.kind==='hot'&&!R.hotDone&&!(p.down>0)&&dist(p.x,p.y,CX,CY)<120){p.kettle=30;SFX.pop();float(p.x,p.y,80,'お湯をくんだ！ 30秒で冷める','gold',true)}}
-const upkeepCost=()=>Math.round(popNow()*(4+G.day*1.3)*DM().up*(1+(YR()-1)*.3));
+const upkeepCost=()=>Math.round(popNow()*(4+G.day*1.3+Math.max(0,G.day-5)*1.6)*DM().up*(1+(YR()-1)*.3));
 function dailyUpkeep(){if(G.day<2){banner(`${tempC()}℃`,`DAY ${G.day}`,'夜が明けた');return}const c=upkeepCost();
   if(G.cash>=c){G.cash-=c;banner(`${tempC()}℃`,`DAY ${G.day}`,`夜が明けた　町の食費 −$${c}`)}
-  else{const short=c-G.cash;G.cash=0;const per=4+G.day*1.3;let k=Math.min(Math.ceil(short/per),idleSurvivors().length);const gone=idleSurvivors().slice(0,k);
+  else{const short=c-G.cash;G.cash=0;const per=4+G.day*1.3+Math.max(0,G.day-5)*1.6;let k=Math.min(Math.ceil(short/per),idleSurvivors().length);const gone=idleSurvivors().slice(0,k);
     for(const s of gone){world.remove(s.m.g);G.surv.splice(G.surv.indexOf(s),1);burst(s.x,s.y,20,10,{c:['#ffffff','#bfe6f7'],s0:30,s1:100,l0:.4,l1:.8})}
     banner(`DAY ${G.day}`,'食費が払えない！',gone.length?`町の人が${gone.length}人出ていった…（食費 $${c}）`:`食費 $${c} が足りない`,'cold');SFX.bad()}}
 function updateRank(){const r=Math.max(G.rank||0,rankOf(popNow()));if(r>(G.rank||0)){G.rank=r;const bon=`熱の範囲+${r*4}%・税+${r*25}%・客+${r*10}%`;banner('町ランクUP！',`${RANKS[r].n}になった`,bon,'area');SFX.area();G.shake=10;
@@ -1835,9 +1837,9 @@ function updateWeather(dt){const ph=(G.t%G.DAY)/G.DAY;
   if(G.day>=2&&G.wxDay!==G.day){G.wxDay=G.day;const pick=['blizzard','snap','clear','aurora'][Math.floor(Math.random()*4)];G.wxNext=pick;G.wxAt=(G.day-1)*G.DAY+(pick==='aurora'?.78:rnd(.12,.5))*G.DAY;G.wxDone=false}
   if(!G.wxDone&&G.wxNext&&G.t>=G.wxAt){G.wxDone=true;const w=WXN(WXS.find(q=>q.id===G.wxNext));const dur=w.id==='aurora'?14:rnd(26,34);G.wx={type:w.id,t:dur,max:dur};banner(`${w.ic} 天気が変わった`,w.n,w.d,w.id==='clear'||w.id==='aurora'?'area':'cold');w.id==='clear'||w.id==='aurora'?SFX.area():SFX.wave()}
   if(G.wx.type){G.wx.t-=dt;if(G.wx.t<=0){toast(`${WXN(WXS.find(q=>q.id===G.wx.type)).n}がおさまった`,'gold');G.wx={type:null,t:0,max:0}}}}
-function updateTax(dt){updateRank();updateWeather(dt);G.taxT=(G.taxT||0)+dt;if(G.taxT<6)return;G.taxT=0;const ok=idleSurvivors().filter(s=>s.warm>40);if(!ok.length)return;
-  const v=Math.round(ok.length*(1+G.level*.5)*G.mod.price*(1+(G.rank||0)*.25)*(wxIs('aurora')?2:1));G.cash+=v;G.earned+=v;float(CX,CY,170,`町の人から +$${v}`,'cash');for(const s of ok)s.happy=Math.max(s.happy||0,.5);SFX.cash(2)}
-function updateSpa(dt){const s=G.spa;if(!G.zones.D)return;s.fuel=Math.max(0,s.fuel-1.4*dt);if(s.fuel>0){s.pile+=(4+G.lv.spa*6)*dt*(G.feverT>0?2:1);G.earned+=(4+G.lv.spa*6)*dt*(G.feverT>0?2:1)}
+function updateTax(dt){updateRank();updateWeather(dt);G.taxT=(G.taxT||0)+dt;if(G.taxT<12)return;G.taxT=0;const ok=idleSurvivors().filter(s=>s.warm>40);if(!ok.length)return;
+  const v=Math.round(ok.length*(1+G.level*.3)*G.mod.price*(1+(G.rank||0)*.15)*(wxIs('aurora')?2:1));G.cash+=v;G.earned+=v;float(CX,CY,170,`町の人から +$${v}`,'cash');for(const s of ok)s.happy=Math.max(s.happy||0,.5);SFX.cash(2)}
+function updateSpa(dt){const s=G.spa;if(!G.zones.D)return;s.fuel=Math.max(0,s.fuel-1.4*dt);if(s.fuel>0){s.pile+=(3+G.lv.spa*4)*dt*(G.feverT>0?2:1);G.earned+=(3+G.lv.spa*4)*dt*(G.feverT>0?2:1)}
   s.t+=dt;if(s.fuel>0&&Math.random()<dt*(8+G.lv.spa*4))puff(SPA.x+rnd(-100,100),SPA.y+rnd(-70,70),8,{c:'#ffffff',r:18,life:2.4,a:.35,vy:30,grow:2.5})}
 const guardsAt=id=>G.workers.filter(w=>w.role==='guard'&&w.tw===id).length;
 function jobPos(w){if(w.role==='guard'){const tw=TOWERS.find(t=>t.id===w.tw)||TOWERS[0];return{x:tw.mx+(w.slot?10:-10),y:tw.my+6}}const a=[[-40,-6],[0,-34],[40,-6]][w.slot%3];return{x:WOOD.x+a[0],y:WOOD.y+a[1]}}
@@ -2029,7 +2031,7 @@ function hideIdleFx(dt){secretFx(dt||.016);roadFx();caravanFx();const me=G.playe
 function monBar(){if(G.raid&&G.raid.on&&G.raid.final&&G.monMax&&G.monV&&G.monV.visible)label(G.monV.position.x,G.monV.position.z,170,bar(100*Math.max(0,G.monHP)/G.monMax,'red'),'')}
 function frozenFx(){for(const v of G.surv)if(v.frozen&&v.m&&v.m.g.visible)label(v.x,v.y,82,`<b>${DES()?'倒れた町人':'凍えた町人'}</b><br><small>${DES()?'そばに立つと助け起こせる':'そばに立つと溶ける'}</small><br>${bar(100*Math.min(1,v.warm/35),'gold wide')}`,'ice')}
 function hideIdle(){let shown=0;for(const v of G.surv){const idle=v.arrived&&!v.frozen;const vis=!idle||shown++<5;if(v.m&&v.m.g.visible!==vis)v.m.g.visible=vis}}
-function frame(dt){hideIdle();monBar();frozenFx();hideIdleFx(dt);
+function frame(dt){hideIdle();monBar();frozenFx();vigFx();hideIdleFx(dt);
   const phase=(G.t%G.DAY)/G.DAY,nk=phase>.72?Math.min(1,(phase-.72)/.06):phase<.04?1-phase/.04:0;nightK=lerp(nightK,nk*(running?1:0)+(G.wave?.2:0),Math.min(1,dt*2));
   const K=Math.min(1,nightK);const dz=DES();scene.fog.color.copy(dz?FOG_DES:FOG_DAY).lerp(FOG_NIGHT,K);sky.material.uniforms.top.value.copy(lin(dz?'#5aa3e6':'#6fa9d8')).lerp(lin('#0b1530'),K);sky.material.uniforms.mid.value.copy(lin(dz?'#f2d6a4':'#bcd0e2')).lerp(lin('#1b2a44'),K);sky.material.uniforms.bot.value.copy(lin(dz?'#f5ddb0':'#c9d7e4')).lerp(lin('#24344f'),K);
   {const wt=G.wx&&G.wx.type,k=wt?Math.min(1,G.wx.t/2,(G.wx.max-G.wx.t)/2+.001):0;$('wxFx').style.opacity=running&&wt==='blizzard'?.85*k:0;
@@ -2048,11 +2050,12 @@ function frame(dt){hideIdle();monBar();frozenFx();hideIdleFx(dt);
   {const el=$('sosArrow'),R=G.rescue;if(running&&R&&R.state==='wait'){pv.set(R.x,60,R.y).project(camera);let sx=(pv.x+1)/2*W,sy=(1-pv.y)/2*H;const behind=pv.z>1;if(behind){sx=W-sx;sy=H-sy}
     const top=150,m=44,mx=86,on=!behind&&sx>m&&sx<W-m&&sy>top&&sy<H-90;if(on)el.hidden=true;else{el.hidden=false;const cx=W/2,cy=(top+H-90)/2;let dx=sx-cx,dy=sy-cy;const k=Math.min((W/2-mx)/Math.abs(dx||1e-3),((H-90-top)/2)/Math.abs(dy||1e-3));const ex=cx+dx*Math.min(1,k),ey=cy+dy*Math.min(1,k);
       const d=Math.round(dist(gp.x,gp.y,R.x,R.y)/10);el.style.transform=`translate(${ex|0}px,${ey|0}px) translate(-50%,-50%)`;el.firstChild.style.transform=`rotate(${Math.atan2(dy,dx)+Math.PI/2}rad)`;$('sosTxt').textContent=`SOS ${Math.ceil(R.t)}秒・${d}m`}}else el.hidden=true}
-  guide.set(running?(coldT||rescueT(gp)||(MISSIONS[G.mission]?MISSIONS[G.mission].tg(gp):flow(gp))):null,gp,G.t);
+  guide.set(running?(coldT||(G.fuel<25&&!G.raid.on?(has(gp,DES()?'water':'log')?{x:CX,y:CY,h:110}:(DES()?freeHole(gp):nearestTree(gp))):null)||rescueT(gp)||(MISSIONS[G.mission]?MISSIONS[G.mission].tg(gp):flow(gp))):null,gp,G.t);
   cullWorld();if(composer)composer.render();else renderer.render(scene,camera);endLabels();
   joys.forEach((j,i)=>{const el=$('joy'+i);if(!j.on){el.hidden=true;return}el.hidden=false;el.style.left=j.ox+'px';el.style.top=j.oy+'px';const dx=j.x-j.ox,dy=j.y-j.oy,m=Math.hypot(dx,dy),k=m>50?50/m:1;el.firstChild.style.transform=`translate(${dx*k}px,${dy*k}px)`;el.firstChild.style.background=nPlayers===2?HERO[i].tag:'#fff'});
 }
 // ================================================================ HUD
+function vigFx(){const el=$('vig');if(!el)return;const me=G.players[G.me]||G.players[0];let c='';if(running&&me){if(!me.inHeat&&me.warm<30&&!me.down)c=DES()?'heat':'frost';else if(G.raid&&G.raid.on)c='raid';else if(G.fuel<15)c='dim'}if(el._c!==c){el._c=c;el.className=c}}
 function hudInit(){const fn=$('hFurnN');if(fn)fn.textContent=DES()?'井戸':'かまど';const ft=$('hFuelTxt');if(ft)ft.textContent=DES()?'水位':'燃料';const fz=$('hFrzN');if(fz)fz.textContent=DES()?'倒れた町人':'凍った町人';$('hBody').innerHTML=[G.players[G.me]||G.players[0]].map(p=>`<div class="bodyt" id="bt${p.id}"><i id="bti${p.id}"></i><span><span id="btt${p.id}">体温</span></span></div>`).join('');$('bottom').innerHTML=`<div class="pill" id="lvBox"><span class="lvb">Lv <span id="hPlv">1</span></span><span class="xpb"><i id="hXp"></i></span></div>`+G.players.map(p=>`<div class="pill pc" id="pc${p.id}">${G.players.length>1?`<span class="tg" style="background:${HERO[p.id].tag}">${HERO[p.id].tagText}</span>`:''}<svg class="icon" viewBox="0 0 26 22"><path d="M4 8h18l-2 12H6z" fill="#c98a4b"/><path d="M4 8h18" stroke="#8a5a30" stroke-width="2.4" stroke-linecap="round"/><path d="M8 8c0-5 10-5 10 0" fill="none" stroke="#8a5a30" stroke-width="2"/><path d="M7 12h12M7.5 16h11" stroke="#a8743f" stroke-width="1.4"/></svg><span class="num sm" id="pcv${p.id}"></span><span class="hpb"><i id="hp${p.id}"></i></span></div>`).join('')}
 function hud(){G.cashShow+=(G.cash-G.cashShow)*.2;if(Math.abs(G.cash-G.cashShow)<1)G.cashShow=G.cash;$('hCash').textContent=Math.round(G.cashShow).toLocaleString();
   $('hDay').textContent=G.day;$('hTemp').textContent=tempC()+'℃';$('hDayIco').textContent=isNight()?'☾':'☀';$('hDayBox').classList.toggle('night',isNight());
