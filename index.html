@@ -200,6 +200,10 @@
   #joy0 i,#joy1 i{position:absolute;left:34px;top:34px;width:48px;height:48px;border-radius:50%;background:#fffaf0;box-shadow:0 3px 0 rgba(91,70,54,.25)}
   @media (max-width:430px){.hud{gap:6px 6px}.date{padding:5px 9px 5px 6px;gap:6px}.date .dico{width:26px;height:26px;font-size:14px}.num{font-size:19px}.money .num{font-size:18px}.popc .rank{font-size:10px;padding:2px 7px}#hFrzBox .tiny{display:none}.modp{max-width:112px}}
   @media (prefers-reduced-motion: reduce){.card,.perk,.mission.done,.badge.new,.lb .alert,.banner{animation:none}}
+#talk{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);width:min(620px,88vw);background:rgba(14,26,42,.88);color:#fff;border:2px solid #ffd23f;border-radius:14px;padding:10px 16px 11px;font-size:15px;line-height:1.55;z-index:40;pointer-events:none;box-shadow:0 6px 24px rgba(0,0,0,.35);animation:talkIn .25s ease-out}
+#talk b{display:block;color:#ffd23f;font-size:12px;letter-spacing:.08em;margin-bottom:2px}
+@keyframes talkIn{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
+#storyLine{margin-top:4px}#storyLine b{color:#e8703a}
 </style>
 
 <canvas id="c"></canvas><div id="vig"></div><div id="netWarn" hidden style="position:fixed;left:50%;top:150px;transform:translateX(-50%);z-index:30;background:rgba(40,52,70,.88);color:#fff;font-weight:900;font-size:13px;padding:8px 16px;border-radius:999px;pointer-events:none"></div>
@@ -232,6 +236,7 @@
 <div id="combo" hidden></div>
 <div id="sosArrow" hidden><i></i><b id="sosTxt">SOS</b></div>
 <div class="toast" id="toast"></div>
+<div id="talk" hidden><b id="talkWho"></b><span id="talkTxt"></span></div>
 <div class="banner" id="banner" hidden><small id="bnSub"></small><b id="bnMain"></b><span id="bnNote"></span></div>
 <div id="joy0" hidden><i></i></div><div id="joy1" hidden><i></i></div>
 
@@ -239,6 +244,8 @@
   <div class="card">
     <h1 class="logo">めちゃ<em>ホワイト</em></h1><div class="tagline">しろくまの町の冬ぐらし</div>
     <div class="seg" id="pSeg" role="group" aria-label="プレイ人数"><button id="p1" aria-pressed="true">1人で遊ぶ</button><button id="p2" aria-pressed="false">友達とオンライン</button></div>
+    <div class="seg" id="mSeg" role="group" aria-label="モード"><button id="mStory" aria-pressed="true">ものがたり</button><button id="mFree" aria-pressed="false">1回勝負</button></div>
+    <div class="key" id="storyLine"></div><button class="linkbtn" id="storyReset" hidden style="font-size:11px;opacity:.75">ものがたりを最初からやり直す</button>
     <div class="seg dseg" id="bSeg" role="group" aria-label="拠点" style="display:none"></div>
     <div class="seg dseg" id="dSeg" role="group" aria-label="難易度"></div>
     <div class="key" id="dbgLine" hidden style="color:#c0392b"></div>
@@ -525,7 +532,7 @@ function inputVec(i){let x=0,y=0;const two=false;
 // ================================================================ toasts, banners, sound
 const tq=[];let toastTimer=0;
 function toast(msg,kind,local){if(tq.length<4)tq.push({msg,kind});if(!local&&NET.mode==='host'&&NET.outT.length<3)NET.outT.push([msg,kind||''])}
-function tickToast(dt){if(toastTimer>0){toastTimer-=dt;if(toastTimer<=0)$('toast').classList.remove('on')}else toastTimer-=dt;
+function tickToast(dt){tickTalk(dt);if(toastTimer>0){toastTimer-=dt;if(toastTimer<=0)$('toast').classList.remove('on')}else toastTimer-=dt;
   if(toastTimer<=-.15&&tq.length){const {msg,kind}=tq.shift();const t=$('toast');t.textContent=msg;t.className='toast '+(kind||'');void t.offsetWidth;t.classList.add('on');toastTimer=1.9}}
 let bnT=null;function banner(sub,main,note,cls,local){if(!local&&NET.mode==='host'&&NET.outB.length<2)NET.outB.push([sub,main,note||'',cls||'']);const b=$('banner');$('bnSub').textContent=sub;$('bnMain').textContent=main;$('bnNote').textContent=note||'';b.className='banner '+(cls||'');b.hidden=true;void b.offsetWidth;b.hidden=false;clearTimeout(bnT);bnT=setTimeout(()=>b.hidden=true,cls==='combo'?1400:2800)}
 const AC=window.AudioContext||window.webkitAudioContext;let actx=null,muted=false,lastCoin=0,lastShot=0,lastChop=0;
@@ -1014,7 +1021,7 @@ const coolMul=()=>DM().cold*(1+(YR()-1)*.18)*(DES()?(isNight()?.4:1.9):(isNight(
 function mult(){return (1+Math.min(2,Math.floor(G.combo/5)*.25))*(G.feverT>0?2:1)}
 
 let CUR_BIO=0;
-function newGame(np,opts){opts=opts||{};CUR_BIO=opts.biome||0;zoneNames();let RS=(opts.seed||((Math.random()*1e9)|0))|0;const srng=()=>{RS=RS+0x6D2B79F5|0;let t=Math.imul(RS^RS>>>15,1|RS);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};const sr=(a,b)=>a+srng()*(b-a);
+function newGame(np,opts){opts=opts||{};CUR_BIO=opts.biome||0;zoneNames();let RS=(opts.seed||((Math.random()*1e9)|0))|0;const SEED0=RS;const srng=()=>{RS=RS+0x6D2B79F5|0;let t=Math.imul(RS^RS>>>15,1|RS);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};const sr=(a,b)=>a+srng()*(b-a);
   if(world){scene.remove(world)}if(forest)forest.dispose();psN.clear();psA.clear();
   world=new T.Group();scene.add(world);world.add(makeGround(),makeMountains());
   G={rank:0,year:1,biome:opts.biome||0,diff:opts.diff||0,charOf:opts.chars||[meta.pick||'Rogue_Hooded','Knight'],t:0,DAY:75,day:1,wave:false,waveWarned:0,players:[],floats:[],flying:[],shake:0,paused:false,mission:0,missionCd:0,endless:false,newAch:[],achT:0,wind:0,
@@ -1024,7 +1031,7 @@ function newGame(np,opts){opts=opts||{};CUR_BIO=opts.biome||0;zoneNames();let RS
     lv:{bag:0,gun:0,price_steak:0,price_fish:0,price_coat:0,cook_steak:0,cook_fish:0,cook_coat:0,spa:0,tw_N:0,tw_E:0,tw_W:0,trap:0},
     pm:{rate:1,dmg:0,cap:0,speed:1,price:0,cook:1,magnet:0,wood:0,burn:1,cold:1,chop:1,thaw:1,tower:1},
     stats:{bears:0,grilled:0,sold:0,soldFish:0,soldCoat:0,chopped:0,fed:0,fish:0,fur:0,boss:0,thawed:0,haul:0,raidKills:0},
-    bearT:0,survT:4,bossT:90,sparkT:0,nid:0,me:0};
+    bearT:0,survT:4,bossT:90,sparkT:0,nid:0,me:0};G.seed=SEED0;
   {let ms=(RS^0x5bd1e995)|0;const mr=()=>{ms=ms+0x6D2B79F5|0;let t=Math.imul(ms^ms>>>15,1|ms);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
     const bo=MODS_B[Math.floor(mr()*MODS_B.length)];let cu=MODS_C[Math.floor(mr()*MODS_C.length)];if(bo.id==='crowd'&&cu.id==='lonely')cu=MODS_C[0];
     G.mod={price:1,bears:1,meat:0,surv:1,raid:1,wave:3,temp:0,cold:1,chop:1,wood:0,trees:1,sos:0};bo.ap(G.mod);cu.ap(G.mod);G.mods=[bo,cu]}
@@ -1143,7 +1150,7 @@ for(const tw of TOWERS)P.push(padDef({id:'tw_'+tw.id,x:tw.x,y:tw.y,name:`見張�
   // zone unlocks
   for(const z of ZONES)P.push(padDef({id:'zone_'+z.id,x:z.pad.x,y:z.pad.y,name:z.name+'を解放',k:'開',pay:'cash',big:true,vis:()=>!G.zones[z.id],lvNeed:z.lv,popNeed:z.pop,req:()=>G.level<z.lv?`かまどLv${z.lv}が必要`:popNow()<z.pop?`町人${z.pop}人が必要（いま${popNow()}人）`:null,cost:()=>z.cost,lvText:()=>'',buy:()=>unlockZone(z)}));
   // monument
-  P.push(padDef({id:'monument',x:MON.x,y:MON.y,name:'町のシンボル像',k:'像',pay:'cash',big:true,vis:()=>!G.monument&&G.zones.D,lvNeed:5,popNeed:18,req:()=>{const g=goalOf(YR());return G.level<g.lv?`かまどLv${g.lv}が必要`:popNow()<g.pop?`町人${g.pop}人が必要（いま${popNow()}人）`:null},cost:()=>goalOf(YR()).c,lvText:()=>'',buy:()=>{G.monument=true;G.monV.visible=true;G.monV.scale.setScalar(.01);G.monPop=0;SFX.area();banner('完成！',goalOf(YR()).n,'…その夜、シロクマの大群が押し寄せてくる。最後の夜を守りきれ！','area');G.shake=14;G.finalPending=true;const ph=(G.t%G.DAY)/G.DAY;if(ph<.66)G.t+=(.66-ph)*G.DAY;else if(ph>.72){G.t=Math.ceil(G.t/G.DAY)*G.DAY+.66*G.DAY;G.raid.night=0}}}));
+  P.push(padDef({id:'monument',x:MON.x,y:MON.y,name:'町のシンボル像',k:'像',pay:'cash',big:true,vis:()=>!G.monument&&G.zones.D&&!(G.story&&G.story.ch===2&&G.story.step<4),lvNeed:5,popNeed:18,req:()=>{const g=goalOf(YR());return G.level<g.lv?`かまどLv${g.lv}が必要`:popNow()<g.pop?`町人${g.pop}人が必要（いま${popNow()}人）`:null},cost:()=>goalOf(YR()).c,lvText:()=>'',buy:()=>{G.monument=true;G.monV.visible=true;G.monV.scale.setScalar(.01);G.monPop=0;SFX.area();banner('完成！',goalOf(YR()).n,'…その夜、シロクマの大群が押し寄せてくる。最後の夜を守りきれ！','area');G.shake=14;G.finalPending=true;const ph=(G.t%G.DAY)/G.DAY;if(ph<.66)G.t+=(.66-ph)*G.DAY;else if(ph>.72){G.t=Math.ceil(G.t/G.DAY)*G.DAY+.66*G.DAY;G.raid.night=0}}}));
   for(const p of P){p.mesh=makePadMesh(p);world.add(p.mesh.g)}
   G.pads=P;if(DES())for(const pd of P){if(/^(cook_|cashier_|price_)/.test(pd.id))pd.vis=()=>false;if(pd.id==='fisher'){pd.zone=null;pd.name='水くみ係'}}
 }
@@ -1368,14 +1375,14 @@ function pjJoin(code){code=(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'');if(
   pjReset();PJ.state='joining';PJ.host=false;netLine();const pe=new Peer(PJ_PRE+'g'+Math.random().toString(36).slice(2,10),Object.assign({},PJ_ICE,window.MW_PEER));PJ.peer=pe;
   pe.on('open',()=>{NET.room=pjRoom();PJ.code=code;const c=pe.connect(PJ_PRE+code,{serialization:'json',reliable:true});pjWire(c);setTimeout(()=>{if(!PJ.conns.size&&PJ.state==='joining'){PJ.state='nofind';netLine()}},9000)});
   pe.on('error',e=>{if(PJ.rejoin)return;if(e&&(e.type==='network'||e.type==='server-error'||e.type==='socket-error'||e.type==='socket-closed'))return;PJ.state=e&&e.type==='peer-unavailable'?'nofind':'err';netLine()});pjKeep(pe)}
-function netLine(){const el=$('netLine');if(!el)return;const box=$('netBox'),cb=$('codeBox');box.hidden=cb.hidden=true;if(nPlayers!==2){el.hidden=true;$('start').textContent='火を灯す';return}el.hidden=false;
-  if(PJ.on){if(PJ.host&&PJ.code){cb.hidden=false;$('roomCode').textContent=PJ.code;const g=PJ.conns.size;el.innerHTML=g?'<b>友達が入ってきた！</b>':'コードか招待URLを友達に送ろう（先に始めてもOK・あとから合流できます）';$('start').textContent='部屋を作って始める';return}
+function netLine(){const el=$('netLine');if(!el)return;const box=$('netBox'),cb=$('codeBox');box.hidden=cb.hidden=true;if(nPlayers!==2){el.hidden=true;$('start').textContent=startLabel();return}el.hidden=false;
+  if(PJ.on){if(PJ.host&&PJ.code){cb.hidden=false;$('roomCode').textContent=PJ.code;const g=PJ.conns.size;el.innerHTML=g?'<b>友達が入ってきた！</b>':'コードか招待URLを友達に送ろう（先に始めてもOK・あとから合流できます）';$('start').textContent=startLabel(true);return}
     const hp=hostPeerNow();if(hp&&hp.presence.seed){el.innerHTML='<b>友達の部屋が見つかった！</b>';$('start').textContent='部屋に参加する';return}
     box.hidden=false;$('start').textContent='1人で始める';
     el.innerHTML={making:'部屋を作っています…',joining:'つないでいます…',nofind:'<b>部屋が見つかりません</b>。コードを確認するか、友達に部屋を作り直してもらってね',err:'<b>つながりませんでした</b>。ネットワークを変えるか、もう一度試してね',nolib:'通信ライブラリを読み込めませんでした（再読み込みしてね）',ok:'つながった！ 友達がゲームを始めるのを待っています…'}[PJ.state]||'友達と遊ぶ：どちらかが<b>部屋を作り</b>、もう1人が<b>コードで参加</b>';return}
   if(!NET.room){el.innerHTML='オンラインは、claude.aiで<b>このページを共有した友達</b>と同時に開いたときだけ使えます';$('start').textContent='1人で始める';return}
   const hp=hostPeerNow();if(hp&&hp.presence.seed){el.innerHTML='<b>友達の部屋が見つかった！</b>';$('start').textContent='部屋に参加する'}
-  else{el.innerHTML='友達にこのページを開いてもらおう<br>先に始めた人が部屋を作り、あとの人が参加します';$('start').textContent='部屋を作って始める'}}
+  else{el.innerHTML='友達にこのページを開いてもらおう<br>先に始めた人が部屋を作り、あとの人が参加します';$('start').textContent=startLabel(true)}}
 function pjInit(){PJ.on=true;const q=new URLSearchParams(location.search).get('room');
   $('mkRoom').addEventListener('click',()=>{audioOn();pjCreate()});$('joinRoom').addEventListener('click',()=>{audioOn();pjJoin($('roomIn').value)});
   $('roomIn').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter')pjJoin($('roomIn').value)});
@@ -1389,7 +1396,7 @@ function followNet(p,dt){const px=p.x,py=p.y;if(p.nx!=null){const k=Math.min(1,d
   const sp=Math.hypot(p.x-px,p.y-py)/Math.max(dt,.001);p.moving=sp>20;if(p.moving){p.step+=dt*sp*.06;p.dirT=Math.atan2(p.x-px,p.y-py)}else if(p.dirN!=null)p.dirT=p.dirN;
   p.vx=(p.x-px)/Math.max(dt,.001);p.vy=(p.y-py)/Math.max(dt,.001);p.bb=lerp(p.bb,0,dt*8);p.flash=Math.max(0,p.flash-dt);p.hurt=Math.max(0,p.hurt-dt);p.inv=Math.max(0,p.inv-dt)}
 function netHost(dt){const gp=guestPeerNow();
-  if(gp&&NET.guestPeer!==gp.peer){if(G.players[1])dropRemote();NET.guestPeer=gp.peer;G.charOf[1]=altCh(G.charOf[0],gp.presence&&gp.presence.ch);const p=addPlayer(1);p.remote=true;p.x=CX+30;p.y=CY+110;hudInit();toast('友達が参加した！','gold');SFX.rare();setTimeout(()=>{if(running)banner('2人専用','協力ワザ','挟み撃ちでダメージ2倍・寄り添うと体温が下がりにくい・巨大肉は2人で運ぶ','area')},2500)}
+  if(gp&&NET.guestPeer!==gp.peer){if(G.players[1])dropRemote();NET.guestPeer=gp.peer;G.charOf[1]=altCh(G.charOf[0],gp.presence&&gp.presence.ch);const p=addPlayer(1);p.remote=true;if(G.savePl&&G.savePl[1])p.lv=Object.assign({gun:0,bag:0},G.savePl[1].lv);p.x=CX+30;p.y=CY+110;hudInit();toast('友達が参加した！','gold');SFX.rare();setTimeout(()=>{if(running)banner('2人専用','協力ワザ','挟み撃ちでダメージ2倍・寄り添うと体温が下がりにくい・巨大肉は2人で運ぶ','area')},2500)}
   if(!gp&&NET.guestPeer){NET.gMiss=(NET.gMiss||0)+dt;const lim=PJ.on?45:3;if(PJ.on)netWarn(`友達の接続が切れた…戻ってくるのを待っています（あと${Math.ceil(lim-NET.gMiss)}秒）`);if(NET.gMiss>lim){netWarn('');dropRemote();NET.guestPeer=null;NET.gMiss=0;toast('友達が抜けた','cold')}}else if(gp&&NET.gMiss){if(NET.gMiss>1)toast('友達が戻ってきた！','gold');NET.gMiss=0;netWarn('')}
   const p=G.players[1];if(p&&gp){const pr=gp.presence;if(typeof pr.fk==='number'){if(p._fk!=null&&pr.fk!==p._fk)p.fPress=true;p._fk=pr.fk}if(typeof pr.x==='number'&&typeof pr.y==='number'){p.nx=clamp(pr.x,30,WORLD-30);p.ny=clamp(pr.y,30,WORLD-30);p.dirN=typeof pr.d==='number'?pr.d:null}}
   NET.sendT+=dt;if(NET.guestPeer&&NET.sendT>=.12){NET.sendT=0;sendSnap()}}
@@ -1402,8 +1409,8 @@ function sendSnap(){
     st:STIDS.map(id=>{const t=G.stations[id];return[t.q.length,t.shelf,r1(t.pile),r2(t.cookT)]}),pd:G.pads.map(q=>q.personal?{p:G.players.map(pl=>q.pp[pl.id]||0)}:q.mp?[q.paid,q.mp.fish,q.mp.fur]:q.paid),
     tr:G.trees.map(t=>t.alive?(t.fall>0?'f':t.grow<1?'g':'a'):'d').join(''),tf:G.trees.filter(t=>t.fall>0).map(t=>[t.i,r2(t.fall),r2(t.fallDir)]),
     ps:G.players.map(p=>[r1(p.x),r1(p.y),r2(p.dir),enc(p.bag),r1(p.warm),r1(p.hp),p.down>0?r2(p.down):0,p.inHeat?1:0,(p.shooting?1:0)|(p.chopping?2:0)|(p.fishing?4:0)|(p.flash>0?8:0)|(p.buddy?16:0)|(p.ko?32:0),r2(p.actT),p.fishing?G.holes.indexOf(p.fishing):-1,[p.lv.gun,p.lv.bag]]),
-    fl:NET.outF.splice(0),bn:NET.outB.splice(0),tq:NET.outT.splice(0),end:NET.endInfo});
-  safeEmit('s.a',{b:G.bears.map(b=>[b.id,r1(b.x),r1(b.y),r2(b.rot),Math.max(0,Math.ceil(b.hp)),b.max,BK.indexOf(b.kind),b.state==='chase'?1:0,b.dead?r2(b.deadT):-1,b.hit>0?1:0,b.roar>0?1:0,b.moving?1:0,b.raid?1:b.flee?2:0]),
+    fl:NET.outF.splice(0),sy:(NET.outS||[]).splice(0),so:G.story?[G.story.ch,G.story.step,G.story.raids||0,G.story.minion||0,G.story.fp?1:0]:0,bn:NET.outB.splice(0),tq:NET.outT.splice(0),end:NET.endInfo});
+  safeEmit('s.a',{b:G.bears.map(b=>[b.id,r1(b.x),r1(b.y),r2(b.rot),Math.max(0,Math.ceil(b.hp)),b.max,BK.indexOf(b.kind),b.state==='chase'?1:0,b.dead?r2(b.deadT):-1,b.hit>0?1:0,b.roar>0?1:0,b.moving?1:0,b.raid?1:b.flee?2:0,b.king?1:0]),
     k:G.pickups.map(m=>[m.id,r1(m.x),r1(m.y),r1(m.h),KC[m.k],m.n||1]),h:G.chests.map(c=>[c.id,r1(c.x),r1(c.y),r1(c.h),c.open<0?-1:r2(c.open),c.rar?RAR.indexOf(c.rar):-1]),
     ho:G.holes.map(h=>r2(h.t)+(h.jump>0?.001:0)),hl:G.hauls.map(h=>[h.id,r1(h.x),r1(h.y),h.big,h.carried?1:0])});
   safeEmit('s.b',{c:G.customers.map(c=>[c.id,r1(c.x),r1(c.y),r2(c.dir),STIDS.indexOf(c.st.id),c.state==='leave'?1:0,c.hold.visible?1:0,r2(Math.max(0,c.happy||0)),r2(Math.max(0,c.angry||0)),c.state==='queue'?r2(c.wait/c.patience):0,c.pal,r2(c.fade==null?1:c.fade)]),
@@ -1428,10 +1435,11 @@ function applyInbox(){const I=NET.inbox;
     c.ps.forEach((v,i)=>{const p=G.players[i];if(!p)return;const was=p.down>0;if(v[11])p.lv={gun:v[11][0],bag:v[11][1]};p.bag=dec(v[3]);p.warm=v[4];p.hp=v[5];p.down=v[6];p.inHeat=!!v[7];p.shooting=v[8]&1?true:null;p.chopping=v[8]&2?true:null;p.fishing=v[8]&4&&v[10]>=0?G.holes[v[10]]:null;if(v[8]&8)p.flash=.07;p.buddy=!!(v[8]&16);p.ko=!!(v[8]&32);p.actT=v[9];
       if(i===G.me){if(was&&!(p.down>0)){p.x=CX+rnd(-40,40);p.y=CY+100}}else{p.nx=v[0];p.ny=v[1];p.dirN=v[2]}});
     for(const f of c.fl||[])float(f[0],f[1],f[2],f[3],f[4],f[5],true);for(const b of c.bn||[])banner(b[0],b[1],b[2],b[3],true);for(const t of c.tq||[])toast(t[0],t[1],true);
+    for(const t of c.sy||[])say(t[0],t[1],true);if(c.so){G.story=G.story||{seen:{}};G.story.ch=c.so[0];G.story.step=c.so[1];G.story.raids=c.so[2];G.story.minion=c.so[3];G.story.fp=c.so[4]}else G.story=null;
     if(c.end){if(running)endGame(!!c.end.c,c.end.w);return}}
   const a=I['s.a'];if(a){I['s.a']=null;
     recon(G.bears,a.b,r=>{const kind=BK[r[6]]||'normal';const b={id:r[0],x:r[1],y:r[2],kind,rot:r[3],step:0,hit:0,roar:0,dead:false,deadT:0};b.m=makeBear(kind);b.m.g.position.set(b.x,0,b.y);world.add(b.m.g);return b},
-      (b,r)=>{b.nx=r[1];b.ny=r[2];b.dirT=r[3];b.hp=r[4];b.max=r[5];b.state=r[7]?'chase':'wander';if(r[8]>=0&&!b.dead){b.dead=true;SFX.kill()}if(b.dead)b.deadT=Math.max(b.deadT,r[8]);if(r[9])b.hit=.14;if(r[10])b.roar=.5;b.moving=!!r[11];const rf=r[12]||0;if(rf!==b._rf){b._rf=rf;b.raid=rf===1;b.m.ring.material.color.copy(lin(rf?'#ff8a1a':'#ff3b4a'))}},b=>world.remove(b.m.g));
+      (b,r)=>{b.nx=r[1];b.ny=r[2];b.dirT=r[3];b.hp=r[4];b.max=r[5];b.state=r[7]?'chase':'wander';if(r[8]>=0&&!b.dead){b.dead=true;SFX.kill()}if(b.dead)b.deadT=Math.max(b.deadT,r[8]);if(r[9])b.hit=.14;if(r[10])b.roar=.5;b.moving=!!r[11];const rf=r[12]||0;if(rf!==b._rf){b._rf=rf;b.raid=rf===1;b.m.ring.material.color.copy(lin(rf?'#ff8a1a':'#ff3b4a'))}if(r[13]&&!b.king){b.king=true;b.m.g.scale.multiplyScalar(1.5)}},b=>world.remove(b.m.g));
     recon(G.pickups,a.k,r=>{const m={id:r[0],x:r[1],y:r[2],h:r[3],k:KR[r[4]]||'meat',spin:rnd(0,TAU)};m.mesh=itemMesh(m.k);world.add(m.mesh);return m},(m,r)=>{m.nx=r[1];m.ny=r[2];m.h=r[3];if(m.n!==(r[5]||1)){m.n=r[5]||1;m.mesh.scale.setScalar(1.1*(1+Math.min(m.n-1,6)*.14))}},m=>{world.remove(m.mesh);SFX.coin(3)});
     recon(G.chests,a.h,r=>{const c={id:r[0],x:r[1],y:r[2],h:r[3],open:-1,t:0};c.m=makeChest();world.add(c.m);SFX.pop();return c},(c,r)=>{c.x=r[1];c.y=r[2];c.h=r[3];if(r[4]>=0&&c.open<0)SFX.chest();c.open=r[4];if(r[5]>=0)c.rar=RAR[r[5]]},c=>world.remove(c.m));
     recon(G.hauls,a.hl,r=>{const h={id:r[0],x:r[1],y:r[2],big:r[3],carried:false};h.m=makeHaul(h.big);world.add(h.m);return h},(h,r)=>{h.nx=r[1];h.ny=r[2];h.carried=!!r[4]},h=>world.remove(h.m));
@@ -1474,7 +1482,7 @@ function guestTick(dt){
 }
 // ================================================================ core update
 function update(dt){
-  G.t+=dt;const nd=1+Math.floor(G.t/G.DAY);if(nd!==G.day){G.day=nd;dailyUpkeep()}
+  G.t+=dt;const nd=1+Math.floor(G.t/G.DAY);if(nd!==G.day){G.day=nd;dailyUpkeep();snapSave()}
   const night=isNight();const waveDay=waveDayN(G.day);
   if(waveDay&&!night&&((G.t%G.DAY)/G.DAY)>.6&&G.waveWarned!==G.day){G.waveWarned=G.day;banner('今夜',DES()?'大熱波が来る！':'大寒波が来る！',DES()?'井戸の水をためておけ（水の減りと渇きが倍）':'燃料をためておけ（燃料の減りと寒さが倍）','cold');SFX.wave()}
   G.wave=waveDay&&night;
@@ -1494,7 +1502,7 @@ function update(dt){
   // stations frozen state
   for(const id in G.stations){const st=G.stations[id];const d=dist(st.def.conv.x,st.def.conv.y,CX,CY);const fz=st.open&&d>R;if(fz&&!st.frozen){toast(`${st.def.name}が凍った！ かまどを強化・燃料を`,'cold')}st.frozen=fz}
   updateWoodpile(dt);updateTrees(dt);updateBears(dt);updateRaid(dt);tickTowers(dt,true);updateHauls(dt);updatePickups(dt);updateWorkers(dt);updateStations(dt);updateSurvivors(dt,R);updateSpa(dt);updateHoles(dt);updateRescue(dt);updateTax(dt);updateSecrets(dt);updateRoad(dt);updateCaravan(dt);
-  checkMission(dt);G.achT-=dt;if(G.achT<=0){G.achT=.5;checkAch()}
+  checkMission(dt);updateStory(dt);G.achT-=dt;if(G.achT<=0){G.achT=.5;checkAch()}
   if(G.pendingLv>0&&!G.paused)openPerk();
   if(G.frozen>=5&&!G.endless)endGame(false,'freeze');
 }
@@ -1751,9 +1759,9 @@ function updateRaid(dt){const ph=(G.t%G.DAY)/G.DAY,night=ph>.72,R=G.raid;
   R.spawnT-=dt;if(R.spawn>0&&R.spawnT<=0){R.spawnT=rnd(.5,1.2)*(R.final?.6:1);if(R.bosses>0&&(R.spawn<=R.bosses||Math.random()<R.bosses/R.spawn*.6)){R.bosses--;spawnRaider(true)}else spawnRaider();R.spawn--}
   R.left=R.spawn+G.bears.filter(b=>b.raid&&!b.dead).length;
   if(R.left===0&&R.final){R.on=false;G.raidWins++;banner('最終決戦 勝利！','町を守りきった！','','r-SSR');SFX.ssr();G.shake=16;setTimeout(()=>{if(running&&!G.endless){checkAch();endGame(true)}},2600);return}
-  if(!night&&R.final){R.on=false;for(const b of G.bears)if(b.raid&&!b.dead){b.raid=false;b.flee=true;b.state='wander'}banner('夜が明けた！','町を守りきった！','','r-SSR');SFX.ssr();setTimeout(()=>{if(running&&!G.endless){checkAch();endGame(true)}},2600);return}
-  if(R.left===0){R.on=false;G.raidWins++;const bonus=Math.round(R.total*(14+G.day*4));G.cash+=bonus;G.earned+=bonus;spawnChest(CX+rnd(-60,60),CY+120);gainXP(20+R.total*3,CX,CY);addCombo(10);banner('襲撃を撃退！',`+$${bonus}`,'かまどを守りきった！','r-SSR');SFX.ssr();G.shake=10}
-  else if(!night){R.on=false;for(const b of G.bears)if(b.raid&&!b.dead){b.raid=false;b.flee=true;b.state='wander'}raidReport();const bonus=Math.round(R.kills*(8+G.day*2));G.cash+=bonus;G.earned+=bonus;banner('夜が明けた',`撃退 ${R.kills}/${R.total}`,bonus?`ごほうび +$${bonus}（全滅させると大ボーナス）`:'見張り台を建てると自動で撃ってくれる','cold')}}
+  if(!night&&R.final&&!G.bears.some(b=>b.king&&!b.dead)){R.on=false;for(const b of G.bears)if(b.raid&&!b.dead){b.raid=false;b.flee=true;b.state='wander'}banner('夜が明けた！','町を守りきった！','','r-SSR');SFX.ssr();setTimeout(()=>{if(running&&!G.endless){checkAch();endGame(true)}},2600);return}
+  if(R.left===0){R.on=false;storyRaidEnd();G.raidWins++;const bonus=Math.round(R.total*(14+G.day*4));G.cash+=bonus;G.earned+=bonus;spawnChest(CX+rnd(-60,60),CY+120);gainXP(20+R.total*3,CX,CY);addCombo(10);banner('襲撃を撃退！',`+$${bonus}`,'かまどを守りきった！','r-SSR');SFX.ssr();G.shake=10}
+  else if(!night&&!R.final){R.on=false;storyRaidEnd();for(const b of G.bears)if(b.raid&&!b.dead){b.raid=false;b.flee=true;b.state='wander'}raidReport();const bonus=Math.round(R.kills*(8+G.day*2));G.cash+=bonus;G.earned+=bonus;banner('夜が明けた',`撃退 ${R.kills}/${R.total}`,bonus?`ごほうび +$${bonus}（全滅させると大ボーナス）`:'見張り台を建てると自動で撃ってくれる','cold')}}
 // towers: host applies damage (sim); the guest only plays the shots
 function tickTowers(dt,sim){for(const tw of TOWERS){const lv=G.lv['tw_'+tw.id];if(!lv)continue;tw.cd=(tw.cd||0)-dt;const v=G.towerV&&G.towerV[tw.id];
   let tg=null,best_=1e9;const rng=250+lv*25;for(const b of G.bears){if(b.dead)continue;if(!b.raid&&b.state!=='chase')continue;const d=dist(tw.mx,tw.my,b.x,b.y);if(d<rng&&d-(b.raid?1000:0)<best_){best_=d-(b.raid?1000:0);tg=b}}
@@ -2072,8 +2080,8 @@ function frame(dt){hideIdle();monBar();frozenFx();vigFx();hideIdleFx(dt);
   {const el=$('sosArrow'),R=G.rescue;if(running&&R&&R.state==='wait'){pv.set(R.x,60,R.y).project(camera);let sx=(pv.x+1)/2*W,sy=(1-pv.y)/2*H;const behind=pv.z>1;if(behind){sx=W-sx;sy=H-sy}
     const top=150,m=44,mx=86,on=!behind&&sx>m&&sx<W-m&&sy>top&&sy<H-90;if(on)el.hidden=true;else{el.hidden=false;const cx=W/2,cy=(top+H-90)/2;let dx=sx-cx,dy=sy-cy;const k=Math.min((W/2-mx)/Math.abs(dx||1e-3),((H-90-top)/2)/Math.abs(dy||1e-3));const ex=cx+dx*Math.min(1,k),ey=cy+dy*Math.min(1,k);
       const d=Math.round(dist(gp.x,gp.y,R.x,R.y)/10);el.style.transform=`translate(${ex|0}px,${ey|0}px) translate(-50%,-50%)`;el.firstChild.style.transform=`rotate(${Math.atan2(dy,dx)+Math.PI/2}rad)`;$('sosTxt').textContent=`SOS ${Math.ceil(R.t)}秒・${d}m`}}else el.hidden=true}
-  guide.set(running?(coldT||(G.fuel<25&&!G.raid.on?(has(gp,DES()?'water':'log')?{x:CX,y:CY,h:110}:(DES()?freeHole(gp):nearestTree(gp))):null)||rescueT(gp)||(MISSIONS[G.mission]?MISSIONS[G.mission].tg(gp):flow(gp))):null,gp,G.t);
-  cullWorld();if(composer)composer.render();else renderer.render(scene,camera);endLabels();
+  guide.set(running?(coldT||(G.fuel<25&&!G.raid.on?(has(gp,DES()?'water':'log')?{x:CX,y:CY,h:110}:(DES()?freeHole(gp):nearestTree(gp))):null)||rescueT(gp)||storyT(gp)||(MISSIONS[G.mission]?MISSIONS[G.mission].tg(gp):flow(gp))):null,gp,G.t);
+  storyVis();cullWorld();if(composer)composer.render();else renderer.render(scene,camera);endLabels();
   joys.forEach((j,i)=>{const el=$('joy'+i);if(!j.on){el.hidden=true;return}el.hidden=false;el.style.left=j.ox+'px';el.style.top=j.oy+'px';const dx=j.x-j.ox,dy=j.y-j.oy,m=Math.hypot(dx,dy),k=m>50?50/m:1;el.firstChild.style.transform=`translate(${dx*k}px,${dy*k}px)`;el.firstChild.style.background=nPlayers===2?HERO[i].tag:'#fff'});
 }
 // ================================================================ HUD
@@ -2091,20 +2099,111 @@ function hud(){G.cashShow+=(G.cash-G.cashShow)*.2;if(Math.abs(G.cash-G.cashShow)
   $('hRaid').hidden=!G.raid.on;if(G.raid.on)$('hRaidN').textContent=G.raid.left;
   $('hPlv').textContent=G.plv;$('hXp').style.width=(100*G.xp/xpNeed())+'%';
   for(const p of G.players){$('pcv'+p.id).textContent=`${p.bag.length}/${cap(p)}`;$('pc'+p.id).classList.toggle('full',p.bag.length>=cap(p));$('hp'+p.id).style.width=p.hp+'%';if(!$('bti'+p.id))continue;$('bti'+p.id).style.width=p.warm+'%';$('bt'+p.id).classList.toggle('cold',p.warm<30&&!p.down);$('bt'+p.id).classList.toggle('warm',!!p.inHeat&&p.warm<99);const tw=TW();$('btt'+p.id).textContent=(p.down?(DES()?'干からびた…':'こごえた…'):p.buddy&&!p.inHeat?`${tw} ${p.warm|0}% ♥寄り添い`:p.warm<30?`${tw} ${p.warm|0}% あぶない！`:p.inHeat?(p.warm<99?`${tw} ${p.warm|0}% 回復中`:(DES()?'水分 100% うるおい':'体温 100% ぽかぽか')):`${tw} ${p.warm|0}% 下がり中`)}
-  if(G.mission<MISSIONS.length){const m=MISSIONS[G.mission],[c,g]=m.f();$('mN').textContent=`${G.mission+1}/${MISSIONS.length}`;$('mT').textContent=m.t;$('mP').textContent=`${Math.min(c,g)}/${g}`}
-  else{const g=goalOf(YR());$('mN').textContent=`${YR()}年目`;$('mT').textContent=`${g.n}を建てろ（かまどLv${g.lv}・町人${g.pop}人）`;$('mP').textContent=`$${g.c.toLocaleString()}`}}
+  if(storyHud()){}else if(G.mission<MISSIONS.length){const m=MISSIONS[G.mission],[c,g]=m.f();$('mN').textContent=`${G.mission+1}/${MISSIONS.length}`;$('mT').textContent=m.t;$('mP').textContent=`${Math.min(c,g)}/${g}`}
+  else{const g=goalOf(YR());$('mN').textContent=G.story&&CH[G.story.ch]?CH[G.story.ch].n:`${YR()}年目`;$('mT').textContent=`${g.n}を建てろ（かまどLv${g.lv}・町人${g.pop}人）`;$('mP').textContent=`$${g.c.toLocaleString()}`}}
 
 // ================================================================ flow
 function show(el,on){$(el).hidden=!on}
+
+// ================================================================ story mode (chapters + morning autosave)
+var gameMode=store.get('mw-mode','story');var SAVE_K='mw-story1';
+var CH={1:{n:'第1章',t:'ホワイトアウト',play:true,sub:'目標：町のシンボル像を建て、最後の夜を守りきれ',
+  intro:[['村長オルガ','よく来てくれた…この吹雪で、町のかまどの火が消えかけている'],['村長オルガ','木を切って薪をくべておくれ。火さえあれば、人は集まってくる']],
+  outro:'像のまわりで、みんなが久しぶりに笑った。\nけれどその夜明け、北の山から戻った斥候カイは青ざめていた。\n\n「家より大きな白い影を見た。熊どもは、あいつに従って動いてる…」\n\n町の人はそれを「白き王」と呼んだ。'},
+ 2:{n:'第2章',t:'白き王',play:true,sub:'王の正体をつきとめ、町を守りぬけ',
+  intro:[['斥候カイ','北の山で見た白い影…熊どもを束ねる“王”がいる'],['村長オルガ','去年より冬も厳しい。まずは守りを固めよう。見張り台を強くしておくれ']],
+  outro:'白き王は、灯台の光の下で雪に崩れ落ちた。\n吹雪が、ほんの少しだけ弱まった気がする。\n\n村長オルガ「王がいなくなっても、この冬は終わらない。\n南の砂の向こうに、冬の原因があると聞いたことがある…」\n\n――第3章「南への道」は制作中'},
+ 3:{n:'第3章',t:'南への道',play:false,sub:'（制作中）ここからは自由に町を育てよう'}};
+const FP=()=>{const r=ZONES[1].rect;return{x:(r[0]+r[2])/2,y:(r[1]+r[3])/2}};
+const stx=o=>typeof o.t==='function'?o.t():o.t;
+const kingOf=()=>G.bears.find(b=>b.king&&!b.dead);
+const SOBJ={2:[
+  {t:'見張り台を3つともLv2にしろ',f:()=>[TOWERS.filter(t=>G.lv['tw_'+t.id]>=2).length,3],tg:()=>{const t=TOWERS.find(t=>G.lv['tw_'+t.id]<2);return t?{x:t.x,y:t.y,h:50}:null}},
+  {t:'襲撃の夜を2回しのげ',f:()=>[G.story.raids||0,2],on:()=>{G.story.raids=0;say('斥候カイ','守りはできた。群れの動きを見たい。2晩しのいでくれ')}},
+  {t:'奥地の森で巨大な足跡を調べろ',f:()=>[G.story.fp?1:0,1],tg:()=>Object.assign(FP(),{h:60}),on:()=>{say('斥候カイ','襲ってくる数が明らかに増えてる。奥地の森に、王の足跡があるはずだ');say('斥候カイ','光っている場所を調べてきてくれ')}},
+  {t:'王の手下（ボスシロクマ）をたおせ',f:()=>[G.story.minion&&!G.bears.some(b=>b.id===G.story.minion&&!b.dead)?1:0,1],tg:()=>{const b=G.bears.find(b=>b.id===G.story.minion&&!b.dead);return b?{x:b.x,y:b.y,h:70}:null},on:()=>{say('斥候カイ','…でかい。しかも町の方へ続いてる。気をつけろ、手下が来るぞ！')}},
+  {t:()=>{const g=goalOf(2);return `${g.n}を建てろ（かまどLv${g.lv}・町人${g.pop}人）`},p:()=>`$${goalOf(2).c.toLocaleString()}`,f:()=>[G.monument?1:0,1],tg:()=>({x:MON.x,y:MON.y,h:60}),on:()=>{say('村長オルガ','手下を倒したか…王は光を嫌うという言い伝えがある');say('村長オルガ','氷の大灯台を建てれば、王をおびき出せるかもしれない')}},
+  {t:'白き王をたおし、灯台を守れ',p:()=>{const k=kingOf();return k?`王 HP ${Math.ceil(k.hp)}`:'今夜'},f:()=>[0,1],tg:()=>{const k=kingOf();return k?{x:k.x,y:k.y,h:90}:null},on:()=>{say('斥候カイ','灯台の光に王が気づいた…今夜、来るぞ！')}}]};
+const TALKQ=[];let talkT=0;
+function say(who,txt,local){if(TALKQ.length<8)TALKQ.push([who,txt]);if(!local&&NET.mode==='host'){NET.outS=NET.outS||[];if(NET.outS.length<6)NET.outS.push([who,txt])}}
+function tickTalk(dt){const el=$('talk');if(!el)return;if(!running){el.hidden=true;talkT=0;TALKQ.length=0;return}if(talkT>0){talkT-=dt;if(talkT<=0)el.hidden=true}
+  if(talkT<=0&&TALKQ.length){const [w,t]=TALKQ.shift();$('talkWho').textContent=w;$('talkTxt').textContent=t;el.hidden=true;void el.offsetWidth;el.hidden=false;talkT=Math.max(3.4,t.length*.14)}}
+function startLabel(room){let db=0;try{db=dbgBio}catch(_){}if(gameMode!=='story'||db)return room?'部屋を作って始める':'火を灯す';const d=store.get(SAVE_K,null);return (d?'つづきから':'第1章をはじめる')+(room?'（部屋を作る）':'')}
+function modeUI(){const st=gameMode==='story';$('mStory').setAttribute('aria-pressed',st);$('mFree').setAttribute('aria-pressed',!st);const d=store.get(SAVE_K,null),el=$('storyLine');
+  if(st){el.hidden=false;const C=d?(CH[d.story.ch]||CH[3]):CH[1];el.innerHTML=d?`つづき：<b>${C.n}「${C.t}」</b>　DAY ${d.day}${d.fresh?'（章のはじめ）':'の朝から'}`:'はじめから：<b>第1章「ホワイトアウト」</b><br>何日かに分けて遊べる。朝になるたび自動でセーブ';$('storyReset').hidden=!d;$('storyReset').textContent='ものがたりを最初からやり直す'}
+  else{el.hidden=true;$('storyReset').hidden=true}
+  $('dSeg').style.display=st&&d?'none':'';netLine()}
+$('mStory').addEventListener('click',()=>{gameMode='story';store.set('mw-mode',gameMode);modeUI()});
+$('mFree').addEventListener('click',()=>{gameMode='free';store.set('mw-mode',gameMode);modeUI()});
+$('storyReset').addEventListener('click',e=>{const b=e.currentTarget;if(!b.dataset.sure){b.dataset.sure='1';b.textContent='本当に消す？（もう一度押すと消えます）';setTimeout(()=>{delete b.dataset.sure;modeUI()},4000);return}delete b.dataset.sure;try{localStorage.removeItem(SAVE_K)}catch(_){}toast('ものがたりを最初からにしました','cold',true);modeUI()});
+setTimeout(()=>{try{modeUI()}catch(_){}},0);
+function saveData(){return{v:1,seed:G.seed,diff:G.diff,year:G.year,day:G.day,cash:Math.floor(G.cash),earned:Math.floor(G.earned),rep:G.rep,fuel:Math.max(45,G.fuel),woodpile:G.woodpile,level:G.level,rank:G.rank||0,
+  zones:Object.assign({},G.zones),lv:Object.assign({},G.lv),pm:Object.assign({},G.pm),stats:Object.assign({},G.stats),raidWins:G.raidWins,mission:G.mission,perk:Object.assign({},G.perkCount),yb:G.yearBonus||0,mg:G.metaGiven||0,
+  sec:G.secrets?G.secrets.map(q=>q.found?1:0):[],secS:G.secretS||0,stele:G.stele||0,pl:[0,1].map(i=>G.players[i]&&!(NET.mode==='host'&&i===1&&!NET.guestPeer)?{lv:Object.assign({},G.players[i].lv)}:(G.savePl&&G.savePl[i])||null),
+  wk:G.workers.map(w=>({r:w.role,st:w.st?w.st.id:null,tw:w.tw,slot:w.slot})),surv:G.surv.filter(q=>!q.frozen&&q.arrived).length,sleds:G.sleds.length,mon:G.monument?1:0,
+  story:JSON.parse(JSON.stringify(G.story)),at:Date.now()}}
+function snapSave(){if(!G||!G.story||NET.mode==='guest'||DES()||!running)return;store.set(SAVE_K,saveData())}
+function storyNew(np,seed){seed=seed||(1+((Math.random()*1e9)|0));
+  if(gameMode!=='story'||dbgBio){newGame(np,{seed,diff:gameDiff,biome:dbgBio});G.story=null;return seed}
+  const d=store.get(SAVE_K,null);if(d&&d.v===1){newGame(np,{seed:d.seed,diff:d.diff||0});applySave(d);return d.seed}
+  newGame(np,{seed,diff:gameDiff});G.story={ch:1,step:0,seen:{},raids:0};return G.seed}
+function applySave(d){G.year=d.year||1;G.day=d.day;G.t=(d.day-1)*G.DAY+.5;G.cash=d.cash;G.earned=d.earned;G.rep=d.rep;G.fuel=d.fuel;G.woodpile=d.woodpile||0;G.level=d.level;G.rank=d.rank||0;
+  Object.assign(G.lv,d.lv);Object.assign(G.pm,d.pm);Object.assign(G.stats,d.stats);G.raidWins=d.raidWins||0;G.mission=d.mission;G.perkCount=d.perk||{};G.yearBonus=d.yb;G.metaGiven=d.mg;G.savePl=d.pl;G._dm=null;
+  if(G.secrets&&d.sec)G.secrets.forEach((q,i)=>{if(d.sec[i]){q.found=true;if(q.m)q.m.visible=false}});G.secretS=d.secS||0;G.stele=d.stele||0;
+  for(const z of ZONES)if(d.zones[z.id]){G.zones[z.id]=true;z.fogT=1;z.fog.visible=false;z.sign.visible=false;for(const id in G.stations){const st=G.stations[id];if(st.def.zone===z.id){st.open=true;st.unlockT=0;st.parts.forEach(o=>o.visible=true);if(st.sign)st.sign.visible=false}}if(z.id==='D'){G.spa.on=true;G.spa.fuel=40}if(z.id==='C'){G.bossT=60;for(let i=0;i<4;i++)spawnBear('C',true)}}
+  for(const q of G.surv)world.remove(q.m.g);G.surv.length=0;const need=(d.wk||[]).length+(d.surv||0);for(let i=0;i<need;i++)spawnSurvivor(true);
+  for(const w of d.wk||[]){if(!hire(w.r,{x:CX,y:CY+80},w.st||undefined))continue;const nw=G.workers[G.workers.length-1];if(w.tw!=null)nw.tw=w.tw;if(w.slot!=null)nw.slot=w.slot}
+  while(G.sleds.length<(d.sleds||0))G.sleds.push({id:++G.nid,x:1500,y:1300,rider:null});
+  G.players.forEach((p,i)=>{if(d.pl&&d.pl[i])p.lv=Object.assign({gun:0,bag:0},d.pl[i].lv)});
+  G.story=JSON.parse(JSON.stringify(d.story));G.story.seen=G.story.seen||{};if(d.mon){G.monument=true;G.monV.visible=true;G.monV.scale.setScalar(.01);G.monPop=0;G.finalPending=true}
+  if(G.story.ch===2&&G.story.step===3)G.story.minion=0;G.story.king=0;G.story.back=!d.fresh}
+function storyIntro(){const S=G.story,C=CH[S.ch];if(!C)return;setTimeout(()=>{if(running&&G.story===S)banner(C.n,C.t,C.sub,'area')},3400);
+  if(!S.seen.intro){S.seen.intro=1;setTimeout(()=>{if(running&&G.story===S)for(const [w,t] of C.intro||[])say(w,t)},4500)}
+  else if(S.back)setTimeout(()=>{if(running&&G.story===S)say('村長オルガ',`おかえり。DAY ${G.day}の朝から続きだよ`)},4500)}
+function storyRaidEnd(){if(G.story)G.story.raids=(G.story.raids||0)+1}
+function beat(id,fn){const S=G.story;if(S.seen[id])return;S.seen[id]=1;fn()}
+function spawnMinion(){spawnBoss();const b=G.bears[G.bears.length-1],f=FP();b.x=f.x+140;b.y=f.y+40;b.m.g.position.set(b.x,0,b.y);b.hp=b.max=Math.round(b.max*1.3);G.story.minion=b.id}
+function spawnKing(){spawnRaider(true);const b=G.bears[G.bears.length-1];b.king=true;b.hp=b.max=Math.round(b.max*3);b.m.g.scale.multiplyScalar(1.5);G.story.kingId=b.id;G.shake=18;
+  setTimeout(()=>{if(running)banner('第2章','白き王が現れた！','巨大な王が灯台へ向かっている。囲んでたおせ','cold')},900);say('斥候カイ','あれが…白き王だ！ みんなで囲め！')}
+function updateStory(dt){const S=G.story;if(!S||DES())return;S.t=(S.t||0)+dt;const ph=(G.t%G.DAY)/G.DAY;
+  if(S.ch===1){
+    if(isNight()&&G.day===1)beat('n1',()=>say('斥候カイ','日が落ちると一気に冷える。かまどのそばを離れるなよ'));
+    if(G.day>=2&&ph>.45&&!isNight())beat('r1',()=>say('斥候カイ','北の森で熊どもがうろついてる。今夜あたり来るぞ。見張り台を建てておけ'));
+    if(G.zones.B)beat('zB',()=>say('村長オルガ','氷の湖か…昔はみんなで魚を焼いて冬を越したもんさ'));
+    if(G.zones.C)beat('zC',()=>say('斥候カイ','奥地の森で妙な足跡を見た。家ほどもある…ただの熊じゃない'));
+    if(G.zones.D)beat('zD',()=>say('村長オルガ','温泉が戻った！ これでみんな凍えずにすむ'));
+    if(G.monument)beat('mon',()=>{say('村長オルガ','像ができた…町の灯りがよみがえったね');say('斥候カイ','待て、森が騒がしい。今夜は総出で来るぞ！')})}
+  const L=SOBJ[S.ch];if(!L)return;
+  if(S.step===0&&!S.seen.s0&&S.t>9){S.seen.s0=1;L[0].on&&L[0].on()}
+  if(S.ch===2){if(S.step===2&&!S.fp&&G.players.some(p=>dist(p.x,p.y,FP().x,FP().y)<95)){S.fp=1;burst(FP().x,FP().y,30,40,{c:['#9fe0ff','#ffffff'],s0:60,s1:220,u0:120,u1:320,l0:.6,l1:1.2,add:true})}
+    if(S.step===3&&!S.minion)spawnMinion();
+    if(S.step>=5&&G.raid.on&&G.raid.final&&!S.king){S.king=1;spawnKing()}}
+  const o=L[S.step];if(o&&S.step<L.length-1){const [c,g]=o.f();if(c>=g){S.step++;const n=L[S.step];banner('目標達成！',stx(n),'','area');SFX.rare();n.on&&n.on();snapSave()}}}
+function storyHud(){const S=G.story,L=S&&SOBJ[S.ch];if(!L||DES())return false;const i=Math.min(S.step||0,L.length-1),o=L[i],[c,g]=o.f();$('mN').textContent=`${CH[S.ch].n} ${i+1}/${L.length}`;$('mT').textContent=stx(o);$('mP').textContent=o.p?o.p():`${Math.min(c,g)}/${g}`;return true}
+function storyT(gp){const S=G.story,L=S&&SOBJ[S.ch];if(!L||DES())return null;const o=L[Math.min(S.step||0,L.length-1)];return o.tg?o.tg(gp):null}
+function storyVis(){if(!G)return;const S=G.story,on=!!(S&&S.ch===2&&S.step===2&&!S.fp&&!DES());if(!on){if(G.fpV)G.fpV.visible=false;return}
+  if(!G.fpV||!G.fpV.parent){const g=new T.Group(),f=FP();const pm=new T.MeshBasicMaterial({color:lin('#2e4f73'),transparent:true,opacity:.6,depthWrite:false});
+    for(let i=0;i<9;i++){const m=M_(new T.CircleGeometry(1,20),pm,false);m.rotation.x=-Math.PI/2;m.scale.set(20,32,1);m.position.set(-260+i*62,1.2,(i%2?-26:26));m.rotation.z=Math.PI/2;g.add(m);
+      for(const t of [-1,0,1]){const c=M_(new T.CircleGeometry(1,10),pm,false);c.rotation.x=-Math.PI/2;c.scale.setScalar(6);c.position.set(-260+i*62+30,1.3,(i%2?-26:26)+t*14);g.add(c)}}
+    const beam=M_(new T.CylinderGeometry(46,46,620,20,1,true),new T.MeshBasicMaterial({color:lin('#9fe0ff'),transparent:true,opacity:.22,blending:T.AdditiveBlending,depthWrite:false,side:T.DoubleSide}),false);beam.position.y=310;g.add(beam);g.userData.beam=beam;
+    const sign=makeTextPlate('巨大な足跡',120,28,'rgba(255,250,240,.92)','#2e4f73',.5);sign.position.set(0,120,0);sign.userData.bb=true;g.add(sign);g.userData.sign=sign;
+    g.position.set(f.x,0,f.y);world.add(g);G.fpV=g}
+  G.fpV.visible=true;const t=performance.now()/1000;G.fpV.userData.beam.material.opacity=.16+Math.sin(t*2.2)*.08;G.fpV.userData.sign.quaternion.copy(camera.quaternion);G.fpV.userData.sign.position.y=120+Math.sin(t*1.6)*5}
+function storyEnd(cleared,why){$('again').textContent='もう一度';show('again',true);$('endTitle').style.fontSize='';$('endMsg').style.whiteSpace='pre-line';if(!G.story||DES())return;const C=CH[G.story.ch]||CH[3];
+  if(cleared){$('endTitle').innerHTML=`<span style="display:block;font-size:.5em">${C.n}</span>${C.t}<em> 完</em>`;$('endTitle').style.fontSize='46px';show('again',false);$('endMsg').textContent=C.outro||$('endMsg').textContent;const N=CH[G.story.ch+1];$('cont').textContent=N&&N.play?`${N.n}「${N.t}」へ`:'このまま続ける（続きの章は制作中）';
+    if(NET.mode==='guest')$('endBest').textContent='ホストが次の章に進むのを待っています…';
+    else{const d=saveData();d.year=G.year+1;d.day=G.day+1;d.yb=(G.yearBonus||0)+15*G.year;d.mon=0;d.fuel=100;d.story={ch:G.story.ch+1,step:0,seen:{},raids:0};d.fresh=1;store.set(SAVE_K,d)}}
+  else{$('endMsg').textContent+='\n\nものがたりは「今日の朝」から続けられる。';$('again').textContent=NET.mode==='guest'?'もう一度参加':'今日の朝からやり直す'}}
+
 function startGame(){audioOn();
   if(nPlayers===2){if(!NET.room){toast('オンラインはこの環境では使えないので、1人で始めます','cold',true);NET.mode='solo';newGame(1)}
     else{const hp=hostPeerNow();if(hp&&hp.presence.seed){NET.mode='guest';NET.hostPeer=hp.peer;NET.hostSeed=hp.presence.seed;NET.hostMiss=0;newGame(2,{seed:hp.presence.seed,guest:true,chars:[hp.presence.ch||'Rogue_Hooded',altCh(hp.presence.ch||'Rogue_Hooded',meta.pick)],diff:hp.presence.df||0,biome:hp.presence.bi||0});NET.room.presence({role:'guest',x:G.players[1].x|0,y:G.players[1].y|0,d:0,ch:meta.pick||'Knight'}).catch(()=>{})}
-      else{NET.mode='host';NET.guestPeer=null;NET.endInfo=null;const seed=1+((Math.random()*1e9)|0);newGame(1,{seed,diff:gameDiff,biome:dbgBio});NET.room.presence({role:'host',seed,ch:meta.pick||'Rogue_Hooded',df:gameDiff,bi:dbgBio}).catch(()=>{})}}}
-  else{NET.mode='solo';newGame(1,{diff:gameDiff,biome:dbgBio})}
+      else{NET.mode='host';NET.guestPeer=null;NET.endInfo=null;const seed=1+((Math.random()*1e9)|0);const sd=storyNew(1,seed);NET.room.presence({role:'host',seed:sd,ch:meta.pick||'Rogue_Hooded',df:G.diff,bi:dbgBio}).catch(()=>{})}}}
+  else{NET.mode='solo';storyNew(1)}
   running=true;updateCam(0,true);show('title',false);show('end',false);show('perk',false);show('hud',true);show('bottom',true);show('side',true);hudInit();tq.length=0;checkAch();
   if(DES())setTimeout(()=>{if(running)toast('砂漠：昼は動くほどのどが渇く。夜のうちに湧き水をくみ、キャラバンの注文に応えよう','cold',true)},6000);
-  banner(DES()?'砂漠の町':'今回の町',`${G.mods[0].t}／${G.mods[1].t}`,`◎${G.mods[0].d}　✕${G.mods[1].d}`,'',true);setTimeout(()=>{if(running)toast('目標：町のシンボル像を建てろ','gold',true)},3200);
-  if(NET.mode==='host')toast('部屋を作った！ 友達がこのページを開くと参加できる','gold',true);if(NET.mode==='guest')toast('友達の部屋に参加した！','gold',true)}
+  banner(DES()?'砂漠の町':'今回の町',`${G.mods[0].t}／${G.mods[1].t}`,`◎${G.mods[0].d}　✕${G.mods[1].d}`,'',true);setTimeout(()=>{if(running&&!G.story)toast('目標：町のシンボル像を建てろ','gold',true)},3200);
+  if(NET.mode==='host')toast('部屋を作った！ 友達がこのページを開くと参加できる','gold',true);if(NET.mode==='guest')toast('友達の部屋に参加した！','gold',true);if(G.story&&NET.mode!=='guest')storyIntro()}
 function settleShards(cleared){const earnedS=Math.round(Math.max(1,Math.floor(Math.sqrt(Math.max(0,G.earned))/7)+G.day+G.raidWins*2+(G.stats.haul||0)+(cleared?15*YR():0)+(G.yearBonus||0)+(G.secretS||0))*DM().sh),gainS=Math.max(0,earnedS-G.metaGiven);G.metaGiven=earnedS;meta.shards+=gainS;store.set('mw2-meta',meta);return gainS}
 function endGame(cleared,why){if(NET.mode==='host'&&NET.guestPeer){NET.endInfo={c:cleared?1:0,w:why||''};sendSnap()}running=false;for(const j of joys)j.on=false;show('perk',false);
   best={day:Math.max(best.day,G.day),earned:Math.max(best.earned,Math.round(G.earned)),cleared:best.cleared||cleared,area:Math.max(best.area,1+Object.values(G.zones).filter(Boolean).length)};store.set('mw2-best',best);
@@ -2114,10 +2213,10 @@ function endGame(cleared,why){if(NET.mode==='host'&&NET.guestPeer){NET.endInfo={
   $('endStats').innerHTML=[[`DAY ${G.day}`,'生き延びた日数'],[`$${Math.round(G.earned).toLocaleString()}`,'総売上'],[`${1+Object.values(G.zones).filter(Boolean).length}/4`,'解放エリア']].map(([v,l])=>`<div><b>${v}</b><small>${l}</small></div>`).join('');
   const gainS=settleShards(cleared);
   $('endShard').textContent=`★ 星のかけら +${gainS}（合計 ${meta.shards}）タイトルで強化できる`;
-  $('endBest').textContent=`ベスト：DAY ${best.day}・$${best.earned.toLocaleString()}${best.cleared?'・町完成':''}`;$('endBadges').innerHTML=badgesHtml(G.newAch);show('cont',cleared&&NET.mode!=='guest');$('cont').textContent=`${YR()+1}年目へ（${DM().n}）`;if(cleared&&NET.mode==='guest')$('endBest').textContent='ホストが次の年に進むのを待っています…';show('end',true);show('hud',false);show('bottom',false);show('side',false);$('combo').hidden=true;$('feverFx').classList.remove('on')}
+  $('endBest').textContent=`ベスト：DAY ${best.day}・$${best.earned.toLocaleString()}${best.cleared?'・町完成':''}`;$('endBadges').innerHTML=badgesHtml(G.newAch);show('cont',cleared&&NET.mode!=='guest');$('cont').textContent=`${YR()+1}年目へ（${DM().n}）`;if(cleared&&NET.mode==='guest')$('endBest').textContent='ホストが次の年に進むのを待っています…';show('end',true);show('hud',false);show('bottom',false);show('side',false);$('combo').hidden=true;$('feverFx').classList.remove('on');storyEnd(cleared,why)}
 function toTitle(){if(NET.room&&NET.mode!=='solo')NET.room.presence({role:'idle',seed:null,x:null,y:null,d:null}).catch(()=>{});NET.mode='solo';NET.guestPeer=null;NET.hostPeer=null;running=false;for(const j of joys)j.on=false;show('end',false);show('perk',false);show('hud',false);show('bottom',false);show('side',false);$('combo').hidden=true;$('feverFx').classList.remove('on');$('banner').hidden=true;
   $('bestLine').textContent=best.day?`ベスト：DAY ${best.day}・総売上 $${best.earned.toLocaleString()}${best.cleared?'・町完成':''}　実績 ${ACH.filter(a=>ach.has(a.id)).length}/${ACH.length}`:'はじめての冬';
-  $('metaN').textContent=meta.shards;renderDiff();newGame(1);updateCam(0,true);show('title',true);netLine()}
+  $('metaN').textContent=meta.shards;renderDiff();newGame(1);updateCam(0,true);show('title',true);modeUI()}
 function renderMeta(){$('metaN').textContent=$('metaN2').textContent=meta.shards;
   const up=META_UP.map(u=>{const l=mlv(u.id),mx=u.max||5,c=(u.cost||META_COST)[l];return `<div class="mrow"><i>${u.k}</i><div><b>${u.t}</b><span class="pips">${Array.from({length:mx},(_,k)=>`<s class="${k<l?'on':''}"></s>`).join('')}</span><small>${l?u.d(l):'まだ強化していない'}${l<mx&&mx>1?` → ${u.d(l+1)}`:''}</small></div><button data-u="${u.id}" ${l>=mx||meta.shards<c?'disabled':''}>${l>=mx?(mx>1?'MAX':'OK'):'★'+c}</button></div>`}).join('');
   const ch=META_CHARS.map(c=>{const own=meta.chars.includes(c.id),use=meta.pick===c.id;return `<div class="mrow"><i>${c.t[0]}</i><div><b>${c.t}</b><small>${CLS[c.id]?CLS[c.id].n+'：'+CLS[c.id].d:''}<br>${use?'使用中':own?'持っている':'買うと使える'}</small></div><button data-c="${c.id}" ${use||(!own&&meta.shards<c.c)?'disabled':''}>${use?'使用中':own?'使う':'★'+c.c}</button></div>`}).join('');
@@ -2141,7 +2240,7 @@ $('p1').addEventListener('click',()=>setPlayers(1));$('p2').addEventListener('cl
 $('start').addEventListener('click',startGame);$('again').addEventListener('click',startGame);$('toTitle').addEventListener('click',toTitle);$('quit').addEventListener('click',toTitle);
 function nextYear(){G.yearBonus=(G.yearBonus||0)+15*G.year;G.year++;G.monument=false;G.monPop=0;G.finalPending=false;G.raid.on=false;G.mission=MISSIONS.length;G.endless=false;NET.endInfo=null;
   const g=goalOf(G.year);banner(`${G.year}年目`,'もっと厳しい冬が来る',`寒さ・燃料・襲撃・食費が強くなった。目標：${g.n}（$${g.c.toLocaleString()}・町人${g.pop}人・かまどLv${g.lv}）`,'cold');SFX.wave()}
-$('cont').addEventListener('click',()=>{nextYear();running=true;show('end',false);show('hud',true);show('bottom',true);show('side',true)});
+$('cont').addEventListener('click',()=>{nextYear();if(G.story){G.story={ch:G.story.ch+1,step:0,seen:{},raids:0};storyIntro()}running=true;show('end',false);show('hud',true);show('bottom',true);show('side',true)});
 // adaptive quality: drop bloom and shadow resolution on slow devices
 const QL=[{n:'低',pr:.7,sh:0,fx:0,decor:0,snow:.3},{n:'中',pr:1,sh:2048,fx:0,decor:.45,snow:.55},{n:'高',pr:Math.min(devicePixelRatio||1,2),sh:4096,fx:1,decor:1,snow:1}];
 window.GQ=null;const GQ=window.GQ={mode:store.get('mw2-gfx','auto'),tier:2,snow:1};const FX0=composer;
