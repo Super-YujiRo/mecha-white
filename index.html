@@ -1304,7 +1304,7 @@ function followNet(p,dt){const px=p.x,py=p.y;if(p.nx!=null){const k=Math.min(1,d
 function netHost(dt){const gp=guestPeerNow();
   if(gp&&NET.guestPeer!==gp.peer){if(G.players[1])dropRemote();NET.guestPeer=gp.peer;G.charOf[1]=altCh(G.charOf[0],gp.presence&&gp.presence.ch);const p=addPlayer(1);p.remote=true;p.x=CX+30;p.y=CY+110;hudInit();toast('友達が参加した！','gold');SFX.rare();setTimeout(()=>{if(running)banner('2人専用','協力ワザ','挟み撃ちでダメージ2倍・寄り添うと体温が下がりにくい・巨大肉は2人で運ぶ','area')},2500)}
   if(!gp&&NET.guestPeer){dropRemote();NET.guestPeer=null;toast('友達が抜けた','cold')}
-  const p=G.players[1];if(p&&gp){const pr=gp.presence;if(typeof pr.x==='number'&&typeof pr.y==='number'){p.nx=clamp(pr.x,30,WORLD-30);p.ny=clamp(pr.y,30,WORLD-30);p.dirN=typeof pr.d==='number'?pr.d:null}}
+  const p=G.players[1];if(p&&gp){const pr=gp.presence;if(typeof pr.fk==='number'){if(p._fk!=null&&pr.fk!==p._fk)p.fPress=true;p._fk=pr.fk}if(typeof pr.x==='number'&&typeof pr.y==='number'){p.nx=clamp(pr.x,30,WORLD-30);p.ny=clamp(pr.y,30,WORLD-30);p.dirN=typeof pr.d==='number'?pr.d:null}}
   NET.sendT+=dt;if(NET.guestPeer&&NET.sendT>=.12){NET.sendT=0;sendSnap()}}
 function dropRemote(){const p=G.players[1];if(!p)return;for(const k of p.bag)dropItem(p.x,p.y,k,20);world.remove(p.m.g);G.players.length=1;for(const h of G.holes)if(h.user===p)h.user=null;hudInit()}
 function safeEmit(tp,d){if(!NET.room)return;let s=JSON.stringify(d);let guard=0;const LIM=PJ.on?200000:3800;while(s.length>LIM&&guard++<8){let big=null,bl=0;for(const k in d)if(Array.isArray(d[k])){const l=JSON.stringify(d[k]).length;if(l>bl){bl=l;big=k}}if(!big)break;d[big]=d[big].slice(0,Math.floor(d[big].length*.7));s=JSON.stringify(d)}
@@ -1371,7 +1371,7 @@ function guestTick(dt){
   fenceCollide(me,px,py);solids(me,12);for(const t of G.trees)if(t.alive&&t.fall<=0&&Math.abs(t.x-me.x)<30&&Math.abs(t.y-me.y)<30)pushCircle(me,t.x,t.y,18*t.s);
   me.bb=lerp(me.bb,0,dt*8);me.flash=Math.max(0,me.flash-dt);me.inv=Math.max(0,me.inv-dt);
   if(me.shooting){const b=nearestBear(me);if(b)me.aimDir=Math.atan2(b.x-me.x,b.y-me.y)}else if(me.chopping){const t=nearestTree(me);if(t)me.aimDir=Math.atan2(t.x-me.x,t.y-me.y)}else me.aimDir=null;
-  NET.room.presence({role:'guest',x:me.x|0,y:me.y|0,d:r2(me.dir),ch:meta.pick||'Knight'}).catch(()=>{});
+  NET.room.presence({role:'guest',x:me.x|0,y:me.y|0,d:r2(me.dir),ch:meta.pick||'Knight',fk:NET.fCount||0}).catch(()=>{});
   const host=G.players[0];followNet(host,dt);if(host.shooting){const b=nearestBear(host);if(b)host.aimDir=Math.atan2(b.x-host.x,b.y-host.y)}else if(host.chopping){const t=nearestTree(host);if(t)host.aimDir=Math.atan2(t.x-host.x,t.y-host.y)}else host.aimDir=null;
   for(const b of G.bears){if(b.dead){b.deadT+=dt;continue}glide(b,dt,8);b.hit=Math.max(0,b.hit-dt);b.roar=Math.max(0,b.roar-dt);b.step+=b.moving?dt*6:0}
   for(const m of G.pickups){if(m.nx!=null){m.x=lerp(m.x,m.nx,Math.min(1,dt*12));m.y=lerp(m.y,m.ny,Math.min(1,dt*12))}}
@@ -1415,10 +1415,10 @@ function give(p,k,n){let c=0;for(let i=0;i<n&&p.bag.length<cap(p);i++){p.bag.pus
 function take(p,k){const i=p.bag.lastIndexOf(k);if(i<0)return false;p.bag.splice(i,1);return true}
 function updateSled(p,dt){dt=dt||.016;const sl=G.sleds.find(q=>q.rider===p.id);const fd=dist(p.x,p.y,CX,CY);
   if(sl){sl.x=p.x;sl.y=p.y;if(fd>FR+20)p.rodeOut=true;if(sl.pass&&fd<FR-30){sl.pass=0;spawnSurvivor(false);const s=G.surv[G.surv.length-1];s.x=p.x;s.y=p.y;s.warm=100;s.m.g.position.set(s.x,0,s.y);const R=G.rescue;if(R&&R.kind==='sled'&&R.state==='wait'){R.saved++;float(p.x,p.y,90,`町へ運んだ！ ${R.saved}/${R.n}`,'gold',true);SFX.rare()}}
-  if(fd<FR-20&&!p.moving)p.sledStill=(p.sledStill||0)+dt;else p.sledStill=0;
-  if((p.rodeOut&&fd<FR-50)||p.down>0||p.sledStill>.9){p.sledStill=0;if(sl.pass&&p.down>0){sl.pass=0;const R=G.rescue;if(R&&R.kind==='sled')R.left++}sl.rider=null;p.riding=false;p.rodeOut=false;p.sledCd=2.5;sl.x=p.x;sl.y=p.y+48;const c0=cap(p);if(p.bag.length>c0){sl.cargo=(sl.cargo||[]).concat(p.bag.splice(c0));toast(`犬ぞりから降りた（入りきらない${sl.cargo.length}個はそりに積んだまま）`,'gold')}else toast('犬ぞりから降りた','gold')}return}
-  p.riding=false;p.sledCd=Math.max(0,(p.sledCd||0)-.016);if(p.sledCd>0||p.down>0)return;
-  for(const q of G.sleds)if(q.rider==null&&dist(p.x,p.y,q.x,q.y)<30){q.rider=p.id;p.riding=true;p.rodeOut=false;if(q.cargo&&q.cargo.length){p.bag.push(...q.cargo);q.cargo=[]}SFX.rare();toast(`犬ぞりに乗った！ 荷物+${SLED_CAP}個・速い・寒さに強い（柵の中で止まると降りる）`,'gold');burst(q.x,q.y,20,16,{c:['#ffffff','#ffd23f'],s0:40,s1:140,l0:.4,l1:.8});break}}
+  const fp=p.fPress;p.fPress=false;
+  if(fp||p.down>0){if(sl.pass&&p.down>0){sl.pass=0;const R=G.rescue;if(R&&R.kind==='sled')R.left++}sl.rider=null;p.riding=false;p.rodeOut=false;p.sledCd=2.5;sl.x=p.x;sl.y=p.y+48;const c0=cap(p);if(p.bag.length>c0){sl.cargo=(sl.cargo||[]).concat(p.bag.splice(c0));toast(`犬ぞりから降りた（入りきらない${sl.cargo.length}個はそりに積んだまま）`,'gold')}else toast('犬ぞりから降りた','gold')}return}
+  p.riding=false;const fp2=p.fPress;p.fPress=false;if(!fp2||p.down>0)return;
+  for(const q of G.sleds)if(q.rider==null&&dist(p.x,p.y,q.x,q.y)<60){q.rider=p.id;p.riding=true;p.rodeOut=false;if(q.cargo&&q.cargo.length){p.bag.push(...q.cargo);q.cargo=[]}SFX.rare();toast(`犬ぞりに乗った！ 荷物+${SLED_CAP}個・速い・寒さに強い（Fキーで降りる）`,'gold');burst(q.x,q.y,20,16,{c:['#ffffff','#ffd23f'],s0:40,s1:140,l0:.4,l1:.8});break}}
 function playerActions(p,dt,R){updateSled(p,dt);if(inBath(p)&&!p.riding){p.warm=Math.min(100,p.warm+40*dt);p.bathT=(p.bathT||0)+dt;if(p.bathT>6){p.bathT=0;float(p.x,p.y,50,['いい湯だな〜','ふぅ〜','極楽…'][Math.floor(Math.random()*3)],'gold')}}else p.bathT=0;updateKettle(p,dt);p.riding=G.sleds.some(q=>q.rider===p.id);
   const fd=dist(p.x,p.y,CX,CY),inHeat=fd<R||spaWarm(p.x,p.y);
   p.inHeat=inHeat;
@@ -1940,7 +1940,7 @@ function updateCam(dt,snap){const ps=NET.mode==='solo'?G.players:[G.players[G.me
   let z=1;if(ps.length>1)z=clamp(Math.min(1,700/(Math.hypot(x1-x0,y1-y0)+300)),.5,1);
   if(G.camPan&&G.camPan.t<2.2){G.camPan.t+=dt;const k=G.camPan.t<.5?G.camPan.t/.5:G.camPan.t>1.7?1-(G.camPan.t-1.7)/.5:1;cx=lerp(cx,G.camPan.x,k*.85);cy=lerp(cy,G.camPan.y,k*.85);z=lerp(z,.62,k)}
   cam.z=snap?z:lerp(cam.z,z,Math.min(1,dt*3));if(snap){cam.x=cx;cam.y=cy}else{cam.x=lerp(cam.x,cx,Math.min(1,dt*6));cam.y=lerp(cam.y,cy,Math.min(1,dt*6))}}
-function hideIdleFx(dt){secretFx(dt||.016);roadFx()}
+function hideIdleFx(dt){secretFx(dt||.016);roadFx();const me=G.players[G.me]||G.players[0];if(me&&G.sleds){if(me.riding)label(me.x,me.y,120,'<small>Fキーで降りる</small>','');else{const q=G.sleds.find(q=>q.rider==null&&dist(me.x,me.y,q.x,q.y)<90);if(q)label(q.x,q.y,50,'<b>Fキーで乗る</b>','gold')}}}
 function monBar(){if(G.raid&&G.raid.on&&G.raid.final&&G.monMax&&G.monV&&G.monV.visible)label(G.monV.position.x,G.monV.position.z,170,bar(100*Math.max(0,G.monHP)/G.monMax,'red'),'')}
 function frozenFx(){for(const v of G.surv)if(v.frozen&&v.m&&v.m.g.visible)label(v.x,v.y,82,`<b>凍えた町人</b><br><small>そばに立つと溶ける</small><br>${bar(100*Math.min(1,v.warm/35),'gold wide')}`,'ice')}
 function hideIdle(){let shown=0;for(const v of G.surv){const idle=v.arrived&&!v.frozen;const vis=!idle||shown++<5;if(v.m&&v.m.g.visible!==vis)v.m.g.visible=vis}}
@@ -2048,6 +2048,7 @@ function checkPerf(){tickFps(Math.min(.25,(performance.now()-(checkPerf.l||perfo
 
 $('gfx').addEventListener('click',()=>{const order=['auto',2,1,0];GQ.mode=order[(order.indexOf(GQ.mode)+1)%4];store.set('mw2-gfx',GQ.mode);applyGfx(GQ.mode==='auto'?2:GQ.mode);perf={t0:0,f:0,skip:0};toast(GQ.mode==='auto'?'画質：自動（重いと自動で下げます）':'画質：'+QL[GQ.tier].n,'gold')});
 function gpuWarn(){if(!SOFTGL)return;const el=$('gpuWarn');el.hidden=false;el.innerHTML='⚠ ブラウザの<b>グラフィックアクセラレーションがオフ</b>になっていて、とても重くなります。<br>Chromeの「設定 → システム →<br>グラフィック アクセラレーションが使用可能な場合は使用する」をオンにして再起動してね';setTimeout(()=>toast('グラフィックアクセラレーションがオフなので重いです（タイトル画面に直し方）','cold',true),1500)}
+addEventListener('keydown',e=>{if(e.code!=='KeyF'||e.repeat||!running)return;if(e.target&&e.target.tagName==='INPUT')return;if(NET.mode==='guest'){NET.fCount=(NET.fCount||0)+1}else{const me=G.players[G.me]||G.players[0];if(me)me.fPress=true}});
 function boot(){gpuWarn();setPlayers(new URLSearchParams(location.search).get('room')?2:1);toTitle();applyGfx(GQ.mode==='auto'?2:GQ.mode);$('loading').hidden=true;if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(G&&G.pads)for(const q of G.pads)q._key=null});requestAnimationFrame(loop)}
 $('loading').textContent='町を組み立てています…';loadKK().catch(e=>{console.warn('assets',e);KK=null;window.__kkErr=String(e&&e.message||e)}).then(()=>{boot();if(!KK){$('credit').textContent='3D素材を読み込めませんでした（'+(window.__kkErr||'ローダーなし')+'）';setTimeout(()=>toast('3D素材を読み込めなかったので簡易表示です','cold',true),800)}});
 let last=performance.now();
