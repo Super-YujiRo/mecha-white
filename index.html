@@ -614,11 +614,11 @@ function kkChar(name,o){o=o||{};const model=T.SkeletonUtils.clone(KK.chars[name]
 function kkAct(m,name){const k=m.kk;if(!k||k.cur===name||!k.acts[name])return;const a=k.acts[name],b=k.acts[k.cur];a.reset();a.setEffectiveTimeScale(1);a.play();if(b)a.crossFadeFrom(b,.18,false);k.cur=name}
 function kkTick(m,moving,run){const k=m.kk;if(!k)return;const now=performance.now(),dt=Math.min(.1,(now-k.last)/1000);k.last=now;if(k.paused)return;
   kkAct(m,k.want||(moving?(run?'Running_A':'Walking_A'):'Idle'));k.want=null;k.mixer.update(dt)}
-const CLS={Rogue_Hooded:{n:'クロスボウ',d:'ふつうの遠距離。扱いやすい',rng:190,rate:1,dmg:1,anim:'1H_Ranged_Shooting',w:null,fx:'bolt'},
-  Rogue:{n:'大型クロスボウ',d:'射程が長く一撃が重い。連射は遅い',rng:255,rate:1.7,dmg:2.1,anim:'2H_Ranged_Shooting',w:['2H_Crossbow'],fx:'bolt'},
-  Knight:{n:'剣と盾',d:'近づいて斬る。攻撃力が高く、受けるダメージ半減・斬ると熊がひるむ・斬るたび回復',rng:98,rate:.72,dmg:3.6,anim:'1H_Melee_Attack_Slice_Diagonal',w:['1H_Sword','Round_Shield'],fx:'slash',armor:.5,stun:.7,heal:4},
-  Barbarian:{n:'大斧',d:'回転斬りで周りの熊をまとめて攻撃・受けるダメージ25%減・当てるたび回復',rng:115,rate:1,dmg:2.8,cleave:true,anim:'2H_Melee_Attack_Spin',w:['2H_Axe'],fx:'spin',armor:.75,stun:.35,heal:2},
-  Mage:{n:'魔法の杖',d:'魔法弾が爆発して周りにもダメージ',rng:215,rate:1.2,dmg:1.15,splash:65,anim:'Spellcast_Shoot',w:['2H_Staff'],fx:'magic'}};
+const CLS={Rogue_Hooded:{n:'クロスボウ',d:'ふつうの遠距離。安全に戦える',rng:190,rate:1,dmg:1,anim:'1H_Ranged_Shooting',w:null,fx:'bolt'},
+  Rogue:{n:'大型クロスボウ',d:'射程が一番長く一撃が重い。連射は遅い',rng:250,rate:1.6,dmg:2.2,anim:'2H_Ranged_Shooting',w:['2H_Crossbow'],fx:'bolt'},
+  Knight:{n:'剣と盾',d:'近づいて斬る。受けるダメージ40%減・熊が少しひるむ・斬ると少し回復',rng:90,rate:.9,dmg:2,anim:'1H_Melee_Attack_Slice_Diagonal',w:['1H_Sword','Round_Shield'],fx:'slash',armor:.6,stun:.35,heal:2},
+  Barbarian:{n:'大斧',d:'回転斬りで周りの熊をまとめて攻撃・受けるダメージ20%減',rng:105,rate:1.15,dmg:1.9,cleave:true,anim:'2H_Melee_Attack_Spin',w:['2H_Axe'],fx:'spin',armor:.8,stun:.2,heal:1.5},
+  Mage:{n:'魔法の杖',d:'魔法弾が爆発して周りにもダメージ。群れに強い',rng:215,rate:1.15,dmg:1.3,splash:70,anim:'Spellcast_Shoot',w:['2H_Staff'],fx:'magic'}};
 const clsOf=p=>CLS[(G&&G.charOf&&G.charOf[G.players.indexOf(p)])||'Rogue_Hooded']||CLS.Rogue_Hooded;
 const armorOf=t=>G.players.includes(t)?(clsOf(t).armor||1):1;
 function heroKK(look,i){const nm=(G&&G.charOf&&G.charOf[i])||(i?'Knight':'Rogue_Hooded');const r=kkChar(KK.chars[nm]?nm:'Rogue_Hooded',{height:52,blob:15});
