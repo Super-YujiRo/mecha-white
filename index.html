@@ -1878,7 +1878,7 @@ function sync(dt){
     if(cooking)label(d.conv.x,d.conv.y,70,bar(100*st.cookT/(d.time*Math.pow(.74,G.lv['cook_'+id])*G.pm.cook),'gold'),'')}
   // pads
   for(const pad of G.pads){const vis=(!pad.zone||G.zones[pad.zone])&&pad.vis();if(vis&&!pad.shown){pad.shown=true;pad.rise=0;pad.mesh.g.visible=true}if(!vis&&pad.shown){pad.shown=false;pad.mesh.g.visible=false}
-    if(!pad.shown)continue;pad.rise=Math.min(1,pad.rise+dt*2);const on=G.onPads&&G.onPads.has(pad);const req=pad.req?pad.req():(pad.pop&&!idleSurvivors().length?'生存者を待っています':null);
+    if(!pad.shown)continue;if(pad.personal){const q=meP(),mine=q&&pad.costP(q)!=null;if(pad.mesh.g.visible!==mine)pad.mesh.g.visible=mine;if(!mine)continue}pad.rise=Math.min(1,pad.rise+dt*2);const on=G.onPads&&G.onPads.has(pad);const req=pad.req?pad.req():(pad.pop&&!idleSurvivors().length?'生存者を待っています':null);
     if(pad.personal){const q=meP();pad.paid=q?(pad.pp[q.id]||0):0}pad.mesh.draw(pad.cost(),pad.paid,pad.lvText(),on,req,mixLeft(pad));pad.mesh.mesh.scale.setScalar(easeOutBack(pad.rise)*(1+pad.pulse*.3+(on?.06:0)));pad.mesh.icon.position.y=56+Math.sin(G.t*2.4+pad.x)*4;pad.mesh.icon.rotation.y=G.t*1.2+pad.y;pad.mesh.icon.scale.setScalar(easeOutBack(pad.rise))}
   // zones
   for(const z of ZONES){if(z.fogT>=0&&z.fogT<1){z.fogT=Math.min(1,z.fogT+dt*.7);z.fog.material.opacity=.93*(1-z.fogT);z.fog.scale.y=Math.max(.01,1-z.fogT);z.sign.material.opacity=1-z.fogT;if(z.fogT>=1){z.fog.visible=false;z.sign.visible=false}}
