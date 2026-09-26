@@ -1630,7 +1630,7 @@ function secretFx(dt){if(!G.secrets)return;const me=G.players[G.me]||G.players[0
     if(q.rune)q.rune.material.color.copy(lin(d<300?(Math.sin(G.t*4)>0?'#aef4ff':'#5fd6f5'):'#3f7f95'));
     if(q.p>0&&q.t!=='nushi'&&q.t!=='stele')label(q.x,q.y,q.t==='trav'?80:50,bar(100*q.p/(q.t==='dig'?1.6:4),'gold'),'')}
   G.secFound=found}
-function raidReport(){const R=G.raid;let left=0;while(popNow()>houseCap()){const idle=G.surv.filter(v=>v.arrived&&!v.frozen);if(idle.length){const v=idle[idle.length-1];world.remove(v.m.g);G.surv.splice(G.surv.indexOf(v),1)}else{const w=G.workers.find(q=>q.role!=='cashier')||G.workers[0];if(!w)break;world.remove(w.m.g);G.workers.splice(G.workers.indexOf(w),1)}left++}
+function raidReport(){const R=G.raid;let left=0;while(popNow()>houseCap()){const idle=G.surv.filter(v=>v.arrived&&!v.frozen);if(idle.length){const v=idle[idle.length-1];world.remove(v.m.g);G.surv.splice(G.surv.indexOf(v),1)}else{const w=G.workers.find(q=>q.role!=='cashier')||G.workers[0];if(!w)break;world.remove(w.m.g);G.workers.splice(G.workers.indexOf(w),1);if(w.st&&w.st.cashier===w)w.st.cashier=null}left++}
   const parts=[];if(R.dmgH)parts.push(`家${R.dmgH}軒が壊れた`);if(R.dmgW)parts.push(`${R.dmgW}人がけが`);if(R.dmgT)parts.push(`${R.dmgT}人がさらわれた`);if(left)parts.push(`住む家がなく${left}人が町を去った`);
   if(parts.length)setTimeout(()=>{if(running)toast('昨夜の被害：'+parts.join('・'),'cold',true)},2200)}
 function updateRaid(dt){const ph=(G.t%G.DAY)/G.DAY,night=ph>.72,R=G.raid;
