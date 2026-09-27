@@ -57,7 +57,7 @@ function playerActions(p,dt,R){updateSled(p,dt);if(inBath(p)&&!p.riding){p.warm=
     if(cl.stun)tgt.atkCd=Math.max(tgt.atkCd||0,cl.stun);if(cl.heal)p.hp=Math.min(100,p.hp+cl.heal);
     if(cl.splash){for(const b of G.bears){if(b.dead||b===tgt)continue;if(dist(tgt.x,tgt.y,b.x,b.y)<cl.splash)shoot(tgt,b,dmg*.6,true,'none')}}
     shoot(p,tgt,dmg,true,cl.fx)}}
-  else{let tree=null,tdd=48;if(p.bag.length<cap(p)&&!p.riding)for(const t of G.trees){if(!t.alive||t.fall>0||(t.zone&&!G.zones[t.zone]))continue;const d=dist(p.x,p.y,t.x,t.y);if(d<tdd){tdd=d;tree=t}}
+  else{let tree=null,tdd=48;if(p.bag.length<cap(p)&&!p.riding&&!ADV())for(const t of G.trees){if(!t.alive||t.fall>0||(t.zone&&!G.zones[t.zone]))continue;const d=dist(p.x,p.y,t.x,t.y);if(d<tdd){tdd=d;tree=t}}
     if(tree){p.chopping=tree;p.aimDir=Math.atan2(tree.x-p.x,tree.y-p.y);p.actT+=dt;if(p.actT>.24*G.pm.chop*G.mod.chop/lifeB(p,'wood',.07)){p.actT=0;hitTree(tree,p.x,p.y,true);const got=give(p,tree.item||'log',G.feverT>0?2:1);G.stats.chopped+=got;lifeXp(p,'wood',1);cnt(p,'chop',got);SFX.chop();addCombo(2);gainXP(1);float(tree.x,tree.y,60,`+${got}`,'gold');G.shake=Math.max(G.shake,2);if(G.stats.chopped%30<got)spawnChest(tree.x+rnd(-25,25),tree.y+rnd(-25,25))}}
     else{p.aimDir=null;p.actT=Math.min(p.actT,.3)}}
   // fishing

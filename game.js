@@ -1,5 +1,5 @@
 /* めちゃホワイト — built from src/*.js by tools/build.py. Edit the sources, not this file. */
-(()=>{const BUILD='20260927170200';
+(()=>{const BUILD='20260927171700';
 const $=id=>document.getElementById(id);
 if(!window.THREE){$('loading').textContent='3Dの読み込みに失敗しました。再読み込みしてください';return}
 const T=THREE;
@@ -537,7 +537,7 @@ function desertDecor(){const sand=std('#e7bf82',{r:1}),rock=std('#b86a3e',{r:.95
   // dunes
   for(let i=0;i<26;i++){const x=rnd(100,2300),y=rnd(80,2320);if(dist(x,y,CX,CY)<FR+220||inZone(x,y))continue;const d=scl(sph(1,sand,false,16,8),rnd(120,260),rnd(18,40),rnd(70,150));d.position.set(x,-6,y);d.rotation.y=rnd(0,TAU);d.receiveShadow=true;world.add(d)}
   // canyon mesas in zone C
-  for(let i=0;i<16;i++){const x=rnd(70,650),y=rnd(680,1740);const h=rnd(60,150),w=rnd(40,90);const m=grp(at(cyl(w*.8,w,h,i%2?rock:rock2,7),0,h/2,0),at(cyl(w*.85,w*.8,8,rock2,7),0,h+2,0));m.position.set(x,0,y);m.rotation.y=rnd(0,TAU);world.add(m)}
+  for(let i=0;i<16;i++){const x=rnd(70,650),y=rnd(680,1740);if(desertClear(x,y,90))continue;const h=rnd(60,150),w=rnd(40,90);const m=grp(at(cyl(w*.8,w,h,i%2?rock:rock2,7),0,h/2,0),at(cyl(w*.85,w*.8,8,rock2,7),0,h+2,0));m.position.set(x,0,y);m.rotation.y=rnd(0,TAU);world.add(m)}
   // ancient ruins
   for(let i=0;i<10;i++){const x=rnd(300,2100),y=rnd(140,640);const r=new T.Group();r.position.set(x,0,y);for(let k=0;k<4;k++){const h=rnd(20,70);r.add(at(cyl(7,8,h,stone,10),Math.cos(k*1.6)*40,h/2,Math.sin(k*1.6)*40))}r.add(at(rot(box(60,8,14,stone),0,0,.15),10,6,-20));world.add(r)}}
 function makeFurnace(){
@@ -869,7 +869,7 @@ function newGame(np,opts){opts=opts||{};CUR_BIO=opts.biome||0;zoneNames();let RS
     for(let i=0;i<14;i++){const x=sr(120,WORLD-120),y=sr(120,WORLD-120);if(dist(x,y,CX,CY)<FR+140||inZone(x,y))continue;const rk=['rock1','rock2','rock3'][i%3];const m=KK.nat&&KK.nat[rk]?(()=>{const g=new T.Group(),o=KK.nat[rk].clone(true);o.scale.setScalar(sr(34,60)/(KK.natH[rk]||1));g.add(o);return g})():kkProp(i%2?'rockA':'rockC',sr(40,70));m.position.set(x,0,y);m.rotation.y=sr(0,TAU);world.add(m)}}
   // decor: bushes, grass tufts, dead trees and pebbles (instanced, no collision)
   G.decor=[];if(KK&&KK.nat&&KK.nat.bush){const o3=new T.Object3D();for(const [k,n,s0,s1] of (DES()?[['dead',34,80,120],['peb',260,12,24]]:[['bush',160,34,60],['grass',420,26,44],['dead',12,90,130],['peb',140,10,20]])){const src=KK.nat[k];if(!src)continue;src.updateMatrixWorld(true);const H=KK.natH[k]||1;const list=[];
-      let g2=0;while(list.length<n&&g2++<n*20){const x=sr(40,WORLD-40),y=sr(40,WORLD-40);const d=dist(x,y,CX,CY);if(d<FR+(k==='dead'?140:60))continue;if(x>900&&x<1700&&y>1580&&y<1840)continue;if(dist(x,y,SPA.x,SPA.y)<260)continue;if(!DES()&&TSPOTS.some(q=>dist(x,y,q[0],q[1])<130))continue;if(dgBlock(x,y))continue;if(dist(x,y,MON.x,MON.y)<170)continue;list.push([x,y,sr(s0,s1)/H,sr(0,TAU)])}
+      let g2=0;while(list.length<n&&g2++<n*20){const x=sr(40,WORLD-40),y=sr(40,WORLD-40);const d=dist(x,y,CX,CY);if(d<FR+(k==='dead'?140:60))continue;if(x>900&&x<1700&&y>1580&&y<1840)continue;if(dist(x,y,SPA.x,SPA.y)<260)continue;if(!DES()&&TSPOTS.some(q=>dist(x,y,q[0],q[1])<130))continue;if(dgBlock(x,y)||desertClear(x,y,40))continue;if(dist(x,y,MON.x,MON.y)<170)continue;list.push([x,y,sr(s0,s1)/H,sr(0,TAU)])}
       const byC=new Map();for(const it of list){const key=chunkKey(it[0],it[1]);if(!byC.has(key))byC.set(key,[]);byC.get(key).push(it)}
       for(const [key,cl] of byC){const box=chunkBox(key,k==='dead'?200:90);src.traverse(o=>{if(!o.isMesh)return;const im=new T.InstancedMesh(o.geometry,o.material,cl.length);im.frustumCulled=false;im.castShadow=k==='bush'||k==='dead';im.receiveShadow=true;im.userData.n=cl.length;im.userData.box=box;im.count=Math.floor(cl.length*QL[GQ.tier].decor*(k==='dead'&&GQ.tier<2?0:1));im.visible=im.count>0;G.decor.push(im);
         cl.forEach(([x,y,sc,r],i)=>{o3.position.set(x,0,y);o3.rotation.set(0,r,0);o3.scale.setScalar(sc);o3.updateMatrix();const m4=new T.Matrix4().multiplyMatrices(o3.matrix,o.matrixWorld);im.setMatrixAt(i,m4)});world.add(im)})}}}
@@ -886,7 +886,7 @@ function newGame(np,opts){opts=opts||{};CUR_BIO=opts.biome||0;zoneNames();let RS
   // trees
   let guard=0;const trees=[];
   while(trees.length<Math.round(360*G.mod.trees)&&guard++<30000){const x=sr(60,WORLD-60),y=sr(60,WORLD-60);const d=dist(x,y,CX,CY);if(d<FR+70)continue;if(x>900&&x<1700&&y>1580&&y<1840)continue;
-    if(!DES()&&dist(x,y,2020,1210)<470&&x>1720)continue;if(DES()&&DHOLES.some(h=>dist(h[0],h[1],x,y)<110))continue;if(dist(x,y,ROAD.x,ROAD.y)<230)continue;if(dist(x,y,SPA.x,SPA.y)<260)continue;if(Math.abs(x-CX)<60&&y<CY)continue;if(!DES()&&TSPOTS.some(q=>dist(x,y,q[0],q[1])<150))continue;if(dgBlock(x,y))continue;if(dist(x,y,MON.x,MON.y)<170)continue;if(Math.abs(y-CY)<60&&(x<CX||x>CX))continue;
+    if(!DES()&&dist(x,y,2020,1210)<470&&x>1720)continue;if(DES()&&DHOLES.some(h=>dist(h[0],h[1],x,y)<110))continue;if(dist(x,y,ROAD.x,ROAD.y)<230)continue;if(dist(x,y,SPA.x,SPA.y)<260)continue;if(Math.abs(x-CX)<60&&y<CY)continue;if(!DES()&&TSPOTS.some(q=>dist(x,y,q[0],q[1])<150))continue;if(dgBlock(x,y)||desertClear(x,y,40))continue;if(dist(x,y,MON.x,MON.y)<170)continue;if(Math.abs(y-CY)<60&&(x<CX||x>CX))continue;
     if(trees.some(t=>dist(t.x,t.y,x,y)<54))continue;trees.push({x,y,s:sr(.85,1.25),ry:sr(0,TAU),hp:4,alive:true,regrow:0,shake:0,fall:0,fallDir:0,grow:1,zone:(inZone(x,y)||{}).id||null})}
   G.trees=trees;forest=new Forest(trees);makeSecrets(trees,sr);makeRoad();applyBiome();
   // ores (zone C? no — rocky outcrops in the east of the north field feed coal)
@@ -1342,7 +1342,7 @@ function playerActions(p,dt,R){updateSled(p,dt);if(inBath(p)&&!p.riding){p.warm=
     if(cl.stun)tgt.atkCd=Math.max(tgt.atkCd||0,cl.stun);if(cl.heal)p.hp=Math.min(100,p.hp+cl.heal);
     if(cl.splash){for(const b of G.bears){if(b.dead||b===tgt)continue;if(dist(tgt.x,tgt.y,b.x,b.y)<cl.splash)shoot(tgt,b,dmg*.6,true,'none')}}
     shoot(p,tgt,dmg,true,cl.fx)}}
-  else{let tree=null,tdd=48;if(p.bag.length<cap(p)&&!p.riding)for(const t of G.trees){if(!t.alive||t.fall>0||(t.zone&&!G.zones[t.zone]))continue;const d=dist(p.x,p.y,t.x,t.y);if(d<tdd){tdd=d;tree=t}}
+  else{let tree=null,tdd=48;if(p.bag.length<cap(p)&&!p.riding&&!ADV())for(const t of G.trees){if(!t.alive||t.fall>0||(t.zone&&!G.zones[t.zone]))continue;const d=dist(p.x,p.y,t.x,t.y);if(d<tdd){tdd=d;tree=t}}
     if(tree){p.chopping=tree;p.aimDir=Math.atan2(tree.x-p.x,tree.y-p.y);p.actT+=dt;if(p.actT>.24*G.pm.chop*G.mod.chop/lifeB(p,'wood',.07)){p.actT=0;hitTree(tree,p.x,p.y,true);const got=give(p,tree.item||'log',G.feverT>0?2:1);G.stats.chopped+=got;lifeXp(p,'wood',1);cnt(p,'chop',got);SFX.chop();addCombo(2);gainXP(1);float(tree.x,tree.y,60,`+${got}`,'gold');G.shake=Math.max(G.shake,2);if(G.stats.chopped%30<got)spawnChest(tree.x+rnd(-25,25),tree.y+rnd(-25,25))}}
     else{p.aimDir=null;p.actT=Math.min(p.actT,.3)}}
   // fishing
@@ -2476,12 +2476,13 @@ const OASES=[{x:2050,y:1000,r:230,n:'東のオアシス',camp:1},{x:330,y:1250,r
 const CAMP={x:1990,y:1080},VALLEY={x:330,y:2080,n:'流砂の谷'};
 const TREAS=[[700,420],[1450,380],[1850,560],[2200,700],[420,860],[900,700],[1600,760],[2250,1400],[1850,1650],[1450,1900],[900,1850],[560,1600],[250,1700],[700,2250]];
 const ADV_SELL={relic:45,iron:15,icec:40,star:120,silk:20,steel:60,fang:50,horn:200,core:25,icew:30,spirit:150};
+function desertClear(x,y,m){if(!DES())return false;return OASES.some(o=>dist(x,y,o.x,o.y)<o.r+m)||dist(x,y,VALLEY.x,VALLEY.y)<250+m||dist(x,y,CAMP.x,CAMP.y)<120+m}
 function advWarm(x,y){if(!ADV())return false;if(OASES.some(o=>dist(x,y,o.x,o.y)<o.r))return true;return false}
 // ---- the town of Razul: adobe houses around the well, market stalls, palms
 function advLayout(){if(G._advL)return G._advL;const L={houses:[],stalls:[],palms:[]};const npcs=(NPCS.desert||[]).map(n=>[n.x,n.y]);
   const A=[15,38,62,108,132,158,200,224,248,290,314,338];A.forEach((deg,i)=>{const a=deg*Math.PI/180,r=i%2?410:315,x=CX+Math.cos(a)*r,y=CY+Math.sin(a)*r;if(npcs.some(q=>dist(q[0],q[1],x,y)<95))return;
     L.houses.push({x,y,w:80+(i*37%40),d:64+(i*23%30),h:48+(i*13%36),a:Math.atan2(CX-x,CY-y),aw:i%3===0,c:['#e3c093','#d9b07e','#e8caa0','#cfa06c'][i%4]})});
-  [[CX+150,CY-120],[CX-160,CY-110],[CX+165,CY+110],[CX-150,CY+130]].forEach(([x,y],i)=>{if(npcs.some(q=>dist(q[0],q[1],x,y)<70))return;L.stalls.push({x,y,c:['#d9534f','#3f8cc4','#f0a830','#5fb35a'][i],a:Math.atan2(CX-x,CY-y)})});
+  [[CX+150,CY-120],[CX-160,CY-110],[CX+165,CY+110],[CX-150,CY+130]].forEach(([x,y],i)=>{if(npcs.some(q=>dist(q[0],q[1],x,y)<70))return;L.stalls.push({x,y,c:['#d9534f','#3f8cc4','#f0a830','#5fb35a'][i],a:Math.atan2(CX-x,CY-y),n:['串焼き屋','革細工屋','串焼き屋','革細工屋'][i],buy:[['meat'],['fur','salt'],['meat'],['fur','salt']][i]})});
   for(const deg of [0,90,180,270])for(const s of [-1,1]){const a=(deg+s*11)*Math.PI/180;L.palms.push([CX+Math.cos(a)*250,CY+Math.sin(a)*250])}
   for(const o of OASES)for(let k=0;k<5;k++){const a=k/5*TAU+.4;L.palms.push([o.x+Math.cos(a)*(o.r*.55),o.y+Math.sin(a)*(o.r*.55)])}
   return G._advL=L}
@@ -2526,6 +2527,8 @@ function wormAnim(b,t){const w=b.m&&b.m.worm;if(!w)return;const segs=w.userData.
 // ---- update (host) and visuals
 function updateAdv(dt){if(!ADV())return;advSetup();G.fuel=100;G.spa.fuel=100;const S=G.story,A=G.adv;
   // buried treasure: a few shimmering spots at a time; stand on one to dig it up
+  // market stalls buy what you carry back from the dunes (meat → skewer stall, hides → leather stall)
+  const L=advLayout();for(const p of G.players){if(p.down>0||!p.bag.length)continue;const s=L.stalls.find(s=>dist(p.x,p.y,s.x,s.y)<75&&p.bag.some(k=>s.buy.includes(k)));if(!s){p._sellT=0;continue}p._sellT=(p._sellT||0)+dt;if(p._sellT<.14)continue;p._sellT=0;const i=p.bag.findIndex(k=>s.buy.includes(k));const k=p.bag.splice(i,1)[0];const v=Math.round(({meat:9,fur:16,salt:12}[k]||8)*(1+G.day*.04));G.cash+=v;G.earned+=v;flyItem(k,p.x,p.y,30,s.x,s.y,20,null,3);float(s.x,s.y,70,`+$${v}`,'cash');SFX.coin&&SFX.coin(2);cnt(p,'sold')}
   A.tr.forEach((on,i)=>{if(!on){A.rt[i]-=dt;if(A.rt[i]<=0&&A.tr.filter(Boolean).length<5&&Math.random()<dt*.05){A.tr[i]=1}return}const [x,y]=TREAS[i];const p=G.players.find(p=>!(p.down>0)&&dist(p.x,p.y,x,y)<40);if(!p){TREAS[i]._t=0;return}TREAS[i]._t=(TREAS[i]._t||0)+dt;if(Math.random()<dt*8)burst(x,y,3,4,{c:['#e2b877','#c9955b'],s0:20,s1:70,u0:30,u1:90,l0:.2,l1:.4});
     if(TREAS[i]._t>1.6){TREAS[i]._t=0;A.tr[i]=0;A.rt[i]=90;const v=Math.round(rnd(80,200)*(1+G.day*.04));G.cash+=v;G.earned+=v;const r=Math.random();const mat=r<.45?'relic':r<.85?'iron':'star';addMat(p,mat,mat==='star'?1:2);cnt(p,'dig');lifeXp(p,'mine',4);
       const pool=['c_scarab','w_sand','a_pharaoh','w_sunbow'].filter(id=>!(p.items||[]).includes(id));if(pool.length&&Math.random()<.14)giveItem(p,pool[Math.floor(Math.random()*pool.length)]);
@@ -2539,6 +2542,7 @@ function advFx(){if(!G||!running)return;const on=ADV();if(G.advV)G.advV.visible=
   G.advV.traverse(o=>{if(o.userData&&o.userData.bb)o.quaternion.copy(camera.quaternion)});
   if(A)A.tr.forEach((on,i)=>{if(!on||!me)return;const [x,y]=TREAS[i];const d=dist(me.x,me.y,x,y);if(d<520&&Math.random()<.08)psA.emit({x:x+rnd(-10,10),y:4,z:y+rnd(-10,10),vx:0,vy:40,vz:0,g:0,life:.5,max:.5,r:4,c:C('#fff2b0'),air:true,fade:.2});if(d<240)label(x,y,30,'<b>砂に埋もれた何か</b><br><small>上に立つと掘る</small>','')});
   for(const b of G.bears)if(b.nm==='巨大サンドワーム'){if(!b.m.worm)wormLook(b);wormAnim(b,t)}
+  if(me)for(const s of advLayout().stalls)if(dist(me.x,me.y,s.x,s.y)<260){const has=me.bag.some(k=>s.buy.includes(k));label(s.x,s.y,70,`<b>${s.n}</b><br><small>${s.buy.includes('meat')?'肉':'毛皮・塩'}を買い取る${has?'（そばに立つと売れる）':''}</small>`,has?'gold':'')}
   const S=G.story;if(me&&S.step===5&&!S.wend&&dist(me.x,me.y,VALLEY.x,VALLEY.y)<700&&!G.bears.some(b=>b.nm==='巨大サンドワーム'&&!b.dead))label(VALLEY.x,VALLEY.y,80,'<b>流砂の谷</b><br><small>近づくと主が目覚める</small>','note')}
 // ---- people of the desert
 function advTalk(v){const S=G.story;if(!ADV())return null;const id=v.n.id;

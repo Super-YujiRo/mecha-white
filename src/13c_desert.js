@@ -5,12 +5,13 @@ const OASES=[{x:2050,y:1000,r:230,n:'東のオアシス',camp:1},{x:330,y:1250,r
 const CAMP={x:1990,y:1080},VALLEY={x:330,y:2080,n:'流砂の谷'};
 const TREAS=[[700,420],[1450,380],[1850,560],[2200,700],[420,860],[900,700],[1600,760],[2250,1400],[1850,1650],[1450,1900],[900,1850],[560,1600],[250,1700],[700,2250]];
 const ADV_SELL={relic:45,iron:15,icec:40,star:120,silk:20,steel:60,fang:50,horn:200,core:25,icew:30,spirit:150};
+function desertClear(x,y,m){if(!DES())return false;return OASES.some(o=>dist(x,y,o.x,o.y)<o.r+m)||dist(x,y,VALLEY.x,VALLEY.y)<250+m||dist(x,y,CAMP.x,CAMP.y)<120+m}
 function advWarm(x,y){if(!ADV())return false;if(OASES.some(o=>dist(x,y,o.x,o.y)<o.r))return true;return false}
 // ---- the town of Razul: adobe houses around the well, market stalls, palms
 function advLayout(){if(G._advL)return G._advL;const L={houses:[],stalls:[],palms:[]};const npcs=(NPCS.desert||[]).map(n=>[n.x,n.y]);
   const A=[15,38,62,108,132,158,200,224,248,290,314,338];A.forEach((deg,i)=>{const a=deg*Math.PI/180,r=i%2?410:315,x=CX+Math.cos(a)*r,y=CY+Math.sin(a)*r;if(npcs.some(q=>dist(q[0],q[1],x,y)<95))return;
     L.houses.push({x,y,w:80+(i*37%40),d:64+(i*23%30),h:48+(i*13%36),a:Math.atan2(CX-x,CY-y),aw:i%3===0,c:['#e3c093','#d9b07e','#e8caa0','#cfa06c'][i%4]})});
-  [[CX+150,CY-120],[CX-160,CY-110],[CX+165,CY+110],[CX-150,CY+130]].forEach(([x,y],i)=>{if(npcs.some(q=>dist(q[0],q[1],x,y)<70))return;L.stalls.push({x,y,c:['#d9534f','#3f8cc4','#f0a830','#5fb35a'][i],a:Math.atan2(CX-x,CY-y)})});
+  [[CX+150,CY-120],[CX-160,CY-110],[CX+165,CY+110],[CX-150,CY+130]].forEach(([x,y],i)=>{if(npcs.some(q=>dist(q[0],q[1],x,y)<70))return;L.stalls.push({x,y,c:['#d9534f','#3f8cc4','#f0a830','#5fb35a'][i],a:Math.atan2(CX-x,CY-y),n:['串焼き屋','革細工屋','串焼き屋','革細工屋'][i],buy:[['meat'],['fur','salt'],['meat'],['fur','salt']][i]})});
   for(const deg of [0,90,180,270])for(const s of [-1,1]){const a=(deg+s*11)*Math.PI/180;L.palms.push([CX+Math.cos(a)*250,CY+Math.sin(a)*250])}
   for(const o of OASES)for(let k=0;k<5;k++){const a=k/5*TAU+.4;L.palms.push([o.x+Math.cos(a)*(o.r*.55),o.y+Math.sin(a)*(o.r*.55)])}
   return G._advL=L}
@@ -55,6 +56,8 @@ function wormAnim(b,t){const w=b.m&&b.m.worm;if(!w)return;const segs=w.userData.
 // ---- update (host) and visuals
 function updateAdv(dt){if(!ADV())return;advSetup();G.fuel=100;G.spa.fuel=100;const S=G.story,A=G.adv;
   // buried treasure: a few shimmering spots at a time; stand on one to dig it up
+  // market stalls buy what you carry back from the dunes (meat → skewer stall, hides → leather stall)
+  const L=advLayout();for(const p of G.players){if(p.down>0||!p.bag.length)continue;const s=L.stalls.find(s=>dist(p.x,p.y,s.x,s.y)<75&&p.bag.some(k=>s.buy.includes(k)));if(!s){p._sellT=0;continue}p._sellT=(p._sellT||0)+dt;if(p._sellT<.14)continue;p._sellT=0;const i=p.bag.findIndex(k=>s.buy.includes(k));const k=p.bag.splice(i,1)[0];const v=Math.round(({meat:9,fur:16,salt:12}[k]||8)*(1+G.day*.04));G.cash+=v;G.earned+=v;flyItem(k,p.x,p.y,30,s.x,s.y,20,null,3);float(s.x,s.y,70,`+$${v}`,'cash');SFX.coin&&SFX.coin(2);cnt(p,'sold')}
   A.tr.forEach((on,i)=>{if(!on){A.rt[i]-=dt;if(A.rt[i]<=0&&A.tr.filter(Boolean).length<5&&Math.random()<dt*.05){A.tr[i]=1}return}const [x,y]=TREAS[i];const p=G.players.find(p=>!(p.down>0)&&dist(p.x,p.y,x,y)<40);if(!p){TREAS[i]._t=0;return}TREAS[i]._t=(TREAS[i]._t||0)+dt;if(Math.random()<dt*8)burst(x,y,3,4,{c:['#e2b877','#c9955b'],s0:20,s1:70,u0:30,u1:90,l0:.2,l1:.4});
     if(TREAS[i]._t>1.6){TREAS[i]._t=0;A.tr[i]=0;A.rt[i]=90;const v=Math.round(rnd(80,200)*(1+G.day*.04));G.cash+=v;G.earned+=v;const r=Math.random();const mat=r<.45?'relic':r<.85?'iron':'star';addMat(p,mat,mat==='star'?1:2);cnt(p,'dig');lifeXp(p,'mine',4);
       const pool=['c_scarab','w_sand','a_pharaoh','w_sunbow'].filter(id=>!(p.items||[]).includes(id));if(pool.length&&Math.random()<.14)giveItem(p,pool[Math.floor(Math.random()*pool.length)]);
@@ -68,6 +71,7 @@ function advFx(){if(!G||!running)return;const on=ADV();if(G.advV)G.advV.visible=
   G.advV.traverse(o=>{if(o.userData&&o.userData.bb)o.quaternion.copy(camera.quaternion)});
   if(A)A.tr.forEach((on,i)=>{if(!on||!me)return;const [x,y]=TREAS[i];const d=dist(me.x,me.y,x,y);if(d<520&&Math.random()<.08)psA.emit({x:x+rnd(-10,10),y:4,z:y+rnd(-10,10),vx:0,vy:40,vz:0,g:0,life:.5,max:.5,r:4,c:C('#fff2b0'),air:true,fade:.2});if(d<240)label(x,y,30,'<b>砂に埋もれた何か</b><br><small>上に立つと掘る</small>','')});
   for(const b of G.bears)if(b.nm==='巨大サンドワーム'){if(!b.m.worm)wormLook(b);wormAnim(b,t)}
+  if(me)for(const s of advLayout().stalls)if(dist(me.x,me.y,s.x,s.y)<260){const has=me.bag.some(k=>s.buy.includes(k));label(s.x,s.y,70,`<b>${s.n}</b><br><small>${s.buy.includes('meat')?'肉':'毛皮・塩'}を買い取る${has?'（そばに立つと売れる）':''}</small>`,has?'gold':'')}
   const S=G.story;if(me&&S.step===5&&!S.wend&&dist(me.x,me.y,VALLEY.x,VALLEY.y)<700&&!G.bears.some(b=>b.nm==='巨大サンドワーム'&&!b.dead))label(VALLEY.x,VALLEY.y,80,'<b>流砂の谷</b><br><small>近づくと主が目覚める</small>','note')}
 // ---- people of the desert
 function advTalk(v){const S=G.story;if(!ADV())return null;const id=v.n.id;

@@ -260,7 +260,7 @@ function desertDecor(){const sand=std('#e7bf82',{r:1}),rock=std('#b86a3e',{r:.95
   // dunes
   for(let i=0;i<26;i++){const x=rnd(100,2300),y=rnd(80,2320);if(dist(x,y,CX,CY)<FR+220||inZone(x,y))continue;const d=scl(sph(1,sand,false,16,8),rnd(120,260),rnd(18,40),rnd(70,150));d.position.set(x,-6,y);d.rotation.y=rnd(0,TAU);d.receiveShadow=true;world.add(d)}
   // canyon mesas in zone C
-  for(let i=0;i<16;i++){const x=rnd(70,650),y=rnd(680,1740);const h=rnd(60,150),w=rnd(40,90);const m=grp(at(cyl(w*.8,w,h,i%2?rock:rock2,7),0,h/2,0),at(cyl(w*.85,w*.8,8,rock2,7),0,h+2,0));m.position.set(x,0,y);m.rotation.y=rnd(0,TAU);world.add(m)}
+  for(let i=0;i<16;i++){const x=rnd(70,650),y=rnd(680,1740);if(desertClear(x,y,90))continue;const h=rnd(60,150),w=rnd(40,90);const m=grp(at(cyl(w*.8,w,h,i%2?rock:rock2,7),0,h/2,0),at(cyl(w*.85,w*.8,8,rock2,7),0,h+2,0));m.position.set(x,0,y);m.rotation.y=rnd(0,TAU);world.add(m)}
   // ancient ruins
   for(let i=0;i<10;i++){const x=rnd(300,2100),y=rnd(140,640);const r=new T.Group();r.position.set(x,0,y);for(let k=0;k<4;k++){const h=rnd(20,70);r.add(at(cyl(7,8,h,stone,10),Math.cos(k*1.6)*40,h/2,Math.sin(k*1.6)*40))}r.add(at(rot(box(60,8,14,stone),0,0,.15),10,6,-20));world.add(r)}}
 function makeFurnace(){
