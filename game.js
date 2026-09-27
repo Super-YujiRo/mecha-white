@@ -1,5 +1,5 @@
 /* めちゃホワイト — built from src/*.js by tools/build.py. Edit the sources, not this file. */
-(()=>{const BUILD='20260927135129';
+(()=>{const BUILD='20260927135459';
 const $=id=>document.getElementById(id);
 if(!window.THREE){$('loading').textContent='3Dの読み込みに失敗しました。再読み込みしてください';return}
 const T=THREE;
@@ -319,7 +319,8 @@ function limb(len,r,m,handM){const p=new T.Group();p.add(at(cyl(r,r*.85,len,m,10
 let KK=null;const KK_HIDE=/Shield|Sword|Axe|Crossbow|Staff|Wand|Spellbook|Knife|Throwable|Mug|Offhand/;
 async function fetchAssets(){let man;try{man=await (await fetch('assets/manifest.json?v='+BUILD)).json()}catch(e){console.warn('manifest',e);return null}const A={},keys=Object.keys(man);let done=0;const el=$('loading');
   await Promise.all(keys.map(async k=>{const m=man[k];const r=await fetch('assets/'+m.f+'?v='+BUILD);if(!r.ok)throw new Error('asset '+m.f+' '+r.status);const buf=await r.arrayBuffer();A[k]=m.w?{w:m.w,h:m.h,d:buf}:buf;done++;if(el)el.textContent=`素材を読み込み中… ${done}/${keys.length}`}));return A}
-async function loadKK(){if(!T.GLTFLoader||!T.SkeletonUtils)return;const L=new T.GLTFLoader(),A=await fetchAssets();if(!A)return;
+function b64Assets(M){const A={},u=b=>{const s=atob(b),a=new Uint8Array(s.length);for(let i=0;i<s.length;i++)a[i]=s.charCodeAt(i);return a.buffer};for(const k in M){const v=M[k];A[k]=typeof v==='string'?u(v):{w:v.w,h:v.h,d:u(v.d)}}return A}
+async function loadKK(){if(!T.GLTFLoader||!T.SkeletonUtils)return;const L=new T.GLTFLoader(),A=window.MW_ASSETS?b64Assets(window.MW_ASSETS):await fetchAssets();if(!A)return;
   const parse=buf=>new Promise((res,rej)=>L.parse(buf.slice(0),'',res,rej));
   const out={chars:{},h:{},clips:{},kit:{},kitW:{},kitH:{}};
   for(const n of ['Knight','Barbarian','Mage','Rogue','Rogue_Hooded']){const g=await parse(A['ch_'+n]);g.scene.traverse(o=>{if(o.isMesh&&KK_HIDE.test(o.name))o.visible=false});const bb=new T.Box3();g.scene.traverse(o=>{if(o.isMesh&&o.visible){o.geometry.computeBoundingBox();const b=o.geometry.boundingBox.clone();bb.union(b)}});out.chars[n]=g.scene;out.h[n]=Math.max(1,bb.max.y-bb.min.y)}
