@@ -19,7 +19,7 @@ function sync(dt){
     if(shoot_){m.armR.rotation.set(-1.3,0,0);m.armL.rotation.set(-1.1,0,.2);m._armR=m._armL=true;m.gun.userData.flash.visible=p.flash>0;if(!m.kk)m.gun.position.z=10-(p.flash>0?3:0)}
     else if(p.chopping){const t=clamp(p.actT/(.24*G.pm.chop),0,1);m.armR.rotation.set(-2.6+Math.sin(t*Math.PI)*2.4,0,0);m._armR=true}
     else if(p.fishing){m.armR.rotation.set(-.9+Math.sin(G.t*3)*.08,0,0);m._armR=true}
-    if(m.kk){m.kkRun=true;m.kk.paused=p.down>0;m.kk.want=p.riding?'Idle':(p.jz>2&&!shoot_)?'Jump_Idle':shoot_?(m.cls?m.cls.anim:'1H_Ranged_Shooting'):p.chopping?'1H_Melee_Attack_Chop':p.fishing?'Sit_Floor_Idle':null}
+    if(m.kk){m.kkRun=true;m.kk.paused=p.down>0;m.kk.want=p.riding?'Idle':p.dash?'Dodge_Forward':(p.jz>2&&!shoot_)?'Jump_Idle':shoot_?(m.cls?m.cls.anim:'1H_Ranged_Shooting'):p.chopping?'1H_Melee_Attack_Chop':p.fishing?'Sit_Floor_Idle':null}
     m.ice.visible=!!(p.down>0)&&!p.ko&&!DES();if(m.kk&&p.down>0&&DES())m.kk.want='Sit_Floor_Idle';if(m.kk&&p.ko)m.kk.want='Sit_Floor_Idle';if(p.down>0){m.ice.rotation.y=G.t*.3;m.ice.scale.set(1,1.45,1)}
     const bath=inBath(p)&&!p.riding;if(m.kk){if(!m.bathParts){m.bathParts=[];m.model.traverse(o=>{if(o.isMesh&&/Cape|Hat|Helmet/.test(o.name)&&o.visible)m.bathParts.push(o)});m.towel=at(rbox(13,3.2,11,1.2,std('#ffffff',{r:1})),0,52,-1);m.towel.visible=false;m.g.add(m.towel)}
       if(m._bath!==bath){m._bath=bath;m.towel.visible=bath;for(const o of m.bathParts)o.visible=!bath}
@@ -183,7 +183,7 @@ function frame(dt){hideIdle();monBar();frozenFx();vigFx();hideIdleFx(dt);
     const top=150,m=44,mx=86,on=!behind&&sx>m&&sx<W-m&&sy>top&&sy<H-90;if(on)el.hidden=true;else{el.hidden=false;const cx=W/2,cy=(top+H-90)/2;let dx=sx-cx,dy=sy-cy;const k=Math.min((W/2-mx)/Math.abs(dx||1e-3),((H-90-top)/2)/Math.abs(dy||1e-3));const ex=cx+dx*Math.min(1,k),ey=cy+dy*Math.min(1,k);
       const d=Math.round(dist(gp.x,gp.y,R.x,R.y)/10);el.style.transform=`translate(${ex|0}px,${ey|0}px) translate(-50%,-50%)`;el.firstChild.style.transform=`rotate(${Math.atan2(dy,dx)+Math.PI/2}rad)`;$('sosTxt').textContent=`SOS ${Math.ceil(R.t)}秒・${d}m`}}else el.hidden=true}
   {const _gt=running?(coldT||(G.fuel<25&&!G.raid.on?(has(gp,DES()?'water':'log')?{x:CX,y:CY,h:110}:(DES()?freeHole(gp):nearestTree(gp))):null)||rescueT(gp)||storyT(gp)||(MISSIONS[G.mission]?MISSIONS[G.mission].tg(gp):flow(gp))):null;G._gt=_gt;guide.set(_gt,gp,G.t)}
-  storyVis();warnFx();driftFx();fireFx();npcFx();rankFx();caveFx();pzFx();heart4Fx();advFx();occFx();survDesertFx();cullWorld();if(composer)composer.render();else renderer.render(scene,camera);endLabels();
+  storyVis();warnFx();driftFx();fireFx();npcFx();rankFx();caveFx();pzFx();heart4Fx();advFx();occFx();survDesertFx();extrasFx();cullWorld();if(composer)composer.render();else renderer.render(scene,camera);endLabels();
   joys.forEach((j,i)=>{const el=$('joy'+i);if(!j.on){el.hidden=true;return}el.hidden=false;el.style.left=j.ox+'px';el.style.top=j.oy+'px';const dx=j.x-j.ox,dy=j.y-j.oy,m=Math.hypot(dx,dy),k=m>50?50/m:1;el.firstChild.style.transform=`translate(${dx*k}px,${dy*k}px)`;el.firstChild.style.background=nPlayers===2?HERO[i].tag:'#fff'});
 }
 // ================================================================ HUD

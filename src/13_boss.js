@@ -13,7 +13,7 @@ function setBtLook(b,bt){b.bt=bt;if(bt==='charge'&&!DES()&&b.m&&b.m.mx&&b.m.key!
   m.g.add(x)}
 function setBt(b,bt){setBtLook(b,bt);b.sk=2;b.sk2=3;b.sk3=4;if(bt==='alpha')b.hw=5}
 function warn(k,x,y,a,r,t){G.warns=G.warns||[];G.warns.push({id:++G.nid,k,x,y,a,r,t,max:t})}
-function bossHit(b,p,dmg,kb){if(p.jz>22&&!(b.bt==='king'&&Math.random()<.5)){float(p.x,p.y,90,'かわした！','gold',true);return}const v=Math.round(dmg*armorOf(p)*DM().atk*(1+(YR()-1)*.15));p.hp-=v;hitLoss(p);p.hurt=.4;p.inv=.7;const k=dist(p.x,p.y,b.x,b.y)||1;p.x+=(p.x-b.x)/k*kb;p.y+=(p.y-b.y)/k*kb;G.shake=Math.max(G.shake,12);float(p.x,p.y,60,`-${v}`,'red');burst(p.x,p.y,24,14,{c:['#ff9a9a','#ffffff'],s0:40,s1:160,l0:.3,l1:.6})}
+function bossHit(b,p,dmg,kb){if(p.dash&&p.inv>0){float(p.x,p.y,90,'回避！','gold',true);return}if(p.jz>22&&!(b.bt==='king'&&Math.random()<.5)){float(p.x,p.y,90,'かわした！','gold',true);return}const v=Math.round(dmg*armorOf(p)*DM().atk*(1+(YR()-1)*.15));p.hp-=v;hitLoss(p);p.hurt=.4;p.inv=.7;const k=dist(p.x,p.y,b.x,b.y)||1;p.x+=(p.x-b.x)/k*kb;p.y+=(p.y-b.y)/k*kb;G.shake=Math.max(G.shake,12);float(p.x,p.y,60,`-${v}`,'red');burst(p.x,p.y,24,14,{c:['#ff9a9a','#ffffff'],s0:40,s1:160,l0:.3,l1:.6})}
 function bossAct(b,dt,t){if(b.ph)return true;const d=dist(b.x,b.y,t.x,t.y),bt=b.bt,ang=Math.atan2(t.x-b.x,t.y-b.y);b.sk=(b.sk||0)-dt;b.sk2=(b.sk2||0)-dt;b.sk3=(b.sk3||0)-dt;
   if((bt==='charge'||bt==='king')&&b.sk<=0&&d>130&&d<500){b.ph='wc';b.pt=bt==='king'?.85:1.1;b.ca=ang;b.sk=bt==='king'?7:5.5;b.roar=.9;warn('line',b.x,b.y,ang,560,b.pt);return true}
   if((bt==='frost'||bt==='king')&&b.sk2<=0&&d<260){b.ph='wf';b.pt=1.2;b.ca=ang;b.sk2=bt==='king'?9:5;b.roar=.6;warn('cone',b.x,b.y,ang,300,b.pt);return true}

@@ -42,7 +42,7 @@ const DUNGEONS=[
     gate:()=>G.zones.C&&G.story&&G.story.ch>=2,lock:'第2章から・奥地の森を解放すると入れる',sub:'氷河の宝・氷牙・氷河の主',enter:['吐く息まで凍りつく…','氷の裂け目の奥に、主が眠っているという'],
     walls:[[30,1830,630,1860],[30,2340,630,2370],[30,1830,60,2370],[600,1830,630,2370],[30,2090,470,2110],[560,2090,630,2110],[300,2110,320,2190],[300,2270,320,2370],[180,1860,200,1990],[420,1960,440,2090]],
     heats:[{x:545,y:2285,r:110},{x:330,y:1935,r:95}],
-    spawns:[{x:440,y:2180,k:'normal',hpm:1.5},{x:470,y:2320,k:'normal',hpm:1.5},{x:380,y:1900,k:'big',hpm:1.4},{x:220,y:2000,k:'big',hpm:1.4},{x:520,y:1940,k:'big',key:'Stag',sc:1.3,hpm:1.8,bk:'gls',nm:'氷河のヘラジカ'},{x:300,y:2010,k:'normal',hpm:1.5},{x:110,y:1930,k:'boss',bt:'frost',sc:1.9,hpm:5,bk:'glb',nm:'氷河の主'}],
+    spawns:[{x:440,y:2180,k:'normal',hpm:1.5},{x:470,y:2320,k:'normal',hpm:1.5},{x:380,y:1900,k:'big',hpm:1.4},{x:220,y:2000,k:'big',hpm:1.4},{x:520,y:1940,k:'big',key:'Stag',sc:1.3,hpm:1.8,bk:'gls',nm:'氷河のヘラジカ'},{x:300,y:2010,k:'normal',hpm:1.5},{x:110,y:1930,k:'boss',bt:'frost',sc:1.9,hpm:3.5,bk:'glb',nm:'氷河の主'}],
     chests:[{x:170,y:2330,tier:1},{x:520,y:1890,tier:2},{x:90,y:2050,tier:3}],cmat:['icec','icec','star'],
     loot:{1:['c_aurora','w_glaxe'],2:['a_glacier','w_frostbow'],3:['w_glking','c_glheart']},
     look:{nomap:1,floor:'#d6e8f3',wall:'#a9cde6',cap:'#ffffff',crys:['#9fe3ff','#e0f6ff'],ring:'#9fe3ff',mouth:'#8fb8d6',fire:'#ffa23d'}},
@@ -68,7 +68,7 @@ function dgState(D){G.dg=G.dg||{};return G.dg[D.id]=G.dg[D.id]||{sp:D.spawns.map
 function dgLook(b,S,D){world.remove(b.m.g);b.m=makeBear(b.kind,S.key||D.key||undefined);if(b.bt)setBtLook(b,b.bt);b.m.g.scale.setScalar(S.sc||(S.k==='boss'?2.4:S.k==='big'?1.4:1));b.m.g.position.set(b.x,0,b.y);world.add(b.m.g);b.dgs=S.code;b.nm=S.nm||null;b.bk=S.bk||(D.id==='cave'?(S.k==='boss'?'spq':'sp'):D.id==='glacier'?'gl':D.id==='ruin'?'ru':null)}
 function updateCave(dt){for(const D of dgMap()){if(!D.gate())continue;const C=dgState(D);
   D.spawns.forEach((S,i)=>{if(G.bears.some(b=>b.dgs===S.code&&!b.dead))return;C.sp[i]-=dt;if(C.sp[i]>0)return;C.sp[i]=S.k==='boss'?240:120;let b;
-    if(S.k==='boss'){b=spawnBoss(S.bt||'frost',true);b.hp=b.max=Math.round(b.max*(S.hpm||4))}else{b=spawnBear('A',true);b.kind=S.k;b.hp=b.max=Math.round((S.k==='big'?16:8)*(S.hpm||1)*DM().hp*(1+(YR()-1)*.25))}
+    if(S.k==='boss'){b=spawnBoss(S.bt||'frost',true);b.hp=b.max=Math.round(b.max*(S.hpm||3))}else{b=spawnBear('A',true);b.kind=S.k;b.hp=b.max=Math.round((S.k==='big'?16:8)*(S.hpm||1)*DM().hp*(1+(YR()-1)*.25))}
     b.x=S.x;b.y=S.y;dgLook(b,S,D);b.zone='K';b.dg=D;b.home={x:S.x,y:S.y}});
   D.chests.forEach((c,i)=>{const st=C.ch[i];if(st.open){st.rt-=dt;if(st.rt<=0)st.open=0;return}const p=G.players.find(p=>!(p.down>0)&&dist(p.x,p.y,c.x,c.y)<55);if(!p){st.t=0;return}st.t=(st.t||0)+dt;if(st.t<1)return;st.open=1;st.rt=G.DAY*1.5;
     const pool=D.loot[c.tier].filter(id=>!(p.items||[]).includes(id));if(pool.length)giveItem(p,pool[Math.floor(Math.random()*pool.length)]);addMat(p,D.cmat[c.tier-1],c.tier===3?2:3);const v=Math.round(60*c.tier*(1+D.i*.5)*(1+G.day*.05));G.cash+=v;G.earned+=v;cnt(p,'chest');

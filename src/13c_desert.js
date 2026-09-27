@@ -54,7 +54,7 @@ function makeWorm(){const g=new T.Group(),skin=std('#d8ad78',{r:.8,e:'#4a2f14',e
   const head=segs[0];const mouth=at(rot(cyl(14,19,10,std('#3a1010',{r:1}),14),Math.PI/2,0,0),0,0,-22);head.add(mouth);for(let k=0;k<10;k++){const a=k/10*TAU;head.add(at(rot(cone(3,12,std('#f4ead2',{r:.6}),5),-Math.PI/2,0,0),Math.cos(a)*15,Math.sin(a)*15,-27))}
   const mound=at(scl(sph(40,std('#d6a86c',{r:1}),false,14,8),1,.25,1),0,0,-80);g.add(mound);
   g.userData.segs=segs;return g}
-function spawnWorm(){const b=spawnBoss('queen',true);b.x=VALLEY.x;b.y=VALLEY.y;b.m.g.position.set(b.x,0,b.y);b.hp=b.max=Math.round(420*DM().hp);b.nm='巨大サンドワーム';b.home={x:VALLEY.x,y:VALLEY.y};
+function spawnWorm(){const b=spawnBoss('queen',true);b.x=VALLEY.x;b.y=VALLEY.y;b.m.g.position.set(b.x,0,b.y);b.hp=b.max=Math.round(260*DM().hp);b.nm='巨大サンドワーム';b.home={x:VALLEY.x,y:VALLEY.y};
   wormLook(b);G.story.worm=b.id;G.shake=18;banner('第3章','巨大サンドワームが現れた！','流砂の谷の主。砂にもぐったら、出てくる場所から離れろ','cold');say('遊牧民の長ハミド','あれが谷の主じゃ…神殿の石が消えてから、あやつは狂ってしもうた')}
 function wormLook(b){if(!b.m||b.m.worm)return;b.m.g.traverse(o=>{if(o.isMesh&&o!==b.m.ring)o.visible=false});const w=makeWorm();w.scale.setScalar(1.6);b.m.g.add(w);b.m.worm=w}
 function wormAnim(b,t){const w=b.m&&b.m.worm;if(!w)return;const segs=w.userData.segs,n=segs.length;segs.forEach((s,i)=>{const k=i/(n-1),ph=Math.PI*(.35+.65*k);const y=72*Math.sin(ph)+2,z=40-k*120,ty=72*.65*Math.PI*Math.cos(ph),tz=-120;s.position.set(Math.sin(t*2.2+i*.7)*7*(1-k),y,z);s.rotation.set(-Math.atan2(ty,tz),0,0)});segs[0].rotation.x+=Math.sin(t*6)*.12}
