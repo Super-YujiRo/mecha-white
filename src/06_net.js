@@ -14,7 +14,7 @@ const PJ_PRE='mecha-white-v1-',PJ_ICE={config:{iceServers:[{urls:['stun:stun.l.g
 function netWire(r){for(const tp of ['s.core','s.a','s.b'])r.on(tp,m=>{if(NET.mode!=='guest'||m.sameTab)return;if(NET.hostPeer&&m.peer!==NET.hostPeer)return;NET.inbox[tp]=m.data},()=>{})}
 function pjRoom(){const r=pjRoomRaw();netWire(r);return r}
 function pjRoomRaw(){return{peers:()=>[...PJ.conns.keys()].filter(k=>{const c=PJ.conns.get(k);return c.open&&performance.now()-(c._seen||0)<7000}).map(k=>({peer:k,presence:PJ.pres[k]||{},sameTab:false})),
-  presence:patch=>{PJ.me=patch;for(const c of PJ.conns.values())if(c.open)try{c.send({p:patch})}catch(e){}return Promise.resolve()},
+  presence:patch=>{patch=Object.assign({v:BUILD},patch);PJ.me=patch;for(const c of PJ.conns.values())if(c.open)try{c.send({p:patch})}catch(e){}return Promise.resolve()},
   onPeers:fn=>{PJ.peerSubs.push(fn)},on:(tp,fn)=>{(PJ.subs[tp]=PJ.subs[tp]||[]).push(fn)},
   emit:(tp,d)=>{for(const c of PJ.conns.values())if(c.open)try{c.send({t:tp,d})}catch(e){}return Promise.resolve()}}}
 const pjPeers=()=>{for(const f of PJ.peerSubs)try{f()}catch(e){}netLine()};
@@ -23,6 +23,7 @@ function pjWire(c){c._seen=performance.now();c.on('open',()=>{c._seen=performanc
   const bye=()=>{PJ.conns.delete(c.peer);delete PJ.pres[c.peer];pjPeers()};c.on('close',bye);c.on('error',bye)}
 setInterval(()=>{for(const [k,c] of PJ.conns){if(c.open)try{c.send({k:1})}catch(e){}if(performance.now()-(c._seen||0)>9000){try{c.close()}catch(e){}PJ.conns.delete(k);delete PJ.pres[k];pjPeers()}}},2000);
 window.addEventListener('beforeunload',()=>{try{PJ.peer&&PJ.peer.destroy()}catch(e){}});
+function verCheck(pr){if(!pr||!pr.v||pr.v===BUILD||NET._vw===pr.v)return;NET._vw=pr.v;const mine=pr.v<BUILD;const msg=mine?'友達のゲームが古い版です。友達にページを再読み込み（Ctrl+Shift+R）してもらってください':'あなたのゲームが古い版です。ページを再読み込み（Ctrl+Shift+R）してください';toast(msg,'cold',true);setTimeout(()=>{if(running)banner('バージョンが違います',mine?'友達が古い版':'自分が古い版',msg,'area')},1500)}
 function netWarn(t){const el=$('netWarn');if(!el)return;if(el._t===t)return;el._t=t;el.hidden=!t;el.textContent=t}
 function pjKeep(pe){pe.on('disconnected',()=>{if(pe.destroyed)return;const tryR=()=>{if(pe.destroyed||!pe.disconnected)return;try{pe.reconnect()}catch(e){}setTimeout(tryR,4000)};setTimeout(tryR,1000)})}
 // guest: reconnect the data channel to the same room after a drop
@@ -50,7 +51,7 @@ function pjInit(){PJ.on=true;const q=new URLSearchParams(location.search).get('r
   $('roomIn').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter')pjJoin($('roomIn').value)});
   $('copyUrl').addEventListener('click',()=>{const u=location.origin+location.pathname+'?room='+PJ.code;(navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>toast('招待URLをコピーした！','gold'),()=>prompt('このURLを友達に送ってね',u))});
   if(q){setPlayers(2);$('roomIn').value=q;setTimeout(()=>pjJoin(q),600)}netLine()}
-(async()=>{try{const u=window.claude&&window.claude.use;if(!u){pjInit();return}const r=await window.claude.use('room');if(!r)return;NET.room=r;r.presence({role:'idle'}).catch(()=>{});
+(async()=>{try{const u=window.claude&&window.claude.use;if(!u){pjInit();return}const r=await window.claude.use('room');if(!r)return;NET.room=new Proxy({},{get:(_,k)=>k==='presence'?(x=>r.presence(Object.assign({v:BUILD},x))):(typeof r[k]==='function'?r[k].bind(r):r[k])});r.presence({role:'idle'}).catch(()=>{});
   r.onPeers(()=>netLine(),()=>{});
   netWire(r);
   netLine()}catch(e){}})();
@@ -60,7 +61,7 @@ function followNet(p,dt){const px=p.x,py=p.y;if(p.nx!=null){const k=Math.min(1,d
 function netHost(dt){const gp=guestPeerNow();
   if(gp&&NET.guestPeer!==gp.peer){if(G.players[1])dropRemote();NET.guestPeer=gp.peer;G.charOf[1]=altCh(G.charOf[0],gp.presence&&gp.presence.ch);const p=addPlayer(1);p.remote=true;if(G.savePl&&G.savePl[1]){p.lv=Object.assign({gun:0,bag:0},G.savePl[1].lv);p.life=Object.assign({},G.savePl[1].life||{});rpgRestore(p,G.savePl[1])}p.x=CX+30;p.y=CY+110;hudInit();toast('友達が参加した！','gold');SFX.rare();setTimeout(()=>{if(running)banner('2人専用','協力ワザ','挟み撃ちでダメージ2倍・寄り添うと体温が下がりにくい・巨大肉は2人で運ぶ','area')},2500)}
   if(!gp&&NET.guestPeer){NET.gMiss=(NET.gMiss||0)+dt;const lim=PJ.on?45:3;if(PJ.on)netWarn(`友達の接続が切れた…戻ってくるのを待っています（あと${Math.ceil(lim-NET.gMiss)}秒）`);if(NET.gMiss>lim){netWarn('');dropRemote();NET.guestPeer=null;NET.gMiss=0;toast('友達が抜けた','cold')}}else if(gp&&NET.gMiss){if(NET.gMiss>1)toast('友達が戻ってきた！','gold');NET.gMiss=0;netWarn('')}
-  const p=G.players[1];if(p&&gp){const pr=gp.presence;p.atkHold=!!pr.ak;if(typeof pr.dg==='number'){if(p._dg!=null&&pr.dg!==p._dg)p.inv=Math.max(p.inv||0,.42);p._dg=pr.dg}p.jz=pr.jz||0;if(typeof pr.sk==='number'){if(p._sk!=null&&pr.sk!==p._sk)p.skillReq=true;p._sk=pr.sk}if(typeof pr.fk==='number'){if(p._fk!=null&&pr.fk!==p._fk)p.fPress=true;p._fk=pr.fk}if(pr.act&&pr.act[0]!==p._act){const first=p._act===undefined&&pr.act[0]>1;p._act=pr.act[0];if(!first)doAct(p,pr.act[1],pr.act[2])}if(typeof pr.ek==='number'){if(p._ek!=null&&pr.ek!==p._ek){p.ePress=true;p.eGrade=pr.eg||0}p._ek=pr.ek}if(typeof pr.x==='number'&&typeof pr.y==='number'){p.nx=clamp(pr.x,30,WORLD-30);p.ny=clamp(pr.y,30,WORLD-30);p.dirN=typeof pr.d==='number'?pr.d:null}}
+  const p=G.players[1];if(p&&gp){const pr=gp.presence;verCheck(pr);p.atkHold=!!pr.ak;if(typeof pr.dg==='number'){if(p._dg!=null&&pr.dg!==p._dg)p.inv=Math.max(p.inv||0,.42);p._dg=pr.dg}p.jz=pr.jz||0;if(typeof pr.sk==='number'){if(p._sk!=null&&pr.sk!==p._sk)p.skillReq=true;p._sk=pr.sk}if(typeof pr.fk==='number'){if(p._fk!=null&&pr.fk!==p._fk)p.fPress=true;p._fk=pr.fk}if(pr.act&&pr.act[0]!==p._act){const first=p._act===undefined&&pr.act[0]>1;p._act=pr.act[0];if(!first)doAct(p,pr.act[1],pr.act[2])}if(typeof pr.ek==='number'){if(p._ek!=null&&pr.ek!==p._ek){p.ePress=true;p.eGrade=pr.eg||0}p._ek=pr.ek}if(typeof pr.x==='number'&&typeof pr.y==='number'){p.nx=clamp(pr.x,30,WORLD-30);p.ny=clamp(pr.y,30,WORLD-30);p.dirN=typeof pr.d==='number'?pr.d:null}}
   NET.sendT+=dt;if(NET.guestPeer&&NET.sendT>=.12){NET.sendT=0;sendSnap()}}
 function dropRemote(){const p=G.players[1];if(!p)return;for(const k of p.bag)dropItem(p.x,p.y,k,20);world.remove(p.m.g);G.players.length=1;for(const h of G.holes)if(h.user===p)h.user=null;hudInit()}
 function safeEmit(tp,d){if(!NET.room)return;let s=JSON.stringify(d);let guard=0;const LIM=PJ.on?200000:3800;while(s.length>LIM&&guard++<8){let big=null,bl=0;for(const k in d)if(Array.isArray(d[k])){const l=JSON.stringify(d[k]).length;if(l>bl){bl=l;big=k}}if(!big)break;d[big]=d[big].slice(0,Math.floor(d[big].length*.7));s=JSON.stringify(d)}
@@ -118,6 +119,7 @@ function applyInbox(){const I=NET.inbox;
     for(const id of STIDS){const st=G.stations[id];st.cashier=G.workers.find(w=>w.role==='cashier'&&w.st===st)||null}}}
 function glide(o,dt,k){if(o.nx==null)return;const px=o.x,py=o.y;const f=Math.min(1,dt*(k||10));o.x=lerp(o.x,o.nx,f);o.y=lerp(o.y,o.ny,f);const sp=Math.hypot(o.x-px,o.y-py)/Math.max(dt,.001);o.moving=sp>12;if(o.moving)o.step+=dt*Math.min(12,sp*.08)}
 function guestTick(dt){
+  {const h0=hostPeerNow();if(h0)verCheck(h0.presence)}
   // leave if the host is gone
   const hp=hostPeerNow();if(hp&&hp.peer===NET.hostPeer&&hp.presence.seed!==NET.hostSeed&&hp.presence.trip&&hp.presence.seed){NET.hostSeed=hp.presence.seed;NET.hostMiss=0;NET.inbox={};newGame(2,{seed:hp.presence.seed,guest:true,chars:[hp.presence.ch||'Rogue_Hooded',altCh(hp.presence.ch||'Rogue_Hooded',meta.pick)],diff:hp.presence.df||0,biome:hp.presence.bi||0});NET.room.presence({role:'guest',x:G.players[1].x|0,y:G.players[1].y|0,d:0,ch:meta.pick||'Knight'}).catch(()=>{});updateCam(0,true);hudInit();banner('砂漠の町に着いた','','ここは雪原より過酷','r-SSR');return}
   if(!hp||hp.peer!==NET.hostPeer||hp.presence.seed!==NET.hostSeed){NET.hostMiss+=dt;const lim=PJ.on?45:3;if(PJ.on&&NET.hostMiss>1.5){PJ.rejoin=true;NET.rjT=(NET.rjT||0)-dt;if(NET.rjT<=0){NET.rjT=3;pjRejoin()}netWarn(`接続が切れた…つなぎ直しています（あと${Math.ceil(lim-NET.hostMiss)}秒）`)}if(NET.hostMiss>lim){PJ.rejoin=false;netWarn('');banner('','ホストとつながらない','タイトルに戻ります','cold',true);toTitle();return}}else{if(NET.hostMiss>1.5){netWarn('');toast('つなぎ直した！','gold')}NET.hostMiss=0;PJ.rejoin=false}
