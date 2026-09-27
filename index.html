@@ -272,6 +272,7 @@ body.rpg #qlog div{background:var(--fl-parch);border:2px solid var(--fl-gold);bo
 body.rpg #keyBar{display:flex}
 #keyBar kbd{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 5px;margin-right:4px;border-radius:50%;background:#fff8e2;color:#1d3150;font:900 11px var(--body);box-shadow:0 2px 0 #b8913f}
 #keyBar kbd.w{border-radius:6px}
+body.mlock #keyBar .kbUn,body:not(.mlock) #keyBar .kbLk{display:none}
 #kbSk.cd{opacity:.55}#kbSk.ready kbd{background:#f1d27a;animation:flb .6s ease-in-out infinite alternate}
 </style>
 
@@ -309,7 +310,7 @@ body.rpg #keyBar{display:flex}
 <div id="dlg" hidden><b id="dlgWho"></b><p id="dlgTxt"></p><div id="dlgCh"></div><small id="dlgHint">Eキー / クリックで進む</small></div>
 <div id="qlog" hidden></div>
 <div id="tracker" hidden></div>
-<div id="keyBar"><span><kbd class="w">左クリック</kbd>攻撃</span><span id="kbSk"><kbd class="w">右クリック</kbd>スキル</span><span><kbd class="w">右ドラッグ</kbd>視点</span><span><kbd class="w">ホイール</kbd>ズーム</span><span><kbd>E</kbd>話す</span><span><kbd>Q</kbd>工房</span></div>
+<div id="keyBar"><span><kbd class="w">左クリック</kbd>攻撃</span><span><kbd class="w">Space</kbd>ジャンプ</span><span id="kbSk"><kbd class="w">右クリック</kbd>スキル</span><span class="kbUn"><kbd class="w">クリック</kbd>マウスで視点操作</span><span class="kbLk"><kbd class="w">Esc/Alt</kbd>カーソルを出す</span><span><kbd>E</kbd>話す</span></div>
 <div id="opening" hidden><div class="opbar t"></div><div class="opbar b"></div><div id="opTxt"></div><button id="opSkip">スキップ ▶▶</button></div>
 <div id="talk" hidden><b id="talkWho"></b><span id="talkTxt"></span></div>
 <div class="banner" id="banner" hidden><small id="bnSub"></small><b id="bnMain"></b><span id="bnNote"></span></div>
@@ -368,4 +369,4 @@ body.rpg #keyBar{display:flex}
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js"></script>
 
-<script src="game.js?v=20260927155130"></script>
+<script src="game.js?v=20260927160356"></script>

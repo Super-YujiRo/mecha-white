@@ -103,16 +103,21 @@ const bar=(pct,kind)=>`<i class="bar ${kind||''}"><b style="width:${Math.max(4,M
 
 // ================================================================ input
 const keys={};
-addEventListener('keydown',e=>{const k=e.key.toLowerCase();keys[k]=true;if(e.key.startsWith('Arrow')||k===' ')e.preventDefault();if(!$('perk').hidden&&['1','2','3'].includes(k)){const b=$('perks').children[+k-1];if(b)b.click()}});
+addEventListener('keydown',e=>{const k=e.key.toLowerCase();keys[k]=true;if(k===' '&&!e.repeat&&running&&isRPG()&&!(e.target&&e.target.tagName==='INPUT'))JMP.req=true;if(e.key.startsWith('Arrow')||k===' ')e.preventDefault();if(!$('perk').hidden&&['1','2','3'].includes(k)){const b=$('perks').children[+k-1];if(b)b.click()}});
 addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false});
 addEventListener('blur',()=>{for(const k in keys)keys[k]=false});
 const joys=[{on:false},{on:false}];let nPlayers=1;
 cv.addEventListener('contextmenu',e=>e.preventDefault());
 cv.addEventListener('wheel',e=>{if(!running||!isRPG())return;e.preventDefault();CAMS.zoom=clamp(CAMS.zoom*(e.deltaY>0?1.1:1/1.1),.55,1.9)},{passive:false});
 const INP={atk:false};addEventListener('blur',()=>{INP.atk=false});
+// mouse-look: in story mode a click locks the cursor and plain mouse movement turns the camera (Esc / Alt frees the cursor)
+const mLocked=()=>document.pointerLockElement===cv;
+document.addEventListener('mousemove',e=>{if(!mLocked())return;CAMS.yaw-=e.movementX*.0032;CAMS.pitch=clamp(CAMS.pitch+e.movementY*.0022,.28,1.15)});
+document.addEventListener('pointerlockchange',()=>{if(!mLocked())INP.atk=false});
+addEventListener('keydown',e=>{if(e.key==='Alt'&&mLocked()){e.preventDefault();document.exitPointerLock()}});
 addEventListener('pointermove',e=>{const d=CAMS.drag;if(!d||d.id!==e.pointerId)return;d.m+=Math.abs(e.clientX-d.x)+Math.abs(e.clientY-d.y);CAMS.yaw-=(e.clientX-d.x)*.0065;CAMS.pitch=clamp(CAMS.pitch+(e.clientY-d.y)*.004,.28,1.15);d.x=e.clientX;d.y=e.clientY});
 addEventListener('pointerup',e=>{if(e.button===0)INP.atk=false;const d=CAMS.drag;if(d&&d.id===e.pointerId){if(d.btn===2&&d.m<10&&performance.now()-d.t<400)skillPress();CAMS.drag=null}});
-cv.addEventListener('pointerdown',e=>{if(running&&isRPG()&&e.pointerType==='mouse'){if(e.button===0){if(!G.paused)INP.atk=true;return}CAMS.drag={id:e.pointerId,x:e.clientX,y:e.clientY,btn:e.button,m:0,t:performance.now()};try{cv.setPointerCapture(e.pointerId)}catch(_){}return}if(e.button!==0)return;if(!running||G.paused)return;const slot=0;const j=joys[slot];if(j.on)return;
+cv.addEventListener('pointerdown',e=>{if(running&&isRPG()&&e.pointerType==='mouse'){if(mLocked()){if(e.button===0){if(!G.paused)INP.atk=true}else if(e.button===2)skillPress();return}if(e.button===0){if(!G.paused&&cv.requestPointerLock)try{const r=cv.requestPointerLock();if(r&&r.catch)r.catch(()=>{})}catch(_){}return}CAMS.drag={id:e.pointerId,x:e.clientX,y:e.clientY,btn:e.button,m:0,t:performance.now()};try{cv.setPointerCapture(e.pointerId)}catch(_){}return}if(e.button!==0)return;if(!running||G.paused)return;const slot=0;const j=joys[slot];if(j.on)return;
   Object.assign(j,{on:true,id:e.pointerId,ox:e.clientX,oy:e.clientY,x:e.clientX,y:e.clientY});try{cv.setPointerCapture(e.pointerId)}catch(_){}});
 cv.addEventListener('pointermove',e=>{for(const j of joys)if(j.on&&j.id===e.pointerId){j.x=e.clientX;j.y=e.clientY}});
 const endJ=e=>{for(const j of joys)if(j.on&&j.id===e.pointerId)j.on=false};cv.addEventListener('pointerup',endJ);cv.addEventListener('pointercancel',endJ);

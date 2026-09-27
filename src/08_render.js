@@ -13,13 +13,13 @@ function sync(dt){
   const fl=1+Math.sin(G.t*9)*.01;v.heat.visible=v.ring.visible=R>0;v.heat.scale.setScalar(R*fl*1.12);v.ring.scale.setScalar(R*fl);v.ring.material.color.copy(C(G.fuel<20&&Math.sin(G.t*10)>0?'#ff4d5a':DES()?'#5fc3f0':'#ffa04d'));
   v.embers.forEach((e,i)=>{const a=i/v.embers.length*TAU+G.t*.25;e.position.set(CX+Math.cos(a)*R*fl,3+Math.sin(G.t*4+i)*1.5,CY+Math.sin(a)*R*fl);e.visible=R>0;e.rotation.y=G.t*2+i});
   // players
-  for(const p of G.players){const m=p.m;m.g.position.set(p.x,p.riding?6:0,p.y);if(p.aimDir!=null)turnTo(p,p.aimDir,dt,16);else if(p.dirT!=null)turnTo(p,p.dirT,dt);m.g.rotation.y=p.dir;
+  for(const p of G.players){const m=p.m;m.g.position.set(p.x,(p.riding?6:0)+(p.jz||0),p.y);silhouette(m,isRPG());if(p.aimDir!=null)turnTo(p,p.aimDir,dt,16);else if(p.dirT!=null)turnTo(p,p.dirT,dt);m.g.rotation.y=p.dir;
     m._armR=m._armL=false;animWalk(m,p.step,p.moving);backWeapon(p,m,!!p.shooting);if(isRPG()&&p.moving&&!p.riding&&!(p.down>0)){p._dust=(p._dust||0)-dt;if(p._dust<=0){p._dust=.17;burst(p.x-Math.sin(p.dir)*8,p.y-Math.cos(p.dir)*8,3,2,{c:DES()?['#e8cf9a','#d9b47a']:['#ffffff','#dfe9f2'],s0:8,s1:26,u0:12,u1:40,l0:.25,l1:.45,r0:3,r1:6})}}
     const shoot_=!!p.shooting||p.skillT>0;m.gun.visible=shoot_;if(m.clsW)for(const o of m.clsW)o.visible=shoot_;m.axe.visible=!shoot_&&!p.fishing;m.rod.visible=!!p.fishing;
     if(shoot_){m.armR.rotation.set(-1.3,0,0);m.armL.rotation.set(-1.1,0,.2);m._armR=m._armL=true;m.gun.userData.flash.visible=p.flash>0;if(!m.kk)m.gun.position.z=10-(p.flash>0?3:0)}
     else if(p.chopping){const t=clamp(p.actT/(.24*G.pm.chop),0,1);m.armR.rotation.set(-2.6+Math.sin(t*Math.PI)*2.4,0,0);m._armR=true}
     else if(p.fishing){m.armR.rotation.set(-.9+Math.sin(G.t*3)*.08,0,0);m._armR=true}
-    if(m.kk){m.kkRun=true;m.kk.paused=p.down>0;m.kk.want=p.riding?'Idle':shoot_?(m.cls?m.cls.anim:'1H_Ranged_Shooting'):p.chopping?'1H_Melee_Attack_Chop':p.fishing?'Sit_Floor_Idle':null}
+    if(m.kk){m.kkRun=true;m.kk.paused=p.down>0;m.kk.want=p.riding?'Idle':(p.jz>2&&!shoot_)?'Jump_Idle':shoot_?(m.cls?m.cls.anim:'1H_Ranged_Shooting'):p.chopping?'1H_Melee_Attack_Chop':p.fishing?'Sit_Floor_Idle':null}
     m.ice.visible=!!(p.down>0)&&!p.ko&&!DES();if(m.kk&&p.down>0&&DES())m.kk.want='Sit_Floor_Idle';if(m.kk&&p.ko)m.kk.want='Sit_Floor_Idle';if(p.down>0){m.ice.rotation.y=G.t*.3;m.ice.scale.set(1,1.45,1)}
     const bath=inBath(p)&&!p.riding;if(m.kk){if(!m.bathParts){m.bathParts=[];m.model.traverse(o=>{if(o.isMesh&&/Cape|Hat|Helmet/.test(o.name)&&o.visible)m.bathParts.push(o)});m.towel=at(rbox(13,3.2,11,1.2,std('#ffffff',{r:1})),0,52,-1);m.towel.visible=false;m.g.add(m.towel)}
       if(m._bath!==bath){m._bath=bath;m.towel.visible=bath;for(const o of m.bathParts)o.visible=!bath}
@@ -149,20 +149,9 @@ function updateCam(dt,snap){const ps=NET.mode==='solo'?G.players:[G.players[G.me
   if(G.camPan&&G.camPan.t<(G.camPan.d||2.2)){const D=G.camPan.d||2.2;G.camPan.t+=dt;const k=G.camPan.t<.5?G.camPan.t/.5:G.camPan.t>D-.5?Math.max(0,1-(G.camPan.t-(D-.5))/.5):1;cx=lerp(cx,G.camPan.x,k*.85);cy=lerp(cy,G.camPan.y,k*.85);z=lerp(z,G.camPan.z||.62,k)}
   cam.z=snap?z:lerp(cam.z,z,Math.min(1,dt*3));if(snap){cam.x=cx;cam.y=cy}else{cam.x=lerp(cam.x,cx,Math.min(1,dt*6));cam.y=lerp(cam.y,cy,Math.min(1,dt*6))}}
 function hideIdleFx(dt){secretFx(dt||.016);roadFx();caravanFx();const me=G.players[G.me]||G.players[0];if(me&&G.sleds){if(me.riding)label(me.x,me.y,120,'<small>Fキーで降りる</small>','');else{const q=G.sleds.find(q=>q.rider==null&&dist(me.x,me.y,q.x,q.y)<90);if(q)label(q.x,q.y,50,'<b>Fキーで乗る</b>','gold')}}}
-// ---- see-through: in story mode, walls/buildings/trees between the camera and your character get a dithered hole
-const SEE={p:{value:new T.Vector3(-1e4,-1e4,-1)},r:{value:1}},_sv=new T.Vector3(),_sv2=new T.Vector3(),_sb=new T.Vector2();let _seeT=0;
-const SEE_TYPES={MeshStandardMaterial:1,MeshBasicMaterial:1,MeshLambertMaterial:1,MeshPhongMaterial:1};
-function seePatch(m){if(!m||m.userData.see||!SEE_TYPES[m.type]||m.onBeforeCompile!==T.Material.prototype.onBeforeCompile)return;m.userData.see=1;
-  m.onBeforeCompile=sh=>{sh.uniforms.seeP=SEE.p;sh.uniforms.seeR=SEE.r;
-    sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nvarying float vSeeY;').replace('#include <project_vertex>','#include <project_vertex>\n{vec4 sw=vec4(transformed,1.0);\n#ifdef USE_INSTANCING\nsw=instanceMatrix*sw;\n#endif\nvSeeY=(modelMatrix*sw).y;}');
-    sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nuniform vec3 seeP;uniform float seeR;varying float vSeeY;').replace('#include <clipping_planes_fragment>','#include <clipping_planes_fragment>\nif(seeP.z>0.0&&vSeeY>7.0&&gl_FragCoord.z<seeP.z){vec2 sd=(gl_FragCoord.xy-seeP.xy)/seeR;float sr=dot(sd,sd);if(sr<1.0){float ign=fract(52.9829189*fract(dot(gl_FragCoord.xy,vec2(0.06711056,0.00583715))));if(ign>smoothstep(0.35,1.0,sr)*0.9)discard;}}')};
-  m.customProgramCacheKey=()=>'see1';m.needsUpdate=true}
-function seeFx(dt){const me=G.players[G.me]||G.players[0];if(!isRPG()||!me||!running){SEE.p.value.z=-1;return}
-  _seeT-=dt;if(_seeT<=0){_seeT=1;scene.traverse(o=>{if(!o.isMesh||o.renderOrder>=5)return;if(Array.isArray(o.material))o.material.forEach(seePatch);else seePatch(o.material)})}
-  renderer.getDrawingBufferSize(_sb);_sv.set(me.x,30,me.y);const toCam=_sv2.copy(camera.position).sub(_sv).normalize();
-  _sv2.copy(_sv).addScaledVector(toCam,45).project(camera);const near=_sv2.z*.5+.5;
-  _sv.project(camera);SEE.p.value.set((_sv.x*.5+.5)*_sb.x,(_sv.y*.5+.5)*_sb.y,near);
-  const dCam=camera.position.distanceTo(_sv2.set(me.x,30,me.y));SEE.r.value=Math.max(40,_sb.y*70/(2*dCam*TANH))}
+// ---- a soft silhouette of the character shows through walls and buildings (story mode)
+const SIL_M=new T.MeshBasicMaterial({color:lin('#8fd8ff'),transparent:true,opacity:.42,depthWrite:false,depthFunc:T.GreaterDepth});
+function silhouette(m,on){if(!m.kk)return;if(on&&!m.sil){m.sil=[];m.model.traverse(n=>{if(!n.isSkinnedMesh||!n.visible||n.userData.isSil)return;const s=new T.SkinnedMesh(n.geometry,SIL_M);s.userData.isSil=1;s.bind(n.skeleton,n.bindMatrix);s.position.copy(n.position);s.quaternion.copy(n.quaternion);s.scale.copy(n.scale);s.renderOrder=30;s.frustumCulled=false;n.parent.add(s);m.sil.push(s)})}if(m.sil)for(const s of m.sil)s.visible=on}
 // ---- the equipped weapon rides on the character's back (story mode)
 function wpnModel(id){const it=ITEMS[id];if(!it)return null;const n=it.n;const key=/弓/.test(n)?'Bow_Wooden':/斧/.test(n)?'Axe':/ハンマー|槌/.test(n)?'Hammer_Small':/ナックル/.test(n)?null:/杖|槍/.test(n)?'staff':'Sword';if(!key)return null;
   let src=key==='staff'?(KK&&KK.kit&&KK.kit.staff):(KK&&KK.prop&&KK.prop[key]&&KK.prop[key].scene);if(!src)return null;const o=src.clone(true);
@@ -188,7 +177,7 @@ function frame(dt){hideIdle();monBar();frozenFx();vigFx();hideIdleFx(dt);
   {const ty=rpgCam?CAMS.yaw:YAW,tp=rpgCam?CAMS.pitch:PITCH;let dy=ty-CAMS.cur;dy=Math.atan2(Math.sin(dy),Math.cos(dy));const k=Math.min(1,dt*10);CAMS.cur+=dy*k;CAMS.curP=lerp(CAMS.curP,tp,k);camDir.set(Math.sin(CAMS.cur)*Math.cos(CAMS.curP),Math.sin(CAMS.curP),Math.cos(CAMS.cur)*Math.cos(CAMS.curP))}
   const D=(rpgCam?150*CAMS.zoom/TANH*(1+Math.max(0,CAMS.curP-.6)*.5):Math.max(390/(2*TANH*camera.aspect),560/(2*TANH)))/cam.z,LY=rpgCam?28:0;
   const shx=(Math.random()-.5)*G.shake,shy=(Math.random()-.5)*G.shake,tx=cam.x+shx,tz=cam.y+shy;
-  camera.position.set(tx+camDir.x*D,LY+camDir.y*D,tz+camDir.z*D);camera.lookAt(tx,LY,tz);camera.updateMatrixWorld();seeFx(dt);{const bz=G.wx&&G.wx.type==='blizzard';scene.fog.near=D*(bz?.55:1.5);scene.fog.far=D*(bz?1.6:4.2)}
+  camera.position.set(tx+camDir.x*D,LY+camDir.y*D,tz+camDir.z*D);camera.lookAt(tx,LY,tz);camera.updateMatrixWorld();{const bz=G.wx&&G.wx.type==='blizzard';scene.fog.near=D*(bz?.55:1.5);scene.fog.far=D*(bz?1.6:4.2)}
   sun.position.set(tx-380,760,tz+240);sun.target.position.set(tx,0,tz);
   const scale=PR*H/(2*TANH);psN.update(dt,scale);psA.update(dt,scale);snow.update(dt,cam.x,cam.y,G.wind+(wxIs('blizzard')?2.2:0),wxIs('blizzard')?1:wxIs('clear')?.08:Math.min(1,.35+G.day*.08+(G.wave?.5:0)),scale);sparkle.uniforms.uT.value=G.t;sparkle.uniforms.uS.value=scale;
   sync(dt);
