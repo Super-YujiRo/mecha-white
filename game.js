@@ -1,5 +1,5 @@
 /* めちゃホワイト — built from src/*.js by tools/build.py. Edit the sources, not this file. */
-(()=>{const BUILD='20260927135459';
+(()=>{const BUILD='20260927144926';
 const $=id=>document.getElementById(id);
 if(!window.THREE){$('loading').textContent='3Dの読み込みに失敗しました。再読み込みしてください';return}
 const T=THREE;
@@ -760,7 +760,7 @@ const STN={
 const SPA={x:1200,y:2070,pile:{x:1030,y:1960},boiler:{x:1390,y:2030}};
 const HOLES=[[1950,980],[2080,1060],[1980,1200],[2130,1260],[2000,1400],[2100,1500]];
 const ORES=[];
-const MON={x:1200,y:1345};const ROAD={x:2215,y:190};const WOOD={x:1070,y:1090};
+const MON={x:1185,y:872};const ROAD={x:2215,y:190};const WOOD={x:1070,y:1090};
 function inZone(x,y,r){for(const z of ZONES){const [x0,y0,x1,y1]=z.rect;if(x>x0-(r||0)&&x<x1+(r||0)&&y>y0-(r||0)&&y<y1+(r||0))return z}return null}
 function zoneOpen(id){return !id||G.zones[id]}
 
@@ -852,7 +852,7 @@ function newGame(np,opts){opts=opts||{};CUR_BIO=opts.biome||0;zoneNames();let RS
     for(let i=0;i<14;i++){const x=sr(120,WORLD-120),y=sr(120,WORLD-120);if(dist(x,y,CX,CY)<FR+140||inZone(x,y))continue;const rk=['rock1','rock2','rock3'][i%3];const m=KK.nat&&KK.nat[rk]?(()=>{const g=new T.Group(),o=KK.nat[rk].clone(true);o.scale.setScalar(sr(34,60)/(KK.natH[rk]||1));g.add(o);return g})():kkProp(i%2?'rockA':'rockC',sr(40,70));m.position.set(x,0,y);m.rotation.y=sr(0,TAU);world.add(m)}}
   // decor: bushes, grass tufts, dead trees and pebbles (instanced, no collision)
   G.decor=[];if(KK&&KK.nat&&KK.nat.bush){const o3=new T.Object3D();for(const [k,n,s0,s1] of (DES()?[['dead',34,80,120],['peb',260,12,24]]:[['bush',160,34,60],['grass',420,26,44],['dead',12,90,130],['peb',140,10,20]])){const src=KK.nat[k];if(!src)continue;src.updateMatrixWorld(true);const H=KK.natH[k]||1;const list=[];
-      let g2=0;while(list.length<n&&g2++<n*20){const x=sr(40,WORLD-40),y=sr(40,WORLD-40);const d=dist(x,y,CX,CY);if(d<FR+(k==='dead'?140:60))continue;if(x>900&&x<1700&&y>1580&&y<1840)continue;if(dist(x,y,SPA.x,SPA.y)<260)continue;if(!DES()&&TSPOTS.some(q=>dist(x,y,q[0],q[1])<130))continue;if(!DES()&&x>CAVE_BOX[0]-60&&y>CAVE_BOX[1]-60)continue;list.push([x,y,sr(s0,s1)/H,sr(0,TAU)])}
+      let g2=0;while(list.length<n&&g2++<n*20){const x=sr(40,WORLD-40),y=sr(40,WORLD-40);const d=dist(x,y,CX,CY);if(d<FR+(k==='dead'?140:60))continue;if(x>900&&x<1700&&y>1580&&y<1840)continue;if(dist(x,y,SPA.x,SPA.y)<260)continue;if(!DES()&&TSPOTS.some(q=>dist(x,y,q[0],q[1])<130))continue;if(!DES()&&x>CAVE_BOX[0]-60&&y>CAVE_BOX[1]-60)continue;if(dist(x,y,MON.x,MON.y)<170)continue;list.push([x,y,sr(s0,s1)/H,sr(0,TAU)])}
       const byC=new Map();for(const it of list){const key=chunkKey(it[0],it[1]);if(!byC.has(key))byC.set(key,[]);byC.get(key).push(it)}
       for(const [key,cl] of byC){const box=chunkBox(key,k==='dead'?200:90);src.traverse(o=>{if(!o.isMesh)return;const im=new T.InstancedMesh(o.geometry,o.material,cl.length);im.frustumCulled=false;im.castShadow=k==='bush'||k==='dead';im.receiveShadow=true;im.userData.n=cl.length;im.userData.box=box;im.count=Math.floor(cl.length*QL[GQ.tier].decor*(k==='dead'&&GQ.tier<2?0:1));im.visible=im.count>0;G.decor.push(im);
         cl.forEach(([x,y,sc,r],i)=>{o3.position.set(x,0,y);o3.rotation.set(0,r,0);o3.scale.setScalar(sc);o3.updateMatrix();const m4=new T.Matrix4().multiplyMatrices(o3.matrix,o.matrixWorld);im.setMatrixAt(i,m4)});world.add(im)})}}}
@@ -869,7 +869,7 @@ function newGame(np,opts){opts=opts||{};CUR_BIO=opts.biome||0;zoneNames();let RS
   // trees
   let guard=0;const trees=[];
   while(trees.length<Math.round(360*G.mod.trees)&&guard++<30000){const x=sr(60,WORLD-60),y=sr(60,WORLD-60);const d=dist(x,y,CX,CY);if(d<FR+70)continue;if(x>900&&x<1700&&y>1580&&y<1840)continue;
-    if(!DES()&&dist(x,y,2020,1210)<470&&x>1720)continue;if(DES()&&DHOLES.some(h=>dist(h[0],h[1],x,y)<110))continue;if(dist(x,y,ROAD.x,ROAD.y)<230)continue;if(dist(x,y,SPA.x,SPA.y)<260)continue;if(Math.abs(x-CX)<60&&y<CY)continue;if(!DES()&&TSPOTS.some(q=>dist(x,y,q[0],q[1])<150))continue;if(!DES()&&x>CAVE_BOX[0]-60&&y>CAVE_BOX[1]-60)continue;if(Math.abs(y-CY)<60&&(x<CX||x>CX))continue;
+    if(!DES()&&dist(x,y,2020,1210)<470&&x>1720)continue;if(DES()&&DHOLES.some(h=>dist(h[0],h[1],x,y)<110))continue;if(dist(x,y,ROAD.x,ROAD.y)<230)continue;if(dist(x,y,SPA.x,SPA.y)<260)continue;if(Math.abs(x-CX)<60&&y<CY)continue;if(!DES()&&TSPOTS.some(q=>dist(x,y,q[0],q[1])<150))continue;if(!DES()&&x>CAVE_BOX[0]-60&&y>CAVE_BOX[1]-60)continue;if(dist(x,y,MON.x,MON.y)<170)continue;if(Math.abs(y-CY)<60&&(x<CX||x>CX))continue;
     if(trees.some(t=>dist(t.x,t.y,x,y)<54))continue;trees.push({x,y,s:sr(.85,1.25),ry:sr(0,TAU),hp:4,alive:true,regrow:0,shake:0,fall:0,fallDir:0,grow:1,zone:(inZone(x,y)||{}).id||null})}
   G.trees=trees;forest=new Forest(trees);makeSecrets(trees,sr);makeRoad();applyBiome();
   // ores (zone C? no — rocky outcrops in the east of the north field feed coal)
@@ -1110,7 +1110,7 @@ function pushRect(e,x0,y0,x1,y1,r){const nx=clamp(e.x,x0,x1),ny=clamp(e.y,y0,y1)
   if(d<r){if(d>0){e.x=nx+dx/d*r;e.y=ny+dy/d*r}else{const l=e.x-x0,r_=x1-e.x,t=e.y-y0,b=y1-e.y,m=Math.min(l,r_,t,b);if(m===l)e.x=x0-r;else if(m===r_)e.x=x1+r;else if(m===t)e.y=y0-r;else e.y=y1+r}}}
 const angGap=an=>GATE_ANG.some(g=>Math.abs(Math.atan2(Math.sin(an-g),Math.cos(an-g)))<.11)||(an>SOUTH[0]&&an<SOUTH[1]);
 function fenceCollide(e,px,py){const d=dist(e.x,e.y,CX,CY),dp=dist(px,py,CX,CY);if(Math.abs(d-FR)<14||(dp<FR)!==(d<FR)){const an=Math.atan2(e.y-CY,e.x-CX);if(angGap(an))return;const r=dp<FR?FR-14:FR+14;e.x=CX+Math.cos(an)*r;e.y=CY+Math.sin(an)*r}}
-function solids(e,r){pushCircle(e,CX,CY,70);for(const d of G.drifts||[])pushCircle(e,d.x,d.y,20*d.s);if(isRPG())pushCircle(e,WB.x,WB.y,24);caveWalls(e,r);for(const id in G.stations){const st=G.stations[id];if(!st.open)continue;const s=st.def;pushRect(e,s.conv.x-34,s.conv.y-16,s.conv.x+34,s.conv.y+16,r*.6);pushRect(e,s.counter.x-52,s.counter.y-12,s.counter.x+52,s.counter.y+12,r*.6);pushCircle(e,s.pile.x,s.pile.y,14)}
+function solids(e,r){pushCircle(e,CX,CY,70);for(const d of G.drifts||[])pushCircle(e,d.x,d.y,20*d.s);if(isRPG())pushCircle(e,WB.x,WB.y,24);caveWalls(e,r);if(G.monV&&G.monV.visible)pushCircle(e,MON.x,MON.y,52*G.monV.scale.x);for(const id in G.stations){const st=G.stations[id];if(!st.open)continue;const s=st.def;pushRect(e,s.conv.x-34,s.conv.y-16,s.conv.x+34,s.conv.y+16,r*.6);pushRect(e,s.counter.x-52,s.counter.y-12,s.counter.x+52,s.counter.y+12,r*.6);pushCircle(e,s.pile.x,s.pile.y,14)}
   if(G.zones.D){pushCircle(e,SPA.boiler.x,SPA.boiler.y,28)}
   for(const z of ZONES)if(!G.zones[z.id]){const [x0,y0,x1,y1]=z.rect;pushRect(e,x0,y0,x1,y1,r)}}
 function nav(e,tx,ty){const ia=dist(e.x,e.y,CX,CY)<FR,ib=dist(tx,ty,CX,CY)<FR;if(ia===ib)return{x:tx,y:ty};
@@ -1425,7 +1425,7 @@ function raidGoal(b,dt,sp){const big=b.kind!=='normal',boss=b.kind==='boss',R=G.
   if(!b.goal){const r=Math.random(),built=G.houses.map((h,i)=>i).filter(i=>houseLv(i)>0),ws=G.workers.filter(w=>w.role!=='guard'&&!(w.hurt>0)&&!w.frozen&&dist(w.x,w.y,CX,CY)<FR+60);
     if(r<.38&&built.length)b.goal={t:'h',i:built[Math.floor(Math.random()*built.length)]};else if(r<.7&&ws.length){let bw=ws[0],bd=1e9;for(const w of ws){const d=dist(w.x,w.y,b.x,b.y);if(d<bd){bd=d;bw=w}}b.goal={t:'w',w:bw}}else b.goal={t:'f'}}
   const g=b.goal;if(g.t==='f')return false;
-  if(g.t==='m'){if(!(G.monHP>0)){b.goal=null;return true}const mx=G.monV.position.x,my=G.monV.position.z,d=dist(b.x,b.y,mx,my);if(d>58){const n=nav(b,mx,my);moveTo(b,n.x,n.y,sp,dt);return true}
+  if(g.t==='m'){if(!(G.monHP>0)){b.goal=null;return true}const mx=G.monV.position.x,my=G.monV.position.z,d=dist(b.x,b.y,mx,my);if(d>40+52*G.monV.scale.x){const n=nav(b,mx,my);moveTo(b,n.x,n.y,sp,dt);return true}
     b.dirT=Math.atan2(mx-b.x,my-b.y);if(b.atkCd<=0){b.atkCd=1.6;b.swipe=.3;G.monHP-=boss?6:big?3:2;G.shake=Math.max(G.shake,5);burst(mx,my,60,10,{c:['#ffd166','#ffffff','#c9d3dd'],s0:40,s1:160,u0:80,u1:240,l0:.4,l1:.7});SFX.chop();
       if(!(R.mT>G.t-5)){R.mT=G.t;toast('像が攻撃されている！','cold')}
       if(G.monHP<=0){G.monHP=0;banner('','像が壊された…','','cold');SFX.bad();G.shake=20;setTimeout(()=>{if(running)endGame(false,'シンボルの像を壊された')},1800)}}
@@ -1805,8 +1805,8 @@ function sync(dt){
   if(G.zones.D){const s=G.spaV,on=G.spa.fuel>0;s.water.material.emissiveIntensity=on?.45+Math.sin(G.t*2)*.08:.05;s.bFire.material.emissiveIntensity=on?2.4:0;const n=on?Math.min(9,3+G.lv.spa*2):1;s.guests.forEach((g,i)=>{g.visible=i<n;g.position.y=5+Math.sin(G.t*1.4+i)*.8});
     G.spaStack.fill('cash',Math.min(220,Math.ceil(G.spa.pile/5)));if(G.spa.pile>1)label(SPA.pile.x,SPA.pile.y,30+G.spaStack.h,`$${G.spa.pile|0}`,'cash');
     label(SPA.boiler.x,SPA.boiler.y,90,on?bar(G.spa.fuel,'gold'):'<span class="lb warnbox" style="position:static">'+(DES()?'薪でポンプを動かす（動くとまわりが涼しい）':'薪を入れて沸かす（沸くとまわりが暖かい）')+'</span>','');if(on)label(SPA.x,SPA.y,150,'♨ ここも暖かい','gold sm')}
-  {const mp=G.pads.find(q=>q.id==='monument');if(mp){mp.name=goalOf(YR()).n;const ox=YR()>1?150:0;if(mp.x!==MON.x+ox){mp.x=MON.x+ox;mp.mesh.mesh.position.x=mp.x;mp.mesh.icon.position.x=mp.x;mp._key=null}}}
-  if(G.monument||YR()>1){G.monPop=Math.min(1,(G.monPop||0)+dt*.8);G.monV.visible=true;G.monV.scale.setScalar(easeOutBack(G.monPop)*(1+(YR()-(G.monument?1:2))*.3));G.monV.userData.flame.scale.set(1,1+Math.sin(G.t*9)*.15,1)}
+  {const mp=G.pads.find(q=>q.id==='monument');if(mp)mp.name=goalOf(YR()).n}
+  if(G.monument||(YR()>1&&!monPadOn())){G.monPop=Math.min(1,(G.monPop||0)+dt*.8);G.monV.visible=true;G.monV.scale.setScalar(easeOutBack(G.monPop)*(1+(YR()-(G.monument?1:2))*.3));G.monV.userData.flame.scale.set(1,1+Math.sin(G.t*9)*.15,1)}
   for(const h of G.hauls){h.m.position.set(h.x,h.carried?10+Math.abs(Math.sin(G.t*9))*4:0,h.y);h.m.rotation.y=h.carried?Math.sin(G.t*4)*.15:0;if(!h.carried)label(h.x,h.y,64,G.players.length>1?'巨大肉：2人で運ぶ':'巨大肉','gold sm')}
   for(const p of G.players)if(p.buddy&&!p.inHeat&&p.id===0){const o=G.players[1];if(o)label((p.x+o.x)/2,(p.y+o.y)/2,70,'♥ 寄り添い中（体温が下がりにくい）','red sm')}
   G.woodStack.fill('log',Math.min(40,G.woodpile));label(WOOD.x,WOOD.y,30+G.woodStack.h,G.woodpile>0?`薪置き場 ${G.woodpile}本（自動でかまど強化へ）`:'薪置き場：火が満タンの時の薪がたまる','note');
@@ -1857,6 +1857,7 @@ function updateCam(dt,snap){const ps=NET.mode==='solo'?G.players:[G.players[G.me
   if(G.camPan&&G.camPan.t<(G.camPan.d||2.2)){const D=G.camPan.d||2.2;G.camPan.t+=dt;const k=G.camPan.t<.5?G.camPan.t/.5:G.camPan.t>D-.5?Math.max(0,1-(G.camPan.t-(D-.5))/.5):1;cx=lerp(cx,G.camPan.x,k*.85);cy=lerp(cy,G.camPan.y,k*.85);z=lerp(z,G.camPan.z||.62,k)}
   cam.z=snap?z:lerp(cam.z,z,Math.min(1,dt*3));if(snap){cam.x=cx;cam.y=cy}else{cam.x=lerp(cam.x,cx,Math.min(1,dt*6));cam.y=lerp(cam.y,cy,Math.min(1,dt*6))}}
 function hideIdleFx(dt){secretFx(dt||.016);roadFx();caravanFx();const me=G.players[G.me]||G.players[0];if(me&&G.sleds){if(me.riding)label(me.x,me.y,120,'<small>Fキーで降りる</small>','');else{const q=G.sleds.find(q=>q.rider==null&&dist(me.x,me.y,q.x,q.y)<90);if(q)label(q.x,q.y,50,'<b>Fキーで乗る</b>','gold')}}}
+const monPadOn=()=>{const mp=G.pads.find(q=>q.id==='monument');return !!(mp&&mp.shown)};
 function monBar(){if(G.raid&&G.raid.on&&G.raid.final&&G.monMax&&G.monV&&G.monV.visible)label(G.monV.position.x,G.monV.position.z,170,bar(100*Math.max(0,G.monHP)/G.monMax,'red'),'')}
 function frozenFx(){for(const v of G.surv)if(v.frozen&&v.m&&v.m.g.visible)label(v.x,v.y,82,`<b>${DES()?'倒れた町人':'凍えた町人'}</b><br><small>${DES()?'そばに立つと助け起こせる':'そばに立つと溶ける'}</small><br>${bar(100*Math.min(1,v.warm/35),'gold wide')}`,'ice')}
 function hideIdle(){let shown=0;for(const v of G.surv){const idle=v.arrived&&!v.frozen;const vis=!idle||shown++<5;if(v.m&&v.m.g.visible!==vis)v.m.g.visible=vis}}
@@ -2062,7 +2063,7 @@ function rpgRestore(p,d){if(!d)return;p.mats=Object.assign({},d.mats||{});p.cnt=
 function gainRX(p,n){if(!p||!isRPG())return;p.rl=p.rl||1;p.rx=(p.rx||0)+n;while(p.rx>=rxNeed(p.rl)){p.rx-=rxNeed(p.rl);p.rl++;float(p.x,p.y,120,`レベルアップ！ Lv${p.rl}`,'gold',true);burst(p.x,p.y,30,30,{c:['#ffe07a','#ffffff','#8ff08f'],s0:60,s1:200,u0:150,u1:320,l0:.6,l1:1.1,add:true,r0:5,r1:9});SFX.rare()}}
 function giveItem(p,id){const it=ITEMS[id];if(!p||!it)return;p.items=p.items||[];if(!p.items.includes(id))p.items.push(id);p.eq=p.eq||{};if(!p.eq[it.s])p.eq[it.s]=id;
   float(p.x,p.y,130,`${it.n} を手に入れた！`,'gold',true);if(p===(G.players[G.me]||G.players[0])&&NET.mode!=='guest')banner('装備を手に入れた！',it.n,itemDesc(it)+'（Lキーで付け替え）','r-SSR',true)}
-const NPCS={snow:[{id:'gordon',n:'猟師のゴードン',pal:1,x:1330,y:1280,o:{hat:'ushanka',beard:true,tool:'gun'}},{id:'mina',n:'パン屋のミーナ',pal:4,x:905,y:1160,o:{apron:true}},{id:'pip',n:'少年ピップ',pal:6,x:1290,y:1100,o:{scale:.75}},{id:'borg',n:'老人ボルグ',pal:2,x:1560,y:1040,o:{beard:true}},{id:'teo',n:'大工のテオ',pal:5,x:1350,y:925,o:{tool:'axe',plaid:true}},{id:'elza',n:'見張りのエルザ',pal:3,x:1470,y:1030,o:{hat:'ushanka',tool:'gun'}}],
+const NPCS={snow:[{id:'gordon',n:'猟師のゴードン',pal:1,x:1330,y:1280,o:{hat:'ushanka',beard:true,tool:'gun'}},{id:'mina',n:'パン屋のミーナ',pal:4,x:905,y:1160,o:{apron:true}},{id:'pip',n:'少年ピップ',pal:6,x:1290,y:1100,o:{scale:.75}},{id:'borg',n:'老人ボルグ',pal:2,x:1560,y:1040,o:{beard:true}},{id:'teo',n:'大工のテオ',pal:5,x:1395,y:955,o:{tool:'axe',plaid:true}},{id:'elza',n:'見張りのエルザ',pal:3,x:1470,y:1030,o:{hat:'ushanka',tool:'gun'}}],
   desert:[{id:'said',n:'水売りのサイード',pal:1,x:1330,y:1280,o:{}},{id:'lana',n:'踊り子のラナ',pal:4,x:905,y:1160,o:{apron:true}}]};
 const npcName=id=>{for(const k in NPCS)for(const n of NPCS[k])if(n.id===id)return n.n;return ''};
 const npcPos=n=>n.a!=null?{x:CX+Math.cos(n.a)*150,y:CY+Math.sin(n.a)*150}:{x:n.x,y:n.y};

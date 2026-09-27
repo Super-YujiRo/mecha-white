@@ -157,7 +157,7 @@ function raidGoal(b,dt,sp){const big=b.kind!=='normal',boss=b.kind==='boss',R=G.
   if(!b.goal){const r=Math.random(),built=G.houses.map((h,i)=>i).filter(i=>houseLv(i)>0),ws=G.workers.filter(w=>w.role!=='guard'&&!(w.hurt>0)&&!w.frozen&&dist(w.x,w.y,CX,CY)<FR+60);
     if(r<.38&&built.length)b.goal={t:'h',i:built[Math.floor(Math.random()*built.length)]};else if(r<.7&&ws.length){let bw=ws[0],bd=1e9;for(const w of ws){const d=dist(w.x,w.y,b.x,b.y);if(d<bd){bd=d;bw=w}}b.goal={t:'w',w:bw}}else b.goal={t:'f'}}
   const g=b.goal;if(g.t==='f')return false;
-  if(g.t==='m'){if(!(G.monHP>0)){b.goal=null;return true}const mx=G.monV.position.x,my=G.monV.position.z,d=dist(b.x,b.y,mx,my);if(d>58){const n=nav(b,mx,my);moveTo(b,n.x,n.y,sp,dt);return true}
+  if(g.t==='m'){if(!(G.monHP>0)){b.goal=null;return true}const mx=G.monV.position.x,my=G.monV.position.z,d=dist(b.x,b.y,mx,my);if(d>40+52*G.monV.scale.x){const n=nav(b,mx,my);moveTo(b,n.x,n.y,sp,dt);return true}
     b.dirT=Math.atan2(mx-b.x,my-b.y);if(b.atkCd<=0){b.atkCd=1.6;b.swipe=.3;G.monHP-=boss?6:big?3:2;G.shake=Math.max(G.shake,5);burst(mx,my,60,10,{c:['#ffd166','#ffffff','#c9d3dd'],s0:40,s1:160,u0:80,u1:240,l0:.4,l1:.7});SFX.chop();
       if(!(R.mT>G.t-5)){R.mT=G.t;toast('像が攻撃されている！','cold')}
       if(G.monHP<=0){G.monHP=0;banner('','像が壊された…','','cold');SFX.bad();G.shake=20;setTimeout(()=>{if(running)endGame(false,'シンボルの像を壊された')},1800)}}

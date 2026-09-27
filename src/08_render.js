@@ -95,8 +95,8 @@ function sync(dt){
   if(G.zones.D){const s=G.spaV,on=G.spa.fuel>0;s.water.material.emissiveIntensity=on?.45+Math.sin(G.t*2)*.08:.05;s.bFire.material.emissiveIntensity=on?2.4:0;const n=on?Math.min(9,3+G.lv.spa*2):1;s.guests.forEach((g,i)=>{g.visible=i<n;g.position.y=5+Math.sin(G.t*1.4+i)*.8});
     G.spaStack.fill('cash',Math.min(220,Math.ceil(G.spa.pile/5)));if(G.spa.pile>1)label(SPA.pile.x,SPA.pile.y,30+G.spaStack.h,`$${G.spa.pile|0}`,'cash');
     label(SPA.boiler.x,SPA.boiler.y,90,on?bar(G.spa.fuel,'gold'):'<span class="lb warnbox" style="position:static">'+(DES()?'薪でポンプを動かす（動くとまわりが涼しい）':'薪を入れて沸かす（沸くとまわりが暖かい）')+'</span>','');if(on)label(SPA.x,SPA.y,150,'♨ ここも暖かい','gold sm')}
-  {const mp=G.pads.find(q=>q.id==='monument');if(mp){mp.name=goalOf(YR()).n;const ox=YR()>1?150:0;if(mp.x!==MON.x+ox){mp.x=MON.x+ox;mp.mesh.mesh.position.x=mp.x;mp.mesh.icon.position.x=mp.x;mp._key=null}}}
-  if(G.monument||YR()>1){G.monPop=Math.min(1,(G.monPop||0)+dt*.8);G.monV.visible=true;G.monV.scale.setScalar(easeOutBack(G.monPop)*(1+(YR()-(G.monument?1:2))*.3));G.monV.userData.flame.scale.set(1,1+Math.sin(G.t*9)*.15,1)}
+  {const mp=G.pads.find(q=>q.id==='monument');if(mp)mp.name=goalOf(YR()).n}
+  if(G.monument||(YR()>1&&!monPadOn())){G.monPop=Math.min(1,(G.monPop||0)+dt*.8);G.monV.visible=true;G.monV.scale.setScalar(easeOutBack(G.monPop)*(1+(YR()-(G.monument?1:2))*.3));G.monV.userData.flame.scale.set(1,1+Math.sin(G.t*9)*.15,1)}
   for(const h of G.hauls){h.m.position.set(h.x,h.carried?10+Math.abs(Math.sin(G.t*9))*4:0,h.y);h.m.rotation.y=h.carried?Math.sin(G.t*4)*.15:0;if(!h.carried)label(h.x,h.y,64,G.players.length>1?'巨大肉：2人で運ぶ':'巨大肉','gold sm')}
   for(const p of G.players)if(p.buddy&&!p.inHeat&&p.id===0){const o=G.players[1];if(o)label((p.x+o.x)/2,(p.y+o.y)/2,70,'♥ 寄り添い中（体温が下がりにくい）','red sm')}
   G.woodStack.fill('log',Math.min(40,G.woodpile));label(WOOD.x,WOOD.y,30+G.woodStack.h,G.woodpile>0?`薪置き場 ${G.woodpile}本（自動でかまど強化へ）`:'薪置き場：火が満タンの時の薪がたまる','note');
@@ -147,6 +147,7 @@ function updateCam(dt,snap){const ps=NET.mode==='solo'?G.players:[G.players[G.me
   if(G.camPan&&G.camPan.t<(G.camPan.d||2.2)){const D=G.camPan.d||2.2;G.camPan.t+=dt;const k=G.camPan.t<.5?G.camPan.t/.5:G.camPan.t>D-.5?Math.max(0,1-(G.camPan.t-(D-.5))/.5):1;cx=lerp(cx,G.camPan.x,k*.85);cy=lerp(cy,G.camPan.y,k*.85);z=lerp(z,G.camPan.z||.62,k)}
   cam.z=snap?z:lerp(cam.z,z,Math.min(1,dt*3));if(snap){cam.x=cx;cam.y=cy}else{cam.x=lerp(cam.x,cx,Math.min(1,dt*6));cam.y=lerp(cam.y,cy,Math.min(1,dt*6))}}
 function hideIdleFx(dt){secretFx(dt||.016);roadFx();caravanFx();const me=G.players[G.me]||G.players[0];if(me&&G.sleds){if(me.riding)label(me.x,me.y,120,'<small>Fキーで降りる</small>','');else{const q=G.sleds.find(q=>q.rider==null&&dist(me.x,me.y,q.x,q.y)<90);if(q)label(q.x,q.y,50,'<b>Fキーで乗る</b>','gold')}}}
+const monPadOn=()=>{const mp=G.pads.find(q=>q.id==='monument');return !!(mp&&mp.shown)};
 function monBar(){if(G.raid&&G.raid.on&&G.raid.final&&G.monMax&&G.monV&&G.monV.visible)label(G.monV.position.x,G.monV.position.z,170,bar(100*Math.max(0,G.monHP)/G.monMax,'red'),'')}
 function frozenFx(){for(const v of G.surv)if(v.frozen&&v.m&&v.m.g.visible)label(v.x,v.y,82,`<b>${DES()?'倒れた町人':'凍えた町人'}</b><br><small>${DES()?'そばに立つと助け起こせる':'そばに立つと溶ける'}</small><br>${bar(100*Math.min(1,v.warm/35),'gold wide')}`,'ice')}
 function hideIdle(){let shown=0;for(const v of G.surv){const idle=v.arrived&&!v.frozen;const vis=!idle||shown++<5;if(v.m&&v.m.g.visible!==vis)v.m.g.visible=vis}}
