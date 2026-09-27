@@ -107,7 +107,11 @@ addEventListener('keydown',e=>{const k=e.key.toLowerCase();keys[k]=true;if(e.key
 addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false});
 addEventListener('blur',()=>{for(const k in keys)keys[k]=false});
 const joys=[{on:false},{on:false}];let nPlayers=1;
-cv.addEventListener('pointerdown',e=>{if(!running||G.paused)return;const slot=0;const j=joys[slot];if(j.on)return;
+cv.addEventListener('contextmenu',e=>e.preventDefault());
+cv.addEventListener('wheel',e=>{if(!running||!isRPG())return;e.preventDefault();CAMS.zoom=clamp(CAMS.zoom*(e.deltaY>0?1.1:1/1.1),.55,1.9)},{passive:false});
+addEventListener('pointermove',e=>{const d=CAMS.drag;if(!d||d.id!==e.pointerId)return;CAMS.yaw-=(e.clientX-d.x)*.0065;CAMS.pitch=clamp(CAMS.pitch+(e.clientY-d.y)*.004,.28,1.15);d.x=e.clientX;d.y=e.clientY});
+addEventListener('pointerup',e=>{if(CAMS.drag&&CAMS.drag.id===e.pointerId)CAMS.drag=null});
+cv.addEventListener('pointerdown',e=>{if(e.button===2||e.button===1){if(running&&isRPG()){CAMS.drag={id:e.pointerId,x:e.clientX,y:e.clientY};try{cv.setPointerCapture(e.pointerId)}catch(_){}}return}if(!running||G.paused)return;const slot=0;const j=joys[slot];if(j.on)return;
   Object.assign(j,{on:true,id:e.pointerId,ox:e.clientX,oy:e.clientY,x:e.clientX,y:e.clientY});try{cv.setPointerCapture(e.pointerId)}catch(_){}});
 cv.addEventListener('pointermove',e=>{for(const j of joys)if(j.on&&j.id===e.pointerId){j.x=e.clientX;j.y=e.clientY}});
 const endJ=e=>{for(const j of joys)if(j.on&&j.id===e.pointerId)j.on=false};cv.addEventListener('pointerup',endJ);cv.addEventListener('pointercancel',endJ);
@@ -116,7 +120,7 @@ function inputVec(i){let x=0,y=0;const two=false;
   const U=i===0?(keys['w']||(!two&&keys['arrowup'])):keys['arrowup'],D=i===0?(keys['s']||(!two&&keys['arrowdown'])):keys['arrowdown'];
   if(L)x-=1;if(R)x+=1;if(U)y-=1;if(D)y+=1;
   const j=joys[i];if(j.on){const dx=j.x-j.ox,dy=j.y-j.oy,m=Math.hypot(dx,dy);if(m>6){const k=Math.min(m,60)/60;x=dx/m*k;y=dy/m*k}}
-  const m=Math.hypot(x,y);if(m>1){x/=m;y/=m}return{x:(x+y)*SQ,y:(-x+y)*SQ}}
+  const m=Math.hypot(x,y);if(m>1){x/=m;y/=m}const a=CAMS.cur,c=Math.cos(a),s=Math.sin(a);return{x:x*c+y*s,y:-x*s+y*c}}
 
 // ================================================================ toasts, banners, sound
 const tq=[];let toastTimer=0;

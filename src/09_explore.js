@@ -134,7 +134,7 @@ function playOpening(C,done){const el=$('opening'),tx=$('opTxt');const slides=C.
 $('opening').addEventListener('click',e=>{if(!OPN)return;if(e.target.id==='opSkip'){OPN.end();return}OPN.next()});
 addEventListener('keydown',e=>{if(!OPN)return;if(e.code==='Escape'){OPN.end();e.preventDefault()}else if(e.code==='Space'||e.code==='Enter'||e.code==='KeyE'){OPN.next();e.preventDefault()}},true);
 function trackerFlash(){const el=$('tracker');el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash')}
-let _tkT=0;function trackerHud(){const el=$('tracker');if(!isRPG()||!running){el.hidden=true;return}const now=performance.now();if(now-_tkT<250)return;_tkT=now;const S=G.story,C=CH[S.ch]||CH[4],L=SOBJ[S.ch];
+let _tkT=0;function trackerHud(){const el=$('tracker');{const on=!!(isRPG()&&running);if(document.body.classList.contains('rpg')!==on)document.body.classList.toggle('rpg',on)}if(!isRPG()||!running){el.hidden=true;return}const now=performance.now();if(now-_tkT<250)return;_tkT=now;const S=G.story,C=CH[S.ch]||CH[4],L=SOBJ[S.ch];
   const pg=(c,g)=>`<div class="pg"><span><u style="width:${Math.round(100*Math.min(1,c/Math.max(1,g)))}%"></u></span><small>${Math.min(c,g)}/${g}</small></div>`;
   let h=`<div class="tk-h">${C.n}<em>「${C.t}」</em></div>`;
   if(L){const i=Math.min(S.step||0,L.length-1),o=L[i],[c,g]=o.f();h+=`<div class="sec now"><i>▶ いまやること（${i+1}/${L.length}）</i><b>${stx(o)}</b>${o.p?`<small>${o.p()}</small>`:pg(c,g)}</div>`}

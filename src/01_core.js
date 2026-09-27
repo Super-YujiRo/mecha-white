@@ -36,6 +36,8 @@ const FOV=30,TANH=Math.tan(FOV*Math.PI/360);
 const camera=new T.PerspectiveCamera(FOV,W/H,20,9000);
 const YAW=Math.PI/4,PITCH=.9;
 const camDir=new T.Vector3(Math.sin(YAW)*Math.cos(PITCH),Math.sin(PITCH),Math.cos(YAW)*Math.cos(PITCH));
+// story mode uses a free third-person camera (right-drag to orbit, wheel to zoom); survival keeps the fixed view
+const CAMS={yaw:YAW,pitch:.6,zoom:1,drag:null,cur:YAW,curP:PITCH};
 const hemi=new T.HemisphereLight(lin('#e3f0ff'),lin('#8397ad'),.55);scene.add(hemi);
 const sun=new T.DirectionalLight(lin('#fff0dc'),1.0);sun.castShadow=true;sun.shadow.mapSize.set(4096,4096);
 Object.assign(sun.shadow.camera,{left:-760,right:760,top:760,bottom:-760,near:10,far:3000});sun.shadow.bias=-.0008;sun.shadow.normalBias=.6;scene.add(sun,sun.target);

@@ -1,5 +1,5 @@
 /* めちゃホワイト — built from src/*.js by tools/build.py. Edit the sources, not this file. */
-(()=>{const BUILD='20260927152603';
+(()=>{const BUILD='20260927153542';
 const $=id=>document.getElementById(id);
 if(!window.THREE){$('loading').textContent='3Dの読み込みに失敗しました。再読み込みしてください';return}
 const T=THREE;
@@ -41,6 +41,8 @@ const FOV=30,TANH=Math.tan(FOV*Math.PI/360);
 const camera=new T.PerspectiveCamera(FOV,W/H,20,9000);
 const YAW=Math.PI/4,PITCH=.9;
 const camDir=new T.Vector3(Math.sin(YAW)*Math.cos(PITCH),Math.sin(PITCH),Math.cos(YAW)*Math.cos(PITCH));
+// story mode uses a free third-person camera (right-drag to orbit, wheel to zoom); survival keeps the fixed view
+const CAMS={yaw:YAW,pitch:.6,zoom:1,drag:null,cur:YAW,curP:PITCH};
 const hemi=new T.HemisphereLight(lin('#e3f0ff'),lin('#8397ad'),.55);scene.add(hemi);
 const sun=new T.DirectionalLight(lin('#fff0dc'),1.0);sun.castShadow=true;sun.shadow.mapSize.set(4096,4096);
 Object.assign(sun.shadow.camera,{left:-760,right:760,top:760,bottom:-760,near:10,far:3000});sun.shadow.bias=-.0008;sun.shadow.normalBias=.6;scene.add(sun,sun.target);
@@ -223,7 +225,11 @@ addEventListener('keydown',e=>{const k=e.key.toLowerCase();keys[k]=true;if(e.key
 addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false});
 addEventListener('blur',()=>{for(const k in keys)keys[k]=false});
 const joys=[{on:false},{on:false}];let nPlayers=1;
-cv.addEventListener('pointerdown',e=>{if(!running||G.paused)return;const slot=0;const j=joys[slot];if(j.on)return;
+cv.addEventListener('contextmenu',e=>e.preventDefault());
+cv.addEventListener('wheel',e=>{if(!running||!isRPG())return;e.preventDefault();CAMS.zoom=clamp(CAMS.zoom*(e.deltaY>0?1.1:1/1.1),.55,1.9)},{passive:false});
+addEventListener('pointermove',e=>{const d=CAMS.drag;if(!d||d.id!==e.pointerId)return;CAMS.yaw-=(e.clientX-d.x)*.0065;CAMS.pitch=clamp(CAMS.pitch+(e.clientY-d.y)*.004,.28,1.15);d.x=e.clientX;d.y=e.clientY});
+addEventListener('pointerup',e=>{if(CAMS.drag&&CAMS.drag.id===e.pointerId)CAMS.drag=null});
+cv.addEventListener('pointerdown',e=>{if(e.button===2||e.button===1){if(running&&isRPG()){CAMS.drag={id:e.pointerId,x:e.clientX,y:e.clientY};try{cv.setPointerCapture(e.pointerId)}catch(_){}}return}if(!running||G.paused)return;const slot=0;const j=joys[slot];if(j.on)return;
   Object.assign(j,{on:true,id:e.pointerId,ox:e.clientX,oy:e.clientY,x:e.clientX,y:e.clientY});try{cv.setPointerCapture(e.pointerId)}catch(_){}});
 cv.addEventListener('pointermove',e=>{for(const j of joys)if(j.on&&j.id===e.pointerId){j.x=e.clientX;j.y=e.clientY}});
 const endJ=e=>{for(const j of joys)if(j.on&&j.id===e.pointerId)j.on=false};cv.addEventListener('pointerup',endJ);cv.addEventListener('pointercancel',endJ);
@@ -232,7 +238,7 @@ function inputVec(i){let x=0,y=0;const two=false;
   const U=i===0?(keys['w']||(!two&&keys['arrowup'])):keys['arrowup'],D=i===0?(keys['s']||(!two&&keys['arrowdown'])):keys['arrowdown'];
   if(L)x-=1;if(R)x+=1;if(U)y-=1;if(D)y+=1;
   const j=joys[i];if(j.on){const dx=j.x-j.ox,dy=j.y-j.oy,m=Math.hypot(dx,dy);if(m>6){const k=Math.min(m,60)/60;x=dx/m*k;y=dy/m*k}}
-  const m=Math.hypot(x,y);if(m>1){x/=m;y/=m}return{x:(x+y)*SQ,y:(-x+y)*SQ}}
+  const m=Math.hypot(x,y);if(m>1){x/=m;y/=m}const a=CAMS.cur,c=Math.cos(a),s=Math.sin(a);return{x:x*c+y*s,y:-x*s+y*c}}
 
 // ================================================================ toasts, banners, sound
 const tq=[];let toastTimer=0;
@@ -1729,7 +1735,7 @@ function sync(dt){
   v.embers.forEach((e,i)=>{const a=i/v.embers.length*TAU+G.t*.25;e.position.set(CX+Math.cos(a)*R*fl,3+Math.sin(G.t*4+i)*1.5,CY+Math.sin(a)*R*fl);e.visible=R>0;e.rotation.y=G.t*2+i});
   // players
   for(const p of G.players){const m=p.m;m.g.position.set(p.x,p.riding?6:0,p.y);if(p.aimDir!=null)turnTo(p,p.aimDir,dt,16);else if(p.dirT!=null)turnTo(p,p.dirT,dt);m.g.rotation.y=p.dir;
-    m._armR=m._armL=false;animWalk(m,p.step,p.moving);
+    m._armR=m._armL=false;animWalk(m,p.step,p.moving);if(isRPG()&&p.moving&&!p.riding&&!(p.down>0)){p._dust=(p._dust||0)-dt;if(p._dust<=0){p._dust=.17;burst(p.x-Math.sin(p.dir)*8,p.y-Math.cos(p.dir)*8,3,2,{c:DES()?['#e8cf9a','#d9b47a']:['#ffffff','#dfe9f2'],s0:8,s1:26,u0:12,u1:40,l0:.25,l1:.45,r0:3,r1:6})}}
     const shoot_=!!p.shooting;m.gun.visible=shoot_;if(m.clsW)for(const o of m.clsW)o.visible=shoot_;m.axe.visible=!shoot_&&!p.fishing;m.rod.visible=!!p.fishing;
     if(shoot_){m.armR.rotation.set(-1.3,0,0);m.armL.rotation.set(-1.1,0,.2);m._armR=m._armL=true;m.gun.userData.flash.visible=p.flash>0;if(!m.kk)m.gun.position.z=10-(p.flash>0?3:0)}
     else if(p.chopping){const t=clamp(p.actT/(.24*G.pm.chop),0,1);m.armR.rotation.set(-2.6+Math.sin(t*Math.PI)*2.4,0,0);m._armR=true}
@@ -1877,9 +1883,11 @@ function frame(dt){hideIdle();monBar();frozenFx();vigFx();hideIdleFx(dt);
   hemi.intensity=(.55-K*.37)*(G.wx&&G.wx.type==='clear'?1.25:1);sun.intensity=(1.0-K*.72)*(G.wx&&G.wx.type==='clear'?1.3:1);sun.color.copy(K>.4?lin('#9fb8ff'):lin('#fff0dc'));
   {const mp=G.players[G.me]||G.players[0];$('coldFx').style.opacity=running?Math.max(G.wave?.45:0,(mp.down>0?1:(mp.warm<50?(1-mp.warm/50):0))*.95):0}
   const hurt=Math.max(...G.players.map(p=>p.hurt));cv.style.filter=hurt>0?`sepia(${hurt}) saturate(${1+hurt*4}) hue-rotate(-30deg)`:'';
-  const D=Math.max(390/(2*TANH*camera.aspect),560/(2*TANH))/cam.z;
+  const rpgCam=isRPG()&&running;if(rpgCam){if(keys['z'])CAMS.yaw+=dt*1.8;if(keys['c'])CAMS.yaw-=dt*1.8}
+  {const ty=rpgCam?CAMS.yaw:YAW,tp=rpgCam?CAMS.pitch:PITCH;let dy=ty-CAMS.cur;dy=Math.atan2(Math.sin(dy),Math.cos(dy));const k=Math.min(1,dt*10);CAMS.cur+=dy*k;CAMS.curP=lerp(CAMS.curP,tp,k);camDir.set(Math.sin(CAMS.cur)*Math.cos(CAMS.curP),Math.sin(CAMS.curP),Math.cos(CAMS.cur)*Math.cos(CAMS.curP))}
+  const D=(rpgCam?150*CAMS.zoom/TANH*(1+Math.max(0,CAMS.curP-.6)*.5):Math.max(390/(2*TANH*camera.aspect),560/(2*TANH)))/cam.z,LY=rpgCam?28:0;
   const shx=(Math.random()-.5)*G.shake,shy=(Math.random()-.5)*G.shake,tx=cam.x+shx,tz=cam.y+shy;
-  camera.position.set(tx+camDir.x*D,camDir.y*D,tz+camDir.z*D);camera.lookAt(tx,0,tz);camera.updateMatrixWorld();{const bz=G.wx&&G.wx.type==='blizzard';scene.fog.near=D*(bz?.55:1.5);scene.fog.far=D*(bz?1.6:4.2)}
+  camera.position.set(tx+camDir.x*D,LY+camDir.y*D,tz+camDir.z*D);camera.lookAt(tx,LY,tz);camera.updateMatrixWorld();{const bz=G.wx&&G.wx.type==='blizzard';scene.fog.near=D*(bz?.55:1.5);scene.fog.far=D*(bz?1.6:4.2)}
   sun.position.set(tx-380,760,tz+240);sun.target.position.set(tx,0,tz);
   const scale=PR*H/(2*TANH);psN.update(dt,scale);psA.update(dt,scale);snow.update(dt,cam.x,cam.y,G.wind+(wxIs('blizzard')?2.2:0),wxIs('blizzard')?1:wxIs('clear')?.08:Math.min(1,.35+G.day*.08+(G.wave?.5:0)),scale);sparkle.uniforms.uT.value=G.t;sparkle.uniforms.uS.value=scale;
   sync(dt);
@@ -2045,7 +2053,7 @@ function playOpening(C,done){const el=$('opening'),tx=$('opTxt');const slides=C.
 $('opening').addEventListener('click',e=>{if(!OPN)return;if(e.target.id==='opSkip'){OPN.end();return}OPN.next()});
 addEventListener('keydown',e=>{if(!OPN)return;if(e.code==='Escape'){OPN.end();e.preventDefault()}else if(e.code==='Space'||e.code==='Enter'||e.code==='KeyE'){OPN.next();e.preventDefault()}},true);
 function trackerFlash(){const el=$('tracker');el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash')}
-let _tkT=0;function trackerHud(){const el=$('tracker');if(!isRPG()||!running){el.hidden=true;return}const now=performance.now();if(now-_tkT<250)return;_tkT=now;const S=G.story,C=CH[S.ch]||CH[4],L=SOBJ[S.ch];
+let _tkT=0;function trackerHud(){const el=$('tracker');{const on=!!(isRPG()&&running);if(document.body.classList.contains('rpg')!==on)document.body.classList.toggle('rpg',on)}if(!isRPG()||!running){el.hidden=true;return}const now=performance.now();if(now-_tkT<250)return;_tkT=now;const S=G.story,C=CH[S.ch]||CH[4],L=SOBJ[S.ch];
   const pg=(c,g)=>`<div class="pg"><span><u style="width:${Math.round(100*Math.min(1,c/Math.max(1,g)))}%"></u></span><small>${Math.min(c,g)}/${g}</small></div>`;
   let h=`<div class="tk-h">${C.n}<em>「${C.t}」</em></div>`;
   if(L){const i=Math.min(S.step||0,L.length-1),o=L[i],[c,g]=o.f();h+=`<div class="sec now"><i>▶ いまやること（${i+1}/${L.length}）</i><b>${stx(o)}</b>${o.p?`<small>${o.p()}</small>`:pg(c,g)}</div>`}
@@ -2506,5 +2514,5 @@ function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;
   for(const f of G.floats)f.life-=dt;G.floats=G.floats.filter(f=>f.life>0);
   for(const f of G.flying){f.t+=dt*f.sp;const t=Math.min(1,f.t),e=t*t*(3-2*t);f.m.position.set(lerp(f.sx,f.tx,e),lerp(f.sh,f.th,e)+Math.sin(t*Math.PI)*50,lerp(f.sy,f.ty,e));f.m.rotation.set(t*6,f.rot+t*4,0);if(f.t>=1){world.remove(f.m);f.done=true;f.land&&f.land()}}
   G.flying=G.flying.filter(f=>!f.done);G.shake=Math.max(0,G.shake-dt*30);
-  tickToast(dt);updateCam(dt,false);frame(dt);checkPerf(dt);requestAnimationFrame(loop)}
+  {const on=!!(running&&isRPG());if(document.body.classList.contains('rpg')!==on)document.body.classList.toggle('rpg',on)}tickToast(dt);updateCam(dt,false);frame(dt);checkPerf(dt);requestAnimationFrame(loop)}
 })();

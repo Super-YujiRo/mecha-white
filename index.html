@@ -1,6 +1,6 @@
 <title>めちゃホワイト</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800;900&family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@500;700&family=M+PLUS+Rounded+1c:wght@500;700;800;900&family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
 <style>
   [hidden]{display:none!important}
   :root{color-scheme:light;
@@ -231,6 +231,47 @@
 #tracker .q{font-size:11.5px;margin-top:2px}#tracker .q.ok{color:#2f8a3a;font-weight:800}
 #tracker.flash{animation:tkf .9s ease-out}@keyframes tkf{0%{transform:scale(1.08);box-shadow:0 0 0 6px #ffd23f}100%{transform:scale(1)}}
 #storyLine{margin-top:4px}#storyLine b{color:#e8703a}
+/* ===== ものがたりモード：ファンタジーRPG風のUI（body.rpg の時だけ効く） ===== */
+body.rpg{--fl-parch:linear-gradient(180deg,#fffaf0 0%,#f7ebcf 100%);--fl-gold:#b8913f;--fl-gold2:#f1d27a;--fl-navy:#1d3150;--fl-navy2:#2b4a73;--fl-ink:#3b2a1a;
+  --fl-frame:inset 0 0 0 2px #fff8e2,inset 0 0 0 3px rgba(184,145,63,.45),0 3px 0 rgba(90,60,20,.25),0 10px 22px rgba(30,20,8,.28);--fl-head:"Kaisei Decol","Zen Maru Gothic",serif}
+body.rpg .pill,body.rpg .cardS{background:var(--fl-parch);border:2px solid var(--fl-gold);border-radius:10px;box-shadow:var(--fl-frame);color:var(--fl-ink)}
+body.rpg .pill .num,body.rpg .cardS .num{font-family:var(--fl-head);font-weight:700}
+body.rpg .chip{border:2px solid var(--fl-gold);box-shadow:var(--fl-frame)}
+body.rpg .mission{background:linear-gradient(180deg,var(--fl-navy2),var(--fl-navy));border:2px solid var(--fl-gold2);border-radius:6px;box-shadow:0 0 0 2px var(--fl-navy),0 6px 16px rgba(10,15,30,.35);padding:5px 16px 5px 6px;position:relative}
+body.rpg .mission::before,body.rpg .mission::after{content:"";position:absolute;top:50%;width:12px;height:12px;background:var(--fl-gold2);transform:translateY(-50%) rotate(45deg);box-shadow:0 0 0 2px var(--fl-navy)}
+body.rpg .mission::before{left:-8px}body.rpg .mission::after{right:-8px}
+body.rpg .mission .mn{background:var(--fl-gold2);color:var(--fl-navy);box-shadow:none;border-radius:4px;font-family:var(--fl-head)}
+body.rpg .mission .mt{color:#fff8e2;font-family:var(--fl-head);font-weight:700;font-size:14px;letter-spacing:.02em}
+body.rpg .mission .mp{background:rgba(255,248,226,.14);color:var(--fl-gold2);border:1px solid rgba(241,210,122,.5)}
+body.rpg #tracker{background:var(--fl-parch);border:2px solid var(--fl-gold);border-radius:10px;box-shadow:var(--fl-frame);color:var(--fl-ink);padding:0 10px 8px;overflow:hidden}
+body.rpg #tracker .tk-h{margin:0 -10px 8px;padding:7px 12px 6px;background:linear-gradient(180deg,var(--fl-navy2),var(--fl-navy));color:#fff8e2;font-family:var(--fl-head);font-weight:700;font-size:14px;border-bottom:2px solid var(--fl-gold2);letter-spacing:.04em}
+body.rpg #tracker .tk-h em{color:var(--fl-gold2)}
+body.rpg #tracker .sec i{color:var(--fl-gold);font-family:var(--fl-head)}
+body.rpg #tracker .sec.now{background:linear-gradient(180deg,#fff6d8,#ffeeb8);border:2px solid var(--fl-gold2);border-radius:8px}
+body.rpg #tracker .pg span{background:#e7d9bb}body.rpg #tracker .pg span u{background:linear-gradient(90deg,#6fcf6a,#3fa34d)}
+body.rpg #dlg{background:var(--fl-parch);border:3px solid var(--fl-gold);border-radius:14px;box-shadow:var(--fl-frame),0 14px 34px rgba(20,14,6,.45);padding:20px 26px 12px;color:var(--fl-ink);bottom:28px;width:min(760px,92vw)}
+body.rpg #dlg b{position:absolute;top:-17px;left:22px;background:linear-gradient(180deg,var(--fl-navy2),var(--fl-navy));color:#fff8e2;border:2px solid var(--fl-gold2);border-radius:6px;padding:4px 18px;font-family:var(--fl-head);font-size:15px;letter-spacing:.06em;box-shadow:0 3px 8px rgba(0,0,0,.3)}
+body.rpg #dlg p{font-size:17px;line-height:1.75;font-weight:700}
+body.rpg #dlg small{opacity:.8;color:var(--fl-gold);font-weight:800}body.rpg #dlg small::after{content:" ▼";display:inline-block;animation:flb .8s ease-in-out infinite alternate}
+@keyframes flb{from{transform:translateY(-2px)}to{transform:translateY(3px)}}
+body.rpg #dlgCh button{background:linear-gradient(180deg,#fffdf5,#f3e3bf);border:2px solid var(--fl-gold);border-radius:8px;color:var(--fl-ink);box-shadow:0 2px 0 rgba(120,90,30,.35)}
+body.rpg #dlgCh button:hover{background:linear-gradient(180deg,var(--fl-navy2),var(--fl-navy));color:#fff8e2;border-color:var(--fl-gold2)}
+body.rpg #talk{background:var(--fl-parch);color:var(--fl-ink);border:2px solid var(--fl-gold);border-radius:12px;box-shadow:var(--fl-frame);padding:16px 20px 12px;bottom:70px}
+body.rpg #talk b{position:absolute;top:-13px;left:16px;background:linear-gradient(180deg,var(--fl-navy2),var(--fl-navy));color:#fff8e2;border:2px solid var(--fl-gold2);border-radius:5px;padding:2px 12px;font-family:var(--fl-head);letter-spacing:.06em;font-size:12px}
+body.rpg #talk span{font-weight:700}
+body.rpg .side button{background:var(--fl-parch);border:2px solid var(--fl-gold);border-radius:8px;color:var(--fl-ink);box-shadow:0 2px 0 rgba(120,90,30,.35)}
+body.rpg .toast{background:linear-gradient(180deg,var(--fl-navy2),var(--fl-navy));color:#fff8e2;border:2px solid var(--fl-gold2);border-radius:8px;font-family:var(--fl-head);font-weight:700}
+body.rpg .banner{background:var(--fl-parch);border:3px solid var(--fl-gold);border-radius:14px;box-shadow:var(--fl-frame),0 16px 40px rgba(20,14,6,.4)}
+body.rpg .banner small{background:linear-gradient(180deg,var(--fl-navy2),var(--fl-navy));color:#fff8e2;border:2px solid var(--fl-gold2);border-radius:6px;box-shadow:0 3px 8px rgba(0,0,0,.3);font-family:var(--fl-head);font-weight:700}
+body.rpg .banner b{font-family:var(--fl-head);font-weight:700;color:var(--fl-ink)}
+body.rpg .banner.r-SSR{background:linear-gradient(180deg,#fff3c8,#fffaf0 60%)}body.rpg .banner.r-SSR b{color:#9a6512}
+body.rpg #lifeCard{background:var(--fl-parch);border:2px solid var(--fl-gold);border-radius:10px;box-shadow:var(--fl-frame);color:var(--fl-ink)}
+body.rpg #lifeCard .lct{font-family:var(--fl-head);font-weight:700;color:var(--fl-navy);border-bottom:2px solid var(--fl-gold2);padding-bottom:4px}
+body.rpg #qlog div{background:var(--fl-parch);border:2px solid var(--fl-gold);border-radius:6px;color:var(--fl-ink)}
+#keyBar{position:fixed;right:12px;bottom:12px;z-index:18;display:none;gap:10px;align-items:center;pointer-events:none;font-weight:800;font-size:11.5px;color:#fff8e2;background:rgba(18,28,46,.72);border:1.5px solid rgba(241,210,122,.7);border-radius:8px;padding:6px 12px}
+body.rpg #keyBar{display:flex}
+#keyBar kbd{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 5px;margin-right:4px;border-radius:50%;background:#fff8e2;color:#1d3150;font:900 11px var(--body);box-shadow:0 2px 0 #b8913f}
+#keyBar kbd.w{border-radius:6px}
 </style>
 
 <canvas id="c"></canvas><div id="vig"></div><div id="netWarn" hidden style="position:fixed;left:50%;top:150px;transform:translateX(-50%);z-index:30;background:rgba(40,52,70,.88);color:#fff;font-weight:900;font-size:13px;padding:8px 16px;border-radius:999px;pointer-events:none"></div>
@@ -267,6 +308,7 @@
 <div id="dlg" hidden><b id="dlgWho"></b><p id="dlgTxt"></p><div id="dlgCh"></div><small id="dlgHint">Eキー / クリックで進む</small></div>
 <div id="qlog" hidden></div>
 <div id="tracker" hidden></div>
+<div id="keyBar"><span><kbd class="w">右ドラッグ</kbd>カメラ</span><span><kbd class="w">ホイール</kbd>ズーム</span><span><kbd>E</kbd>話す</span><span><kbd>Q</kbd>工房</span><span><kbd>L</kbd>ステータス</span></div>
 <div id="opening" hidden><div class="opbar t"></div><div class="opbar b"></div><div id="opTxt"></div><button id="opSkip">スキップ ▶▶</button></div>
 <div id="talk" hidden><b id="talkWho"></b><span id="talkTxt"></span></div>
 <div class="banner" id="banner" hidden><small id="bnSub"></small><b id="bnMain"></b><span id="bnNote"></span></div>
@@ -325,4 +367,4 @@
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js"></script>
 
-<script src="game.js?v=20260927152603"></script>
+<script src="game.js?v=20260927153542"></script>
