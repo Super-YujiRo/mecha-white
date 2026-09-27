@@ -6,6 +6,11 @@ const CAMP={x:1990,y:1080},VALLEY={x:330,y:2080,n:'流砂の谷'};
 const TREAS=[[700,420],[1450,380],[1850,560],[2200,700],[420,860],[900,700],[1600,760],[2250,1400],[1850,1650],[1450,1900],[900,1850],[560,1600],[250,1700],[700,2250]];
 const ADV_SELL={relic:45,iron:15,icec:40,star:120,silk:20,steel:60,fang:50,horn:200,core:25,icew:30,spirit:150};
 function desertClear(x,y,m){if(!DES())return false;return OASES.some(o=>dist(x,y,o.x,o.y)<o.r+m)||dist(x,y,VALLEY.x,VALLEY.y)<250+m||dist(x,y,CAMP.x,CAMP.y)<120+m}
+// adobe town wall for the desert (replaces the wooden fence), same gaps as the fence
+function adobeWall(seg,pil,L){const wm=std('#dcb384',{r:.92}),cm=std('#b8875a',{r:.9});const W=new T.InstancedMesh(new T.BoxGeometry(L+2,30,10),wm,seg.length),Cp=new T.InstancedMesh(new T.BoxGeometry(L+4,4,13),cm,seg.length),P=new T.InstancedMesh(new T.BoxGeometry(16,40,16),wm,pil.length),PC=new T.InstancedMesh(new T.BoxGeometry(19,5,19),cm,pil.length);const o=new T.Object3D();
+  seg.forEach(([x,y,r],i)=>{o.position.set(x,15,y);o.rotation.set(0,r,0);o.updateMatrix();W.setMatrixAt(i,o.matrix);o.position.y=32;o.updateMatrix();Cp.setMatrixAt(i,o.matrix)});pil.forEach(([x,y,r],i)=>{o.position.set(x,20,y);o.rotation.set(0,r,0);o.updateMatrix();P.setMatrixAt(i,o.matrix);o.position.y=42;o.updateMatrix();PC.setMatrixAt(i,o.matrix)});
+  for(const m of [W,Cp,P,PC]){m.castShadow=true;m.receiveShadow=true;world.add(m)}return[W,Cp,P,PC]}
+function survDesertFx(){if(!G||!DES()||ADV()){if(G&&G.sPalmV)G.sPalmV.visible=false;return}if(!G.sPalmV||G.sPalmV.parent!==world){const g=new T.Group();for(const [deg,r] of [[-45,240],[-135,240],[-62,330],[-118,330],[-30,330],[-150,330]]){const a=deg*Math.PI/180,p=makePalm();p.position.set(CX+Math.cos(a)*r,0,CY+Math.sin(a)*r);p.rotation.y=deg;g.add(p)}world.add(g);G.sPalmV=g}G.sPalmV.visible=true}
 function advWarm(x,y){if(!ADV())return false;if(OASES.some(o=>dist(x,y,o.x,o.y)<o.r))return true;return false}
 // ---- the town of Razul: adobe houses around the well, market stalls, palms
 function advLayout(){if(G._advL)return G._advL;const L={houses:[],stalls:[],palms:[]};const npcs=(NPCS.desert||[]).map(n=>[n.x,n.y]);
@@ -41,7 +46,7 @@ function advSetup(){if(!ADV()||(G.advV&&G.advV.parent===world))return;
   for(const pd of G.pads){pd.vis=()=>false;if(pd.mesh)pd.mesh.g.visible=false}
   for(const z of ZONES){G.zones[z.id]=true;z.fogT=1;if(z.fog)z.fog.visible=false;if(z.sign)z.sign.visible=false}
   for(const q of G.surv)world.remove(q.m.g);G.surv.length=0;for(const w of G.workers)if(w.m)world.remove(w.m.g);G.workers.length=0;
-  for(const h of G.houses||[])h.g.visible=false;for(const k in G.towerV||{})G.towerV[k].g.visible=false;for(const m of G.trapV||[])m.visible=false;for(const m of G.fenceIM||[])m.visible=false;if(G.sledV)for(const s of [].concat(G.sledV))if(s&&s.visible!=null)s.visible=false;
+  for(const h of G.houses||[])h.g.visible=false;for(const k in G.towerV||{})G.towerV[k].g.visible=false;for(const m of G.trapV||[])m.visible=false;if(G.sledV)for(const s of [].concat(G.sledV))if(s&&s.visible!=null)s.visible=false;
   G.sleds.length=0;G.spa.on=true;G.spa.fuel=100;G.fuel=100;G.raid.on=false;G.advV=advBuild();G.adv=G.adv||{tr:TREAS.map((_,i)=>i%3===0?1:0),rt:TREAS.map(()=>0)}}
 // ---- the giant sandworm (boss of chapter 3): rides the burrowing boss AI with its own body
 function makeWorm(){const g=new T.Group(),skin=std('#d8ad78',{r:.8,e:'#4a2f14',ei:.12}),band=std('#a5703f',{r:.85});const segs=[];
@@ -59,14 +64,14 @@ function updateAdv(dt){if(!ADV())return;advSetup();G.fuel=100;G.spa.fuel=100;con
   // market stalls buy what you carry back from the dunes (meat → skewer stall, hides → leather stall)
   const L=advLayout();for(const p of G.players){if(p.down>0||!p.bag.length)continue;const s=L.stalls.find(s=>dist(p.x,p.y,s.x,s.y)<75&&p.bag.some(k=>s.buy.includes(k)));if(!s){p._sellT=0;continue}p._sellT=(p._sellT||0)+dt;if(p._sellT<.14)continue;p._sellT=0;const i=p.bag.findIndex(k=>s.buy.includes(k));const k=p.bag.splice(i,1)[0];const v=Math.round(({meat:9,fur:16,salt:12}[k]||8)*(1+G.day*.04));G.cash+=v;G.earned+=v;flyItem(k,p.x,p.y,30,s.x,s.y,20,null,3);float(s.x,s.y,70,`+$${v}`,'cash');SFX.coin&&SFX.coin(2);cnt(p,'sold')}
   A.tr.forEach((on,i)=>{if(!on){A.rt[i]-=dt;if(A.rt[i]<=0&&A.tr.filter(Boolean).length<5&&Math.random()<dt*.05){A.tr[i]=1}return}const [x,y]=TREAS[i];const p=G.players.find(p=>!(p.down>0)&&dist(p.x,p.y,x,y)<40);if(!p){TREAS[i]._t=0;return}TREAS[i]._t=(TREAS[i]._t||0)+dt;if(Math.random()<dt*8)burst(x,y,3,4,{c:['#e2b877','#c9955b'],s0:20,s1:70,u0:30,u1:90,l0:.2,l1:.4});
-    if(TREAS[i]._t>1.6){TREAS[i]._t=0;A.tr[i]=0;A.rt[i]=90;const v=Math.round(rnd(80,200)*(1+G.day*.04));G.cash+=v;G.earned+=v;const r=Math.random();const mat=r<.45?'relic':r<.85?'iron':'star';addMat(p,mat,mat==='star'?1:2);cnt(p,'dig');lifeXp(p,'mine',4);
+    if(TREAS[i]._t>1.6){TREAS[i]._t=0;A.tr[i]=0;A.rt[i]=90;const v=Math.round(rnd(80,200)*(1+G.day*.04));G.cash+=v;G.earned+=v;const r=Math.random();const mat=r<.4?'relic':r<.7?'iron':r<.9?'herb':'star';addMat(p,mat,mat==='star'?1:2);cnt(p,'dig');lifeXp(p,'mine',4);
       const pool=['c_scarab','w_sand','a_pharaoh','w_sunbow'].filter(id=>!(p.items||[]).includes(id));if(pool.length&&Math.random()<.14)giveItem(p,pool[Math.floor(Math.random()*pool.length)]);
       banner('お宝を掘り当てた！',`+$${v}`,`${MATS[mat]}を見つけた`,'r-SSR');SFX.chest&&SFX.chest();burst(x,y,30,20,{c:['#ffd23f','#ffffff','#e2b877'],s0:60,s1:200,u0:150,u1:300,l0:.6,l1:1,add:true})}});
   if(S.step===1&&!S.camp&&G.players.some(p=>dist(p.x,p.y,CAMP.x,CAMP.y)<200))S.camp=1;
   if(S.step===3&&!S.ruin&&G.players.some(p=>dist(p.x,p.y,RUIN.x,RUIN.y)<120))S.ruin=1;
   if(S.step===5){const w=G.bears.find(b=>b.id===S.worm);if(!S.worm||(!w&&!S.wend)){if(G.players.some(p=>dist(p.x,p.y,VALLEY.x,VALLEY.y)<420))spawnWorm()}
     else if(w&&w.dead&&!S.wend){S.wend=1;addClue('c9');banner('巨大サンドワームをたおした！','流砂の谷が静まった','隊長ザラ「……あんたたちに、この砂漠の昔話の続きを聞かせなきゃね」','r-SSR');SFX.ssr&&SFX.ssr();setTimeout(()=>{if(running&&ADV()&&NET.mode!=='guest')endGame(true)},6500)}}
-  for(const b of G.bears)if(b.id===S.worm&&!b.dead&&b.bt!=='queen')setBt(b,'queen')}
+  for(const b of G.bears)if(b.id===S.worm&&!b.dead&&b.bt!=='queen')setBt(b,'queen');wormLeash()}
 function advFx(){if(!G||!running)return;const on=ADV();if(G.advV)G.advV.visible=on;if(!on)return;if(!G.advV||G.advV.parent!==world)return;const me=G.players[G.me]||G.players[0],t=performance.now()/1000,A=G.adv;
   G.advV.traverse(o=>{if(o.userData&&o.userData.bb)o.quaternion.copy(camera.quaternion)});
   if(A)A.tr.forEach((on,i)=>{if(!on||!me)return;const [x,y]=TREAS[i];const d=dist(me.x,me.y,x,y);if(d<520&&Math.random()<.08)psA.emit({x:x+rnd(-10,10),y:4,z:y+rnd(-10,10),vx:0,vy:40,vz:0,g:0,life:.5,max:.5,r:4,c:C('#fff2b0'),air:true,fade:.2});if(d<240)label(x,y,30,'<b>砂に埋もれた何か</b><br><small>上に立つと掘る</small>','')});

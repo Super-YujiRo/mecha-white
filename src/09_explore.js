@@ -25,6 +25,7 @@ const CHAL={wood:[['木を30本切る','chop',30],['大きな古木を切りた�
   fish:[['魚を10匹釣る','fish',10],['魚を40匹釣る','fish',40],['ぬしの穴で大物を釣る','bigfish',1],['大物を5回釣る','bigfish',5]],
   mine:[['鉄鉱石を10個掘る','iron',10],['鉄鉱石を40個掘る','iron',40],['氷晶を5個掘る','icec',5],['星の結晶を掘る','star',1]],
   craft:[['吹雪の工房で木工品を5個作る','carve',5],['工房で装備を1つ作る','cr_eq',1],['会心の出来を5回出す','great',5],['工房で装備を3つ作る','cr_eq',3]],
+  cook:[['料理を3回作る','cook',3],['料理を5回食べる','eat',5],['料理を15回作る','cook',15],['料理を40回作る','cook',40]],
   smith:[['鉄の剣を鍛える','mk_w_ironsword',1],['武器や防具を3つ鍛える','sm',3],['氷晶の剣を鍛える','mk_w_icesword',1],['星の大剣を鍛える','mk_w_starsword',1]]};
 function updateChallenges(){if(!isRPG())return;for(const p of G.players){p.chd=p.chd||[];const c=p.cnt||{};for(const k of LIVES)(CHAL[k]||[]).forEach((ch,i)=>{const id=k+i;if(p.chd.includes(id))return;if((c[ch[1]]||0)>=ch[2]){p.chd.push(id);lifeXp(p,k,25);const v=100+i*80;G.cash+=v;G.earned+=v;float(p.x,p.y,140,`お題達成！ ${ch[0]}（${LIFE[k].n}）+$${v}`,'gold',true);SFX.rare()}})}}
 // ---- dungeons: walled areas reached through a portal (story mode). Data-driven: add an entry to DUNGEONS to add an area.
@@ -110,7 +111,7 @@ function statusTab(me){const tab=G._stab||'eq',rows=$('lifeRows'),lct=document.q
 $('lifeCard').addEventListener('click',e=>{if(e.target.closest('button[data-deduce]')){$('lifeCard').hidden=true;openDeduce();return}const b=e.target.closest('button[data-tab]');if(!b)return;G._stab=b.dataset.tab;lifeHud(true)});
 
 // ---- workshop recipes: special wood and beast materials become gear
-const MATS={iron:'鉄鉱石',icec:'氷晶',star:'星の結晶',silk:'クモの糸',core:'古木の芯材',icew:'氷結木材',spirit:'精霊の枝',relic:'古代の欠片',steel:'鋼の角',fang:'氷牙',horn:'覇者の角'};
+const MATS={iron:'鉄鉱石',icec:'氷晶',star:'星の結晶',silk:'クモの糸',core:'古木の芯材',icew:'氷結木材',spirit:'精霊の枝',relic:'古代の欠片',herb:'香草',steel:'鋼の角',fang:'氷牙',horn:'覇者の角'};
 function addMat(p,k,n){if(!p||!k)return;p.mats=p.mats||{};p.mats[k]=(p.mats[k]||0)+n;float(p.x,p.y,100,`${MATS[k]} +${n}`,'gold',true)}
 const RECIPES={
   bow_old:{id:'w_oldbow',m:{core:3},log:10,cash:100,rk:1},shield_old:{id:'a_oldshield',m:{core:2,steel:1},log:6,cash:150,rk:1},
@@ -145,6 +146,7 @@ let _tkT=0;function trackerHud(){const el=$('tracker');{const on=!!(isRPG()&&run
   const qs=[];for(const k in (S.q||{})){const Q=QUESTS[k],q=S.q[k];if(!Q||Q.bio!==bioKey()||q.st===3)continue;const pr=q.st===2?`→ ${npcName(Q.npc)}に報告`:Q.type==='bring'?`${{log:'薪',fish:'魚',meat:'肉'}[Q.k]||Q.k} ${q.p||0}/${Q.n}`:Q.type==='build'?`${Math.min(Q.chk(),Q.n)}/${Q.n}`:Q.type==='count'?`${Math.min(Q.chk(q),Q.n)}/${Q.n}`:Q.where?`（${Q.where}）`:'';qs.push(`<div class="q ${q.st===2?'ok':''}">・${Q.t} ${pr}</div>`)}
   const avail=G.npcV?G.npcV.filter(v=>npcMark(v.n.id)==='！').length:0;
   h+=`<div class="sec"><i>✉ 住人の依頼</i>${qs.join('')||'<div class="q">受けている依頼はない</div>'}${avail?`<div class="q" style="color:#e8703a">“！”の住人が${avail}人いる（Eキーで話す）</div>`:''}</div>`;
+  {const me=G.players[G.me]||G.players[0],b=me&&me.buff;if(b&&b.t>0)h+=`<div class="sec"><i>🍳 料理の効果</i><b style="font-size:12.5px">${b.n}</b><small>${dishD(DISH[b.k])}・残り${Math.ceil(b.t)}秒</small></div>`;else if(me&&(me.food||[]).length)h+=`<div class="sec"><i>🍳 料理</i><small>${me.food.length}品持っている（Vキーで食べる）</small></div>`}
   if(el._h!==h){el.innerHTML=h;el._h=h}el.hidden=false}
 
 

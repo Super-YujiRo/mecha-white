@@ -115,6 +115,7 @@ function float(x,y,h,txt,cls,big,local){if(!local&&NET.mode==='host'&&NET.outF.l
 function flyItem(kind,sx,sy,sh,tx,ty,th,land,sp){const m=itemMesh(kind);world.add(m);G.flying.push({m,sx,sy,sh,tx,ty,th,t:0,sp:sp||2.8,land,rot:rnd(0,TAU)})}
 const SLED_CAP=25,cap=p=>15+G.pm.cap+((p&&p.lv)?p.lv.bag:0)*6+(p&&p.riding?SLED_CAP:0)+eqv(p,'cap');
 const heatBase=()=>(150+G.level*50)*((G&&G.stele>=3)?1.2:1);
+const desTxt=s=>DES()?String(s).replace(/かまど/g,'井戸').replace(/凍っ/g,'倒れ').replace(/薪をくべ/g,'水を注ぎ'):s;
 const heatR=()=>G.fuel>0?heatBase()*(.7+.3*G.fuel/100)*(1+(G.rank||0)*.04):0;
 const isNight=()=>((G.t%G.DAY)/G.DAY)>.72;
 const MODS_B=[{id:'forest',t:'豊かな森',d:'木を切るのが速く、薪がよく燃える',ap:m=>{m.chop=.7;m.wood=2}},{id:'herd',t:'オオカミの当たり年',d:'オオカミが多く、肉が1個多く落ちる',ap:m=>{m.bears=1.4;m.meat=1}},
@@ -173,7 +174,7 @@ function newGame(np,opts){opts=opts||{};CUR_BIO=opts.biome||0;zoneNames();let RS
   world.add(pI,tI,cI,bI);G.fenceIM=[pI,tI,cI,bI];
   if(KK&&KK.kit.h_fence){pI.visible=tI.visible=cI.visible=bI.visible=false;const seg=[],pil=[];const L=58,step=L/FR;
     for(let a=-Math.PI;a<Math.PI-step/2;a+=step){const an=a+step/2;const gap=q=>GATE_ANG.some(g=>Math.abs(Math.atan2(Math.sin(q-g),Math.cos(q-g)))<.13)||(q>SOUTH[0]&&q<SOUTH[1]);if(gap(an))continue;seg.push([CX+Math.cos(an)*FR,CY+Math.sin(an)*FR,-an-Math.PI/2]);pil.push([CX+Math.cos(a)*FR,CY+Math.sin(a)*FR,-a]);if(gap(a+step))pil.push([CX+Math.cos(a+step)*FR,CY+Math.sin(a+step)*FR,-a])}
-    G.fenceIM=[...kkInst('h_fence',L,seg),...kkInst('h_fence_p',L*.125*1.3,pil)]}
+    G.fenceIM=DES()?adobeWall(seg,pil,L):[...kkInst('h_fence',L,seg),...kkInst('h_fence_p',L*.125*1.3,pil)]}
   for(const a of GATE_ANG){for(const s of [-1,1]){const aa=a+s*.13;if(KK&&KK.kit.d_pillar)world.add(kkP('d_pillar',22,CX+Math.cos(aa)*FR,0,CY+Math.sin(aa)*FR,-aa));else world.add(at(cyl(9,9,80,std('#7a4a2a',{map:TEX.bark}),10),CX+Math.cos(aa)*FR,40,CY+Math.sin(aa)*FR))}}
   // lamps around the plaza
   for(const [x,y] of [[1030,1400],[1240,1400],[1450,1400],[1030,1700],[1450,1700],[1600,1600],[800,1400]]){const l=makeLamp();l.position.set(x,0,y);world.add(l)}
@@ -205,7 +206,7 @@ function newGame(np,opts){opts=opts||{};CUR_BIO=opts.biome||0;zoneNames();let RS
   G.towerV={};for(const tw of TOWERS){const m=makeTower();m.g.position.set(tw.mx,0,tw.my);m.g.visible=false;m.lv=0;m.pop=1;world.add(m.g);G.towerV[tw.id]=m}
   G.trapV=GATE_ANG.map(a=>{const m=makeTrap();m.position.set(CX+Math.cos(a)*FR,0,CY+Math.sin(a)*FR);m.visible=false;world.add(m);return m});
   G.rankV=makeRankVisuals();G.rankO={};
-  G.houses=HOUSES.map(([x,y],i)=>{const tent=KK?kkProp('tent',54):makeTent(i),cab=KK?kkProp(['home_A_red','home_B_blue','home_A_blue','home_B_red','home_A_red'][i],66):makeHouse(i),man=KK?kkProp('tavern',80):makeManor(i);man.visible=false;const g=grp(tent,cab,man);g.position.set(x,0,y);g.rotation.y=Math.atan2(CX-x,CY-y);tent.visible=cab.visible=false;world.add(g);return{x,y,g,tent,cab,man,lv:0,pop:1,need:[7,10,13,17,21][i]}});
+  G.houses=HOUSES.map(([x,y],i)=>{const tent=KK?kkProp('tent',54):makeTent(i),cab=DES()?makeAdobe({x:0,y:0,w:62,d:50,h:42,a:0,c:['#e3c093','#d9b07e','#e8caa0','#cfa06c','#e3c093'][i],aw:i%2===0}):KK?kkProp(['home_A_red','home_B_blue','home_A_blue','home_B_red','home_A_red'][i],66):makeHouse(i),man=DES()?makeAdobe({x:0,y:0,w:92,d:70,h:64,a:0,c:'#e8caa0',aw:true}):KK?kkProp('tavern',80):makeManor(i);man.visible=false;const g=grp(tent,cab,man);g.position.set(x,0,y);g.rotation.y=Math.atan2(CX-x,CY-y);tent.visible=cab.visible=false;world.add(g);return{x,y,g,tent,cab,man,lv:0,pop:1,need:[7,10,13,17,21][i]}});
   // zone fog curtains
   for(const z of ZONES){const [x0,y0,x1,y1]=z.rect;const fogM=new T.MeshStandardMaterial({color:lin(DES()?'#ecc98f':'#eef5fb'),transparent:true,opacity:.93,roughness:1});
     const m=M_(new T.BoxGeometry(x1-x0,240,y1-y0),fogM,false);m.position.set((x0+x1)/2,120,(y0+y1)/2);world.add(m);
@@ -299,7 +300,7 @@ function makePadMesh(pad){
     if(cost!=null&&paid>0){x.lineWidth=14;x.lineCap='round';x.strokeStyle='rgba(91,70,54,.12)';x.beginPath();x.arc(128,128,86,0,TAU);x.stroke();x.strokeStyle=money?'#6ab04c':'#f0a15a';x.beginPath();x.arc(128,128,86,-Math.PI/2,-Math.PI/2+TAU*Math.min(1,paid/cost));x.stroke()}
     x.textAlign='center';x.textBaseline='middle';
     const t=money?`$${(cost-paid).toLocaleString()}`:cost-paid>0?`薪 ${cost-paid}`:'OK';x.font=`900 ${pad.big?50:46}px ${F}`;x.fillStyle=req?'#a8927a':money?'#3f8a3a':'#b8661e';x.fillText(t,128,114,210);
-    x.font=`900 23px ${F}`;x.fillStyle='#5b4636';x.fillText(`${pad.name}${lvText?' '+lvText:''}`,128,166,200);
+    x.font=`900 23px ${F}`;x.fillStyle='#5b4636';x.fillText(desTxt(`${pad.name}${lvText?' '+lvText:''}`),128,166,200);
     const chip=(txt,bg,fg)=>{x.font=`900 20px ${F}`;const w=Math.min(206,x.measureText(txt).width+26);x.fillStyle=bg;rr(x,128-w/2,48,w,32,16);x.fill();x.fillStyle=fg;x.fillText(txt,128,65,196)};
     if(req)chip(req,'#f0826a','#fff');else if(extra)chip('+'+extra,'#6fb7e6','#fff');else if(pad.pop)chip('町の人1人','#8ac66a','#fff');
     tex.needsUpdate=true};

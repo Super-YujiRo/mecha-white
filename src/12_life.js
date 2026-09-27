@@ -1,6 +1,6 @@
 // ================================================================ くらし (life ranks), workshop crafting, blizzard chores
-const LIVES=['wood','hunt','fish','mine','craft','smith'];
-const LIFE={wood:{n:'木こり',k:'斧',c:'#3f7a45',b:r=>`伐採の速さ +${r*7}%`},hunt:{n:'狩人',k:'弓',c:'#c0392b',b:r=>`攻撃力 +${r*6}%`},fish:{n:'釣り人',k:'釣',c:'#2f7de0',b:r=>DES()?`水くみの速さ +${r*8}%`:`釣りの速さ +${r*8}%`},craft:{n:'木工職人',k:'工',c:'#a8743f',b:r=>`作品の値段 +${r*15}%`},mine:{n:'採掘師',k:'掘',c:'#7a6a9a',b:r=>`採掘の速さ +${r*8}%`},smith:{n:'鍛冶屋',k:'鍛',c:'#5a6470',b:r=>`作れる武器が増える`}};
+const LIVES=['wood','hunt','fish','mine','craft','smith','cook'];
+const LIFE={wood:{n:'木こり',k:'斧',c:'#3f7a45',b:r=>`伐採の速さ +${r*7}%`},hunt:{n:'狩人',k:'弓',c:'#c0392b',b:r=>`攻撃力 +${r*6}%`},fish:{n:'釣り人',k:'釣',c:'#2f7de0',b:r=>DES()?`水くみの速さ +${r*8}%`:`釣りの速さ +${r*8}%`},craft:{n:'木工職人',k:'工',c:'#a8743f',b:r=>`作品の値段 +${r*15}%`},mine:{n:'採掘師',k:'掘',c:'#7a6a9a',b:r=>`採掘の速さ +${r*8}%`},smith:{n:'鍛冶屋',k:'鍛',c:'#5a6470',b:r=>`作れる武器が増える`},cook:{n:'料理人',k:'料',c:'#e8703a',b:r=>`料理の効き目 +${r*10}%`}};
 const LR=[{n:'見習い',x:0},{n:'かけだし',x:15},{n:'一人前',x:45},{n:'ベテラン',x:100},{n:'達人',x:180},{n:'マスター',x:300},{n:'伝説',x:480}];
 const CRAFTN=['木のスプーン','木のおもちゃ','木彫りのクマ','ゆり椅子','からくり箱','精霊の木像','伝説の大彫刻'];
 const lifeRank=(p,k)=>{const x=((p&&p.life)||{})[k]||0;let r=0;for(let i=0;i<LR.length;i++)if(x>=LR[i].x)r=i;return r};

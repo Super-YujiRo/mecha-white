@@ -272,6 +272,9 @@ body.rpg #qlog div{background:var(--fl-parch);border:2px solid var(--fl-gold);bo
 body.rpg #keyBar{display:flex}
 #keyBar kbd{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 5px;margin-right:4px;border-radius:50%;background:#fff8e2;color:#1d3150;font:900 11px var(--body);box-shadow:0 2px 0 #b8913f}
 #keyBar kbd.w{border-radius:6px}
+#mini{position:fixed;left:12px;top:112px;width:170px;height:170px;z-index:18;pointer-events:none;filter:drop-shadow(0 4px 8px rgba(0,0,0,.25))}
+#bigmap{position:fixed;inset:0;z-index:50;background:rgba(10,16,28,.55);display:grid;place-items:center}#bigmap .bmIn{background:linear-gradient(180deg,#fffaf0,#f7ebcf);border:3px solid #b8913f;border-radius:14px;padding:10px 14px;display:grid;gap:6px;justify-items:center;box-shadow:0 16px 40px rgba(0,0,0,.4)}#bigmap b{font-size:18px;color:#1d3150}#bigmap canvas{width:min(640px,80vh);height:min(640px,80vh);border-radius:8px}#bigmap small{color:#5b4636;font-weight:700}
+body.rpg #lifeCard{top:292px;max-height:calc(100vh - 310px)}
 body.adv .hud .furn,body.adv #hPopBox,body.adv #hFrzBox,body.adv #hRepBox{display:none!important}
 body.mlock #keyBar .kbUn,body:not(.mlock) #keyBar .kbLk{display:none}
 #kbSk.cd{opacity:.55}#kbSk.ready kbd{background:#f1d27a;animation:flb .6s ease-in-out infinite alternate}
@@ -311,7 +314,9 @@ body.mlock #keyBar .kbUn,body:not(.mlock) #keyBar .kbLk{display:none}
 <div id="dlg" hidden><b id="dlgWho"></b><p id="dlgTxt"></p><div id="dlgCh"></div><small id="dlgHint">Eキー / クリックで進む</small></div>
 <div id="qlog" hidden></div>
 <div id="tracker" hidden></div>
-<div id="keyBar"><span><kbd class="w">左クリック</kbd>攻撃</span><span><kbd class="w">Space</kbd>ジャンプ</span><span id="kbSk"><kbd class="w">右クリック</kbd>スキル</span><span class="kbUn"><kbd class="w">クリック</kbd>マウスで視点操作</span><span class="kbLk"><kbd class="w">Esc/Alt</kbd>カーソルを出す</span><span><kbd>E</kbd>話す</span></div>
+<canvas id="mini" width="170" height="170" hidden></canvas>
+<div id="bigmap" hidden><div class="bmIn"><b>地図</b><canvas id="bigmapC" width="640" height="640"></canvas><small>Mキーで閉じる　★＝次の目的地　●オレンジ＝話したい人　●青＝仲間</small></div></div>
+<div id="keyBar"><span><kbd class="w">左クリック</kbd>攻撃</span><span><kbd class="w">Space</kbd>ジャンプ</span><span id="kbSk"><kbd class="w">右クリック</kbd>スキル</span><span class="kbUn"><kbd class="w">クリック</kbd>マウスで視点操作</span><span class="kbLk"><kbd class="w">Esc/Alt</kbd>カーソルを出す</span><span><kbd>E</kbd>話す</span><span><kbd>M</kbd>地図</span><span><kbd>C</kbd>料理</span></div>
 <div id="opening" hidden><div class="opbar t"></div><div class="opbar b"></div><div id="opTxt"></div><button id="opSkip">スキップ ▶▶</button></div>
 <div id="talk" hidden><b id="talkWho"></b><span id="talkTxt"></span></div>
 <div class="banner" id="banner" hidden><small id="bnSub"></small><b id="bnMain"></b><span id="bnNote"></span></div>
@@ -370,4 +375,4 @@ body.mlock #keyBar .kbUn,body:not(.mlock) #keyBar .kbLk{display:none}
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js"></script>
 
-<script src="game.js?v=20260927171700"></script>
+<script src="game.js?v=20260927175359"></script>
