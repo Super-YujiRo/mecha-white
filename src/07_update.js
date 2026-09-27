@@ -5,7 +5,7 @@ function update(dt){
   if(waveDay&&!night&&((G.t%G.DAY)/G.DAY)>.6&&G.waveWarned!==G.day){G.waveWarned=G.day;banner('今夜',DES()?'大熱波が来る！':'大寒波が来る！',DES()?'井戸の水をためておけ（水の減りと渇きが倍）':'燃料をためておけ（燃料の減りと寒さが倍）','cold');SFX.wave()}
   G.wave=waveDay&&night;
   G.wind=Math.sin(G.t*.3)*.5+Math.sin(G.t*.11)*.5+(G.wave?1.2:0);
-  const R=heatR();G.onPads=new Set();tickCombo(dt);tickChests(dt);
+  const adv=ADV(),R=adv?420:heatR();G.onPads=new Set();tickCombo(dt);tickChests(dt);
   for(const p of G.players){const px=p.x,py=p.y;if(p.remote){followNet(p,dt);continue}const iv=p.down>0?{x:0,y:0}:inputVec(p.id),sp0=195*G.pm.speed*(p.riding?1.8:1)*(1+eqv(p,'spd'));p.vx=lerp(p.vx,iv.x*sp0,Math.min(1,dt*12));p.vy=lerp(p.vy,iv.y*sp0,Math.min(1,dt*12));
     p.x=clamp(p.x+p.vx*dt,30,WORLD-30);p.y=clamp(p.y+p.vy*dt,30,WORLD-30);const sp=Math.hypot(p.vx,p.vy);p.moving=sp>20;if(p.moving){p.step+=dt*sp*.06;p.dirT=Math.atan2(p.vx,p.vy);if(Math.random()<dt*6)puff(p.x-p.vx*.05,p.y-p.vy*.05,2,{r:7,life:.6,a:.7,vy:10,grow:1})}
     fenceCollide(p,px,py);solids(p,12);for(const t of G.trees)if(t.alive&&t.fall<=0&&Math.abs(t.x-p.x)<30&&Math.abs(t.y-p.y)<30)pushCircle(p,t.x,t.y,18*t.s);jumpTick(p,dt);
@@ -14,15 +14,16 @@ function update(dt){
   for(const p of G.players)playerActions(p,dt,R);
   for(const pad of G.pads)pad.pulse=Math.max(0,pad.pulse-dt*2);
   // furnace
-  const burn=(.6+G.level*.14+G.day*.05)*(night?1.4:1)*(G.wave?1.8:1)*G.pm.burn*(wxIs('snap')?1.3:1)*(DES()&&!isNight()?1.25:1)*DM().burn*(1+(YR()-1)*.12)*(1+.05*((G.drifts||[]).length));G.fuel=Math.max(0,G.fuel-burn*dt);
+  if(adv)G.fuel=100;const burn=adv?0:(.6+G.level*.14+G.day*.05)*(night?1.4:1)*(G.wave?1.8:1)*G.pm.burn*(wxIs('snap')?1.3:1)*(DES()&&!isNight()?1.25:1)*DM().burn*(1+(YR()-1)*.12)*(1+.05*((G.drifts||[]).length));G.fuel=Math.max(0,G.fuel-burn*dt);
   if(G.fuel<20&&!G.lowWarned){G.lowWarned=true;toast('かまどの燃料が少ない！ 薪をくべろ','cold');SFX.bad()}if(G.fuel>35)G.lowWarned=false;
   if(G.fuel<=0&&!G.outWarned){G.outWarned=true;banner(DES()?'井戸が干上がった！':'かまどの火が消えた！',DES()?'町の人が倒れていく':'町の人が凍っていく',DES()?'湧き水をくんで井戸を満たせ。倒れた町人が5人でゲームオーバー':'薪をくべて火を戻せ。凍った町人が5人でゲームオーバー','cold');SFX.wave()}if(G.fuel>5)G.outWarned=false;
   // stations frozen state
   for(const id in G.stations){const st=G.stations[id];const d=dist(st.def.conv.x,st.def.conv.y,CX,CY);const fz=st.open&&d>R;if(fz&&!st.frozen){toast(`${st.def.name}が凍った！ かまどを強化・燃料を`,'cold')}st.frozen=fz}
-  updateWoodpile(dt);updateTrees(dt);updateBears(dt);updateRaid(dt);tickTowers(dt,true);updateHauls(dt);updatePickups(dt);updateWorkers(dt);updateStations(dt);updateSurvivors(dt,R);updateMilitia(dt);updateSpa(dt);updateHoles(dt);updateRescue(dt);updateTax(dt);updateSecrets(dt);updateRoad(dt);updateCaravan(dt);
-  checkMission(dt);updateStory(dt);updateDrifts(dt);updateFireside(dt);updateCraft(dt);updateQuests(dt);updateRankObj(dt);updateCave(dt);updateChallenges();G.achT-=dt;if(G.achT<=0){G.achT=.5;checkAch()}
-  if(G.pendingLv>0&&!G.paused)openPerk();
-  if(G.frozen>=5&&!G.endless)endGame(false,'freeze');
+  updateTrees(dt);updateBears(dt);updatePickups(dt);updateSecrets(dt);
+  if(!adv){updateWoodpile(dt);updateRaid(dt);tickTowers(dt,true);updateHauls(dt);updateWorkers(dt);updateStations(dt);updateSurvivors(dt,R);updateMilitia(dt);updateSpa(dt);updateHoles(dt);updateRescue(dt);updateTax(dt);updateRoad(dt);updateCaravan(dt);checkMission(dt);updateDrifts(dt);updateFireside(dt)}
+  updateStory(dt);updateCraft(dt);updateQuests(dt);updateRankObj(dt);updateCave(dt);updateChallenges();G.achT-=dt;if(G.achT<=0){G.achT=.5;checkAch()}
+  if(G.pendingLv>0&&!G.paused&&!adv)openPerk();
+  if(G.frozen>=5&&!G.endless&&!adv)endGame(false,'freeze');
 }
 function give(p,k,n){let c=0;for(let i=0;i<n&&p.bag.length<cap(p);i++){p.bag.push(k);c++}p.bb=1;return c}
 function take(p,k){const i=p.bag.lastIndexOf(k);if(i<0)return false;p.bag.splice(i,1);return true}
@@ -33,7 +34,7 @@ function updateSled(p,dt){dt=dt||.016;const sl=G.sleds.find(q=>q.rider===p.id);c
   p.riding=false;const fp2=p.fPress;p.fPress=false;if(!fp2||p.down>0)return;
   for(const q of G.sleds)if(q.rider==null&&dist(p.x,p.y,q.x,q.y)<60){q.rider=p.id;p.riding=true;p.rodeOut=false;if(q.cargo&&q.cargo.length){p.bag.push(...q.cargo);q.cargo=[]}SFX.rare();toast(`犬ぞりに乗った！ 荷物+${SLED_CAP}個・速い・寒さに強い（Fキーで降りる）`,'gold');burst(q.x,q.y,20,16,{c:['#ffffff','#ffd23f'],s0:40,s1:140,l0:.4,l1:.8});break}}
 function playerActions(p,dt,R){updateSled(p,dt);if(inBath(p)&&!p.riding){p.warm=Math.min(100,p.warm+40*dt);p.bathT=(p.bathT||0)+dt;if(p.bathT>6){p.bathT=0;float(p.x,p.y,50,['いい湯だな〜','ふぅ〜','極楽…'][Math.floor(Math.random()*3)],'gold')}}else p.bathT=0;updateKettle(p,dt);p.riding=G.sleds.some(q=>q.rider===p.id);
-  const fd=dist(p.x,p.y,CX,CY),inHeat=fd<R||spaWarm(p.x,p.y)||caveWarm(p.x,p.y);
+  const fd=dist(p.x,p.y,CX,CY),inHeat=fd<R||spaWarm(p.x,p.y)||caveWarm(p.x,p.y)||advWarm(p.x,p.y);
   p.inHeat=inHeat;
   if(p.down>0){p.down-=dt*(p.ko&&G.players.some(q=>q!==p&&!(q.down>0)&&dist(q.x,q.y,p.x,p.y)<50)?3:1);if(p.down<=0){if(p.ko){p.ko=false;p.inv=1.5;SFX.pop();float(p.x,p.y,70,'起きあがった！','gold');return}p.x=CX+rnd(-40,40);p.y=CY+100;p.warm=55;p.inv=1.5;SFX.pop();burst(p.x,p.y,20,24,{c:['#ffd166','#ff8a3d','#ffffff'],s0:40,s1:150,u0:120,u1:260,l0:.5,l1:.9,add:true,r0:5,r1:8});toast('かまどで目を覚ました','gold')}return}
   const zoneK=(inZone(p.x,p.y)||{}).id==='C'?1.35:(inZone(p.x,p.y)||{}).id==='B'?1.2:1;
@@ -234,7 +235,7 @@ function updateRoad(dt){if(!G.road||!roadOpen()||NET.mode==='guest')return;const
 function startTrip(){const gain=settleShards(true),carry=0,chars=G.charOf.slice(),np=G.players.length,diff=G.diff;const seed=1+((Math.random()*1e9)|0);
   if(NET.mode==='host'){NET.guestPeer=null;NET.endInfo=null;newGame(1,{seed,diff,biome:1,chars});NET.room.presence({role:'host',seed,ch:meta.pick||'Rogue_Hooded',df:diff,bi:1,trip:1}).catch(()=>{})}
   else newGame(1,{seed,diff,biome:1,chars});
-  G.cash+=carry;updateCam(0,true);hudInit();banner('砂漠の町に着いた',`一文無しからの再出発 ・ ★+${gain}`,'昼は灼熱で水分が減る。湧き水をくんで井戸へ。稼ぎはキャラバンとの取引だけ','r-SSR');SFX.ssr()}
+  G.cash+=carry;updateCam(0,true);hudInit();if(gameMode!=='story')banner('砂漠の町に着いた',`一文無しからの再出発 ・ ★+${gain}`,'昼は灼熱で水分が減る。湧き水をくんで井戸へ。稼ぎはキャラバンとの取引だけ','r-SSR');SFX.ssr()}
 function makeSecrets(TR,sr){G.secrets=[];G.stele=0;G.secretS=0;const R=(r)=>({x:sr(r[0],r[2]),y:sr(r[1],r[3])});
   const A=[300,140,2100,640],Cz=[90,680,640,1720],Bz=[1760,660,2320,1740];
   const add=(t,r)=>{let q,g=0;do{q=R(r);g++}while(g<40&&(TR.some(tr=>dist(tr.x,tr.y,q.x,q.y)<40)||HOLES.some(h=>dist(h[0],h[1],q.x,q.y)<90)));G.secrets.push({id:G.secrets.length,t,x:q.x,y:q.y,found:false,p:0})};

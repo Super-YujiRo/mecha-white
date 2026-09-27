@@ -59,7 +59,7 @@ function ruinVis(){const S=G.story,on=!!(S&&S.ch===3&&DES());if(!on){if(G.ruinV)
     g.add(at(box(90,10,60,dk),0,5,0));const mural=at(box(80,50,8,stoneM),0,35,-50);g.add(mural);const sun=at(cyl(12,12,1.5,glow('#7fd4ff',1.6),20,false),0,42,-45.5);sun.rotation.x=Math.PI/2;g.add(sun);
     const beam=M_(new T.CylinderGeometry(50,50,650,20,1,true),new T.MeshBasicMaterial({color:lin('#7fd4ff'),transparent:true,opacity:.18,blending:T.AdditiveBlending,depthWrite:false,side:T.DoubleSide}),false);beam.position.y=325;g.add(beam);g.userData.beam=beam;
     const sign=makeTextPlate('古代遺跡',110,28,'rgba(255,250,240,.92)','#8a6a48',.5);sign.position.set(0,140,0);sign.userData.bb=true;g.add(sign);g.userData.sign=sign;world.add(g);G.ruinV=g}
-  G.ruinV.visible=true;const t=performance.now()/1000;G.ruinV.userData.beam.visible=S.step===2&&!S.ruin;G.ruinV.userData.beam.material.opacity=.14+Math.sin(t*2)*.06;G.ruinV.userData.sign.quaternion.copy(camera.quaternion);
+  G.ruinV.visible=true;const t=performance.now()/1000;G.ruinV.userData.beam.visible=S.step===3&&!S.ruin;G.ruinV.userData.beam.material.opacity=.14+Math.sin(t*2)*.06;G.ruinV.userData.sign.quaternion.copy(camera.quaternion);
   if(!G.heartV||!G.heartV.parent){const h=new T.Group();const c=M_(new T.OctahedronGeometry(14,0),glow('#7fd4ff',2.6),false);c.scale.set(1,1.5,1);h.add(c);const l=new T.PointLight(lin('#7fd4ff'),1.6,260,1.6);h.add(l);world.add(h);G.heartV=h}
   const hv=G.heartV;hv.visible=false;if(!hv.visible)return;hv.rotation.y=t*2;
   if(S.hs===1&&G.players[S.hc]){const p=G.players[S.hc];hv.position.set(p.x,70+Math.sin(t*4)*3,p.y)}else if(S.hs===3){hv.position.set(CX,34+Math.sin(t*2)*4,CY)}else hv.position.set(S.hx||RUIN.x,26+Math.sin(t*3)*4,S.hy||RUIN.y);

@@ -11,7 +11,7 @@ function gainRX(p,n){if(!p||!isRPG())return;p.rl=p.rl||1;p.rx=(p.rx||0)+n;while(
 function giveItem(p,id){const it=ITEMS[id];if(!p||!it)return;p.items=p.items||[];if(!p.items.includes(id))p.items.push(id);p.eq=p.eq||{};if(!p.eq[it.s])p.eq[it.s]=id;
   float(p.x,p.y,130,`${it.n} を手に入れた！`,'gold',true);if(p===(G.players[G.me]||G.players[0])&&NET.mode!=='guest')banner('装備を手に入れた！',it.n,itemDesc(it)+'（Lキーで付け替え）','r-SSR',true)}
 const NPCS={snow:[{id:'gordon',n:'猟師のゴードン',pal:1,x:1330,y:1280,o:{hat:'ushanka',beard:true,tool:'gun'}},{id:'mina',n:'パン屋のミーナ',pal:4,x:905,y:1160,o:{apron:true}},{id:'pip',n:'少年ピップ',pal:6,x:1290,y:1100,o:{scale:.75}},{id:'borg',n:'老人ボルグ',pal:2,x:1560,y:1040,o:{beard:true}},{id:'teo',n:'大工のテオ',pal:5,x:1395,y:955,o:{tool:'axe',plaid:true}},{id:'elza',n:'見張りのエルザ',pal:3,x:1470,y:1030,o:{hat:'ushanka',tool:'gun'}},{id:'olga',n:'村長オルガ',pal:2,x:1085,y:890,o:{apron:true,scale:.95}}],
-  desert:[{id:'said',n:'水売りのサイード',pal:1,x:1330,y:1280,o:{}},{id:'lana',n:'踊り子のラナ',pal:4,x:905,y:1160,o:{apron:true}}]};
+  desert:[{id:'said',n:'水売りのサイード',pal:1,x:1330,y:1280,o:{}},{id:'lana',n:'踊り子のラナ',pal:4,x:905,y:1160,o:{apron:true}},{id:'zara',n:'隊長ザラ',pal:3,x:1120,y:1085,o:{hat:'ushanka',tool:'gun'},adv:1},{id:'hamid',n:'遊牧民の長ハミド',pal:2,x:1950,y:1040,o:{beard:true},adv:1}]};
 const npcName=id=>{for(const k in NPCS)for(const n of NPCS[k])if(n.id===id)return n.n;return ''};
 const npcPos=n=>n.a!=null?{x:CX+Math.cos(n.a)*150,y:CY+Math.sin(n.a)*150}:{x:n.x,y:n.y};
 const QUESTS={
@@ -35,13 +35,13 @@ const qS=id=>(G.story&&G.story.q&&G.story.q[id])||null,qDone=id=>{const q=qS(id)
 const bioKey=()=>DES()?'desert':'snow';
 function solvedN(bio){let n=0;const ch=(G.story&&G.story.ch)||1;for(const k in QUESTS){const Q=QUESTS[k];if(Q.bio===bio&&qDone(k)&&(!Q.ch||Q.ch.includes(ch)))n++}return n}
 function npcQuest(nid){let avail=null;const ch=(G.story&&G.story.ch)||1;for(const k in QUESTS){const Q=QUESTS[k];if(Q.npc!==nid||Q.bio!==bioKey())continue;const q=qS(k);if(q&&(q.st===1||q.st===2))return k;if(!q&&!avail&&(!Q.ch||Q.ch.includes(ch))&&(!Q.req||Q.req()))avail=k}return avail}
-function npcMark(nid){const mm=mysteryMark(nid);if(mm)return mm;const k=npcQuest(nid);if(!k)return '';const q=qS(k);return !q?'！':q.st===2?'？':'…'}
+function npcMark(nid){const mm=advMark(nid)||mysteryMark(nid);if(mm)return mm;const k=npcQuest(nid);if(!k)return '';const q=qS(k);return !q?'！':q.st===2?'？':'…'}
 // ---- NPC meshes and markers (both host and guest)
 function npcFx(){if(!G||!running)return;const on=isRPG();const L=NPCS[bioKey()];
   if(!on){if(G.npcV)for(const v of G.npcV)v.m.g.visible=false;if(G.escV)G.escV.m.g.visible=false;if(G.findV)G.findV.visible=false;$('dlg').hidden=true;return}
   if(!G.npcV||G.npcBio!==bioKey()||(G.npcV[0]&&!G.npcV[0].m.g.parent)){if(G.npcV)for(const v of G.npcV)world.remove(v.m.g);G.npcBio=bioKey();G.npcV=L.map(n=>{const m=makeVillager(PALS[n.pal%PALS.length],Object.assign({noShadow:false},n.o));const q=npcPos(n);m.g.position.set(q.x,0,q.y);m.g.rotation.y=Math.atan2(CX-q.x,CY-q.y)+Math.PI;world.add(m.g);return{n,m,x:q.x,y:q.y}})}
   const me=G.players[G.me]||G.players[0];
-  for(const v of G.npcV){v.m.g.visible=true;animWalk(v.m,0,false);const mk=npcMark(v.n.id),d=me?dist(me.x,me.y,v.x,v.y):1e9;v.m.g.rotation.y=d<200&&me?Math.atan2(me.x-v.x,me.y-v.y):Math.atan2(CX-v.x,CY-v.y)+Math.PI;
+  for(const v of G.npcV){v.m.g.visible=!v.n.adv||ADV();if(!v.m.g.visible)continue;animWalk(v.m,0,false);const mk=npcMark(v.n.id),d=me?dist(me.x,me.y,v.x,v.y):1e9;v.m.g.rotation.y=d<200&&me?Math.atan2(me.x-v.x,me.y-v.y):Math.atan2(CX-v.x,CY-v.y)+Math.PI;
     if(mk)label(v.x,v.y,74,`<b style="font-size:${mk==='…'?16:26}px;color:${mk==='？'?'#3fc157':mk==='！'?'#ffb020':'#9aa3ad'};-webkit-text-stroke:3px #16283a;paint-order:stroke fill">${mk}</b>`,'');
     if(d<220)label(v.x,v.y,d<75?108:96,`<small>${v.n.n}</small>${d<75&&!DLG.open?'<br><b>Eキーで話す</b>':''}`,'')}
   // escort follower, find spot
@@ -63,7 +63,7 @@ function updateQuests(dt){if(!isRPG())return;const S=G.story;S.q=S.q||{};
       else{const p=G.players[q.f];if(!p||p.down>0){q.f=null}else{const d=dist(p.x,p.y,q.x,q.y);if(d>45){const k2=Math.min(d-40,230*dt);q.x+=(p.x-q.x)/d*k2;q.y+=(p.y-q.y)/d*k2}if(dist(q.x,q.y,CX,CY)<FR-30){q.st=2;const n=NPCS.snow.find(n=>n.id===Q.npc);const np=npcPos(n);q.x=np.x+30;q.y=np.y+20;banner('町に着いた！',Q.nm,`${npcName(Q.npc)}に知らせよう`,'area');SFX.rare()}}}}
     else if(Q.type==='count'){if(Q.chk(q)>=Q.n){q.st=2;banner('依頼達成！',Q.t,`${npcName(Q.npc)}に報告しよう`,'area');SFX.rare()}}
     else if(Q.type==='build'){if(Q.chk()>=Q.n){q.st=2;banner('依頼達成！',Q.t,`${npcName(Q.npc)}に報告しよう`,'area');SFX.rare()}}}}
-function doAct(p,type,id){if(!isRPG()||!p)return;const S=G.story;S.q=S.q||{};if(mysteryAct(p,type,id))return;
+function doAct(p,type,id){if(!isRPG()||!p)return;const S=G.story;S.q=S.q||{};if(mysteryAct(p,type,id)||advAct(p,type,id))return;
   if(type==='craft'){const R=RECIPES[id];if(!R)return;const why=craftWhy(p,R);if(why){float(p.x,p.y,90,why,'red',true);return}for(const k in R.m)p.mats[k]-=R.m[k];for(let i=0;i<(R.log||0);i++)take(p,'log');G.cash-=R.cash||0;giveItem(p,R.id);lifeXp(p,R.life||'craft',15);cnt(p,R.life==='smith'?'sm':'cr_eq');cnt(p,'mk_'+R.id);gainRX(p,20);banner('装備を作った！',ITEMS[R.id].n,itemDesc(ITEMS[R.id]),'r-SSR');SFX.ssr();burst(WB.x,WB.y,40,30,{c:['#ffd23f','#ffffff'],s0:60,s1:220,u0:150,u1:320,l0:.6,l1:1.1,add:true});return}
   if(type==='eq'){const it=ITEMS[id];if(!it||!(p.items||[]).includes(id))return;p.eq=p.eq||{};p.eq[it.s]=p.eq[it.s]===id?null:id;return}
   const Q=QUESTS[id];if(!Q)return;let q=S.q[id];
@@ -74,7 +74,7 @@ function doAct(p,type,id){if(!isRPG()||!p)return;const S=G.story;S.q=S.q||{};if(
 function sendAct(type,id){const me=G.players[G.me]||G.players[0];if(NET.mode==='guest'){NET.actN=(NET.actN||0)+1;NET.act=[NET.actN,type,id]}else doAct(me,type,id)}
 // ---- dialog UI (local to each player)
 const DLG={open:false};
-function openTalk(v){{const mt=mysteryTalk(v);if(mt){Object.assign(DLG,{open:true,npc:v,pages:mt.pages,i:0,ch:mt.ch||null});if(NET.mode==='solo')G.paused=true;for(const j of joys)j.on=false;drawDlg();SFX.pop&&SFX.pop();return}}const k=npcQuest(v.n.id),q=k?qS(k):null,Q=k?QUESTS[k]:null,me=G.players[G.me]||G.players[0];let pages,ch=null;
+function openTalk(v){{const mt=advTalk(v)||mysteryTalk(v);if(mt){Object.assign(DLG,{open:true,npc:v,pages:mt.pages,i:0,ch:mt.ch||null});if(NET.mode==='solo')G.paused=true;for(const j of joys)j.on=false;drawDlg();SFX.pop&&SFX.pop();return}}const k=npcQuest(v.n.id),q=k?qS(k):null,Q=k?QUESTS[k]:null,me=G.players[G.me]||G.players[0];let pages,ch=null;
   if(!k)pages=[['いつもありがとう。この町は、あんたたちのおかげで持ってるよ','困ったことがあったら、また頼むね','外は冷える。気をつけてな'][Math.floor(Math.random()*3)]];
   else if(!q){pages=Q.intro.slice();ch=[['引き受ける',()=>sendAct('accept',k)],['やめておく',null]]}
   else if(q.st===2){pages=Q.done.slice();ch=[['受け取る',()=>sendAct('claim',k)]]}

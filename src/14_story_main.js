@@ -6,9 +6,9 @@ var CH={1:{n:'第1章',t:'ホワイトアウト',play:true,open:['暦の上で�
  2:{n:'第2章',t:'白き王',play:true,open:['像が完成した夜から、ひと月。','北の山から、\n地鳴りのような足音が近づいてくる。','狼たちを束ねる“白き王”。\nなぜ獣たちは、この町ばかりを狙うのか――'],sub:'白き王の正体と、狼がこの町を狙う理由をつきとめろ',
   intro:[['斥候カイ','北の山で見た白い影…狼どもを束ねる“王”がいる'],['斥候カイ','妙なんだ。狼どもは、獲物の多い南の谷じゃなく、わざわざこの町を目指してくる'],['村長オルガ','去年より冬も厳しい。まずは守りを固めよう。見張り台を強くしておくれ']],
   outro:'白き王は、灯台の光の下で雪に崩れ落ちた。\n額から転がり落ちた青いかけらは、なぜか町の中心へ引かれるように震えていた。\n\n氷河の手記にはこうあった。「石は、町でいちばん温かい場所に眠らせた」――\n\n村長オルガ「……南の砂の向こうに、冬の原因があると聞いたことがある。ただの言い伝えさ」\n\n一行は、南への道の雪をかきわけはじめた。'},
- 3:{n:'第3章',t:'南への道',play:true,desert:true,open:['雪をかきわけ、たどり着いたのは――\n灼熱の砂の町だった。','昼は焼けるように暑く、\n夜は凍えるほど寒い。','この砂漠もまた、\n季節を失っていた。'],sub:'砂漠の古代遺跡で、100年前に何があったのかをつきとめろ',
-  intro:[['斥候カイ','ここが砂の町か…昼は焼けるように暑いのに、夜は凍えるほど寒い'],['隊長ザラ','北から来た旅人かい？ ここじゃ水が命だ。湧き水をくんで井戸を満たしな']],
-  outro:'砂の女王は、空の台座の前で静かに崩れた。\n星の壁画が語っていた――100年前、北の男が神殿の「陽の石」を奪った、と。\n男の指輪には、雪の結晶と炎の紋章。\n\n隊長ザラ「石が台座に戻れば、北にも南にも季節が戻る。……頼んだよ、北の旅人」\n\n斥候カイ「かけらは、町に近づくほど震えてた。石は――俺たちの町にある」'},
+ 3:{n:'第3章',t:'南への道',play:true,desert:true,open:['雪をかきわけ、たどり着いたのは――\n灼熱の砂の町、ラズール。','昼は焼けるように暑く、\n夜は凍えるほど寒い。','この砂漠もまた、\n季節を失っていた。','町の外には、果てしない砂の海。\n古い神殿が、どこかに眠っているという。'],sub:'砂漠を旅して、100年前に何があったのかをつきとめろ',
+  intro:[['斥候カイ','ここが砂の町ラズールか…昼は焼けるように暑いのに、夜は凍えるほど寒い'],['斥候カイ','まずは町の隊長に話を聞こう。のどが渇いたら井戸のそばで休むんだ']],
+  outro:'流砂の谷の主は、砂の底へと静かに沈んでいった。\n星の壁画が語っていた――100年前、北の男が神殿の「陽の石」を奪った、と。\n男の指輪には、雪の結晶と炎の紋章。\n\n隊長ザラ「石が台座に戻れば、北にも南にも季節が戻る。……頼んだよ、北の旅人」\n\n斥候カイ「かけらは、町に近づくほど震えてた。石は――俺たちの町にある」'},
  4:{n:'第4章',t:'帰郷',play:true,open:['砂の町で知った、100年前の盗み。','奪われた「陽の石」は、\n北の町へ持ち去られた。','けれど町の誰も、\nそんな話はしなかった――','手がかりを集め、\n石の隠し場所をつきとめろ。'],sub:'町のみんなに話を聞き、「冬の心臓」の隠し場所を推理しろ',
   intro:[['斥候カイ','帰ってきたな…さっそく町のみんなに話を聞こう'],['斥候カイ','頭に緑の“？”が出ている人が、何か知ってるはずだ']],
   outro:'心臓――陽の石が南への道を越えたとき、北の空の雲が、はじめて割れた。\n\n石が台座に戻った朝、砂漠には100年ぶりの雨が降り、\n北の町の軒先から、つららが一粒ずつ落ちはじめた。\n\n村長オルガ「祖父がほしかった夏は、盗まなくても、ちゃんと巡ってくるんだね」\n\n――めちゃホワイト　完'},
@@ -18,12 +18,12 @@ const stx=o=>typeof o.t==='function'?o.t():o.t;
 const kingOf=()=>G.bears.find(b=>b.king&&!b.dead);
 const RUIN={x:520,y:330};
 const SOBJ={3:[
-  {t:'水くみ係を2人雇え',f:()=>[G.workers.filter(w=>w.role==='fisher').length,2],tg:()=>{const p=G.pads.find(q=>q.id==='fisher');return p&&p.vis()?{x:p.x,y:p.y,h:50}:null}},
-  {t:'キャラバンと2回取引し、砂の町の悩みを1つ解決しろ',p:()=>`取引 ${Math.min(2,(G.stats.car||0)-(G.story.car0||0))}/2・悩み ${Math.min(1,solvedN('desert'))}/1`,f:()=>[Math.min(2,(G.stats.car||0)-(G.story.car0||0))+Math.min(1,solvedN('desert')),3],on:()=>{G.story.car0=G.stats.car||0;say('隊長ザラ','水が回りだしたね。キャラバンの注文に応えてくれたら、この砂漠の昔話をしてやるよ')},tg:()=>G.car&&G.car.state==='here'?{x:CAR_STOP.x,y:CAR_STOP.y,h:60}:null},
-  {t:'北西の古代遺跡を調べろ',f:()=>[G.story.ruin?1:0,1],tg:()=>({x:RUIN.x,y:RUIN.y,h:80}),on:()=>{say('隊長ザラ','約束だ。100年前まで、この砂漠にも季節があった。北西の神殿に“陽の石”が祀られていたころの話さ');say('隊長ザラ','ある年、石が消えた。それからずっと、昼は灼けて夜は凍る');say('斥候カイ','陽の石…ヨルンの手記に出てきた石だ。見に行こう')}},
+  {t:'砂の町ラズールの隊長ザラに話を聞け',f:()=>[G.story.zara?1:0,1],tg:()=>({x:1120,y:1085,h:70})},
+  {t:'東のオアシスの遊牧民キャンプへ行け',f:()=>[G.story.camp?1:0,1],tg:()=>({x:CAMP.x,y:CAMP.y,h:80}),on:()=>{say('斥候カイ','東のオアシスか。のどが渇いたら、オアシスの水辺で休もう')}},
+  {t:'遊牧民の長ハミドの話を聞け',f:()=>[G.story.hamid?1:0,1],tg:()=>({x:1950,y:1040,h:70})},
+  {t:'北西の古代遺跡を調べろ',f:()=>[G.story.ruin?1:0,1],tg:()=>({x:RUIN.x,y:RUIN.y,h:80}),on:()=>{say('斥候カイ','陽の石…ヨルンの手記に出てきた石だ。北西の遺跡へ行こう');say('斥候カイ','途中でキラキラ光る砂を見つけたら、掘ってみるといい')}},
   {t:'遺跡の「星の床」の謎を解け',f:()=>[hasClue('c8')?1:0,1],tg:()=>({x:SF.x,y:SF.y,h:40}),on:()=>{addClue('c7');say('斥候カイ','台座が空っぽだ…ここに石があったのか');say('斥候カイ','床に星の模様がある。そばの石板に何か書いてあるぞ')}},
-  {t:'砂の女王をたおせ',f:()=>[G.story.queen&&!G.bears.some(b=>b.id===G.story.queen&&!b.dead)?1:0,1],tg:()=>{const b=G.bears.find(b=>b.id===G.story.queen&&!b.dead);return b&&!b.hide?{x:b.x,y:b.y,h:80}:null},on:()=>{say('斥候カイ','待て、砂が動いてる！ 台座の番人か…俺たちを、また石を奪いに来た北の人間だと思ってる！')}},
-  {t:'最後の夜：砂の化け物から井戸を守れ',p:()=>'今夜',f:()=>[0,1],on:()=>{G.finalPending=true;addClue('c9');say('隊長ザラ','女王が静まった…あんたたちは、盗人とはちがうようだね');say('斥候カイ','女王の悲鳴に、砂の化け物どもが集まってくる…今夜を越えたら、町に帰ろう！')}}],
+  {t:'流砂の谷の主・巨大サンドワームをたおせ',p:()=>{const b=G.bears.find(b=>b.id===G.story.worm&&!b.dead);return b?`HP ${Math.ceil(b.hp)}`:'南西の谷'},f:()=>[G.story.wend?1:0,1],tg:()=>{const b=G.bears.find(b=>b.id===G.story.worm&&!b.dead&&!b.hide);return b?{x:b.x,y:b.y,h:110}:{x:VALLEY.x,y:VALLEY.y,h:90}},on:()=>{say('斥候カイ','石を奪った男の紋章は、雪の結晶と炎…俺たちの町だ');say('遊牧民の長ハミド','神殿の番人は、石を失って谷の主になり果てた。あやつを鎮めねば、この砂漠の怒りはおさまらん');say('斥候カイ','南西の流砂の谷だ。行こう！')}}],
 2:[
   {t:'見張り台を3つともLv2にしろ',f:()=>[TOWERS.filter(t=>G.lv['tw_'+t.id]>=2).length,3],tg:()=>{const t=TOWERS.find(t=>G.lv['tw_'+t.id]<2);return t?{x:t.x,y:t.y,h:50}:null}},
   {t:'襲撃の夜を2回しのぎ、町の悩みを2つ解決しろ',p:()=>`襲撃 ${Math.min(2,G.story.raids||0)}/2・悩み ${Math.min(2,solvedN('snow'))}/2`,f:()=>[Math.min(2,G.story.raids||0)+Math.min(2,solvedN('snow')),4],on:()=>{G.story.raids=0;say('斥候カイ','守りはできた。群れの動きを見たい。2晩しのいでくれ')}},
@@ -73,7 +73,7 @@ function applySave(d){G.year=d.year||1;G.day=d.day;G.t=(d.day-1)*G.DAY+.5;G.cash
   while(G.sleds.length<(d.sleds||0))G.sleds.push({id:++G.nid,x:1500,y:1300,rider:null});
   G.players.forEach((p,i)=>{if(d.pl&&d.pl[i]){p.lv=Object.assign({gun:0,bag:0},d.pl[i].lv);p.life=Object.assign({},d.pl[i].life||{});rpgRestore(p,d.pl[i])}});
   G.story=JSON.parse(JSON.stringify(d.story));G.story.seen=G.story.seen||{};if(d.mon){G.monument=true;G.monV.visible=true;G.monV.scale.setScalar(.01);G.monPop=0;G.finalPending=true}
-  if(G.story.ch===2&&G.story.step===3)G.story.minion=0;if(G.story.ch===3&&G.story.step===4)G.story.queen=0;if(G.story.ch===4&&G.story.step===4&&!G.story.gdead){G.story.step=3;G.story.dig=0;G.story.dg=0}if(G.story.ch===4)G.finalPending=G.story.step>=6;if(G.story.hs===1)G.story.hs=2;for(const k in (G.story.q||{})){const q=G.story.q[k];if(q.st===1&&QUESTS[k]&&QUESTS[k].type==='escort'){q.f=null;q.x=QUESTS[k].x;q.y=QUESTS[k].y}}G.story.king=0;G.story.back=!d.fresh}
+  if(G.story.ch===2&&G.story.step===3)G.story.minion=0;if(G.story.ch===3&&G.story.step===5){G.story.worm=0}if(G.story.ch===4&&G.story.step===4&&!G.story.gdead){G.story.step=3;G.story.dig=0;G.story.dg=0}if(G.story.ch===4)G.finalPending=G.story.step>=6;if(G.story.hs===1)G.story.hs=2;for(const k in (G.story.q||{})){const q=G.story.q[k];if(q.st===1&&QUESTS[k]&&QUESTS[k].type==='escort'){q.f=null;q.x=QUESTS[k].x;q.y=QUESTS[k].y}}G.story.king=0;G.story.back=!d.fresh}
 // chapter 4: back to the snow town (its snapshot from the end of chapter 2), keeping everyone's gear from the desert
 function keepGear(pl){if(pl)G.players.forEach((p,i)=>{if(pl[i]){p.life=Object.assign({},pl[i].life||{});rpgRestore(p,pl[i])}})}
 function goHome(st){const h=store.get(SAVE_K+'-home',null),pl=saveData().pl,chars=G.charOf.slice(),diff=G.diff,seed=h?h.seed:1+((Math.random()*1e9)|0);if(NET.mode==='host'){NET.guestPeer=null;NET.endInfo=null}
@@ -103,16 +103,13 @@ function updateStory(dt){const S=G.story;if(!S)return;S.t=(S.t||0)+dt;const ph=(
     if(G.zones.C)beat('zC',()=>say('斥候カイ','奥地の森で妙な足跡を見た。家ほどもある…ただの狼じゃない'));
     if(G.zones.D)beat('zD',()=>say('村長オルガ','温泉が戻った！ これでみんな凍えずにすむ'));
     if(G.monument)beat('mon',()=>{say('村長オルガ','像ができた…町の灯りがよみがえったね');say('斥候カイ','待て、森が騒がしい。今夜は総出で来るぞ！')})}
-  updatePuzzles(dt);updateCh4(dt);
+  updatePuzzles(dt);updateCh4(dt);updateAdv(dt);
   const L=SOBJ[S.ch];if(!L)return;
   if(S.step===0&&!S.seen.s0&&S.t>9){S.seen.s0=1;L[0].on&&L[0].on()}
   if(S.ch===2){if(S.step===3&&S.minion){const mb=G.bears.find(b=>b.id===S.minion);if(mb&&!mb.bt)setBt(mb,'alpha')}const kb=G.bears.find(b=>b.king&&!b.dead);if(kb&&kb.bt!=='king')setBt(kb,'king')}
   if(S.ch===2){if(S.step===2&&!S.fp&&G.players.some(p=>dist(p.x,p.y,FP().x,FP().y)<95)){S.fp=1;burst(FP().x,FP().y,30,40,{c:['#9fe0ff','#ffffff'],s0:60,s1:220,u0:120,u1:320,l0:.6,l1:1.2,add:true})}
     if(S.step===3&&!S.minion)spawnMinion();
     if(S.step>=6&&G.raid.on&&G.raid.final&&!S.king){S.king=1;spawnKing()}}
-  if(S.ch===3&&DES()){if(S.step===2&&!S.ruin&&G.players.some(p=>dist(p.x,p.y,RUIN.x,RUIN.y)<120))S.ruin=1;
-    if(S.step===4&&!S.queen){const b=spawnBoss('queen');b.x=RUIN.x+160;b.y=RUIN.y+60;b.m.g.position.set(b.x,0,b.y);b.hp=b.max=Math.round(240*DM().hp);S.queen=b.id}
-}
   const o=L[S.step];if(o&&S.step<L.length-1){const [c,g]=o.f();if(c>=g){S.step++;const n=L[S.step];banner('目標達成！',stx(n),'','area');SFX.rare();n.on&&n.on();snapSave();trackerFlash()}}}
 function storyHud(){const S=G.story,L=S&&SOBJ[S.ch];if(!L)return false;const i=Math.min(S.step||0,L.length-1),o=L[i],[c,g]=o.f();$('mN').textContent=`${CH[S.ch].n} ${i+1}/${L.length}`;$('mT').textContent=stx(o);$('mP').textContent=o.p?o.p():`${Math.min(c,g)}/${g}`;return true}
 function storyT(gp){const S=G.story,L=S&&SOBJ[S.ch];if(!L)return null;const o=L[Math.min(S.step||0,L.length-1)];return o.tg?o.tg(gp):null}
@@ -136,7 +133,7 @@ function startGame(){audioOn();
       else{NET.mode='host';NET.guestPeer=null;NET.endInfo=null;const seed=1+((Math.random()*1e9)|0);const sd=storyNew(1,seed);NET.room.presence({role:'host',seed:sd,ch:meta.pick||'Rogue_Hooded',df:G.diff,bi:G.biome||0}).catch(()=>{})}}}
   else{NET.mode='solo';storyNew(1)}
   running=true;updateCam(0,true);show('title',false);show('end',false);show('perk',false);show('hud',true);show('bottom',true);show('side',true);hudInit();tq.length=0;checkAch();
-  if(DES())setTimeout(()=>{if(running)toast('砂漠：昼は動くほどのどが渇く。夜のうちに湧き水をくみ、キャラバンの注文に応えよう','cold',true)},6000);
+  if(DES()&&!G.story)setTimeout(()=>{if(running)toast('砂漠：昼は動くほどのどが渇く。夜のうちに湧き水をくみ、キャラバンの注文に応えよう','cold',true)},6000);
   banner(DES()?'砂漠の町':'今回の町',`${G.mods[0].t}／${G.mods[1].t}`,`◎${G.mods[0].d}　✕${G.mods[1].d}`,'',true);setTimeout(()=>{if(running&&!G.story)toast('目標：町のシンボル像を建てろ','gold',true)},3200);
   if(NET.mode==='host')toast('部屋を作った！ 友達がこのページを開くと参加できる','gold',true);if(NET.mode==='guest')toast('友達の部屋に参加した！','gold',true);if(G.story&&NET.mode!=='guest')storyIntro()}
 function settleShards(cleared){const earnedS=Math.round(Math.max(1,Math.floor(Math.sqrt(Math.max(0,G.earned))/7)+G.day+G.raidWins*2+(G.stats.haul||0)+(cleared?15*YR():0)+(G.yearBonus||0)+(G.secretS||0))*DM().sh),gainS=Math.max(0,earnedS-G.metaGiven);G.metaGiven=earnedS;meta.shards+=gainS;store.set('mw2-meta',meta);return gainS}
@@ -208,4 +205,4 @@ function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;
   for(const f of G.floats)f.life-=dt;G.floats=G.floats.filter(f=>f.life>0);
   for(const f of G.flying){f.t+=dt*f.sp;const t=Math.min(1,f.t),e=t*t*(3-2*t);f.m.position.set(lerp(f.sx,f.tx,e),lerp(f.sh,f.th,e)+Math.sin(t*Math.PI)*50,lerp(f.sy,f.ty,e));f.m.rotation.set(t*6,f.rot+t*4,0);if(f.t>=1){world.remove(f.m);f.done=true;f.land&&f.land()}}
   G.flying=G.flying.filter(f=>!f.done);G.shake=Math.max(0,G.shake-dt*30);
-  {const on=!!(running&&isRPG());if(document.body.classList.contains('rpg')!==on)document.body.classList.toggle('rpg',on);if(document.pointerLockElement&&(!on||G.paused||DLG.open||OPN||!$('lifeCard').hidden||!$('perk').hidden||!$('end').hidden))document.exitPointerLock();document.body.classList.toggle('mlock',!!document.pointerLockElement)}tickToast(dt);updateCam(dt,false);frame(dt);checkPerf(dt);requestAnimationFrame(loop)}
+  {const on=!!(running&&isRPG());if(document.body.classList.contains('rpg')!==on)document.body.classList.toggle('rpg',on);const av=!!(running&&ADV());if(document.body.classList.contains('adv')!==av)document.body.classList.toggle('adv',av);if(document.pointerLockElement&&(!on||G.paused||DLG.open||OPN||!$('lifeCard').hidden||!$('perk').hidden||!$('end').hidden))document.exitPointerLock();document.body.classList.toggle('mlock',!!document.pointerLockElement)}tickToast(dt);updateCam(dt,false);frame(dt);checkPerf(dt);requestAnimationFrame(loop)}

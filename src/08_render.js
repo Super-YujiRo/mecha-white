@@ -8,7 +8,7 @@ function sync(dt){
   if(Math.random()<dt*(G.fuel>0?3:5))puff(CX+rnd(-8,8),CY+rnd(-8,8),120+f*40,{c:'#7a8491',r:18,life:2.4,a:.3,vy:40,vx:G.wind*20,grow:2.4});
   v.f.flames.forEach((fl,i)=>{const h=(G.fuel>0?(.35+f*.75+G.level*.07):0)*(1+Math.sin(G.t*(11+i*5))*.12);fl.scale.set(.6+f*.5,Math.max(.001,h),.6+f*.5);fl.visible=G.fuel>0;fl.rotation.y=G.t*(1+i)});
   v.f.light.intensity=G.fuel>0?(1.4+f*2.2)*(1+Math.sin(G.t*13)*.06)*(nightK>.3?1.6:1):0;v.f.light.distance=R*2.4+200;v.f.coals.material.emissiveIntensity=G.fuel>0?2.2:.1;
-  if(v.f.plate._lv!==G.level){v.f.plate._lv=G.level;v.f.plate.userData.draw('Lv'+G.level)}
+  if(v.f.plate._lv!==G.level){v.f.plate._lv=G.level;v.f.plate.userData.draw('Lv'+G.level)}v.f.plate.visible=!ADV();
   syncTown(dt);
   const fl=1+Math.sin(G.t*9)*.01;v.heat.visible=v.ring.visible=R>0;v.heat.scale.setScalar(R*fl*1.12);v.ring.scale.setScalar(R*fl);v.ring.material.color.copy(C(G.fuel<20&&Math.sin(G.t*10)>0?'#ff4d5a':DES()?'#5fc3f0':'#ffa04d'));
   v.embers.forEach((e,i)=>{const a=i/v.embers.length*TAU+G.t*.25;e.position.set(CX+Math.cos(a)*R*fl,3+Math.sin(G.t*4+i)*1.5,CY+Math.sin(a)*R*fl);e.visible=R>0;e.rotation.y=G.t*2+i});
@@ -99,7 +99,7 @@ function sync(dt){
   if(G.monument||(YR()>1&&!monPadOn())){G.monPop=Math.min(1,(G.monPop||0)+dt*.8);G.monV.visible=true;G.monV.scale.setScalar(easeOutBack(G.monPop)*(1+(YR()-(G.monument?1:2))*.3));G.monV.userData.flame.scale.set(1,1+Math.sin(G.t*9)*.15,1)}
   for(const h of G.hauls){h.m.position.set(h.x,h.carried?10+Math.abs(Math.sin(G.t*9))*4:0,h.y);h.m.rotation.y=h.carried?Math.sin(G.t*4)*.15:0;if(!h.carried)label(h.x,h.y,64,G.players.length>1?'巨大肉：2人で運ぶ':'巨大肉','gold sm')}
   for(const p of G.players)if(p.buddy&&!p.inHeat&&p.id===0){const o=G.players[1];if(o)label((p.x+o.x)/2,(p.y+o.y)/2,70,'♥ 寄り添い中（体温が下がりにくい）','red sm')}
-  G.woodStack.fill('log',Math.min(40,G.woodpile));label(WOOD.x,WOOD.y,30+G.woodStack.h,G.woodpile>0?`薪置き場 ${G.woodpile}本（自動でかまど強化へ）`:'薪置き場：火が満タンの時の薪がたまる','note');
+  G.woodStack.fill('log',ADV()?0:Math.min(40,G.woodpile));if(!ADV())label(WOOD.x,WOOD.y,30+G.woodStack.h,G.woodpile>0?`薪置き場 ${G.woodpile}本（自動でかまど強化へ）`:'薪置き場：火が満タンの時の薪がたまる','note');
   syncChests();
   for(const f of G.floats){const age=f.max-f.life,sc=age<.25?easeOutBack(age/.25):1;label(f.x,f.y,f.h+age*30,f.txt,f.cls,Math.min(1,f.life*2),sc)}
 }
@@ -183,7 +183,7 @@ function frame(dt){hideIdle();monBar();frozenFx();vigFx();hideIdleFx(dt);
     const top=150,m=44,mx=86,on=!behind&&sx>m&&sx<W-m&&sy>top&&sy<H-90;if(on)el.hidden=true;else{el.hidden=false;const cx=W/2,cy=(top+H-90)/2;let dx=sx-cx,dy=sy-cy;const k=Math.min((W/2-mx)/Math.abs(dx||1e-3),((H-90-top)/2)/Math.abs(dy||1e-3));const ex=cx+dx*Math.min(1,k),ey=cy+dy*Math.min(1,k);
       const d=Math.round(dist(gp.x,gp.y,R.x,R.y)/10);el.style.transform=`translate(${ex|0}px,${ey|0}px) translate(-50%,-50%)`;el.firstChild.style.transform=`rotate(${Math.atan2(dy,dx)+Math.PI/2}rad)`;$('sosTxt').textContent=`SOS ${Math.ceil(R.t)}秒・${d}m`}}else el.hidden=true}
   guide.set(running?(coldT||(G.fuel<25&&!G.raid.on?(has(gp,DES()?'water':'log')?{x:CX,y:CY,h:110}:(DES()?freeHole(gp):nearestTree(gp))):null)||rescueT(gp)||storyT(gp)||(MISSIONS[G.mission]?MISSIONS[G.mission].tg(gp):flow(gp))):null,gp,G.t);
-  storyVis();warnFx();driftFx();fireFx();npcFx();rankFx();caveFx();pzFx();heart4Fx();cullWorld();if(composer)composer.render();else renderer.render(scene,camera);endLabels();
+  storyVis();warnFx();driftFx();fireFx();npcFx();rankFx();caveFx();pzFx();heart4Fx();advFx();cullWorld();if(composer)composer.render();else renderer.render(scene,camera);endLabels();
   joys.forEach((j,i)=>{const el=$('joy'+i);if(!j.on){el.hidden=true;return}el.hidden=false;el.style.left=j.ox+'px';el.style.top=j.oy+'px';const dx=j.x-j.ox,dy=j.y-j.oy,m=Math.hypot(dx,dy),k=m>50?50/m:1;el.firstChild.style.transform=`translate(${dx*k}px,${dy*k}px)`;el.firstChild.style.background=nPlayers===2?HERO[i].tag:'#fff'});
 }
 // ================================================================ HUD

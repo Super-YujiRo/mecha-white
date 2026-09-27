@@ -139,7 +139,7 @@ const rankOf=n=>RANKS.reduce((a,r,i)=>n>=r.p?i:a,0);
 const popNow=()=>G.surv.filter(s=>!s.frozen).length+G.workers.length;
 const HCAP=[0,3,6,10],HNAME=['','テント','小屋','宿屋'],HCOST=[[100,380,1100],[140,450,1250],[180,520,1400],[220,600,1600],[260,700,1800]];
 const houseLv=i=>G.lv['house_'+i]||0,nextHouse=()=>{for(let l=0;l<3;l++)for(let i=0;i<HOUSES.length;i++)if(houseLv(i)===l)return i;return -1},houseCap=()=>Math.max(6,G.baseCap||6)+HOUSES.reduce((a,_,i)=>a+HCAP[houseLv(i)],0),houseFull=()=>popNow()>=houseCap();
-const tempC=()=>Math.round((G.mod?G.mod.temp:0)-(G.wx&&G.wx.type==='snap'?15:G.wx&&G.wx.type==='clear'?-8:0)-12-G.day*2.5-(isNight()?10:0)-(G.wave?15:0));
+const tempC=()=>DES()?Math.round((isNight()?6:43)+(G.wx&&G.wx.type==='snap'?6:0)+Math.min(8,G.day*.5)):Math.round((G.mod?G.mod.temp:0)-(G.wx&&G.wx.type==='snap'?15:G.wx&&G.wx.type==='clear'?-8:0)-12-G.day*2.5-(isNight()?10:0)-(G.wave?15:0));
 const price=id=>Math.round((STN[id].base+STN[id].step*G.lv['price_'+id]+G.pm.price*(id==='steak'?1:id==='fish'?2.5:6))*(G.mod?G.mod.price:1)*(G&&G._dm?G._dm.price:1));
 const logFuel=()=>9+G.level*1.2+G.pm.wood+(G.mod?G.mod.wood:0);
 const WXS=[{id:'blizzard',n:'猛吹雪',ic:'🌨',d:'まわりが見えない・寒さ1.4倍',cool:1.4},{id:'snap',n:'急な冷え込み',ic:'❄',d:'寒さ1.9倍・燃料の減りも速い',cool:1.9},{id:'clear',n:'晴れ間',ic:'☀',d:'寒さ半分・お客さんが増える',cool:.5},{id:'aurora',n:'オーロラの夜',ic:'✦',d:'町の税が2倍・経験値1.5倍',cool:1}];

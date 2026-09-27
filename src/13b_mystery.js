@@ -62,7 +62,7 @@ function updatePuzzles(dt){if(!isRPG()||!G.story)return;const P=pzState(),S=G.st
     // mirrors
     if(!hasClue('c6')&&(S.ch||1)>=2&&G.zones.C){const M=P.mr;MR.m.forEach((m,i)=>{const p=G.players.find(p=>!(p.down>0)&&dist(p.x,p.y,m.x,m.y)<30);if(!p){m._t=0;m._arm=true;return}if(!m._arm)return;m._t=(m._t||0)+dt;if(m._t>.6){m._arm=false;m._t=0;M.st[i]^=1;SFX.pop&&SFX.pop();burst(m.x,m.y,10,30,{c:['#bfe9ff','#ffffff'],s0:30,s1:90,u0:60,u1:150,l0:.2,l1:.5,add:true});
         if(mrTrace(M.st).hit){addClue('c6');G.shake=8;banner('光が祭壇に届いた！','凍てつく氷河','祭壇の氷がとけて、古い手記が現れた','area');burst(MR.alt.x,MR.alt.y,50,40,{c:['#bfe9ff','#ffffff','#ffe07a'],s0:80,s1:260,u0:150,u1:400,l0:.6,l1:1.2,add:true});for(const q of G.players)addMat(q,'star',1)}}})}
-  }else if(S.ch===3&&S.step>=3&&!hasClue('c8')){const F=P.sf;
+  }else if(S.ch===3&&S.step>=4&&!hasClue('c8')){const F=P.sf;
     G.players.forEach(p=>{if(p.down>0)return;let t=-1;for(let i=0;i<9;i++){const q=sfPos(i);if(Math.abs(p.x-q.x)<24&&Math.abs(p.y-q.y)<24){t=i;break}}if(t!==p._sf){p._sf=t;if(t>=0){F.on[t]^=1;SFX.pop&&SFX.pop();const q=sfPos(t);burst(q.x,q.y,8,6,{c:F.on[t]?['#ffe07a','#ffffff']:['#8a6a48'],s0:20,s1:60,u0:20,u1:80,l0:.2,l1:.4,add:!!F.on[t]})}}});
     if(F.on.every((v,i)=>v===SF.sol[i])){addClue('c8');G.shake=10;say('斥候カイ','壁画が浮かび上がった…北の男が石を奪っていく絵だ');say('斥候カイ','あの指輪の紋章……雪の結晶と炎。俺たちの町の紋章じゃないか！')}}}
 function caveDoorOpen(){return hasClue('c3')}
@@ -89,7 +89,7 @@ function pzFx(){if(!G||!running)return;const on=isRPG()&&G.story;if(!on){if(G.pz
     const tr=mrTrace(st),seen=me&&me.x<MR.room[2]+40&&me.y>MR.room[1]-40;U.beam.forEach((b,i)=>{const s=tr.segs[i];b.visible=!!s&&!!seen;if(!s)return;const L=Math.hypot(s[2]-s[0],s[3]-s[1]);b.position.set((s[0]+s[2])/2,32,(s[1]+s[3])/2);b.scale.set(s[0]===s[2]?5:L,5,s[0]===s[2]?L:5)});
     if(mdone&&!U.gemDone){U.gemDone=1;U.gem.material=glow('#ffe07a',2.4)}U.gem.rotation.y+=.02;if(seen&&!mdone&&me&&dist(me.x,me.y,MR.alt.x,MR.alt.y)<260)label(MR.alt.x,MR.alt.y,70,'<b>光の祭壇</b><br><small>裂け目の光を、鏡で導け</small>','note')}
   else{const done=hasClue('c8'),F=P.sf;U.sf.forEach((s,i)=>s.visible=done?!!SF.sol[i]:!!F.on[i]);
-    if(S.ch===3&&S.step>=3&&!done&&me&&dist(me.x,me.y,SF.x,SF.y)<340)label(SF.x,SF.y-110,60,'<b>石板</b><br><small>「空を渡る翼の星座を、床に描け」</small><br><span style="font-family:monospace;font-size:15px;line-height:1.1;letter-spacing:4px">◆・◆<br>・◆・<br>◆・◆</span><br><small>床を踏むと光る／もう一度踏むと消える</small>','note')}}
+    if(S.ch===3&&S.step>=4&&!done&&me&&dist(me.x,me.y,SF.x,SF.y)<340)label(SF.x,SF.y-110,60,'<b>石板</b><br><small>「空を渡る翼の星座を、床に描け」</small><br><span style="font-family:monospace;font-size:15px;line-height:1.1;letter-spacing:4px">◆・◆<br>・◆・<br>◆・◆</span><br><small>床を踏むと光る／もう一度踏むと消える</small>','note')}}
 // ================================================================ chapter 4 「帰郷」
 const OLGA={id:'olga',n:'村長オルガ',pal:7,x:1085,y:890,o:{apron:true}};
 function spawnGuardian(){const b=spawnBoss('frost',true);b.x=CX+40;b.y=CY+150;b.m.g.position.set(b.x,0,b.y);b.hp=b.max=Math.round(b.max*6*DM().hp);b.nm='心臓の番人';b.m.g.scale.multiplyScalar(1.5);G.story.guard=b.id;G.shake=18;
@@ -104,5 +104,5 @@ function heart4Fx(){const S=G.story,on=!!(isRPG()&&S&&S.ch===4&&!DES()&&S.step>=
   const hv=G.heart4V,t=performance.now()/1000;hv.visible=true;hv.rotation.y=t*2;if(S.hs===1&&G.players[S.hc]){const p=G.players[S.hc];hv.position.set(p.x,70+Math.sin(t*4)*3,p.y)}else hv.position.set(S.hx||CX,26+Math.sin(t*3)*4,S.hy||CY);
   const me=G.players[G.me]||G.players[0];if(S.hs!==1&&S.hs!==3&&me&&dist(me.x,me.y,hv.position.x,hv.position.z)<300)label(hv.position.x,hv.position.z,60,'<b>冬の心臓</b><br>近づくと持てる','');
   if(S.hs===1&&me)label(ROAD.x,ROAD.y,90,'<b>南への道</b><br><small>ここまで心臓を運ぶ</small>','note')}
-function mysterySnap(){const S=G.story;if(!S)return null;const P=G.pz;return{cl:S.clues||[],pz:P?[P.br.lit,P.mr.st,P.sf.on]:null,d4:[S.deduced||0,S.olga||0,S.dig||0,S.guard||0,S.gdead||0]}}
-function mysteryApply(x){if(!x||!G.story)return;G.story.clues=x.cl||[];if(x.pz){const P=pzState();P.br.lit=x.pz[0];P.mr.st=x.pz[1];P.sf.on=x.pz[2]}const d=x.d4||[];G.story.deduced=d[0];G.story.olga=d[1];G.story.dig=d[2];G.story.guard=d[3];G.story.gdead=d[4]}
+function mysterySnap(){const S=G.story;if(!S)return null;const P=G.pz;return{cl:S.clues||[],pz:P?[P.br.lit,P.mr.st,P.sf.on]:null,d4:[S.deduced||0,S.olga||0,S.dig||0,S.guard||0,S.gdead||0,S.zara||0,S.camp||0,S.hamid||0,S.worm||0,S.wend||0,S.ruin||0],adv:G.adv?G.adv.tr:null}}
+function mysteryApply(x){if(!x||!G.story)return;G.story.clues=x.cl||[];if(x.pz){const P=pzState();P.br.lit=x.pz[0];P.mr.st=x.pz[1];P.sf.on=x.pz[2]}const d=x.d4||[];G.story.deduced=d[0];G.story.olga=d[1];G.story.dig=d[2];G.story.guard=d[3];G.story.gdead=d[4];G.story.zara=d[5];G.story.camp=d[6];G.story.hamid=d[7];G.story.worm=d[8];G.story.wend=d[9];G.story.ruin=d[10];if(x.adv){G.adv=G.adv||{tr:[],rt:[]};G.adv.tr=x.adv}}
