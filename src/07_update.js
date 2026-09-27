@@ -45,9 +45,11 @@ function playerActions(p,dt,R){updateSled(p,dt);if(inBath(p)&&!p.riding){p.warm=
   if(p.warm<=0){p.down=2.6;p.inv=3.2;p.shooting=p.chopping=p.fishing=null;const drop=p.bag.splice(0);for(const k of drop)dropItem(p.x,p.y,k,20);SFX.bad();G.shake=10;float(p.x,p.y,80,DES()?'干からびた…':'こごえた…','ice',true);banner('',DES()?'干からびた…':'こごえた…',DES()?'持ち物を落とした。井戸のまわりでしか水分は戻らない':'持ち物を落とした。かまどの熱の中でしか体温は戻らない','cold');return}
   p.breath-=dt;if(p.breath<=0&&!inHeat&&!DES()){p.breath=rnd(.9,1.4);puff(p.x+Math.sin(p.dir)*10,p.y+Math.cos(p.dir)*10,36,{r:6,life:1,a:.8,vy:10,grow:1.4})}
   // shoot > chop > fish
-  p.shooting=null;p.chopping=null;
+  p.shooting=null;p.chopping=null;const rpgA=isRPG();
+  if(rpgA){if(!p.remote&&p===(G.players[G.me]||G.players[0]))p.atkHold=INP.atk||!!keys[' '];p.skCd=Math.max(0,(p.skCd||0)-dt);p.skillT=Math.max(0,(p.skillT||0)-dt);if(p.skillReq){p.skillReq=false;if(p.skCd<=0&&!(p.down>0)&&!p.riding)doSkill(p)}}
   const cl=clsOf(p),melee=cl.rng<130;let tgt=null,td=cl.rng+p.lv.gun*(melee?4:15);for(const b of G.bears){if(b.dead)continue;const d=dist(p.x,p.y,b.x,b.y);if(d<td){td=d;tgt=b}}
   const gunInt=.5*cl.rate*Math.pow(.86,p.lv.gun)*G.pm.rate*(G.feverT>0?.5:1);
+  if(rpgA){if(!p.atkHold)tgt=null;else if(!p._ah)p.actT=99;p._ah=!!p.atkHold}
   if(tgt){p.shooting=tgt;p.aimDir=Math.atan2(tgt.x-p.x,tgt.y-p.y);p.actT+=dt;if(p.actT>=gunInt){p.actT=0;p.flash=.07;let dmg=(1+p.lv.gun*.5+G.pm.dmg)*cl.dmg*(G.feverT>0?2:1)*lifeB(p,'hunt',.06)*(1+eqv(p,'atk')+(isRPG()?(rlv(p)-1)*.05:0));
     const o=G.players.length>1&&G.players.find(q=>q!==p&&q.shooting===tgt);if(o){const a1=Math.atan2(p.x-tgt.x,p.y-tgt.y),a2=Math.atan2(o.x-tgt.x,o.y-tgt.y);if(Math.abs(Math.atan2(Math.sin(a1-a2),Math.cos(a1-a2)))>1.6){dmg*=2;if(!(tgt.pinT>0)){tgt.pinT=1.5;float(tgt.x,tgt.y,120,'挟み撃ち！ ダメージ2倍','gold',true);SFX.combo(8)}}}
     if(cl.cleave){for(const b of G.bears){if(b.dead||b===tgt)continue;if(dist(p.x,p.y,b.x,b.y)<cl.rng+12){shoot(p,b,dmg,true,cl.fx);if(cl.stun)b.atkCd=Math.max(b.atkCd,cl.stun)}}}
@@ -108,6 +110,21 @@ function updateTrees(dt){for(const t of G.trees){if(t.shake>0){t.shake-=dt;t.dir
     if(!t.alive){t.regrow-=dt;if(t.regrow<=0&&G.players.every(p=>dist(t.x,t.y,p.x,p.y)>70)&&G.workers.every(w=>dist(t.x,t.y,w.x,w.y)>50)){t.alive=true;t.hp=4;t.grow=0;t.dirty=true}}
     if(t.alive&&t.grow<1){t.grow=Math.min(1,t.grow+dt*1.5);t.dirty=true}
     if(t.dirty){t.dirty=false;forest.upd(t)}}}
+// ---- story-mode combat: left click attacks, right click (or R) fires the class skill
+const SKILLS={Rogue_Hooded:{n:'拡散射撃',cd:7},Rogue:{n:'貫通の一矢',cd:8},Knight:{n:'シールドバッシュ',cd:7},Barbarian:{n:'大回転斬り',cd:8},Mage:{n:'氷の大爆発',cd:9}};
+const clsKey=p=>{const k=G&&G.charOf&&G.charOf[G.players.indexOf(p)];return SKILLS[k]?k:'Rogue_Hooded'};
+function skillPress(){if(!running||!isRPG()||G.paused)return;if(NET.mode==='guest'){NET.skN=(NET.skN||0)+1;const sk=SKILLS[clsKey(G.players[G.me])];if(!(NET.skAt>0)||performance.now()-NET.skAt>sk.cd*1000)NET.skAt=performance.now();return}const me=G.players[G.me]||G.players[0];if(me)me.skillReq=true}
+function doSkill(p){const key=clsKey(p),S=SKILLS[key],cl=CLS[key];const base=(1+p.lv.gun*.5+G.pm.dmg)*cl.dmg*lifeB(p,'hunt',.06)*(1+eqv(p,'atk')+(rlv(p)-1)*.05);
+  const near=r=>G.bears.filter(b=>!b.dead&&!b.hide&&dist(p.x,p.y,b.x,b.y)<r);const nearest=r=>{let t=null,d0=r;for(const b of G.bears){if(b.dead||b.hide)continue;const d=dist(p.x,p.y,b.x,b.y);if(d<d0){d0=d;t=b}}return t};
+  const kb=(b,x,y,f)=>{const a=Math.atan2(b.x-x,b.y-y);b.x+=Math.sin(a)*f;b.y+=Math.cos(a)*f};let hit=0;
+  if(key==='Rogue_Hooded'){for(const b of near(cl.rng*1.5)){shoot(p,b,base*1.6,true,'bolt');hit++}}
+  else if(key==='Rogue'){const t=nearest(cl.rng*1.7);if(t){p.aimDir=Math.atan2(t.x-p.x,t.y-p.y);shoot(p,t,base*5,true,'bolt');if(!t.dead){kb(t,p.x,p.y,70);t.atkCd=Math.max(t.atkCd||0,1.2)}hit=1}}
+  else if(key==='Knight'){const a=p.dir;for(let i=0;i<6;i++){const ox=p.x,oy=p.y;p.x=clamp(p.x+Math.sin(a)*20,30,WORLD-30);p.y=clamp(p.y+Math.cos(a)*20,30,WORLD-30);fenceCollide(p,ox,oy);solids(p,12);burst(p.x,p.y,4,6,{c:['#ffffff','#cfe3f0'],s0:20,s1:60,u0:20,u1:60,l0:.2,l1:.4,r0:3,r1:6})}
+    for(const b of near(100)){shoot(p,b,base*3,true,'slash');if(!b.dead){b.atkCd=Math.max(b.atkCd||0,2);kb(b,p.x,p.y,60)}hit++}}
+  else if(key==='Barbarian'){for(const b of near(170)){shoot(p,b,base*3,true,'spin');if(!b.dead)kb(b,p.x,p.y,45);hit++}burst(p.x,p.y,30,12,{c:['#ffffff','#ffd6a0'],s0:120,s1:260,u0:20,u1:80,l0:.3,l1:.5,r0:4,r1:8})}
+  else if(key==='Mage'){const t=nearest(cl.rng*1.4);const cx=t?t.x:p.x+Math.sin(p.dir)*150,cy=t?t.y:p.y+Math.cos(p.dir)*150;if(t)p.aimDir=Math.atan2(t.x-p.x,t.y-p.y);
+    burst(cx,cy,50,20,{c:['#bfe9ff','#7fd4ff','#ffffff'],s0:80,s1:320,u0:80,u1:260,l0:.5,l1:1,r0:5,r1:11,add:true});for(const b of G.bears){if(b.dead||b.hide||dist(cx,cy,b.x,b.y)>160)continue;shoot(p,b,base*2.6,true,'none');if(!b.dead)b.trapT=3;hit++}}
+  p.skCd=S.cd;p.skillT=.5;G.shake=Math.max(G.shake,hit?9:4);SFX.rare&&SFX.rare();float(p.x,p.y,110,`${S.n}！${hit?'':'（空振り）'}`,'gold',true)}
 function shoot(sh,b,dmg,isPlayer,fx){const a=Math.atan2(b.x-sh.x,b.y-sh.y);const mx=sh.x+Math.sin(a)*28,my=sh.y+Math.cos(a)*28;fx=fx||'bolt';
   if(fx==='bolt'){for(let i=0;i<7;i++){const k=i/7;psA.emit({x:lerp(mx,b.x,k),y:lerp(24,22,k),z:lerp(my,b.y,k),vx:0,vy:0,vz:0,g:0,life:.07+k*.05,max:.12,r:5,c:C('#fff2b0'),air:true,fade:.1})}}
   else if(fx==='magic'){for(let i=0;i<10;i++){const k=i/10;psA.emit({x:lerp(mx,b.x,k),y:lerp(30,22,k)+Math.sin(k*9)*4,z:lerp(my,b.y,k),vx:0,vy:0,vz:0,g:0,life:.12+k*.08,max:.2,r:7,c:C(i%2?'#c9a2ff':'#7fe8ff'),air:true,fade:.1})}burst(b.x,b.y,22,14,{c:['#c9a2ff','#7fe8ff','#ffffff'],s0:60,s1:180,u0:60,u1:180,l0:.3,l1:.6,r0:4,r1:8,add:true})}

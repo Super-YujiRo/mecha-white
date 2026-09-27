@@ -1,5 +1,5 @@
 /* めちゃホワイト — built from src/*.js by tools/build.py. Edit the sources, not this file. */
-(()=>{const BUILD='20260927153542';
+(()=>{const BUILD='20260927155130';
 const $=id=>document.getElementById(id);
 if(!window.THREE){$('loading').textContent='3Dの読み込みに失敗しました。再読み込みしてください';return}
 const T=THREE;
@@ -227,9 +227,10 @@ addEventListener('blur',()=>{for(const k in keys)keys[k]=false});
 const joys=[{on:false},{on:false}];let nPlayers=1;
 cv.addEventListener('contextmenu',e=>e.preventDefault());
 cv.addEventListener('wheel',e=>{if(!running||!isRPG())return;e.preventDefault();CAMS.zoom=clamp(CAMS.zoom*(e.deltaY>0?1.1:1/1.1),.55,1.9)},{passive:false});
-addEventListener('pointermove',e=>{const d=CAMS.drag;if(!d||d.id!==e.pointerId)return;CAMS.yaw-=(e.clientX-d.x)*.0065;CAMS.pitch=clamp(CAMS.pitch+(e.clientY-d.y)*.004,.28,1.15);d.x=e.clientX;d.y=e.clientY});
-addEventListener('pointerup',e=>{if(CAMS.drag&&CAMS.drag.id===e.pointerId)CAMS.drag=null});
-cv.addEventListener('pointerdown',e=>{if(e.button===2||e.button===1){if(running&&isRPG()){CAMS.drag={id:e.pointerId,x:e.clientX,y:e.clientY};try{cv.setPointerCapture(e.pointerId)}catch(_){}}return}if(!running||G.paused)return;const slot=0;const j=joys[slot];if(j.on)return;
+const INP={atk:false};addEventListener('blur',()=>{INP.atk=false});
+addEventListener('pointermove',e=>{const d=CAMS.drag;if(!d||d.id!==e.pointerId)return;d.m+=Math.abs(e.clientX-d.x)+Math.abs(e.clientY-d.y);CAMS.yaw-=(e.clientX-d.x)*.0065;CAMS.pitch=clamp(CAMS.pitch+(e.clientY-d.y)*.004,.28,1.15);d.x=e.clientX;d.y=e.clientY});
+addEventListener('pointerup',e=>{if(e.button===0)INP.atk=false;const d=CAMS.drag;if(d&&d.id===e.pointerId){if(d.btn===2&&d.m<10&&performance.now()-d.t<400)skillPress();CAMS.drag=null}});
+cv.addEventListener('pointerdown',e=>{if(running&&isRPG()&&e.pointerType==='mouse'){if(e.button===0){if(!G.paused)INP.atk=true;return}CAMS.drag={id:e.pointerId,x:e.clientX,y:e.clientY,btn:e.button,m:0,t:performance.now()};try{cv.setPointerCapture(e.pointerId)}catch(_){}return}if(e.button!==0)return;if(!running||G.paused)return;const slot=0;const j=joys[slot];if(j.on)return;
   Object.assign(j,{on:true,id:e.pointerId,ox:e.clientX,oy:e.clientY,x:e.clientX,y:e.clientY});try{cv.setPointerCapture(e.pointerId)}catch(_){}});
 cv.addEventListener('pointermove',e=>{for(const j of joys)if(j.on&&j.id===e.pointerId){j.x=e.clientX;j.y=e.clientY}});
 const endJ=e=>{for(const j of joys)if(j.on&&j.id===e.pointerId)j.on=false};cv.addEventListener('pointerup',endJ);cv.addEventListener('pointercancel',endJ);
@@ -1194,7 +1195,7 @@ function followNet(p,dt){const px=p.x,py=p.y;if(p.nx!=null){const k=Math.min(1,d
 function netHost(dt){const gp=guestPeerNow();
   if(gp&&NET.guestPeer!==gp.peer){if(G.players[1])dropRemote();NET.guestPeer=gp.peer;G.charOf[1]=altCh(G.charOf[0],gp.presence&&gp.presence.ch);const p=addPlayer(1);p.remote=true;if(G.savePl&&G.savePl[1]){p.lv=Object.assign({gun:0,bag:0},G.savePl[1].lv);p.life=Object.assign({},G.savePl[1].life||{});rpgRestore(p,G.savePl[1])}p.x=CX+30;p.y=CY+110;hudInit();toast('友達が参加した！','gold');SFX.rare();setTimeout(()=>{if(running)banner('2人専用','協力ワザ','挟み撃ちでダメージ2倍・寄り添うと体温が下がりにくい・巨大肉は2人で運ぶ','area')},2500)}
   if(!gp&&NET.guestPeer){NET.gMiss=(NET.gMiss||0)+dt;const lim=PJ.on?45:3;if(PJ.on)netWarn(`友達の接続が切れた…戻ってくるのを待っています（あと${Math.ceil(lim-NET.gMiss)}秒）`);if(NET.gMiss>lim){netWarn('');dropRemote();NET.guestPeer=null;NET.gMiss=0;toast('友達が抜けた','cold')}}else if(gp&&NET.gMiss){if(NET.gMiss>1)toast('友達が戻ってきた！','gold');NET.gMiss=0;netWarn('')}
-  const p=G.players[1];if(p&&gp){const pr=gp.presence;if(typeof pr.fk==='number'){if(p._fk!=null&&pr.fk!==p._fk)p.fPress=true;p._fk=pr.fk}if(pr.act&&pr.act[0]!==p._act){const first=p._act===undefined&&pr.act[0]>1;p._act=pr.act[0];if(!first)doAct(p,pr.act[1],pr.act[2])}if(typeof pr.ek==='number'){if(p._ek!=null&&pr.ek!==p._ek){p.ePress=true;p.eGrade=pr.eg||0}p._ek=pr.ek}if(typeof pr.x==='number'&&typeof pr.y==='number'){p.nx=clamp(pr.x,30,WORLD-30);p.ny=clamp(pr.y,30,WORLD-30);p.dirN=typeof pr.d==='number'?pr.d:null}}
+  const p=G.players[1];if(p&&gp){const pr=gp.presence;p.atkHold=!!pr.ak;if(typeof pr.sk==='number'){if(p._sk!=null&&pr.sk!==p._sk)p.skillReq=true;p._sk=pr.sk}if(typeof pr.fk==='number'){if(p._fk!=null&&pr.fk!==p._fk)p.fPress=true;p._fk=pr.fk}if(pr.act&&pr.act[0]!==p._act){const first=p._act===undefined&&pr.act[0]>1;p._act=pr.act[0];if(!first)doAct(p,pr.act[1],pr.act[2])}if(typeof pr.ek==='number'){if(p._ek!=null&&pr.ek!==p._ek){p.ePress=true;p.eGrade=pr.eg||0}p._ek=pr.ek}if(typeof pr.x==='number'&&typeof pr.y==='number'){p.nx=clamp(pr.x,30,WORLD-30);p.ny=clamp(pr.y,30,WORLD-30);p.dirN=typeof pr.d==='number'?pr.d:null}}
   NET.sendT+=dt;if(NET.guestPeer&&NET.sendT>=.12){NET.sendT=0;sendSnap()}}
 function dropRemote(){const p=G.players[1];if(!p)return;for(const k of p.bag)dropItem(p.x,p.y,k,20);world.remove(p.m.g);G.players.length=1;for(const h of G.holes)if(h.user===p)h.user=null;hudInit()}
 function safeEmit(tp,d){if(!NET.room)return;let s=JSON.stringify(d);let guard=0;const LIM=PJ.on?200000:3800;while(s.length>LIM&&guard++<8){let big=null,bl=0;for(const k in d)if(Array.isArray(d[k])){const l=JSON.stringify(d[k]).length;if(l>bl){bl=l;big=k}}if(!big)break;d[big]=d[big].slice(0,Math.floor(d[big].length*.7));s=JSON.stringify(d)}
@@ -1263,7 +1264,7 @@ function guestTick(dt){
   fenceCollide(me,px,py);solids(me,12);for(const t of G.trees)if(t.alive&&t.fall<=0&&Math.abs(t.x-me.x)<30&&Math.abs(t.y-me.y)<30)pushCircle(me,t.x,t.y,18*t.s);
   me.bb=lerp(me.bb,0,dt*8);me.flash=Math.max(0,me.flash-dt);me.inv=Math.max(0,me.inv-dt);
   if(me.shooting){const b=nearestBear(me);if(b)me.aimDir=Math.atan2(b.x-me.x,b.y-me.y)}else if(me.chopping){const t=nearestTree(me);if(t)me.aimDir=Math.atan2(t.x-me.x,t.y-me.y)}else me.aimDir=null;
-  NET.room.presence({role:'guest',x:me.x|0,y:me.y|0,d:r2(me.dir),ch:meta.pick||'Knight',fk:NET.fCount||0,ek:NET.eCount||0,eg:NET.eGrade||0,act:NET.act||null}).catch(()=>{});
+  NET.room.presence({role:'guest',x:me.x|0,y:me.y|0,d:r2(me.dir),ch:meta.pick||'Knight',fk:NET.fCount||0,ek:NET.eCount||0,eg:NET.eGrade||0,act:NET.act||null,ak:(INP.atk||keys[' '])?1:0,sk:NET.skN||0}).catch(()=>{});
   const host=G.players[0];followNet(host,dt);if(host.shooting){const b=nearestBear(host);if(b)host.aimDir=Math.atan2(b.x-host.x,b.y-host.y)}else if(host.chopping){const t=nearestTree(host);if(t)host.aimDir=Math.atan2(t.x-host.x,t.y-host.y)}else host.aimDir=null;
   for(const b of G.bears){if(b.dead){b.deadT+=dt;continue}glide(b,dt,8);b.hit=Math.max(0,b.hit-dt);b.roar=Math.max(0,b.roar-dt);b.step+=b.moving?dt*6:0}
   for(const m of G.pickups){if(m.nx!=null){m.x=lerp(m.x,m.nx,Math.min(1,dt*12));m.y=lerp(m.y,m.ny,Math.min(1,dt*12))}}
@@ -1324,9 +1325,11 @@ function playerActions(p,dt,R){updateSled(p,dt);if(inBath(p)&&!p.riding){p.warm=
   if(p.warm<=0){p.down=2.6;p.inv=3.2;p.shooting=p.chopping=p.fishing=null;const drop=p.bag.splice(0);for(const k of drop)dropItem(p.x,p.y,k,20);SFX.bad();G.shake=10;float(p.x,p.y,80,DES()?'干からびた…':'こごえた…','ice',true);banner('',DES()?'干からびた…':'こごえた…',DES()?'持ち物を落とした。井戸のまわりでしか水分は戻らない':'持ち物を落とした。かまどの熱の中でしか体温は戻らない','cold');return}
   p.breath-=dt;if(p.breath<=0&&!inHeat&&!DES()){p.breath=rnd(.9,1.4);puff(p.x+Math.sin(p.dir)*10,p.y+Math.cos(p.dir)*10,36,{r:6,life:1,a:.8,vy:10,grow:1.4})}
   // shoot > chop > fish
-  p.shooting=null;p.chopping=null;
+  p.shooting=null;p.chopping=null;const rpgA=isRPG();
+  if(rpgA){if(!p.remote&&p===(G.players[G.me]||G.players[0]))p.atkHold=INP.atk||!!keys[' '];p.skCd=Math.max(0,(p.skCd||0)-dt);p.skillT=Math.max(0,(p.skillT||0)-dt);if(p.skillReq){p.skillReq=false;if(p.skCd<=0&&!(p.down>0)&&!p.riding)doSkill(p)}}
   const cl=clsOf(p),melee=cl.rng<130;let tgt=null,td=cl.rng+p.lv.gun*(melee?4:15);for(const b of G.bears){if(b.dead)continue;const d=dist(p.x,p.y,b.x,b.y);if(d<td){td=d;tgt=b}}
   const gunInt=.5*cl.rate*Math.pow(.86,p.lv.gun)*G.pm.rate*(G.feverT>0?.5:1);
+  if(rpgA){if(!p.atkHold)tgt=null;else if(!p._ah)p.actT=99;p._ah=!!p.atkHold}
   if(tgt){p.shooting=tgt;p.aimDir=Math.atan2(tgt.x-p.x,tgt.y-p.y);p.actT+=dt;if(p.actT>=gunInt){p.actT=0;p.flash=.07;let dmg=(1+p.lv.gun*.5+G.pm.dmg)*cl.dmg*(G.feverT>0?2:1)*lifeB(p,'hunt',.06)*(1+eqv(p,'atk')+(isRPG()?(rlv(p)-1)*.05:0));
     const o=G.players.length>1&&G.players.find(q=>q!==p&&q.shooting===tgt);if(o){const a1=Math.atan2(p.x-tgt.x,p.y-tgt.y),a2=Math.atan2(o.x-tgt.x,o.y-tgt.y);if(Math.abs(Math.atan2(Math.sin(a1-a2),Math.cos(a1-a2)))>1.6){dmg*=2;if(!(tgt.pinT>0)){tgt.pinT=1.5;float(tgt.x,tgt.y,120,'挟み撃ち！ ダメージ2倍','gold',true);SFX.combo(8)}}}
     if(cl.cleave){for(const b of G.bears){if(b.dead||b===tgt)continue;if(dist(p.x,p.y,b.x,b.y)<cl.rng+12){shoot(p,b,dmg,true,cl.fx);if(cl.stun)b.atkCd=Math.max(b.atkCd,cl.stun)}}}
@@ -1387,6 +1390,21 @@ function updateTrees(dt){for(const t of G.trees){if(t.shake>0){t.shake-=dt;t.dir
     if(!t.alive){t.regrow-=dt;if(t.regrow<=0&&G.players.every(p=>dist(t.x,t.y,p.x,p.y)>70)&&G.workers.every(w=>dist(t.x,t.y,w.x,w.y)>50)){t.alive=true;t.hp=4;t.grow=0;t.dirty=true}}
     if(t.alive&&t.grow<1){t.grow=Math.min(1,t.grow+dt*1.5);t.dirty=true}
     if(t.dirty){t.dirty=false;forest.upd(t)}}}
+// ---- story-mode combat: left click attacks, right click (or R) fires the class skill
+const SKILLS={Rogue_Hooded:{n:'拡散射撃',cd:7},Rogue:{n:'貫通の一矢',cd:8},Knight:{n:'シールドバッシュ',cd:7},Barbarian:{n:'大回転斬り',cd:8},Mage:{n:'氷の大爆発',cd:9}};
+const clsKey=p=>{const k=G&&G.charOf&&G.charOf[G.players.indexOf(p)];return SKILLS[k]?k:'Rogue_Hooded'};
+function skillPress(){if(!running||!isRPG()||G.paused)return;if(NET.mode==='guest'){NET.skN=(NET.skN||0)+1;const sk=SKILLS[clsKey(G.players[G.me])];if(!(NET.skAt>0)||performance.now()-NET.skAt>sk.cd*1000)NET.skAt=performance.now();return}const me=G.players[G.me]||G.players[0];if(me)me.skillReq=true}
+function doSkill(p){const key=clsKey(p),S=SKILLS[key],cl=CLS[key];const base=(1+p.lv.gun*.5+G.pm.dmg)*cl.dmg*lifeB(p,'hunt',.06)*(1+eqv(p,'atk')+(rlv(p)-1)*.05);
+  const near=r=>G.bears.filter(b=>!b.dead&&!b.hide&&dist(p.x,p.y,b.x,b.y)<r);const nearest=r=>{let t=null,d0=r;for(const b of G.bears){if(b.dead||b.hide)continue;const d=dist(p.x,p.y,b.x,b.y);if(d<d0){d0=d;t=b}}return t};
+  const kb=(b,x,y,f)=>{const a=Math.atan2(b.x-x,b.y-y);b.x+=Math.sin(a)*f;b.y+=Math.cos(a)*f};let hit=0;
+  if(key==='Rogue_Hooded'){for(const b of near(cl.rng*1.5)){shoot(p,b,base*1.6,true,'bolt');hit++}}
+  else if(key==='Rogue'){const t=nearest(cl.rng*1.7);if(t){p.aimDir=Math.atan2(t.x-p.x,t.y-p.y);shoot(p,t,base*5,true,'bolt');if(!t.dead){kb(t,p.x,p.y,70);t.atkCd=Math.max(t.atkCd||0,1.2)}hit=1}}
+  else if(key==='Knight'){const a=p.dir;for(let i=0;i<6;i++){const ox=p.x,oy=p.y;p.x=clamp(p.x+Math.sin(a)*20,30,WORLD-30);p.y=clamp(p.y+Math.cos(a)*20,30,WORLD-30);fenceCollide(p,ox,oy);solids(p,12);burst(p.x,p.y,4,6,{c:['#ffffff','#cfe3f0'],s0:20,s1:60,u0:20,u1:60,l0:.2,l1:.4,r0:3,r1:6})}
+    for(const b of near(100)){shoot(p,b,base*3,true,'slash');if(!b.dead){b.atkCd=Math.max(b.atkCd||0,2);kb(b,p.x,p.y,60)}hit++}}
+  else if(key==='Barbarian'){for(const b of near(170)){shoot(p,b,base*3,true,'spin');if(!b.dead)kb(b,p.x,p.y,45);hit++}burst(p.x,p.y,30,12,{c:['#ffffff','#ffd6a0'],s0:120,s1:260,u0:20,u1:80,l0:.3,l1:.5,r0:4,r1:8})}
+  else if(key==='Mage'){const t=nearest(cl.rng*1.4);const cx=t?t.x:p.x+Math.sin(p.dir)*150,cy=t?t.y:p.y+Math.cos(p.dir)*150;if(t)p.aimDir=Math.atan2(t.x-p.x,t.y-p.y);
+    burst(cx,cy,50,20,{c:['#bfe9ff','#7fd4ff','#ffffff'],s0:80,s1:320,u0:80,u1:260,l0:.5,l1:1,r0:5,r1:11,add:true});for(const b of G.bears){if(b.dead||b.hide||dist(cx,cy,b.x,b.y)>160)continue;shoot(p,b,base*2.6,true,'none');if(!b.dead)b.trapT=3;hit++}}
+  p.skCd=S.cd;p.skillT=.5;G.shake=Math.max(G.shake,hit?9:4);SFX.rare&&SFX.rare();float(p.x,p.y,110,`${S.n}！${hit?'':'（空振り）'}`,'gold',true)}
 function shoot(sh,b,dmg,isPlayer,fx){const a=Math.atan2(b.x-sh.x,b.y-sh.y);const mx=sh.x+Math.sin(a)*28,my=sh.y+Math.cos(a)*28;fx=fx||'bolt';
   if(fx==='bolt'){for(let i=0;i<7;i++){const k=i/7;psA.emit({x:lerp(mx,b.x,k),y:lerp(24,22,k),z:lerp(my,b.y,k),vx:0,vy:0,vz:0,g:0,life:.07+k*.05,max:.12,r:5,c:C('#fff2b0'),air:true,fade:.1})}}
   else if(fx==='magic'){for(let i=0;i<10;i++){const k=i/10;psA.emit({x:lerp(mx,b.x,k),y:lerp(30,22,k)+Math.sin(k*9)*4,z:lerp(my,b.y,k),vx:0,vy:0,vz:0,g:0,life:.12+k*.08,max:.2,r:7,c:C(i%2?'#c9a2ff':'#7fe8ff'),air:true,fade:.1})}burst(b.x,b.y,22,14,{c:['#c9a2ff','#7fe8ff','#ffffff'],s0:60,s1:180,u0:60,u1:180,l0:.3,l1:.6,r0:4,r1:8,add:true})}
@@ -1735,8 +1753,8 @@ function sync(dt){
   v.embers.forEach((e,i)=>{const a=i/v.embers.length*TAU+G.t*.25;e.position.set(CX+Math.cos(a)*R*fl,3+Math.sin(G.t*4+i)*1.5,CY+Math.sin(a)*R*fl);e.visible=R>0;e.rotation.y=G.t*2+i});
   // players
   for(const p of G.players){const m=p.m;m.g.position.set(p.x,p.riding?6:0,p.y);if(p.aimDir!=null)turnTo(p,p.aimDir,dt,16);else if(p.dirT!=null)turnTo(p,p.dirT,dt);m.g.rotation.y=p.dir;
-    m._armR=m._armL=false;animWalk(m,p.step,p.moving);if(isRPG()&&p.moving&&!p.riding&&!(p.down>0)){p._dust=(p._dust||0)-dt;if(p._dust<=0){p._dust=.17;burst(p.x-Math.sin(p.dir)*8,p.y-Math.cos(p.dir)*8,3,2,{c:DES()?['#e8cf9a','#d9b47a']:['#ffffff','#dfe9f2'],s0:8,s1:26,u0:12,u1:40,l0:.25,l1:.45,r0:3,r1:6})}}
-    const shoot_=!!p.shooting;m.gun.visible=shoot_;if(m.clsW)for(const o of m.clsW)o.visible=shoot_;m.axe.visible=!shoot_&&!p.fishing;m.rod.visible=!!p.fishing;
+    m._armR=m._armL=false;animWalk(m,p.step,p.moving);backWeapon(p,m,!!p.shooting);if(isRPG()&&p.moving&&!p.riding&&!(p.down>0)){p._dust=(p._dust||0)-dt;if(p._dust<=0){p._dust=.17;burst(p.x-Math.sin(p.dir)*8,p.y-Math.cos(p.dir)*8,3,2,{c:DES()?['#e8cf9a','#d9b47a']:['#ffffff','#dfe9f2'],s0:8,s1:26,u0:12,u1:40,l0:.25,l1:.45,r0:3,r1:6})}}
+    const shoot_=!!p.shooting||p.skillT>0;m.gun.visible=shoot_;if(m.clsW)for(const o of m.clsW)o.visible=shoot_;m.axe.visible=!shoot_&&!p.fishing;m.rod.visible=!!p.fishing;
     if(shoot_){m.armR.rotation.set(-1.3,0,0);m.armL.rotation.set(-1.1,0,.2);m._armR=m._armL=true;m.gun.userData.flash.visible=p.flash>0;if(!m.kk)m.gun.position.z=10-(p.flash>0?3:0)}
     else if(p.chopping){const t=clamp(p.actT/(.24*G.pm.chop),0,1);m.armR.rotation.set(-2.6+Math.sin(t*Math.PI)*2.4,0,0);m._armR=true}
     else if(p.fishing){m.armR.rotation.set(-.9+Math.sin(G.t*3)*.08,0,0);m._armR=true}
@@ -1806,7 +1824,7 @@ function sync(dt){
   // pads
   for(const pad of G.pads){const vis=(!pad.zone||G.zones[pad.zone])&&pad.vis();if(vis&&!pad.shown){pad.shown=true;pad.rise=0;pad.mesh.g.visible=true}if(!vis&&pad.shown){pad.shown=false;pad.mesh.g.visible=false}
     if(!pad.shown)continue;if(pad.personal){const q=meP(),mine=q&&pad.costP(q)!=null;if(pad.mesh.g.visible!==mine)pad.mesh.g.visible=mine;if(!mine)continue}pad.rise=Math.min(1,pad.rise+dt*2);const on=G.onPads&&G.onPads.has(pad);const req=pad.req?pad.req():(pad.pop&&!idleSurvivors().length?'生存者を待っています':null);
-    if(pad.personal){const q=meP();pad.paid=q?(pad.pp[q.id]||0):0}pad.mesh.draw(pad.cost(),pad.paid,pad.lvText(),on,req,mixLeft(pad));pad.mesh.mesh.scale.setScalar(easeOutBack(pad.rise)*(1+pad.pulse*.3+(on?.06:0)));pad.mesh.icon.position.y=56+Math.sin(G.t*2.4+pad.x)*4;pad.mesh.icon.rotation.y=G.t*1.2+pad.y;pad.mesh.icon.scale.setScalar(easeOutBack(pad.rise))}
+    if(pad.personal){const q=meP();pad.paid=q?(pad.pp[q.id]||0):0}pad.mesh.draw(pad.cost(),pad.paid,pad.lvText(),on,req,mixLeft(pad));pad.mesh.mesh.scale.setScalar(easeOutBack(pad.rise)*(1+pad.pulse*.3+(on?.06:0)));{const mm=pad.mesh.mesh,rz=isRPG()?CAMS.cur:YAW;if(mm.rotation.z!==rz)mm.rotation.set(-Math.PI/2,0,rz)}pad.mesh.icon.position.y=56+Math.sin(G.t*2.4+pad.x)*4;pad.mesh.icon.rotation.y=G.t*1.2+pad.y;pad.mesh.icon.scale.setScalar(easeOutBack(pad.rise))}
   // zones
   for(const z of ZONES){if(z.fogT>=0&&z.fogT<1){z.fogT=Math.min(1,z.fogT+dt*.7);z.fog.material.opacity=.93*(1-z.fogT);z.fog.scale.y=Math.max(.01,1-z.fogT);z.sign.material.opacity=1-z.fogT;if(z.fogT>=1){z.fog.visible=false;z.sign.visible=false}}
     if(!G.zones[z.id]){z.sign.quaternion.copy(camera.quaternion);z.sign.position.y=130+Math.sin(G.t*1.5)*4}}
@@ -1870,6 +1888,28 @@ function updateCam(dt,snap){const ps=NET.mode==='solo'?G.players:[G.players[G.me
   if(G.camPan&&G.camPan.t<(G.camPan.d||2.2)){const D=G.camPan.d||2.2;G.camPan.t+=dt;const k=G.camPan.t<.5?G.camPan.t/.5:G.camPan.t>D-.5?Math.max(0,1-(G.camPan.t-(D-.5))/.5):1;cx=lerp(cx,G.camPan.x,k*.85);cy=lerp(cy,G.camPan.y,k*.85);z=lerp(z,G.camPan.z||.62,k)}
   cam.z=snap?z:lerp(cam.z,z,Math.min(1,dt*3));if(snap){cam.x=cx;cam.y=cy}else{cam.x=lerp(cam.x,cx,Math.min(1,dt*6));cam.y=lerp(cam.y,cy,Math.min(1,dt*6))}}
 function hideIdleFx(dt){secretFx(dt||.016);roadFx();caravanFx();const me=G.players[G.me]||G.players[0];if(me&&G.sleds){if(me.riding)label(me.x,me.y,120,'<small>Fキーで降りる</small>','');else{const q=G.sleds.find(q=>q.rider==null&&dist(me.x,me.y,q.x,q.y)<90);if(q)label(q.x,q.y,50,'<b>Fキーで乗る</b>','gold')}}}
+// ---- see-through: in story mode, walls/buildings/trees between the camera and your character get a dithered hole
+const SEE={p:{value:new T.Vector3(-1e4,-1e4,-1)},r:{value:1}},_sv=new T.Vector3(),_sv2=new T.Vector3(),_sb=new T.Vector2();let _seeT=0;
+const SEE_TYPES={MeshStandardMaterial:1,MeshBasicMaterial:1,MeshLambertMaterial:1,MeshPhongMaterial:1};
+function seePatch(m){if(!m||m.userData.see||!SEE_TYPES[m.type]||m.onBeforeCompile!==T.Material.prototype.onBeforeCompile)return;m.userData.see=1;
+  m.onBeforeCompile=sh=>{sh.uniforms.seeP=SEE.p;sh.uniforms.seeR=SEE.r;
+    sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nvarying float vSeeY;').replace('#include <project_vertex>','#include <project_vertex>\n{vec4 sw=vec4(transformed,1.0);\n#ifdef USE_INSTANCING\nsw=instanceMatrix*sw;\n#endif\nvSeeY=(modelMatrix*sw).y;}');
+    sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nuniform vec3 seeP;uniform float seeR;varying float vSeeY;').replace('#include <clipping_planes_fragment>','#include <clipping_planes_fragment>\nif(seeP.z>0.0&&vSeeY>7.0&&gl_FragCoord.z<seeP.z){vec2 sd=(gl_FragCoord.xy-seeP.xy)/seeR;float sr=dot(sd,sd);if(sr<1.0){float ign=fract(52.9829189*fract(dot(gl_FragCoord.xy,vec2(0.06711056,0.00583715))));if(ign>smoothstep(0.35,1.0,sr)*0.9)discard;}}')};
+  m.customProgramCacheKey=()=>'see1';m.needsUpdate=true}
+function seeFx(dt){const me=G.players[G.me]||G.players[0];if(!isRPG()||!me||!running){SEE.p.value.z=-1;return}
+  _seeT-=dt;if(_seeT<=0){_seeT=1;scene.traverse(o=>{if(!o.isMesh||o.renderOrder>=5)return;if(Array.isArray(o.material))o.material.forEach(seePatch);else seePatch(o.material)})}
+  renderer.getDrawingBufferSize(_sb);_sv.set(me.x,30,me.y);const toCam=_sv2.copy(camera.position).sub(_sv).normalize();
+  _sv2.copy(_sv).addScaledVector(toCam,45).project(camera);const near=_sv2.z*.5+.5;
+  _sv.project(camera);SEE.p.value.set((_sv.x*.5+.5)*_sb.x,(_sv.y*.5+.5)*_sb.y,near);
+  const dCam=camera.position.distanceTo(_sv2.set(me.x,30,me.y));SEE.r.value=Math.max(40,_sb.y*70/(2*dCam*TANH))}
+// ---- the equipped weapon rides on the character's back (story mode)
+function wpnModel(id){const it=ITEMS[id];if(!it)return null;const n=it.n;const key=/弓/.test(n)?'Bow_Wooden':/斧/.test(n)?'Axe':/ハンマー|槌/.test(n)?'Hammer_Small':/ナックル/.test(n)?null:/杖|槍/.test(n)?'staff':'Sword';if(!key)return null;
+  let src=key==='staff'?(KK&&KK.kit&&KK.kit.staff):(KK&&KK.prop&&KK.prop[key]&&KK.prop[key].scene);if(!src)return null;const o=src.clone(true);
+  const em=/氷|霜|青/.test(n)?'#4fb8ff':/星|太陽|覇者|王|黄金/.test(n)?'#ffb020':/精霊/.test(n)?'#5fe07a':/毒/.test(n)?'#b04fff':null;
+  o.traverse(q=>{if(q.isMesh){q.material=q.material.clone();q.castShadow=true;if(em){q.material.emissive=lin(em);q.material.emissiveIntensity=.35}}});
+  const b=new T.Box3().setFromObject(o),sz=new T.Vector3();b.getSize(sz);const L=Math.max(sz.x,sz.y,sz.z)||1;o.scale.multiplyScalar((/大/.test(n)?50:40)/L);
+  const w=new T.Group();w.add(o);b.setFromObject(w);const c=new T.Vector3();b.getCenter(c);o.position.sub(c);const r=new T.Group();r.add(w);w.rotation.set(0,0,key==='Bow_Wooden'?.35:2.5);return r}
+function backWeapon(p,m,busy){if(!m.back)return;const id=isRPG()&&p.eq?p.eq.w:null;if(m._wid!==id){m._wid=id;if(m.backW){m.back.remove(m.backW);m.backW=null}if(id){m.backW=wpnModel(id);if(m.backW){m.backW.position.set(0,10,-4);m.back.add(m.backW)}}}if(m.backW)m.backW.visible=!busy}
 const monPadOn=()=>{const mp=G.pads.find(q=>q.id==='monument');return !!(mp&&mp.shown)};
 function monBar(){if(G.raid&&G.raid.on&&G.raid.final&&G.monMax&&G.monV&&G.monV.visible)label(G.monV.position.x,G.monV.position.z,170,bar(100*Math.max(0,G.monHP)/G.monMax,'red'),'')}
 function frozenFx(){for(const v of G.surv)if(v.frozen&&v.m&&v.m.g.visible)label(v.x,v.y,82,`<b>${DES()?'倒れた町人':'凍えた町人'}</b><br><small>${DES()?'そばに立つと助け起こせる':'そばに立つと溶ける'}</small><br>${bar(100*Math.min(1,v.warm/35),'gold wide')}`,'ice')}
@@ -1887,7 +1927,7 @@ function frame(dt){hideIdle();monBar();frozenFx();vigFx();hideIdleFx(dt);
   {const ty=rpgCam?CAMS.yaw:YAW,tp=rpgCam?CAMS.pitch:PITCH;let dy=ty-CAMS.cur;dy=Math.atan2(Math.sin(dy),Math.cos(dy));const k=Math.min(1,dt*10);CAMS.cur+=dy*k;CAMS.curP=lerp(CAMS.curP,tp,k);camDir.set(Math.sin(CAMS.cur)*Math.cos(CAMS.curP),Math.sin(CAMS.curP),Math.cos(CAMS.cur)*Math.cos(CAMS.curP))}
   const D=(rpgCam?150*CAMS.zoom/TANH*(1+Math.max(0,CAMS.curP-.6)*.5):Math.max(390/(2*TANH*camera.aspect),560/(2*TANH)))/cam.z,LY=rpgCam?28:0;
   const shx=(Math.random()-.5)*G.shake,shy=(Math.random()-.5)*G.shake,tx=cam.x+shx,tz=cam.y+shy;
-  camera.position.set(tx+camDir.x*D,LY+camDir.y*D,tz+camDir.z*D);camera.lookAt(tx,LY,tz);camera.updateMatrixWorld();{const bz=G.wx&&G.wx.type==='blizzard';scene.fog.near=D*(bz?.55:1.5);scene.fog.far=D*(bz?1.6:4.2)}
+  camera.position.set(tx+camDir.x*D,LY+camDir.y*D,tz+camDir.z*D);camera.lookAt(tx,LY,tz);camera.updateMatrixWorld();seeFx(dt);{const bz=G.wx&&G.wx.type==='blizzard';scene.fog.near=D*(bz?.55:1.5);scene.fog.far=D*(bz?1.6:4.2)}
   sun.position.set(tx-380,760,tz+240);sun.target.position.set(tx,0,tz);
   const scale=PR*H/(2*TANH);psN.update(dt,scale);psA.update(dt,scale);snow.update(dt,cam.x,cam.y,G.wind+(wxIs('blizzard')?2.2:0),wxIs('blizzard')?1:wxIs('clear')?.08:Math.min(1,.35+G.day*.08+(G.wave?.5:0)),scale);sparkle.uniforms.uT.value=G.t;sparkle.uniforms.uS.value=scale;
   sync(dt);
@@ -2053,7 +2093,7 @@ function playOpening(C,done){const el=$('opening'),tx=$('opTxt');const slides=C.
 $('opening').addEventListener('click',e=>{if(!OPN)return;if(e.target.id==='opSkip'){OPN.end();return}OPN.next()});
 addEventListener('keydown',e=>{if(!OPN)return;if(e.code==='Escape'){OPN.end();e.preventDefault()}else if(e.code==='Space'||e.code==='Enter'||e.code==='KeyE'){OPN.next();e.preventDefault()}},true);
 function trackerFlash(){const el=$('tracker');el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash')}
-let _tkT=0;function trackerHud(){const el=$('tracker');{const on=!!(isRPG()&&running);if(document.body.classList.contains('rpg')!==on)document.body.classList.toggle('rpg',on)}if(!isRPG()||!running){el.hidden=true;return}const now=performance.now();if(now-_tkT<250)return;_tkT=now;const S=G.story,C=CH[S.ch]||CH[4],L=SOBJ[S.ch];
+let _tkT=0;function trackerHud(){const el=$('tracker');{const on=!!(isRPG()&&running);if(document.body.classList.contains('rpg')!==on)document.body.classList.toggle('rpg',on)}if(!isRPG()||!running){el.hidden=true;return}const now=performance.now();if(now-_tkT<250)return;_tkT=now;{const me=G.players[G.me]||G.players[0],sk=SKILLS[clsKey(me)],el=$('kbSk');const cd=NET.mode==='guest'?(NET.skAt>0?Math.max(0,sk.cd-(performance.now()-NET.skAt)/1000):0):(me.skCd||0);const h=`<kbd class="w">右クリック</kbd>${sk.n}${cd>0?` ${Math.ceil(cd)}s`:''}`;if(el.innerHTML!==h)el.innerHTML=h;el.className=cd>0?'cd':'ready'}const S=G.story,C=CH[S.ch]||CH[4],L=SOBJ[S.ch];
   const pg=(c,g)=>`<div class="pg"><span><u style="width:${Math.round(100*Math.min(1,c/Math.max(1,g)))}%"></u></span><small>${Math.min(c,g)}/${g}</small></div>`;
   let h=`<div class="tk-h">${C.n}<em>「${C.t}」</em></div>`;
   if(L){const i=Math.min(S.step||0,L.length-1),o=L[i],[c,g]=o.f();h+=`<div class="sec now"><i>▶ いまやること（${i+1}/${L.length}）</i><b>${stx(o)}</b>${o.p?`<small>${o.p()}</small>`:pg(c,g)}</div>`}
@@ -2502,6 +2542,7 @@ function checkPerf(){tickFps(Math.min(.25,(performance.now()-(checkPerf.l||perfo
 $('gfx').addEventListener('click',()=>{const order=['auto',2,1,0];GQ.mode=order[(order.indexOf(GQ.mode)+1)%4];store.set('mw2-gfx',GQ.mode);applyGfx(GQ.mode==='auto'?2:GQ.mode);perf={t0:0,f:0,skip:0};toast(GQ.mode==='auto'?'画質：自動（重いと自動で下げます）':'画質：'+QL[GQ.tier].n,'gold')});
 function gpuWarn(){if(!SOFTGL)return;const el=$('gpuWarn');el.hidden=false;el.innerHTML='⚠ ブラウザの<b>グラフィックアクセラレーションがオフ</b>になっていて、とても重くなります。<br>Chromeの「設定 → システム →<br>グラフィック アクセラレーションが使用可能な場合は使用する」をオンにして再起動してね';setTimeout(()=>toast('グラフィックアクセラレーションがオフなので重いです（タイトル画面に直し方）','cold',true),1500)}
 addEventListener('keydown',e=>{if(e.code==='KeyL'&&!e.repeat&&running&&!(e.target&&e.target.tagName==='INPUT')){toggleLife();return}if(e.code==='KeyQ'&&!e.repeat&&running&&!DLG.open&&isRPG()){const me=G.players[G.me]||G.players[0];if(me&&dist(me.x,me.y,WB.x,WB.y)<90){openCraft();return}}if(DLG.open&&!e.repeat&&(e.code==='KeyE'||e.code==='Space'||e.code==='Enter'||/^Digit[1-9]$/.test(e.code))){dlgKey(e.code);e.preventDefault();return}if(e.code!=='KeyE'||e.repeat||!running)return;if(e.target&&e.target.tagName==='INPUT')return;const me=G.players[G.me]||G.players[0];if(!me)return;const nn=npcNear(me);if(nn){openTalk(nn);return}if(isRPG()&&dist(me.x,me.y,WB.x,WB.y)<90&&!(snowy()&&has(me,'log'))){openCraft();return}const gr=craftGrade();if(NET.mode==='guest'){NET.eCount=(NET.eCount||0)+1;NET.eGrade=gr}else{me.ePress=true;me.eGrade=gr}});
+addEventListener('keydown',e=>{if(e.code==='KeyR'&&!e.repeat&&running&&isRPG()&&!(e.target&&e.target.tagName==='INPUT'))skillPress()});
 addEventListener('keydown',e=>{if(e.code!=='KeyF'||e.repeat||!running)return;if(e.target&&e.target.tagName==='INPUT')return;if(NET.mode==='guest'){NET.fCount=(NET.fCount||0)+1}else{const me=G.players[G.me]||G.players[0];if(me)me.fPress=true}});
 setTimeout(()=>dbgLine(),0);
 function boot(){gpuWarn();setPlayers(new URLSearchParams(location.search).get('room')?2:1);toTitle();applyGfx(GQ.mode==='auto'?2:GQ.mode);$('loading').hidden=true;if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(G&&G.pads)for(const q of G.pads)q._key=null});requestAnimationFrame(loop)}

@@ -14,8 +14,8 @@ function sync(dt){
   v.embers.forEach((e,i)=>{const a=i/v.embers.length*TAU+G.t*.25;e.position.set(CX+Math.cos(a)*R*fl,3+Math.sin(G.t*4+i)*1.5,CY+Math.sin(a)*R*fl);e.visible=R>0;e.rotation.y=G.t*2+i});
   // players
   for(const p of G.players){const m=p.m;m.g.position.set(p.x,p.riding?6:0,p.y);if(p.aimDir!=null)turnTo(p,p.aimDir,dt,16);else if(p.dirT!=null)turnTo(p,p.dirT,dt);m.g.rotation.y=p.dir;
-    m._armR=m._armL=false;animWalk(m,p.step,p.moving);if(isRPG()&&p.moving&&!p.riding&&!(p.down>0)){p._dust=(p._dust||0)-dt;if(p._dust<=0){p._dust=.17;burst(p.x-Math.sin(p.dir)*8,p.y-Math.cos(p.dir)*8,3,2,{c:DES()?['#e8cf9a','#d9b47a']:['#ffffff','#dfe9f2'],s0:8,s1:26,u0:12,u1:40,l0:.25,l1:.45,r0:3,r1:6})}}
-    const shoot_=!!p.shooting;m.gun.visible=shoot_;if(m.clsW)for(const o of m.clsW)o.visible=shoot_;m.axe.visible=!shoot_&&!p.fishing;m.rod.visible=!!p.fishing;
+    m._armR=m._armL=false;animWalk(m,p.step,p.moving);backWeapon(p,m,!!p.shooting);if(isRPG()&&p.moving&&!p.riding&&!(p.down>0)){p._dust=(p._dust||0)-dt;if(p._dust<=0){p._dust=.17;burst(p.x-Math.sin(p.dir)*8,p.y-Math.cos(p.dir)*8,3,2,{c:DES()?['#e8cf9a','#d9b47a']:['#ffffff','#dfe9f2'],s0:8,s1:26,u0:12,u1:40,l0:.25,l1:.45,r0:3,r1:6})}}
+    const shoot_=!!p.shooting||p.skillT>0;m.gun.visible=shoot_;if(m.clsW)for(const o of m.clsW)o.visible=shoot_;m.axe.visible=!shoot_&&!p.fishing;m.rod.visible=!!p.fishing;
     if(shoot_){m.armR.rotation.set(-1.3,0,0);m.armL.rotation.set(-1.1,0,.2);m._armR=m._armL=true;m.gun.userData.flash.visible=p.flash>0;if(!m.kk)m.gun.position.z=10-(p.flash>0?3:0)}
     else if(p.chopping){const t=clamp(p.actT/(.24*G.pm.chop),0,1);m.armR.rotation.set(-2.6+Math.sin(t*Math.PI)*2.4,0,0);m._armR=true}
     else if(p.fishing){m.armR.rotation.set(-.9+Math.sin(G.t*3)*.08,0,0);m._armR=true}
@@ -85,7 +85,7 @@ function sync(dt){
   // pads
   for(const pad of G.pads){const vis=(!pad.zone||G.zones[pad.zone])&&pad.vis();if(vis&&!pad.shown){pad.shown=true;pad.rise=0;pad.mesh.g.visible=true}if(!vis&&pad.shown){pad.shown=false;pad.mesh.g.visible=false}
     if(!pad.shown)continue;if(pad.personal){const q=meP(),mine=q&&pad.costP(q)!=null;if(pad.mesh.g.visible!==mine)pad.mesh.g.visible=mine;if(!mine)continue}pad.rise=Math.min(1,pad.rise+dt*2);const on=G.onPads&&G.onPads.has(pad);const req=pad.req?pad.req():(pad.pop&&!idleSurvivors().length?'生存者を待っています':null);
-    if(pad.personal){const q=meP();pad.paid=q?(pad.pp[q.id]||0):0}pad.mesh.draw(pad.cost(),pad.paid,pad.lvText(),on,req,mixLeft(pad));pad.mesh.mesh.scale.setScalar(easeOutBack(pad.rise)*(1+pad.pulse*.3+(on?.06:0)));pad.mesh.icon.position.y=56+Math.sin(G.t*2.4+pad.x)*4;pad.mesh.icon.rotation.y=G.t*1.2+pad.y;pad.mesh.icon.scale.setScalar(easeOutBack(pad.rise))}
+    if(pad.personal){const q=meP();pad.paid=q?(pad.pp[q.id]||0):0}pad.mesh.draw(pad.cost(),pad.paid,pad.lvText(),on,req,mixLeft(pad));pad.mesh.mesh.scale.setScalar(easeOutBack(pad.rise)*(1+pad.pulse*.3+(on?.06:0)));{const mm=pad.mesh.mesh,rz=isRPG()?CAMS.cur:YAW;if(mm.rotation.z!==rz)mm.rotation.set(-Math.PI/2,0,rz)}pad.mesh.icon.position.y=56+Math.sin(G.t*2.4+pad.x)*4;pad.mesh.icon.rotation.y=G.t*1.2+pad.y;pad.mesh.icon.scale.setScalar(easeOutBack(pad.rise))}
   // zones
   for(const z of ZONES){if(z.fogT>=0&&z.fogT<1){z.fogT=Math.min(1,z.fogT+dt*.7);z.fog.material.opacity=.93*(1-z.fogT);z.fog.scale.y=Math.max(.01,1-z.fogT);z.sign.material.opacity=1-z.fogT;if(z.fogT>=1){z.fog.visible=false;z.sign.visible=false}}
     if(!G.zones[z.id]){z.sign.quaternion.copy(camera.quaternion);z.sign.position.y=130+Math.sin(G.t*1.5)*4}}
@@ -149,6 +149,28 @@ function updateCam(dt,snap){const ps=NET.mode==='solo'?G.players:[G.players[G.me
   if(G.camPan&&G.camPan.t<(G.camPan.d||2.2)){const D=G.camPan.d||2.2;G.camPan.t+=dt;const k=G.camPan.t<.5?G.camPan.t/.5:G.camPan.t>D-.5?Math.max(0,1-(G.camPan.t-(D-.5))/.5):1;cx=lerp(cx,G.camPan.x,k*.85);cy=lerp(cy,G.camPan.y,k*.85);z=lerp(z,G.camPan.z||.62,k)}
   cam.z=snap?z:lerp(cam.z,z,Math.min(1,dt*3));if(snap){cam.x=cx;cam.y=cy}else{cam.x=lerp(cam.x,cx,Math.min(1,dt*6));cam.y=lerp(cam.y,cy,Math.min(1,dt*6))}}
 function hideIdleFx(dt){secretFx(dt||.016);roadFx();caravanFx();const me=G.players[G.me]||G.players[0];if(me&&G.sleds){if(me.riding)label(me.x,me.y,120,'<small>Fキーで降りる</small>','');else{const q=G.sleds.find(q=>q.rider==null&&dist(me.x,me.y,q.x,q.y)<90);if(q)label(q.x,q.y,50,'<b>Fキーで乗る</b>','gold')}}}
+// ---- see-through: in story mode, walls/buildings/trees between the camera and your character get a dithered hole
+const SEE={p:{value:new T.Vector3(-1e4,-1e4,-1)},r:{value:1}},_sv=new T.Vector3(),_sv2=new T.Vector3(),_sb=new T.Vector2();let _seeT=0;
+const SEE_TYPES={MeshStandardMaterial:1,MeshBasicMaterial:1,MeshLambertMaterial:1,MeshPhongMaterial:1};
+function seePatch(m){if(!m||m.userData.see||!SEE_TYPES[m.type]||m.onBeforeCompile!==T.Material.prototype.onBeforeCompile)return;m.userData.see=1;
+  m.onBeforeCompile=sh=>{sh.uniforms.seeP=SEE.p;sh.uniforms.seeR=SEE.r;
+    sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nvarying float vSeeY;').replace('#include <project_vertex>','#include <project_vertex>\n{vec4 sw=vec4(transformed,1.0);\n#ifdef USE_INSTANCING\nsw=instanceMatrix*sw;\n#endif\nvSeeY=(modelMatrix*sw).y;}');
+    sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nuniform vec3 seeP;uniform float seeR;varying float vSeeY;').replace('#include <clipping_planes_fragment>','#include <clipping_planes_fragment>\nif(seeP.z>0.0&&vSeeY>7.0&&gl_FragCoord.z<seeP.z){vec2 sd=(gl_FragCoord.xy-seeP.xy)/seeR;float sr=dot(sd,sd);if(sr<1.0){float ign=fract(52.9829189*fract(dot(gl_FragCoord.xy,vec2(0.06711056,0.00583715))));if(ign>smoothstep(0.35,1.0,sr)*0.9)discard;}}')};
+  m.customProgramCacheKey=()=>'see1';m.needsUpdate=true}
+function seeFx(dt){const me=G.players[G.me]||G.players[0];if(!isRPG()||!me||!running){SEE.p.value.z=-1;return}
+  _seeT-=dt;if(_seeT<=0){_seeT=1;scene.traverse(o=>{if(!o.isMesh||o.renderOrder>=5)return;if(Array.isArray(o.material))o.material.forEach(seePatch);else seePatch(o.material)})}
+  renderer.getDrawingBufferSize(_sb);_sv.set(me.x,30,me.y);const toCam=_sv2.copy(camera.position).sub(_sv).normalize();
+  _sv2.copy(_sv).addScaledVector(toCam,45).project(camera);const near=_sv2.z*.5+.5;
+  _sv.project(camera);SEE.p.value.set((_sv.x*.5+.5)*_sb.x,(_sv.y*.5+.5)*_sb.y,near);
+  const dCam=camera.position.distanceTo(_sv2.set(me.x,30,me.y));SEE.r.value=Math.max(40,_sb.y*70/(2*dCam*TANH))}
+// ---- the equipped weapon rides on the character's back (story mode)
+function wpnModel(id){const it=ITEMS[id];if(!it)return null;const n=it.n;const key=/弓/.test(n)?'Bow_Wooden':/斧/.test(n)?'Axe':/ハンマー|槌/.test(n)?'Hammer_Small':/ナックル/.test(n)?null:/杖|槍/.test(n)?'staff':'Sword';if(!key)return null;
+  let src=key==='staff'?(KK&&KK.kit&&KK.kit.staff):(KK&&KK.prop&&KK.prop[key]&&KK.prop[key].scene);if(!src)return null;const o=src.clone(true);
+  const em=/氷|霜|青/.test(n)?'#4fb8ff':/星|太陽|覇者|王|黄金/.test(n)?'#ffb020':/精霊/.test(n)?'#5fe07a':/毒/.test(n)?'#b04fff':null;
+  o.traverse(q=>{if(q.isMesh){q.material=q.material.clone();q.castShadow=true;if(em){q.material.emissive=lin(em);q.material.emissiveIntensity=.35}}});
+  const b=new T.Box3().setFromObject(o),sz=new T.Vector3();b.getSize(sz);const L=Math.max(sz.x,sz.y,sz.z)||1;o.scale.multiplyScalar((/大/.test(n)?50:40)/L);
+  const w=new T.Group();w.add(o);b.setFromObject(w);const c=new T.Vector3();b.getCenter(c);o.position.sub(c);const r=new T.Group();r.add(w);w.rotation.set(0,0,key==='Bow_Wooden'?.35:2.5);return r}
+function backWeapon(p,m,busy){if(!m.back)return;const id=isRPG()&&p.eq?p.eq.w:null;if(m._wid!==id){m._wid=id;if(m.backW){m.back.remove(m.backW);m.backW=null}if(id){m.backW=wpnModel(id);if(m.backW){m.backW.position.set(0,10,-4);m.back.add(m.backW)}}}if(m.backW)m.backW.visible=!busy}
 const monPadOn=()=>{const mp=G.pads.find(q=>q.id==='monument');return !!(mp&&mp.shown)};
 function monBar(){if(G.raid&&G.raid.on&&G.raid.final&&G.monMax&&G.monV&&G.monV.visible)label(G.monV.position.x,G.monV.position.z,170,bar(100*Math.max(0,G.monHP)/G.monMax,'red'),'')}
 function frozenFx(){for(const v of G.surv)if(v.frozen&&v.m&&v.m.g.visible)label(v.x,v.y,82,`<b>${DES()?'倒れた町人':'凍えた町人'}</b><br><small>${DES()?'そばに立つと助け起こせる':'そばに立つと溶ける'}</small><br>${bar(100*Math.min(1,v.warm/35),'gold wide')}`,'ice')}
@@ -166,7 +188,7 @@ function frame(dt){hideIdle();monBar();frozenFx();vigFx();hideIdleFx(dt);
   {const ty=rpgCam?CAMS.yaw:YAW,tp=rpgCam?CAMS.pitch:PITCH;let dy=ty-CAMS.cur;dy=Math.atan2(Math.sin(dy),Math.cos(dy));const k=Math.min(1,dt*10);CAMS.cur+=dy*k;CAMS.curP=lerp(CAMS.curP,tp,k);camDir.set(Math.sin(CAMS.cur)*Math.cos(CAMS.curP),Math.sin(CAMS.curP),Math.cos(CAMS.cur)*Math.cos(CAMS.curP))}
   const D=(rpgCam?150*CAMS.zoom/TANH*(1+Math.max(0,CAMS.curP-.6)*.5):Math.max(390/(2*TANH*camera.aspect),560/(2*TANH)))/cam.z,LY=rpgCam?28:0;
   const shx=(Math.random()-.5)*G.shake,shy=(Math.random()-.5)*G.shake,tx=cam.x+shx,tz=cam.y+shy;
-  camera.position.set(tx+camDir.x*D,LY+camDir.y*D,tz+camDir.z*D);camera.lookAt(tx,LY,tz);camera.updateMatrixWorld();{const bz=G.wx&&G.wx.type==='blizzard';scene.fog.near=D*(bz?.55:1.5);scene.fog.far=D*(bz?1.6:4.2)}
+  camera.position.set(tx+camDir.x*D,LY+camDir.y*D,tz+camDir.z*D);camera.lookAt(tx,LY,tz);camera.updateMatrixWorld();seeFx(dt);{const bz=G.wx&&G.wx.type==='blizzard';scene.fog.near=D*(bz?.55:1.5);scene.fog.far=D*(bz?1.6:4.2)}
   sun.position.set(tx-380,760,tz+240);sun.target.position.set(tx,0,tz);
   const scale=PR*H/(2*TANH);psN.update(dt,scale);psA.update(dt,scale);snow.update(dt,cam.x,cam.y,G.wind+(wxIs('blizzard')?2.2:0),wxIs('blizzard')?1:wxIs('clear')?.08:Math.min(1,.35+G.day*.08+(G.wave?.5:0)),scale);sparkle.uniforms.uT.value=G.t;sparkle.uniforms.uS.value=scale;
   sync(dt);
