@@ -251,7 +251,7 @@
   <div class="card">
     <h1 class="logo">めちゃ<em>ホワイト</em></h1><div class="tagline">しろくまの町の冬ぐらし</div>
     <div class="seg" id="pSeg" role="group" aria-label="プレイ人数"><button id="p1" aria-pressed="true">1人で遊ぶ</button><button id="p2" aria-pressed="false">友達とオンライン</button></div>
-    <div class="seg" id="mSeg" role="group" aria-label="モード"><button id="mStory" aria-pressed="true">ものがたり</button><button id="mFree" aria-pressed="false">1回勝負</button></div>
+    <div class="seg" id="mSeg" role="group" aria-label="モード"><button id="mStory" aria-pressed="true">ものがたり</button><button id="mFree" aria-pressed="false">サバイバル</button></div>
     <div class="key" id="storyLine"></div><button class="linkbtn" id="storyReset" hidden style="font-size:11px;opacity:.75">ものがたりを最初からやり直す</button>
     <div class="seg dseg" id="bSeg" role="group" aria-label="拠点" style="display:none"></div>
     <div class="seg dseg" id="dSeg" role="group" aria-label="難易度"></div>
@@ -1215,6 +1215,7 @@ for(const tw of TOWERS)P.push(padDef({id:'tw_'+tw.id,x:tw.x,y:tw.y,name:`見張�
   // monument
   P.push(padDef({id:'monument',x:MON.x,y:MON.y,name:'町のシンボル像',k:'像',pay:'cash',big:true,vis:()=>!G.monument&&G.zones.D&&!(G.story&&G.story.ch===2&&G.story.step<4)&&!(G.story&&G.story.ch===3),lvNeed:5,popNeed:18,req:()=>{const g=goalOf(YR());return G.level<g.lv?`かまどLv${g.lv}が必要`:popNow()<g.pop?`町人${g.pop}人が必要（いま${popNow()}人）`:null},cost:()=>goalOf(YR()).c,lvText:()=>'',buy:()=>{G.monument=true;G.monV.visible=true;G.monV.scale.setScalar(.01);G.monPop=0;SFX.area();banner('完成！',goalOf(YR()).n,'…その夜、シロクマの大群が押し寄せてくる。最後の夜を守りきれ！','area');G.shake=14;G.finalPending=true;const ph=(G.t%G.DAY)/G.DAY;if(ph<.66)G.t+=(.66-ph)*G.DAY;else if(ph>.72){G.t=Math.ceil(G.t/G.DAY)*G.DAY+.66*G.DAY;G.raid.night=0}}}));
   for(const p of P){p.mesh=makePadMesh(p);world.add(p.mesh.g)}
+  for(const pd of P){if(pd.personal||pd.pay!=='cash')continue;const c0=pd.cost;pd.cost=()=>{const v=c0();return v!=null&&!isRPG()&&snowy()?Math.round(v*.8):v}}
   G.pads=P;makeBench();if(DES())for(const pd of P){if(/^(cook_|cashier_|price_)/.test(pd.id))pd.vis=()=>false;if(pd.id==='fisher'){pd.zone=null;pd.name='水くみ係'}}
 }
 function makePadMesh(pad){
@@ -1388,7 +1389,7 @@ function pushRect(e,x0,y0,x1,y1,r){const nx=clamp(e.x,x0,x1),ny=clamp(e.y,y0,y1)
   if(d<r){if(d>0){e.x=nx+dx/d*r;e.y=ny+dy/d*r}else{const l=e.x-x0,r_=x1-e.x,t=e.y-y0,b=y1-e.y,m=Math.min(l,r_,t,b);if(m===l)e.x=x0-r;else if(m===r_)e.x=x1+r;else if(m===t)e.y=y0-r;else e.y=y1+r}}}
 const angGap=an=>GATE_ANG.some(g=>Math.abs(Math.atan2(Math.sin(an-g),Math.cos(an-g)))<.11)||(an>SOUTH[0]&&an<SOUTH[1]);
 function fenceCollide(e,px,py){const d=dist(e.x,e.y,CX,CY),dp=dist(px,py,CX,CY);if(Math.abs(d-FR)<14||(dp<FR)!==(d<FR)){const an=Math.atan2(e.y-CY,e.x-CX);if(angGap(an))return;const r=dp<FR?FR-14:FR+14;e.x=CX+Math.cos(an)*r;e.y=CY+Math.sin(an)*r}}
-function solids(e,r){pushCircle(e,CX,CY,70);for(const d of G.drifts||[])pushCircle(e,d.x,d.y,20*d.s);pushCircle(e,WB.x,WB.y,24);for(const id in G.stations){const st=G.stations[id];if(!st.open)continue;const s=st.def;pushRect(e,s.conv.x-34,s.conv.y-16,s.conv.x+34,s.conv.y+16,r*.6);pushRect(e,s.counter.x-52,s.counter.y-12,s.counter.x+52,s.counter.y+12,r*.6);pushCircle(e,s.pile.x,s.pile.y,14)}
+function solids(e,r){pushCircle(e,CX,CY,70);for(const d of G.drifts||[])pushCircle(e,d.x,d.y,20*d.s);if(isRPG())pushCircle(e,WB.x,WB.y,24);for(const id in G.stations){const st=G.stations[id];if(!st.open)continue;const s=st.def;pushRect(e,s.conv.x-34,s.conv.y-16,s.conv.x+34,s.conv.y+16,r*.6);pushRect(e,s.counter.x-52,s.counter.y-12,s.counter.x+52,s.counter.y+12,r*.6);pushCircle(e,s.pile.x,s.pile.y,14)}
   if(G.zones.D){pushCircle(e,SPA.boiler.x,SPA.boiler.y,28)}
   for(const z of ZONES)if(!G.zones[z.id]){const [x0,y0,x1,y1]=z.rect;pushRect(e,x0,y0,x1,y1,r)}}
 function nav(e,tx,ty){const ia=dist(e.x,e.y,CX,CY)<FR,ib=dist(tx,ty,CX,CY)<FR;if(ia===ib)return{x:tx,y:ty};
@@ -2180,11 +2181,12 @@ const LIFE={wood:{n:'木こり',k:'斧',c:'#3f7a45',b:r=>`伐採の速さ +${r*7
 const LR=[{n:'見習い',x:0},{n:'かけだし',x:15},{n:'一人前',x:45},{n:'ベテラン',x:100},{n:'達人',x:180},{n:'マスター',x:300},{n:'伝説',x:480}];
 const CRAFTN=['木のスプーン','木のおもちゃ','木彫りのクマ','ゆり椅子','からくり箱','精霊の木像','伝説の大彫刻'];
 const lifeRank=(p,k)=>{const x=((p&&p.life)||{})[k]||0;let r=0;for(let i=0;i<LR.length;i++)if(x>=LR[i].x)r=i;return r};
-const lifeB=(p,k,st)=>1+lifeRank(p,k)*st;
-function lifeXp(p,k,n){if(!p)return;p.life=p.life||{};p.life[k]=(p.life[k]||0)+n}
-function toggleLife(){const el=$('lifeCard');el.hidden=!el.hidden;lifeHud(true)}
+const isRPG=()=>!!(G&&G.story);
+const lifeB=(p,k,st)=>isRPG()?1+lifeRank(p,k)*st:1;
+function lifeXp(p,k,n){if(!p||!isRPG())return;p.life=p.life||{};p.life[k]=(p.life[k]||0)+n}
+function toggleLife(){const el=$('lifeCard');if(!isRPG()){el.hidden=true;return}el.hidden=!el.hidden;lifeHud(true)}
 $('lifeBtn').addEventListener('click',toggleLife);
-let _lhT=0;function lifeHud(force){const me=G&&(G.players[G.me]||G.players[0]);if(!me)return;
+let _lhT=0;function lifeHud(force){const me=G&&(G.players[G.me]||G.players[0]);if(!me)return;const rpg=isRPG(),lb=$('lifeBtn');if(lb&&lb.hidden===rpg)lb.hidden=!rpg;if(!rpg){$('lifeCard').hidden=true;return}
   if(!me._lr){me._lr={};for(const k of LIVES)me._lr[k]=lifeRank(me,k)}
   for(const k of LIVES){const r=lifeRank(me,k);if(r>me._lr[k]){me._lr[k]=r;banner(`${LIFE[k].n} ランクUP！`,`「${LR[r].n}」になった`,LIFE[k].b(r),'r-SSR',true);SFX.ssr();burst(me.x,me.y,40,30,{c:['#ffd23f','#ffffff','#8ff08f'],s0:60,s1:220,u0:150,u1:320,l0:.6,l1:1.1,add:true,r0:5,r1:9})}else if(r<me._lr[k])me._lr[k]=r}
   const el=$('lifeCard');if(el.hidden)return;const now=performance.now();if(!force&&now-_lhT<300)return;_lhT=now;
@@ -2198,7 +2200,7 @@ function makeBench(){const g=new T.Group(),wood=std('#a8743f',{map:TEX.wood}),dk
   const sign=makeTextPlate('工房',60,20,'#fff7ea','#8a5a30',.5);sign.position.set(0,58,-6);g.add(sign);g.position.set(WB.x,0,WB.y);g.rotation.y=-.6;world.add(g);G.benchV=g}
 const craftV=()=>{const u=(G.t*1.25)%2;return u<1?u:2-u};
 function craftGrade(){const v=craftV(),dv=Math.abs(v-.5);return dv<.07?2:dv<.17?1:0}
-function updateCraft(dt){const on=snowy();for(const p of G.players){if(!p.ePress)continue;p.ePress=false;if(!on||p.down>0||dist(p.x,p.y,WB.x,WB.y)>80||!take(p,'log'))continue;
+function updateCraft(dt){if(!isRPG()){for(const p of G.players)p.ePress=false;return}const on=snowy();for(const p of G.players){if(!p.ePress)continue;p.ePress=false;if(!on||p.down>0||dist(p.x,p.y,WB.x,WB.y)>80||!take(p,'log'))continue;
   const gr=p.eGrade||0,rk=lifeRank(p,'craft');p.cc=gr===2?(p.cc||0)+1:0;const base=(6+G.level*1.6)*(G.mod?G.mod.price:1)*(1+.15*rk);const val=Math.round(base*[.4,1.2,2.2][gr]*(1+Math.min(5,p.cc)*.1));
   G.cash+=val;G.earned+=val;lifeXp(p,'craft',[1,2,3][gr]);G.stats.craft=(G.stats.craft||0)+1;
   float(WB.x,WB.y,80,`${['しっぱい…','いい出来！','会心の出来！'][gr]} ${CRAFTN[Math.min(CRAFTN.length-1,rk)]} +$${val}${p.cc>1?`（${p.cc}連続）`:''}`,gr===2?'gold':gr?'cash':'red',gr===2);
@@ -2218,10 +2220,10 @@ function driftFx(){if(!G||!G.drifts)return;const me=G.players[G.me]||G.players[0
     if(me&&dist(me.x,me.y,d.x,d.y)<170)label(d.x,d.y,48,d.p>0?bar(100*d.p/1.3,'blue'):`<small>${DES()?'砂':'雪'}かき</small>`,'')}}
 // ---- stories by the fire during storms
 const TALES=['昔、この谷は一年中あたたかい緑の土地だった。雪なんて、年に一度降るかどうかだったのさ','冬が明けなくなったのは、南の砂漠で“何か”が掘り出された年からだと言われている','白い熊たちは、もともと北の果ての山にしか住んでいなかった。冬と一緒に降りてきたんだ','火を絶やすな。火は人を集め、人は町をつくる。それがこの土地の教えだよ','オーロラの夜には、昔の人の声が聞こえるそうだ。“心臓を眠らせよ”ってね','砂漠の民は、冬の心臓を“青い太陽”と呼んで恐れていたらしい'];
-function updateFireside(dt){const on=snowy();const key=G.day+(G.wave?'w':'b');for(const p of G.players){if(p.down>0||!on||dist(p.x,p.y,CX,CY)>175){p.taleT=0;continue}p.taleT=(p.taleT||0)+dt;
+function updateFireside(dt){if(!isRPG())return;const on=snowy();const key=G.day+(G.wave?'w':'b');for(const p of G.players){if(p.down>0||!on||dist(p.x,p.y,CX,CY)>175){p.taleT=0;continue}p.taleT=(p.taleT||0)+dt;
     if(p.taleT>4&&G.taleKey!==key){G.taleKey=key;const i=(G.stats.tales||0)%TALES.length;G.stats.tales=(G.stats.tales||0)+1;say(DES()?'隊長ザラ':'村長オルガ',TALES[i]);if(!G.taleEnd)G.pm.dmg+=.25;G.taleEnd=G.t+G.DAY;banner('焚き火の昔話','みんなの攻撃力 +25%','明日のこの時間まで','area');SFX.rare()}}
   if(G.taleEnd&&G.t>G.taleEnd){G.taleEnd=0;G.pm.dmg=Math.max(0,G.pm.dmg-.25);toast('昔話の元気が切れた','cold')}}
-function fireFx(){if(!G||!running)return;const me=G.players[G.me]||G.players[0];if(!me)return;const on=snowy();
+function fireFx(){if(!G||!running)return;if(G.benchV)G.benchV.visible=isRPG();if(!isRPG()){if(snowy()&&!G.wxDisc){G.wxDisc=1;toast('吹雪の間は大工仕事がはかどる：建設費20%オフ','gold')}if(!snowy())G.wxDisc=0;return}const me=G.players[G.me]||G.players[0];if(!me)return;const on=snowy();
   const dw=dist(me.x,me.y,WB.x,WB.y);if(dw<170){if(!on)label(WB.x,WB.y,70,'<b>工房</b><br><small>吹雪の間だけ開く内職（薪→木工品）</small>','');
     else if(!has(me,'log'))label(WB.x,WB.y,70,'<b>工房</b><br><small>薪を持ってくると木工品を作れる</small>','');
     else label(WB.x,WB.y,76,`<b>工房</b> 緑でEキー！<div class="cbar"><i style="left:${(craftV()*100).toFixed(1)}%"></i></div>`,'')}
