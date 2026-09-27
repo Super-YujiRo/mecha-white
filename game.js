@@ -1,5 +1,5 @@
 /* めちゃホワイト — built from src/*.js by tools/build.py. Edit the sources, not this file. */
-(()=>{const BUILD='20260927160356';
+(()=>{const BUILD='20260927161301';
 const $=id=>document.getElementById(id);
 if(!window.THREE){$('loading').textContent='3Dの読み込みに失敗しました。再読み込みしてください';return}
 const T=THREE;
@@ -1761,7 +1761,7 @@ function sync(dt){
   const fl=1+Math.sin(G.t*9)*.01;v.heat.visible=v.ring.visible=R>0;v.heat.scale.setScalar(R*fl*1.12);v.ring.scale.setScalar(R*fl);v.ring.material.color.copy(C(G.fuel<20&&Math.sin(G.t*10)>0?'#ff4d5a':DES()?'#5fc3f0':'#ffa04d'));
   v.embers.forEach((e,i)=>{const a=i/v.embers.length*TAU+G.t*.25;e.position.set(CX+Math.cos(a)*R*fl,3+Math.sin(G.t*4+i)*1.5,CY+Math.sin(a)*R*fl);e.visible=R>0;e.rotation.y=G.t*2+i});
   // players
-  for(const p of G.players){const m=p.m;m.g.position.set(p.x,(p.riding?6:0)+(p.jz||0),p.y);silhouette(m,isRPG());if(p.aimDir!=null)turnTo(p,p.aimDir,dt,16);else if(p.dirT!=null)turnTo(p,p.dirT,dt);m.g.rotation.y=p.dir;
+  for(const p of G.players){const m=p.m;m.g.position.set(p.x,(p.riding?6:0)+(p.jz||0),p.y);if(p.aimDir!=null)turnTo(p,p.aimDir,dt,16);else if(p.dirT!=null)turnTo(p,p.dirT,dt);m.g.rotation.y=p.dir;
     m._armR=m._armL=false;animWalk(m,p.step,p.moving);backWeapon(p,m,!!p.shooting);if(isRPG()&&p.moving&&!p.riding&&!(p.down>0)){p._dust=(p._dust||0)-dt;if(p._dust<=0){p._dust=.17;burst(p.x-Math.sin(p.dir)*8,p.y-Math.cos(p.dir)*8,3,2,{c:DES()?['#e8cf9a','#d9b47a']:['#ffffff','#dfe9f2'],s0:8,s1:26,u0:12,u1:40,l0:.25,l1:.45,r0:3,r1:6})}}
     const shoot_=!!p.shooting||p.skillT>0;m.gun.visible=shoot_;if(m.clsW)for(const o of m.clsW)o.visible=shoot_;m.axe.visible=!shoot_&&!p.fishing;m.rod.visible=!!p.fishing;
     if(shoot_){m.armR.rotation.set(-1.3,0,0);m.armL.rotation.set(-1.1,0,.2);m._armR=m._armL=true;m.gun.userData.flash.visible=p.flash>0;if(!m.kk)m.gun.position.z=10-(p.flash>0?3:0)}
@@ -1897,9 +1897,6 @@ function updateCam(dt,snap){const ps=NET.mode==='solo'?G.players:[G.players[G.me
   if(G.camPan&&G.camPan.t<(G.camPan.d||2.2)){const D=G.camPan.d||2.2;G.camPan.t+=dt;const k=G.camPan.t<.5?G.camPan.t/.5:G.camPan.t>D-.5?Math.max(0,1-(G.camPan.t-(D-.5))/.5):1;cx=lerp(cx,G.camPan.x,k*.85);cy=lerp(cy,G.camPan.y,k*.85);z=lerp(z,G.camPan.z||.62,k)}
   cam.z=snap?z:lerp(cam.z,z,Math.min(1,dt*3));if(snap){cam.x=cx;cam.y=cy}else{cam.x=lerp(cam.x,cx,Math.min(1,dt*6));cam.y=lerp(cam.y,cy,Math.min(1,dt*6))}}
 function hideIdleFx(dt){secretFx(dt||.016);roadFx();caravanFx();const me=G.players[G.me]||G.players[0];if(me&&G.sleds){if(me.riding)label(me.x,me.y,120,'<small>Fキーで降りる</small>','');else{const q=G.sleds.find(q=>q.rider==null&&dist(me.x,me.y,q.x,q.y)<90);if(q)label(q.x,q.y,50,'<b>Fキーで乗る</b>','gold')}}}
-// ---- a soft silhouette of the character shows through walls and buildings (story mode)
-const SIL_M=new T.MeshBasicMaterial({color:lin('#8fd8ff'),transparent:true,opacity:.42,depthWrite:false,depthFunc:T.GreaterDepth});
-function silhouette(m,on){if(!m.kk)return;if(on&&!m.sil){m.sil=[];m.model.traverse(n=>{if(!n.isSkinnedMesh||!n.visible||n.userData.isSil)return;const s=new T.SkinnedMesh(n.geometry,SIL_M);s.userData.isSil=1;s.bind(n.skeleton,n.bindMatrix);s.position.copy(n.position);s.quaternion.copy(n.quaternion);s.scale.copy(n.scale);s.renderOrder=30;s.frustumCulled=false;n.parent.add(s);m.sil.push(s)})}if(m.sil)for(const s of m.sil)s.visible=on}
 // ---- the equipped weapon rides on the character's back (story mode)
 function wpnModel(id){const it=ITEMS[id];if(!it)return null;const n=it.n;const key=/弓/.test(n)?'Bow_Wooden':/斧/.test(n)?'Axe':/ハンマー|槌/.test(n)?'Hammer_Small':/ナックル/.test(n)?null:/杖|槍/.test(n)?'staff':'Sword';if(!key)return null;
   let src=key==='staff'?(KK&&KK.kit&&KK.kit.staff):(KK&&KK.prop&&KK.prop[key]&&KK.prop[key].scene);if(!src)return null;const o=src.clone(true);
