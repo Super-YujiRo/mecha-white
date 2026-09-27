@@ -1,5 +1,5 @@
 /* めちゃホワイト — built from src/*.js by tools/build.py. Edit the sources, not this file. */
-(()=>{const BUILD='20260927212229';
+(()=>{const BUILD='20260927214324';
 const $=id=>document.getElementById(id);
 if(!window.THREE){$('loading').textContent='3Dの読み込みに失敗しました。再読み込みしてください';return}
 const T=THREE;
@@ -230,10 +230,15 @@ cv.addEventListener('wheel',e=>{if(!running||!isRPG())return;e.preventDefault();
 const INP={atk:false};addEventListener('blur',()=>{INP.atk=false});
 // mouse-look: in story mode a click locks the cursor and plain mouse movement turns the camera (Esc / Alt frees the cursor)
 const mLocked=()=>document.pointerLockElement===cv;
-document.addEventListener('mousemove',e=>{if(!mLocked())return;CAMS.yaw-=e.movementX*.0032;CAMS.pitch=clamp(CAMS.pitch+e.movementY*.0022,.28,1.15)});
+// mouse sensitivity (saved per browser): side button or [ ] keys
+const SENS_STEPS=[.25,.4,.6,.8,1,1.25,1.6,2,2.5,3.2];let SENS=(()=>{try{const v=+localStorage.getItem('mw-sens');return v>0?v:1}catch(_){return 1}})();
+function setSens(v){SENS=v;try{localStorage.setItem('mw-sens',String(v))}catch(_){}const b=$('sensBtn');if(b)b.textContent=`マウス感度 ${v}`;toast(`マウス感度：${v}`,'gold',true)}
+function stepSens(d){let i=SENS_STEPS.findIndex(x=>x>=SENS-1e-6);if(i<0)i=SENS_STEPS.length-1;i=clamp(i+d,0,SENS_STEPS.length-1);setSens(SENS_STEPS[i])}
+addEventListener('keydown',e=>{if(!running||e.repeat||(e.target&&e.target.tagName==='INPUT'))return;if(e.key==='['){stepSens(-1);e.preventDefault()}else if(e.key===']'){stepSens(1);e.preventDefault()}});
+document.addEventListener('mousemove',e=>{if(!mLocked())return;CAMS.yaw-=e.movementX*.0032*SENS;CAMS.pitch=clamp(CAMS.pitch+e.movementY*.0022*SENS,.28,1.15)});
 document.addEventListener('pointerlockchange',()=>{if(!mLocked())INP.atk=false});
 addEventListener('keydown',e=>{if(e.key==='Alt'&&mLocked()){e.preventDefault();document.exitPointerLock()}});
-addEventListener('pointermove',e=>{const d=CAMS.drag;if(!d||d.id!==e.pointerId)return;d.m+=Math.abs(e.clientX-d.x)+Math.abs(e.clientY-d.y);CAMS.yaw-=(e.clientX-d.x)*.0065;CAMS.pitch=clamp(CAMS.pitch+(e.clientY-d.y)*.004,.28,1.15);d.x=e.clientX;d.y=e.clientY});
+addEventListener('pointermove',e=>{const d=CAMS.drag;if(!d||d.id!==e.pointerId)return;d.m+=Math.abs(e.clientX-d.x)+Math.abs(e.clientY-d.y);CAMS.yaw-=(e.clientX-d.x)*.0065*SENS;CAMS.pitch=clamp(CAMS.pitch+(e.clientY-d.y)*.004*SENS,.28,1.15);d.x=e.clientX;d.y=e.clientY});
 addEventListener('pointerup',e=>{if(e.button===0)INP.atk=false;const d=CAMS.drag;if(d&&d.id===e.pointerId){if(d.btn===2&&d.m<10&&performance.now()-d.t<400)skillPress();CAMS.drag=null}});
 cv.addEventListener('pointerdown',e=>{if(running&&isRPG()&&e.pointerType==='mouse'){if(mLocked()){if(e.button===0){if(!G.paused)INP.atk=true}else if(e.button===2)skillPress();return}if(e.button===0){if(!G.paused){INP.atk=true;if(cv.requestPointerLock)try{const r=cv.requestPointerLock();if(r&&r.catch)r.catch(()=>{})}catch(_){}}return}CAMS.drag={id:e.pointerId,x:e.clientX,y:e.clientY,btn:e.button,m:0,t:performance.now()};try{cv.setPointerCapture(e.pointerId)}catch(_){}return}if(e.button!==0)return;if(!running||G.paused)return;const slot=0;const j=joys[slot];if(j.on)return;
   Object.assign(j,{on:true,id:e.pointerId,ox:e.clientX,oy:e.clientY,x:e.clientX,y:e.clientY});try{cv.setPointerCapture(e.pointerId)}catch(_){}});
@@ -275,6 +280,8 @@ const SFX={
   wave:()=>{tone(180,1.2,'sawtooth',.05,.5);noise(1.2,.08,600)}};
 $('mute').addEventListener('click',()=>{muted=!muted;$('mute').textContent=muted?'音 OFF':'音 ON'});
 
+
+{const b=document.getElementById('sensBtn');if(b){b.textContent=`マウス感度 ${SENS}`;b.title='クリックで上げる／右クリックで下げる（[ ] キーでも変えられる）';b.addEventListener('click',()=>{if(SENS>=SENS_STEPS[SENS_STEPS.length-1])setSens(SENS_STEPS[0]);else stepSens(1)});b.addEventListener('contextmenu',e=>{e.preventDefault();stepSens(-1)})}}
 // ================================================================ models: items
 let _meatM=null;const MEATM=()=>_meatM||(_meatM=new T.MeshStandardMaterial({vertexColors:true,roughness:.45}));
 function meatGeo(ck){const ex=(sh,d,bv)=>{const g=new T.ExtrudeGeometry(sh,{depth:d,bevelEnabled:true,bevelThickness:bv,bevelSize:bv,bevelSegments:2,curveSegments:10});g.rotateX(-Math.PI/2);g.translate(0,bv,0);return g};
