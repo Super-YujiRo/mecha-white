@@ -19,7 +19,7 @@ function bgmDrum(kind,t,v){const len=kind==='kick'?.18:.08,b=actx.createBuffer(1
 function bgmTick(){if(!actx)return;if(!BGM.g){BGM.g=actx.createGain();BGM.g.gain.value=0;BGM.g.connect(actx.destination)}
   const now=actx.currentTime,want=muted?null:bgmArea();
   if(want!==BGM.cur){BGM.g.gain.cancelScheduledValues(now);BGM.g.gain.setTargetAtTime(0,now,.25);if(!BGM.sw||BGM.sw!==want){BGM.sw=want;BGM.swAt=now+.9}if(now>=BGM.swAt){BGM.cur=want;BGM.step=0;BGM.next=now+.05}return}
-  if(!BGM.cur)return;const T=TRK[BGM.cur];BGM.g.gain.setTargetAtTime(BGM.base*T.vol,now,.4);const e8=60/T.bpm/2;
+  if(!BGM.cur)return;const T=TRK[BGM.cur];if(BGM.next<now-.25)BGM.next=now+.05;BGM.g.gain.setTargetAtTime(BGM.base*T.vol,now,.4);const e8=60/T.bpm/2;
   while(BGM.next<now+.3){const i=BGM.step,t=BGM.next,m=T.mel[i%T.mel.length],bs=T.bass[i%T.bass.length];const deg=k=>T.root+T.sc[((k%T.sc.length)+T.sc.length)%T.sc.length]+12*Math.floor(k/T.sc.length);
     if(m!=null)bgmNote(deg(m)+12,t,e8*(T.bpm<80?3.2:1.8),T.mw,T.mw==='square'?.10:T.mw==='sawtooth'?.14:.2);
     if(bs!=null)bgmNote(T.root-12+bs,t,e8*(T.bpm<80?6:1.6),T.bw,.22);

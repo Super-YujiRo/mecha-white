@@ -1,5 +1,5 @@
 /* めちゃホワイト — built from src/*.js by tools/build.py. Edit the sources, not this file. */
-(()=>{const BUILD='20260927194012';
+(()=>{const BUILD='20260927195845';
 const $=id=>document.getElementById(id);
 if(!window.THREE){$('loading').textContent='3Dの読み込みに失敗しました。再読み込みしてください';return}
 const T=THREE;
@@ -2685,7 +2685,7 @@ function bgmDrum(kind,t,v){const len=kind==='kick'?.18:.08,b=actx.createBuffer(1
 function bgmTick(){if(!actx)return;if(!BGM.g){BGM.g=actx.createGain();BGM.g.gain.value=0;BGM.g.connect(actx.destination)}
   const now=actx.currentTime,want=muted?null:bgmArea();
   if(want!==BGM.cur){BGM.g.gain.cancelScheduledValues(now);BGM.g.gain.setTargetAtTime(0,now,.25);if(!BGM.sw||BGM.sw!==want){BGM.sw=want;BGM.swAt=now+.9}if(now>=BGM.swAt){BGM.cur=want;BGM.step=0;BGM.next=now+.05}return}
-  if(!BGM.cur)return;const T=TRK[BGM.cur];BGM.g.gain.setTargetAtTime(BGM.base*T.vol,now,.4);const e8=60/T.bpm/2;
+  if(!BGM.cur)return;const T=TRK[BGM.cur];if(BGM.next<now-.25)BGM.next=now+.05;BGM.g.gain.setTargetAtTime(BGM.base*T.vol,now,.4);const e8=60/T.bpm/2;
   while(BGM.next<now+.3){const i=BGM.step,t=BGM.next,m=T.mel[i%T.mel.length],bs=T.bass[i%T.bass.length];const deg=k=>T.root+T.sc[((k%T.sc.length)+T.sc.length)%T.sc.length]+12*Math.floor(k/T.sc.length);
     if(m!=null)bgmNote(deg(m)+12,t,e8*(T.bpm<80?3.2:1.8),T.mw,T.mw==='square'?.10:T.mw==='sawtooth'?.14:.2);
     if(bs!=null)bgmNote(T.root-12+bs,t,e8*(T.bpm<80?6:1.6),T.bw,.22);
@@ -2797,7 +2797,7 @@ function rebuildFx(){if(!G||!running)return;const on=REB();G.rebV=G.rebV||{};con
   {let bi=-1,bd=170;L.forEach((r,i)=>{if(rbGone(i))return;const d=dist(me.x,me.y,r.x,r.y);if(d<bd){bd=d;bi=i}});if(bi>=0){const r=L[bi],h=(G.story.rbh||{})[bi]||0;label(r.x,r.y,52,`<b>瓦礫</b><br><small>${h?`${'■'.repeat(h)}${'□'.repeat(5-h)}`:'そばに立つと片付ける'}</small>`,'')}}
   // stranded villagers (rescue spots)
   G.rebV.sp=G.rebV.sp||{};for(const id of JOIN_ORDER){const J=JOIN[id];if(!J.spot)continue;let v=G.rebV.sp[id];const show=!joined(id)&&(!J.need||J.need());
-    if(show&&(!v||v.g.parent!==world)){const n=NPCS.snow.find(n=>n.id===id);const m=makeVillager(PALS[n.pal%PALS.length],Object.assign({noShadow:false},n.o));m.g.position.set(J.spot.x,0,J.spot.y);world.add(m);v=G.rebV.sp[id]=m}
+    if(show&&(!v||v.g.parent!==world)){const n=NPCS.snow.find(n=>n.id===id);const m=makeVillager(PALS[n.pal%PALS.length],Object.assign({noShadow:false},n.o));m.g.position.set(J.spot.x,0,J.spot.y);world.add(m.g);v=G.rebV.sp[id]=m}
     if(v){v.g.visible=show;if(show){animWalk(v,0,false);v.g.rotation.y=Math.sin(performance.now()/300)*.15;if(dist(me.x,me.y,J.spot.x,J.spot.y)<420)label(J.spot.x,J.spot.y,80,`<b>${npcName(id)}</b><br><small>${id==='gordon'?'凍えて動けない…近づいて助けよう':'ひとりで震えている…近づいて声をかけよう'}</small>`,'gold')}}}}
 function rebuildHtml(){if(!REB())return '';const L=rubbleList(),left=L.filter((_,i)=>!rbGone(i)).length,n=joinedN();const next=JOIN_ORDER.find(id=>!joined(id));
   return `<div class="sec"><i>🏚 町の再建</i><small>瓦礫 残り${left}/${L.length}・戻った仲間 ${n}/6</small>${next?`<div class="q">次の仲間：${npcName(next)}（${JOIN[next].why}）</div>`:''}</div>`}

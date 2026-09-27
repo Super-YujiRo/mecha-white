@@ -49,7 +49,7 @@ function rebuildFx(){if(!G||!running)return;const on=REB();G.rebV=G.rebV||{};con
   {let bi=-1,bd=170;L.forEach((r,i)=>{if(rbGone(i))return;const d=dist(me.x,me.y,r.x,r.y);if(d<bd){bd=d;bi=i}});if(bi>=0){const r=L[bi],h=(G.story.rbh||{})[bi]||0;label(r.x,r.y,52,`<b>瓦礫</b><br><small>${h?`${'■'.repeat(h)}${'□'.repeat(5-h)}`:'そばに立つと片付ける'}</small>`,'')}}
   // stranded villagers (rescue spots)
   G.rebV.sp=G.rebV.sp||{};for(const id of JOIN_ORDER){const J=JOIN[id];if(!J.spot)continue;let v=G.rebV.sp[id];const show=!joined(id)&&(!J.need||J.need());
-    if(show&&(!v||v.g.parent!==world)){const n=NPCS.snow.find(n=>n.id===id);const m=makeVillager(PALS[n.pal%PALS.length],Object.assign({noShadow:false},n.o));m.g.position.set(J.spot.x,0,J.spot.y);world.add(m);v=G.rebV.sp[id]=m}
+    if(show&&(!v||v.g.parent!==world)){const n=NPCS.snow.find(n=>n.id===id);const m=makeVillager(PALS[n.pal%PALS.length],Object.assign({noShadow:false},n.o));m.g.position.set(J.spot.x,0,J.spot.y);world.add(m.g);v=G.rebV.sp[id]=m}
     if(v){v.g.visible=show;if(show){animWalk(v,0,false);v.g.rotation.y=Math.sin(performance.now()/300)*.15;if(dist(me.x,me.y,J.spot.x,J.spot.y)<420)label(J.spot.x,J.spot.y,80,`<b>${npcName(id)}</b><br><small>${id==='gordon'?'凍えて動けない…近づいて助けよう':'ひとりで震えている…近づいて声をかけよう'}</small>`,'gold')}}}}
 function rebuildHtml(){if(!REB())return '';const L=rubbleList(),left=L.filter((_,i)=>!rbGone(i)).length,n=joinedN();const next=JOIN_ORDER.find(id=>!joined(id));
   return `<div class="sec"><i>🏚 町の再建</i><small>瓦礫 残り${left}/${L.length}・戻った仲間 ${n}/6</small>${next?`<div class="q">次の仲間：${npcName(next)}（${JOIN[next].why}）</div>`:''}</div>`}
