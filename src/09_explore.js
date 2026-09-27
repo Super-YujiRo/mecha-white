@@ -12,7 +12,7 @@ const cnt=(p,k,n=1)=>{if(!p||!isRPG())return;p.cnt=p.cnt||{};p.cnt[k]=(p.cnt[k]|
 const bkId=b=>b.bk?b.bk:b.rbi!=null?'rb'+b.rbi:(b.m&&b.m.key==='Spider')?(b.kind==='boss'?'spq':'sp'):b.bt?b.bt:b.kind;
 const BOOK=[['normal','雪オオカミ'],['big','黒オオカミ'],['boss','森の大オオカミ'],['charge','突進ヘラジカ'],['frost','氷息のオオカミ'],['alpha','群れの長'],['king','白き王'],['rb0','鋼角のヘラジカ'],['rb2','氷の魔獣'],['rb3','雪原の覇者'],['sp','洞窟グモ'],['spq','洞窟の女王グモ'],['gl','氷河オオカミ'],['gls','氷河のヘラジカ'],['glb','氷河の主'],['ru','遺跡サソリ'],['rub','砂の王サソリ']];
 const RTK_MINE={iron:{life:'mine',mat:'iron',n:'鉄鉱石の岩',rq:0,hp:5,prop:'Mineral',tint:'#8a8f99',h:44,cash:20},icec:{life:'mine',mat:'icec',n:'氷晶の結晶',rq:2,hp:6,prop:'Crystal1',tint:'#bfe9ff',em:'#4fb8ff',h:64,cash:70},star:{life:'mine',mat:'star',n:'星の結晶',rq:4,hp:8,prop:'Crystal3',tint:'#ffe38a',em:'#ffc629',h:74,cash:220}};
-const NODES_SNOW=[['iron',1500,640],['iron',900,650],['iron',2120,300],['iron',1870,2200],['iron',1960,2310],['iron',2030,2170],['icec',2160,2300],['icec',2310,2190],['icec',160,900],['icec',230,2230],['icec',540,2020],['star',95,2150],['star',2310,1890]];
+const NODES_SNOW=[['iron',1500,640],['iron',900,650],['iron',2120,300],['iron',1845,2130],['iron',2040,2325],['iron',2050,2140],['icec',2160,2300],['icec',2310,2190],['icec',160,900],['icec',230,2230],['icec',540,2020],['star',95,2150],['star',2310,1890]];
 function mkNode(k){const K=RTK[k],g=new T.Group();let tr;const P=KK&&KK.prop&&KK.prop[K.prop];
   if(P){tr=P.scene.clone(true);tr.scale.setScalar(K.h/Math.max(.01,P.h));tr.traverse(o=>{if(o.isMesh){o.material=o.material.clone();o.material.color.lerp(lin(K.tint),.6);if(K.em){o.material.emissive=lin(K.em);o.material.emissiveIntensity=.5}o.castShadow=true}})}
   else{tr=at(M_(new T.OctahedronGeometry(K.h*.4,0),std(K.tint,{e:K.em||'#000000',ei:K.em?.5:0}),true),0,K.h*.4,0)}
@@ -33,7 +33,7 @@ const DUNGEONS=[
     gate:()=>G.zones.B,lock:'氷の湖を解放すると入れる',sub:'宝箱・鉱石・強い魔物',enter:['ひんやりと冷たい…','焚き火のまわりだけは暖かい。奥に宝が眠っている'],
     walls:[[1790,1830,2370,1860],[1790,2340,2370,2370],[1790,1830,1820,2370],[2340,1830,2370,2370],[1790,2090,2240,2110],[2330,2090,2370,2110],[2070,2110,2090,2190],[2070,2270,2090,2370]],
     heats:[{x:1900,y:2250,r:120}],
-    spawns:[{x:1980,y:2250,k:'normal'},{x:2030,y:2320,k:'normal'},{x:1900,y:2160,k:'normal'},{x:2200,y:2200,k:'big'},{x:2280,y:2280,k:'big'},{x:2180,y:2320,k:'big'},{x:2100,y:1960,k:'boss',bt:'queen',sc:2.4,bk:'spq'}],
+    spawns:[{x:2150,y:2150,k:'normal'},{x:2300,y:2160,k:'normal'},{x:2120,y:2320,k:'normal'},{x:2200,y:2230,k:'big'},{x:2290,y:2300,k:'big'},{x:2260,y:1930,k:'big'},{x:2100,y:1960,k:'boss',bt:'queen',sc:2.4,bk:'spq'}],
     chests:[{x:2030,y:2140,tier:1},{x:2300,y:2310,tier:2},{x:2090,y:1890,tier:3}],cmat:['iron','icec','star'],
     loot:{1:['w_icicle','c_lantern'],2:['a_silk','w_bluehammer'],3:['w_queenfang','c_starring']},
     look:{floor:'#3c4652',wall:'#5c6b7a',cap:'#eef4fa',crys:['#7fd4ff','#c9a2ff'],ring:'#7fd4ff',mouth:'#5c6b7a',fire:'#ffa23d'}},
@@ -41,7 +41,7 @@ const DUNGEONS=[
     gate:()=>G.zones.C&&G.story&&G.story.ch>=2,lock:'第2章から・奥地の森を解放すると入れる',sub:'氷河の宝・氷牙・氷河の主',enter:['吐く息まで凍りつく…','氷の裂け目の奥に、主が眠っているという'],
     walls:[[30,1830,630,1860],[30,2340,630,2370],[30,1830,60,2370],[600,1830,630,2370],[30,2090,470,2110],[560,2090,630,2110],[300,2110,320,2190],[300,2270,320,2370],[180,1860,200,1990],[420,1960,440,2090]],
     heats:[{x:545,y:2285,r:110},{x:330,y:1935,r:95}],
-    spawns:[{x:440,y:2180,k:'normal',hpm:1.5},{x:470,y:2320,k:'normal',hpm:1.5},{x:220,y:2200,k:'big',hpm:1.4},{x:130,y:2300,k:'big',hpm:1.4},{x:520,y:1940,k:'big',key:'Stag',sc:1.3,hpm:1.8,bk:'gls',nm:'氷河のヘラジカ'},{x:300,y:2010,k:'normal',hpm:1.5},{x:110,y:1930,k:'boss',bt:'frost',sc:1.9,hpm:5,bk:'glb',nm:'氷河の主'}],
+    spawns:[{x:440,y:2180,k:'normal',hpm:1.5},{x:470,y:2320,k:'normal',hpm:1.5},{x:380,y:1900,k:'big',hpm:1.4},{x:220,y:2000,k:'big',hpm:1.4},{x:520,y:1940,k:'big',key:'Stag',sc:1.3,hpm:1.8,bk:'gls',nm:'氷河のヘラジカ'},{x:300,y:2010,k:'normal',hpm:1.5},{x:110,y:1930,k:'boss',bt:'frost',sc:1.9,hpm:5,bk:'glb',nm:'氷河の主'}],
     chests:[{x:170,y:2330,tier:1},{x:520,y:1890,tier:2},{x:90,y:2050,tier:3}],cmat:['icec','icec','star'],
     loot:{1:['c_aurora','w_glaxe'],2:['a_glacier','w_frostbow'],3:['w_glking','c_glheart']},
     look:{nomap:1,floor:'#d6e8f3',wall:'#a9cde6',cap:'#ffffff',crys:['#9fe3ff','#e0f6ff'],ring:'#9fe3ff',mouth:'#8fb8d6',fire:'#ffa23d'}},
@@ -62,7 +62,7 @@ const inBox=(x,y,b,m=0)=>x>b[0]-m&&x<b[2]+m&&y>b[1]-m&&y<b[3]+m;
 const dgAt=(x,y)=>dgMap().find(D=>inBox(x,y,D.box));
 function dgBlock(x,y){return DUNGEONS.some(D=>D.des===(DES()?1:0)&&inBox(x,y,D.box,60))}
 function caveWarm(x,y){return dgMap().some(D=>D.heats.some(h=>dist(x,y,h.x,h.y)<h.r))}
-function caveWalls(e,r){for(const D of dgMap()){if(!inBox(e.x,e.y,D.box,40))continue;for(const w of D.walls)pushRect(e,w[0],w[1],w[2],w[3],r||12)}}
+function caveWalls(e,r){for(const D of dgMap()){if(!inBox(e.x,e.y,D.box,40))continue;for(const w of D.walls)pushRect(e,w[0],w[1],w[2],w[3],r||12);if(D.id==='cave'&&!caveDoorOpen())pushRect(e,VAULT_DOOR[0],VAULT_DOOR[1],VAULT_DOOR[2],VAULT_DOOR[3],r||12)}}
 function dgState(D){G.dg=G.dg||{};return G.dg[D.id]=G.dg[D.id]||{sp:D.spawns.map(()=>3),ch:D.chests.map(()=>({open:0,rt:0}))}}
 function dgLook(b,S,D){world.remove(b.m.g);b.m=makeBear(b.kind,S.key||D.key||undefined);if(b.bt)setBtLook(b,b.bt);b.m.g.scale.setScalar(S.sc||(S.k==='boss'?2.4:S.k==='big'?1.4:1));b.m.g.position.set(b.x,0,b.y);world.add(b.m.g);b.dgs=S.code;b.nm=S.nm||null;b.bk=S.bk||(D.id==='cave'?(S.k==='boss'?'spq':'sp'):D.id==='glacier'?'gl':D.id==='ruin'?'ru':null)}
 function updateCave(dt){for(const D of dgMap()){if(!D.gate())continue;const C=dgState(D);
@@ -78,7 +78,7 @@ function dgSnap(){return dgMap().map(D=>{const C=G.dg&&G.dg[D.id];return D.chest
 function dgApply(s){if(typeof s!=='string')return;const L=dgMap(),P=s.split('.');L.forEach((D,j)=>{const C=dgState(D),v=P[j]||'';D.chests.forEach((_,i)=>C.ch[i].open=v[i]==='1'?1:0)})}
 function dgBuild(D){const L=D.look,g=new T.Group();const stone=std(L.wall,{map:TEX.stone,r:.95}),dark=std('#2a323c',{r:1}),B=D.box;
   const fl=M_(new T.PlaneGeometry(B[2]-B[0],B[3]-B[1]),(L.nomap?std(L.floor,{r:.55}):std(L.floor,{map:TEX.stone,r:1})),false,true);fl.rotation.x=-Math.PI/2;fl.position.set((B[0]+B[2])/2,.25,(B[1]+B[3])/2);g.add(fl);
-  for(const w of D.walls){const m=M_(new T.BoxGeometry(w[2]-w[0],150,w[3]-w[1]),stone,true,true);m.position.set((w[0]+w[2])/2,75,(w[1]+w[3])/2);g.add(m);const cap=M_(new T.BoxGeometry(w[2]-w[0]+4,8,w[3]-w[1]+4),std(L.cap,{r:.9}),false);cap.position.set((w[0]+w[2])/2,154,(w[1]+w[3])/2);g.add(cap)}
+  for(const w of D.walls){const WH=70;const m=M_(new T.BoxGeometry(w[2]-w[0],WH,w[3]-w[1]),stone,true,true);m.position.set((w[0]+w[2])/2,WH/2,(w[1]+w[3])/2);g.add(m);const cap=M_(new T.BoxGeometry(w[2]-w[0]+4,8,w[3]-w[1]+4),std(L.cap,{r:.9}),false);cap.position.set((w[0]+w[2])/2,WH+4,(w[1]+w[3])/2);g.add(cap)}
   for(let i=0;i<24;i++){const x=rnd(B[0]+50,B[2]-50),y=rnd(B[1]+50,B[3]-50);if(D.walls.some(w=>x>w[0]-20&&x<w[2]+20&&y>w[1]-20&&y<w[3]+20))continue;if(D.chests.some(c=>dist(x,y,c.x,c.y)<50))continue;g.add(at(rot(cone(rnd(4,8),rnd(14,30),glow(L.crys[i%2],1.4),5,false),0,0,rnd(-.3,.3)),x,6,y))}
   for(const h of D.heats){g.add(at(cyl(16,20,10,dark,10),h.x,5,h.y));g.add(at(cone(12,26,glow(L.fire,2.4),8,false),h.x,24,h.y));const l=new T.PointLight(lin('#ffa050'),1.6,300,1.5);l.position.set(h.x,60,h.y);g.add(l)}
   const mouth=new T.Group();mouth.position.set(D.inp.x,0,D.inp.y);const mb=new T.Group();mb.rotation.y=D.rotY||0;mb.add(at(scl(sph(70,std(L.mouth,{map:TEX.stone,r:.95}),true,12,8),1.4,1,1),0,20,-30),at(box(90,70,6,dark),0,35,8));mouth.add(mb);
@@ -99,14 +99,15 @@ function caveFx(){if(!G||!running)return;const me=G.players[G.me]||G.players[0];
     const P=cur?D.out:D.ring,d=dist(me.x,me.y,P.x,P.y);if(d<320)label(P.x,P.y,cur?60:90,cur?`<b>出口</b><br><small>立つと外へ出る</small>`:`<b>${D.n}</b><br><small>立つと中へ入る（${D.sub}）</small>`,'');
     if(d<40&&!(me.down>0)&&!me.riding){near=true;me.ptT=(me.ptT||0)+dt;if(me.ptT>1.1){me.ptT=0;const T2=cur?D.back:D.start;me.x=T2.x;me.y=T2.y;me.vx=me.vy=0;updateCam(0,true);SFX.area();if(!cur)banner(D.n,D.enter[0],D.enter[1],'cold',true);return}}}
   if(!near)me.ptT=0}
-function statusTab(me){const tab=G._stab||'eq',rows=$('lifeRows'),lct=document.querySelector('#lifeCard .lct');const tabs=`<div style="display:flex;gap:4px;margin-bottom:6px">${[['eq','装備'],['life','くらし'],['chal','お題'],['book','図鑑']].map(([k,n])=>`<button data-tab="${k}" style="flex:1;font:inherit;font-size:11px;font-weight:800;border:2px solid #16283a;border-radius:8px;padding:3px;background:${tab===k?'#ffd23f':'#fff'};cursor:pointer">${n}</button>`).join('')}</div>`;
+function statusTab(me){const tab=G._stab||'eq',rows=$('lifeRows'),lct=document.querySelector('#lifeCard .lct');const tabs=`<div style="display:flex;gap:4px;margin-bottom:6px">${[['eq','装備'],['life','くらし'],['chal','お題'],['book','図鑑'],['clue','手がかり']].map(([k,n])=>`<button data-tab="${k}" style="flex:1;font:inherit;font-size:11px;font-weight:800;border:2px solid #16283a;border-radius:8px;padding:3px;background:${tab===k?'#ffd23f':'#fff'};cursor:pointer">${n}</button>`).join('')}</div>`;
+  if(tab==='clue'){$('rpgBox').innerHTML=tabs+'<div style="font-weight:900;margin:2px 0 4px">手がかり帳</div>'+clueHtml();rows.innerHTML='';lct.style.display='none';return true}
   if(tab==='eq'){$('rpgBox').innerHTML=tabs+rpgBoxHtml(me);rows.innerHTML='';lct.style.display='none';return true}
   if(tab==='life'){$('rpgBox').innerHTML=tabs;lct.style.display='';return false}
   lct.style.display='none';rows.innerHTML='';const c=me.cnt||{},chd=me.chd||[];
   if(tab==='chal'){$('rpgBox').innerHTML=tabs+LIVES.map(k=>`<div style="margin:4px 0"><b style="color:${LIFE[k].c}">${LIFE[k].n}</b>${(CHAL[k]||[]).map((ch,i)=>{const done=chd.includes(k+i);return `<div style="font-size:11.5px;${done?'color:#2f8a3a':''}">${done?'✓':'・'} ${ch[0]} <small>${done?'':`${Math.min(c[ch[1]]||0,ch[2])}/${ch[2]}`}</small></div>`}).join('')}</div>`).join('')+'<small>お題を達成すると、くらしの経験とお金がもらえる</small>';return true}
   const own=me.items||[],all=Object.keys(ITEMS);$('rpgBox').innerHTML=tabs+`<b>装備 ${own.length}/${all.length}</b><div style="font-size:11px;line-height:1.6">${all.map(id=>own.includes(id)?ITEMS[id].n:'？？？').join('・')}</div>
     <b style="display:block;margin-top:6px">魔物 ${BOOK.filter(([id])=>c['bk_'+id]).length}/${BOOK.length}</b><div style="font-size:11px;line-height:1.6">${BOOK.map(([id,n])=>c['bk_'+id]?`${n}（${c['bk_'+id]}）`:'？？？').join('・')}</div>`;return true}
-$('lifeCard').addEventListener('click',e=>{const b=e.target.closest('button[data-tab]');if(!b)return;G._stab=b.dataset.tab;lifeHud(true)});
+$('lifeCard').addEventListener('click',e=>{if(e.target.closest('button[data-deduce]')){$('lifeCard').hidden=true;openDeduce();return}const b=e.target.closest('button[data-tab]');if(!b)return;G._stab=b.dataset.tab;lifeHud(true)});
 
 // ---- workshop recipes: special wood and beast materials become gear
 const MATS={iron:'鉄鉱石',icec:'氷晶',star:'星の結晶',silk:'クモの糸',core:'古木の芯材',icew:'氷結木材',spirit:'精霊の枝',relic:'古代の欠片',steel:'鋼の角',fang:'氷牙',horn:'覇者の角'};

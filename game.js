@@ -1,5 +1,5 @@
 /* めちゃホワイト — built from src/*.js by tools/build.py. Edit the sources, not this file. */
-(()=>{const BUILD='20260927161301';
+(()=>{const BUILD='20260927163751';
 const $=id=>document.getElementById(id);
 if(!window.THREE){$('loading').textContent='3Dの読み込みに失敗しました。再読み込みしてください';return}
 const T=THREE;
@@ -951,7 +951,7 @@ for(const tw of TOWERS)P.push(padDef({id:'tw_'+tw.id,x:tw.x,y:tw.y,name:`見張�
   // zone unlocks
   for(const z of ZONES)P.push(padDef({id:'zone_'+z.id,x:z.pad.x,y:z.pad.y,name:z.name+'を解放',k:'開',pay:'cash',big:true,vis:()=>!G.zones[z.id],lvNeed:z.lv,popNeed:z.pop,req:()=>G.level<z.lv?`かまどLv${z.lv}が必要`:popNow()<z.pop?`町人${z.pop}人が必要（いま${popNow()}人）`:null,cost:()=>z.cost,lvText:()=>'',buy:()=>unlockZone(z)}));
   // monument
-  P.push(padDef({id:'monument',x:MON.x,y:MON.y,name:'町のシンボル像',k:'像',pay:'cash',big:true,vis:()=>!G.monument&&G.zones.D&&!(G.story&&G.story.ch===2&&G.story.step<4)&&!(G.story&&G.story.ch===3),lvNeed:5,popNeed:18,req:()=>{const g=goalOf(YR());return G.level<g.lv?`かまどLv${g.lv}が必要`:popNow()<g.pop?`町人${g.pop}人が必要（いま${popNow()}人）`:null},cost:()=>goalOf(YR()).c,lvText:()=>'',buy:()=>{G.monument=true;G.monV.visible=true;G.monV.scale.setScalar(.01);G.monPop=0;SFX.area();banner('完成！',goalOf(YR()).n,'…その夜、オオカミの大群が押し寄せてくる。最後の夜を守りきれ！','area');G.shake=14;G.finalPending=true;const ph=(G.t%G.DAY)/G.DAY;if(ph<.66)G.t+=(.66-ph)*G.DAY;else if(ph>.72){G.t=Math.ceil(G.t/G.DAY)*G.DAY+.66*G.DAY;G.raid.night=0}}}));
+  P.push(padDef({id:'monument',x:MON.x,y:MON.y,name:'町のシンボル像',k:'像',pay:'cash',big:true,vis:()=>!G.monument&&G.zones.D&&!(G.story&&G.story.ch===2&&G.story.step<5)&&!(G.story&&G.story.ch>=3),lvNeed:5,popNeed:18,req:()=>{const g=goalOf(YR());return G.level<g.lv?`かまどLv${g.lv}が必要`:popNow()<g.pop?`町人${g.pop}人が必要（いま${popNow()}人）`:null},cost:()=>goalOf(YR()).c,lvText:()=>'',buy:()=>{G.monument=true;G.monV.visible=true;G.monV.scale.setScalar(.01);G.monPop=0;SFX.area();banner('完成！',goalOf(YR()).n,'…その夜、オオカミの大群が押し寄せてくる。最後の夜を守りきれ！','area');G.shake=14;G.finalPending=true;const ph=(G.t%G.DAY)/G.DAY;if(ph<.66)G.t+=(.66-ph)*G.DAY;else if(ph>.72){G.t=Math.ceil(G.t/G.DAY)*G.DAY+.66*G.DAY;G.raid.night=0}}}));
   for(const p of P){p.mesh=makePadMesh(p);world.add(p.mesh.g)}
   for(const pd of P){if(pd.personal||pd.pay!=='cash')continue;const c0=pd.cost;pd.cost=()=>{const v=c0();return v!=null&&!isRPG()&&snowy()?Math.round(v*.8):v}}
   G.pads=P;makeBench();if(DES())for(const pd of P){if(/^(cook_|cashier_|price_)/.test(pd.id))pd.vis=()=>false;if(pd.id==='fisher'){pd.zone=null;pd.name='水くみ係'}}
@@ -1207,7 +1207,7 @@ function safeEmit(tp,d){if(!NET.room)return;let s=JSON.stringify(d);let guard=0;
   NET.room.emit(tp,d).catch(e=>{if(e&&e.code==='not_permitted'&&!NET.warned){NET.warned=true;toast('この権限では部屋を作れません（編集できる人が部屋を作ってください）','cold',true)}})}
 function sendSnap(){
   safeEmit('s.core',{t:r2(G.t),c:Math.floor(G.cash),e:Math.floor(G.earned),f:r1(G.fuel*10)/10,l:G.level,w:G.woodpile,r:r2(G.rep),fz:G.frozen,pl:G.plv,x:r1(G.xp),mi:G.mission,fv:r1(G.fever),ft:r2(G.feverT),cb:G.combo,ct:r2(G.comboT),
-    z:ZONES.map(z=>G.zones[z.id]?1:0).join(''),dg:isRPG()?dgSnap():null,ra:[G.raid.on?1:0,G.raid.left,G.raid.total,G.raid.final?1:0,G.monHP||0,G.monMax||0],cv:G.car&&DES()?[G.car.state==='here'?1:0,r1(G.car.t),G.car.max||80,Object.entries(G.car.order||{}).map(([k,n])=>KC[k]+n).join(','),Object.entries(G.car.got||{}).map(([k,n])=>KC[k]+n).join(',')]:0,yr:G.year,sc:G.secrets?G.secrets.map(q=>q.found?1:0).join(''):'',df:G.diff,sl:G.sleds.map(q=>[q.id,r1(q.x),r1(q.y),q.rider==null?-1:q.rider,q.pass?1:0,enc(q.cargo||[])]),kt:G.players.map(p=>r1(p.kettle||0)),wx:G.wx.type?[WXS.findIndex(w=>w.id===G.wx.type),r1(G.wx.t*10)/10,G.wx.max]:0,rk:G.rank||0,rs:G.rescue?[G.rescue.id,r1(G.rescue.x),r1(G.rescue.y),G.rescue.n,r1(G.rescue.t*10)/10,G.rescue.max,['wait','done','fail'].indexOf(G.rescue.state),r2(G.rescue.hold),RKIND.indexOf(G.rescue.kind),G.rescue.hotDone?1:0,G.rescue.left,G.rescue.saved,G.rescue.gb,G.rescue.spec||0]:0,sr:G.stats.rescued||0,rw:G.raidWins,sh:G.stats.haul,lv:G.lv,pm:G.pm,sp:[r1(G.spa.fuel),r1(G.spa.pile)],mo:G.monument?1:0,
+    z:ZONES.map(z=>G.zones[z.id]?1:0).join(''),dg:isRPG()?dgSnap():null,sx:isRPG()?mysterySnap():null,ra:[G.raid.on?1:0,G.raid.left,G.raid.total,G.raid.final?1:0,G.monHP||0,G.monMax||0],cv:G.car&&DES()?[G.car.state==='here'?1:0,r1(G.car.t),G.car.max||80,Object.entries(G.car.order||{}).map(([k,n])=>KC[k]+n).join(','),Object.entries(G.car.got||{}).map(([k,n])=>KC[k]+n).join(',')]:0,yr:G.year,sc:G.secrets?G.secrets.map(q=>q.found?1:0).join(''):'',df:G.diff,sl:G.sleds.map(q=>[q.id,r1(q.x),r1(q.y),q.rider==null?-1:q.rider,q.pass?1:0,enc(q.cargo||[])]),kt:G.players.map(p=>r1(p.kettle||0)),wx:G.wx.type?[WXS.findIndex(w=>w.id===G.wx.type),r1(G.wx.t*10)/10,G.wx.max]:0,rk:G.rank||0,rs:G.rescue?[G.rescue.id,r1(G.rescue.x),r1(G.rescue.y),G.rescue.n,r1(G.rescue.t*10)/10,G.rescue.max,['wait','done','fail'].indexOf(G.rescue.state),r2(G.rescue.hold),RKIND.indexOf(G.rescue.kind),G.rescue.hotDone?1:0,G.rescue.left,G.rescue.saved,G.rescue.gb,G.rescue.spec||0]:0,sr:G.stats.rescued||0,rw:G.raidWins,sh:G.stats.haul,lv:G.lv,pm:G.pm,sp:[r1(G.spa.fuel),r1(G.spa.pile)],mo:G.monument?1:0,
     st:STIDS.map(id=>{const t=G.stations[id];return[t.q.length,t.shelf,r1(t.pile),r2(t.cookT)]}),pd:G.pads.map(q=>q.personal?{p:G.players.map(pl=>q.pp[pl.id]||0)}:q.mp?[q.paid,q.mp.fish,q.mp.fur]:q.paid),
     tr:G.trees.map(t=>t.alive?(t.fall>0?'f':t.grow<1?'g':'a'):'d').join(''),tf:G.trees.filter(t=>t.fall>0).map(t=>[t.i,r2(t.fall),r2(t.fallDir)]),
     ps:G.players.map(p=>[r1(p.x),r1(p.y),r2(p.dir),enc(p.bag),r1(p.warm),r1(p.hp),p.down>0?r2(p.down):0,p.inHeat?1:0,(p.shooting?1:0)|(p.chopping?2:0)|(p.fishing?4:0)|(p.flash>0?8:0)|(p.buddy?16:0)|(p.ko?32:0),r2(p.actT),p.fishing?G.holes.indexOf(p.fishing):-1,[p.lv.gun,p.lv.bag],Math.round(p.jz||0)]),
@@ -1225,7 +1225,7 @@ function applyInbox(){const I=NET.inbox;
   const c=I['s.core'];if(c){I['s.core']=null;
     if(Math.abs(G.t-c.t)>.5)G.t=c.t;G.day=1+Math.floor(G.t/G.DAY);G.cash=c.c;G.earned=c.e;G.fuel=c.f;G.level=c.l;G.woodpile=c.w;G.rep=c.r;G.frozen=c.fz;G.plv=c.pl;G.xp=c.x;G.mission=c.mi;G.fever=c.fv;G.feverT=c.ft;
     if(c.cb>G.combo){const el=$('combo');el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop');SFX.combo(c.cb)}G.combo=c.cb;G.comboT=c.ct;Object.assign(G.lv,c.lv||{});Object.assign(G.pm,c.pm||{});G.spa.fuel=c.sp[0];G.spa.pile=c.sp[1];if(c.ra){G.raid.on=!!c.ra[0];G.raid.left=c.ra[1];G.raid.total=c.ra[2];G.raid.final=!!c.ra[3];G.monHP=c.ra[4];G.monMax=c.ra[5]}G.raidWins=c.rw||0;if(c.cv){const dec2=s=>{const o={};for(const t of (s||'').split(','))if(t)o[KR[t[0]]]=+t.slice(1);return o};G.car={state:c.cv[0]?'here':'away',t:c.cv[1],max:c.cv[2],order:dec2(c.cv[3]),got:dec2(c.cv[4])}}else if(DES())G.car={state:'away',t:0,order:{},got:{}};if(G.diff!==(c.df||0)){G.diff=c.df||0;G._dm=null}if(c.sc&&G.secrets){let st=0;G.secrets.forEach((q,i)=>{const f=c.sc[i]==='1';if(f&&!q.found){q.found=true;if(q.t==='dig'||q.t==='trav')q.g.visible=false}if(q.found&&q.t==='stele')st++});G.stele=st}if(c.yr&&c.yr!==G.year){G.year=c.yr;G.monPop=0;if(NET.yearWait){NET.yearWait=false;running=true;show('end',false);show('hud',true);show('bottom',true);show('side',true);G.mission=MISSIONS.length}}if(c.sl){G.sleds=c.sl.map(v=>({id:v[0],x:v[1],y:v[2],rider:v[3]<0?null:v[3],pass:v[4],cargo:dec(v[5]||'')}));(c.kt||[]).forEach((k,i)=>{if(G.players[i])G.players[i].kettle=k});for(const p of G.players)p.riding=G.sleds.some(q=>q.rider===p.id)}if(c.wx){G.wx={type:WXS[c.wx[0]].id,t:c.wx[1],max:c.wx[2]}}else G.wx={type:null,t:0,max:0};G.rank=c.rk||0;G.stats.rescued=c.sr||0;if(c.rs){const v=c.rs;if(!G.rescue||G.rescue.id!==v[0])G.rescue={id:v[0],x:v[1],y:v[2],n:v[3]};Object.assign(G.rescue,{t:v[4],max:v[5],state:['wait','done','fail'][v[6]],hold:v[7],kind:RKIND[v[8]]||'walk',hotDone:!!v[9],left:v[10],saved:v[11],gb:v[12],spec:v[13]||null})}else G.rescue=null;G.stats.haul=c.sh||0;
-    if(c.dg!=null)dgApply(c.dg);if(c.mo&&!G.monument){G.monument=true;G.monV.visible=true;G.monV.scale.setScalar(.01);G.monPop=0}
+    if(c.dg!=null)dgApply(c.dg);if(c.sx)mysteryApply(c.sx);if(c.mo&&!G.monument){G.monument=true;G.monV.visible=true;G.monV.scale.setScalar(.01);G.monPop=0}
     ZONES.forEach((z,i)=>{if(c.z[i]==='1'&&!G.zones[z.id]){G.zones[z.id]=true;z.fogT=0;G.camPan={x:(z.rect[0]+z.rect[2])/2,y:(z.rect[1]+z.rect[3])/2,t:0};SFX.area();for(const id in G.stations){const st=G.stations[id];if(st.def.zone===z.id){st.open=true;st.unlockT=0}}if(z.id==='D')G.spa.on=true}});
     STIDS.forEach((id,i)=>{const st=G.stations[id],v=c.st[i];if(st.q.length!==v[0]){st.q.length=0;for(let k=0;k<v[0];k++)st.q.push(st.def.in)}if(v[2]>st.pile)SFX.cash(G.combo);st.shelf=v[1];st.pile=v[2];st.cookT=v[3]});
     c.pd.forEach((v,i)=>{const pad=G.pads[i];if(!pad)return;if(v&&v.p){G.players.forEach((pl,j)=>{const nv=v.p[j]||0;if(nv<(pad.pp[pl.id]||0)&&pl===meP()){pad.pulse=1;SFX.build()}pad.pp[pl.id]=nv});return}if(Array.isArray(v)){pad.mp={fish:v[1],fur:v[2]};v=v[0]}if(v<pad.paid&&pad.paid>0){pad.pulse=1;SFX.build()}pad.paid=v});
@@ -1924,14 +1924,14 @@ function frame(dt){hideIdle();monBar();frozenFx();vigFx();hideIdleFx(dt);
   const shx=(Math.random()-.5)*G.shake,shy=(Math.random()-.5)*G.shake,tx=cam.x+shx,tz=cam.y+shy;
   camera.position.set(tx+camDir.x*D,LY+camDir.y*D,tz+camDir.z*D);camera.lookAt(tx,LY,tz);camera.updateMatrixWorld();{const bz=G.wx&&G.wx.type==='blizzard';scene.fog.near=D*(bz?.55:1.5);scene.fog.far=D*(bz?1.6:4.2)}
   sun.position.set(tx-380,760,tz+240);sun.target.position.set(tx,0,tz);
-  const scale=PR*H/(2*TANH);psN.update(dt,scale);psA.update(dt,scale);snow.update(dt,cam.x,cam.y,G.wind+(wxIs('blizzard')?2.2:0),wxIs('blizzard')?1:wxIs('clear')?.08:Math.min(1,.35+G.day*.08+(G.wave?.5:0)),scale);sparkle.uniforms.uT.value=G.t;sparkle.uniforms.uS.value=scale;
+  const scale=PR*H/(2*TANH);psN.update(dt,scale);psA.update(dt,scale);snow.update(dt,cam.x,cam.y,G.wind+(wxIs('blizzard')?2.2:0),(G.story&&G.story.ch>=5)?.04:wxIs('blizzard')?1:wxIs('clear')?.08:Math.min(1,.35+G.day*.08+(G.wave?.5:0)),scale);sparkle.uniforms.uT.value=G.t;sparkle.uniforms.uS.value=scale;
   sync(dt);
   const gp=G.players[G.me]||G.players[0];const coldT=gp&&!gp.inHeat&&!gp.down&&gp.warm<35?{x:CX,y:CY,h:130}:null;
   {const el=$('sosArrow'),R=G.rescue;if(running&&R&&R.state==='wait'){pv.set(R.x,60,R.y).project(camera);let sx=(pv.x+1)/2*W,sy=(1-pv.y)/2*H;const behind=pv.z>1;if(behind){sx=W-sx;sy=H-sy}
     const top=150,m=44,mx=86,on=!behind&&sx>m&&sx<W-m&&sy>top&&sy<H-90;if(on)el.hidden=true;else{el.hidden=false;const cx=W/2,cy=(top+H-90)/2;let dx=sx-cx,dy=sy-cy;const k=Math.min((W/2-mx)/Math.abs(dx||1e-3),((H-90-top)/2)/Math.abs(dy||1e-3));const ex=cx+dx*Math.min(1,k),ey=cy+dy*Math.min(1,k);
       const d=Math.round(dist(gp.x,gp.y,R.x,R.y)/10);el.style.transform=`translate(${ex|0}px,${ey|0}px) translate(-50%,-50%)`;el.firstChild.style.transform=`rotate(${Math.atan2(dy,dx)+Math.PI/2}rad)`;$('sosTxt').textContent=`SOS ${Math.ceil(R.t)}秒・${d}m`}}else el.hidden=true}
   guide.set(running?(coldT||(G.fuel<25&&!G.raid.on?(has(gp,DES()?'water':'log')?{x:CX,y:CY,h:110}:(DES()?freeHole(gp):nearestTree(gp))):null)||rescueT(gp)||storyT(gp)||(MISSIONS[G.mission]?MISSIONS[G.mission].tg(gp):flow(gp))):null,gp,G.t);
-  storyVis();warnFx();driftFx();fireFx();npcFx();rankFx();caveFx();cullWorld();if(composer)composer.render();else renderer.render(scene,camera);endLabels();
+  storyVis();warnFx();driftFx();fireFx();npcFx();rankFx();caveFx();pzFx();heart4Fx();cullWorld();if(composer)composer.render();else renderer.render(scene,camera);endLabels();
   joys.forEach((j,i)=>{const el=$('joy'+i);if(!j.on){el.hidden=true;return}el.hidden=false;el.style.left=j.ox+'px';el.style.top=j.oy+'px';const dx=j.x-j.ox,dy=j.y-j.oy,m=Math.hypot(dx,dy),k=m>50?50/m:1;el.firstChild.style.transform=`translate(${dx*k}px,${dy*k}px)`;el.firstChild.style.background=nPlayers===2?HERO[i].tag:'#fff'});
 }
 // ================================================================ HUD
@@ -1966,7 +1966,7 @@ const cnt=(p,k,n=1)=>{if(!p||!isRPG())return;p.cnt=p.cnt||{};p.cnt[k]=(p.cnt[k]|
 const bkId=b=>b.bk?b.bk:b.rbi!=null?'rb'+b.rbi:(b.m&&b.m.key==='Spider')?(b.kind==='boss'?'spq':'sp'):b.bt?b.bt:b.kind;
 const BOOK=[['normal','雪オオカミ'],['big','黒オオカミ'],['boss','森の大オオカミ'],['charge','突進ヘラジカ'],['frost','氷息のオオカミ'],['alpha','群れの長'],['king','白き王'],['rb0','鋼角のヘラジカ'],['rb2','氷の魔獣'],['rb3','雪原の覇者'],['sp','洞窟グモ'],['spq','洞窟の女王グモ'],['gl','氷河オオカミ'],['gls','氷河のヘラジカ'],['glb','氷河の主'],['ru','遺跡サソリ'],['rub','砂の王サソリ']];
 const RTK_MINE={iron:{life:'mine',mat:'iron',n:'鉄鉱石の岩',rq:0,hp:5,prop:'Mineral',tint:'#8a8f99',h:44,cash:20},icec:{life:'mine',mat:'icec',n:'氷晶の結晶',rq:2,hp:6,prop:'Crystal1',tint:'#bfe9ff',em:'#4fb8ff',h:64,cash:70},star:{life:'mine',mat:'star',n:'星の結晶',rq:4,hp:8,prop:'Crystal3',tint:'#ffe38a',em:'#ffc629',h:74,cash:220}};
-const NODES_SNOW=[['iron',1500,640],['iron',900,650],['iron',2120,300],['iron',1870,2200],['iron',1960,2310],['iron',2030,2170],['icec',2160,2300],['icec',2310,2190],['icec',160,900],['icec',230,2230],['icec',540,2020],['star',95,2150],['star',2310,1890]];
+const NODES_SNOW=[['iron',1500,640],['iron',900,650],['iron',2120,300],['iron',1845,2130],['iron',2040,2325],['iron',2050,2140],['icec',2160,2300],['icec',2310,2190],['icec',160,900],['icec',230,2230],['icec',540,2020],['star',95,2150],['star',2310,1890]];
 function mkNode(k){const K=RTK[k],g=new T.Group();let tr;const P=KK&&KK.prop&&KK.prop[K.prop];
   if(P){tr=P.scene.clone(true);tr.scale.setScalar(K.h/Math.max(.01,P.h));tr.traverse(o=>{if(o.isMesh){o.material=o.material.clone();o.material.color.lerp(lin(K.tint),.6);if(K.em){o.material.emissive=lin(K.em);o.material.emissiveIntensity=.5}o.castShadow=true}})}
   else{tr=at(M_(new T.OctahedronGeometry(K.h*.4,0),std(K.tint,{e:K.em||'#000000',ei:K.em?.5:0}),true),0,K.h*.4,0)}
@@ -1987,7 +1987,7 @@ const DUNGEONS=[
     gate:()=>G.zones.B,lock:'氷の湖を解放すると入れる',sub:'宝箱・鉱石・強い魔物',enter:['ひんやりと冷たい…','焚き火のまわりだけは暖かい。奥に宝が眠っている'],
     walls:[[1790,1830,2370,1860],[1790,2340,2370,2370],[1790,1830,1820,2370],[2340,1830,2370,2370],[1790,2090,2240,2110],[2330,2090,2370,2110],[2070,2110,2090,2190],[2070,2270,2090,2370]],
     heats:[{x:1900,y:2250,r:120}],
-    spawns:[{x:1980,y:2250,k:'normal'},{x:2030,y:2320,k:'normal'},{x:1900,y:2160,k:'normal'},{x:2200,y:2200,k:'big'},{x:2280,y:2280,k:'big'},{x:2180,y:2320,k:'big'},{x:2100,y:1960,k:'boss',bt:'queen',sc:2.4,bk:'spq'}],
+    spawns:[{x:2150,y:2150,k:'normal'},{x:2300,y:2160,k:'normal'},{x:2120,y:2320,k:'normal'},{x:2200,y:2230,k:'big'},{x:2290,y:2300,k:'big'},{x:2260,y:1930,k:'big'},{x:2100,y:1960,k:'boss',bt:'queen',sc:2.4,bk:'spq'}],
     chests:[{x:2030,y:2140,tier:1},{x:2300,y:2310,tier:2},{x:2090,y:1890,tier:3}],cmat:['iron','icec','star'],
     loot:{1:['w_icicle','c_lantern'],2:['a_silk','w_bluehammer'],3:['w_queenfang','c_starring']},
     look:{floor:'#3c4652',wall:'#5c6b7a',cap:'#eef4fa',crys:['#7fd4ff','#c9a2ff'],ring:'#7fd4ff',mouth:'#5c6b7a',fire:'#ffa23d'}},
@@ -1995,7 +1995,7 @@ const DUNGEONS=[
     gate:()=>G.zones.C&&G.story&&G.story.ch>=2,lock:'第2章から・奥地の森を解放すると入れる',sub:'氷河の宝・氷牙・氷河の主',enter:['吐く息まで凍りつく…','氷の裂け目の奥に、主が眠っているという'],
     walls:[[30,1830,630,1860],[30,2340,630,2370],[30,1830,60,2370],[600,1830,630,2370],[30,2090,470,2110],[560,2090,630,2110],[300,2110,320,2190],[300,2270,320,2370],[180,1860,200,1990],[420,1960,440,2090]],
     heats:[{x:545,y:2285,r:110},{x:330,y:1935,r:95}],
-    spawns:[{x:440,y:2180,k:'normal',hpm:1.5},{x:470,y:2320,k:'normal',hpm:1.5},{x:220,y:2200,k:'big',hpm:1.4},{x:130,y:2300,k:'big',hpm:1.4},{x:520,y:1940,k:'big',key:'Stag',sc:1.3,hpm:1.8,bk:'gls',nm:'氷河のヘラジカ'},{x:300,y:2010,k:'normal',hpm:1.5},{x:110,y:1930,k:'boss',bt:'frost',sc:1.9,hpm:5,bk:'glb',nm:'氷河の主'}],
+    spawns:[{x:440,y:2180,k:'normal',hpm:1.5},{x:470,y:2320,k:'normal',hpm:1.5},{x:380,y:1900,k:'big',hpm:1.4},{x:220,y:2000,k:'big',hpm:1.4},{x:520,y:1940,k:'big',key:'Stag',sc:1.3,hpm:1.8,bk:'gls',nm:'氷河のヘラジカ'},{x:300,y:2010,k:'normal',hpm:1.5},{x:110,y:1930,k:'boss',bt:'frost',sc:1.9,hpm:5,bk:'glb',nm:'氷河の主'}],
     chests:[{x:170,y:2330,tier:1},{x:520,y:1890,tier:2},{x:90,y:2050,tier:3}],cmat:['icec','icec','star'],
     loot:{1:['c_aurora','w_glaxe'],2:['a_glacier','w_frostbow'],3:['w_glking','c_glheart']},
     look:{nomap:1,floor:'#d6e8f3',wall:'#a9cde6',cap:'#ffffff',crys:['#9fe3ff','#e0f6ff'],ring:'#9fe3ff',mouth:'#8fb8d6',fire:'#ffa23d'}},
@@ -2016,7 +2016,7 @@ const inBox=(x,y,b,m=0)=>x>b[0]-m&&x<b[2]+m&&y>b[1]-m&&y<b[3]+m;
 const dgAt=(x,y)=>dgMap().find(D=>inBox(x,y,D.box));
 function dgBlock(x,y){return DUNGEONS.some(D=>D.des===(DES()?1:0)&&inBox(x,y,D.box,60))}
 function caveWarm(x,y){return dgMap().some(D=>D.heats.some(h=>dist(x,y,h.x,h.y)<h.r))}
-function caveWalls(e,r){for(const D of dgMap()){if(!inBox(e.x,e.y,D.box,40))continue;for(const w of D.walls)pushRect(e,w[0],w[1],w[2],w[3],r||12)}}
+function caveWalls(e,r){for(const D of dgMap()){if(!inBox(e.x,e.y,D.box,40))continue;for(const w of D.walls)pushRect(e,w[0],w[1],w[2],w[3],r||12);if(D.id==='cave'&&!caveDoorOpen())pushRect(e,VAULT_DOOR[0],VAULT_DOOR[1],VAULT_DOOR[2],VAULT_DOOR[3],r||12)}}
 function dgState(D){G.dg=G.dg||{};return G.dg[D.id]=G.dg[D.id]||{sp:D.spawns.map(()=>3),ch:D.chests.map(()=>({open:0,rt:0}))}}
 function dgLook(b,S,D){world.remove(b.m.g);b.m=makeBear(b.kind,S.key||D.key||undefined);if(b.bt)setBtLook(b,b.bt);b.m.g.scale.setScalar(S.sc||(S.k==='boss'?2.4:S.k==='big'?1.4:1));b.m.g.position.set(b.x,0,b.y);world.add(b.m.g);b.dgs=S.code;b.nm=S.nm||null;b.bk=S.bk||(D.id==='cave'?(S.k==='boss'?'spq':'sp'):D.id==='glacier'?'gl':D.id==='ruin'?'ru':null)}
 function updateCave(dt){for(const D of dgMap()){if(!D.gate())continue;const C=dgState(D);
@@ -2032,7 +2032,7 @@ function dgSnap(){return dgMap().map(D=>{const C=G.dg&&G.dg[D.id];return D.chest
 function dgApply(s){if(typeof s!=='string')return;const L=dgMap(),P=s.split('.');L.forEach((D,j)=>{const C=dgState(D),v=P[j]||'';D.chests.forEach((_,i)=>C.ch[i].open=v[i]==='1'?1:0)})}
 function dgBuild(D){const L=D.look,g=new T.Group();const stone=std(L.wall,{map:TEX.stone,r:.95}),dark=std('#2a323c',{r:1}),B=D.box;
   const fl=M_(new T.PlaneGeometry(B[2]-B[0],B[3]-B[1]),(L.nomap?std(L.floor,{r:.55}):std(L.floor,{map:TEX.stone,r:1})),false,true);fl.rotation.x=-Math.PI/2;fl.position.set((B[0]+B[2])/2,.25,(B[1]+B[3])/2);g.add(fl);
-  for(const w of D.walls){const m=M_(new T.BoxGeometry(w[2]-w[0],150,w[3]-w[1]),stone,true,true);m.position.set((w[0]+w[2])/2,75,(w[1]+w[3])/2);g.add(m);const cap=M_(new T.BoxGeometry(w[2]-w[0]+4,8,w[3]-w[1]+4),std(L.cap,{r:.9}),false);cap.position.set((w[0]+w[2])/2,154,(w[1]+w[3])/2);g.add(cap)}
+  for(const w of D.walls){const WH=70;const m=M_(new T.BoxGeometry(w[2]-w[0],WH,w[3]-w[1]),stone,true,true);m.position.set((w[0]+w[2])/2,WH/2,(w[1]+w[3])/2);g.add(m);const cap=M_(new T.BoxGeometry(w[2]-w[0]+4,8,w[3]-w[1]+4),std(L.cap,{r:.9}),false);cap.position.set((w[0]+w[2])/2,WH+4,(w[1]+w[3])/2);g.add(cap)}
   for(let i=0;i<24;i++){const x=rnd(B[0]+50,B[2]-50),y=rnd(B[1]+50,B[3]-50);if(D.walls.some(w=>x>w[0]-20&&x<w[2]+20&&y>w[1]-20&&y<w[3]+20))continue;if(D.chests.some(c=>dist(x,y,c.x,c.y)<50))continue;g.add(at(rot(cone(rnd(4,8),rnd(14,30),glow(L.crys[i%2],1.4),5,false),0,0,rnd(-.3,.3)),x,6,y))}
   for(const h of D.heats){g.add(at(cyl(16,20,10,dark,10),h.x,5,h.y));g.add(at(cone(12,26,glow(L.fire,2.4),8,false),h.x,24,h.y));const l=new T.PointLight(lin('#ffa050'),1.6,300,1.5);l.position.set(h.x,60,h.y);g.add(l)}
   const mouth=new T.Group();mouth.position.set(D.inp.x,0,D.inp.y);const mb=new T.Group();mb.rotation.y=D.rotY||0;mb.add(at(scl(sph(70,std(L.mouth,{map:TEX.stone,r:.95}),true,12,8),1.4,1,1),0,20,-30),at(box(90,70,6,dark),0,35,8));mouth.add(mb);
@@ -2053,14 +2053,15 @@ function caveFx(){if(!G||!running)return;const me=G.players[G.me]||G.players[0];
     const P=cur?D.out:D.ring,d=dist(me.x,me.y,P.x,P.y);if(d<320)label(P.x,P.y,cur?60:90,cur?`<b>出口</b><br><small>立つと外へ出る</small>`:`<b>${D.n}</b><br><small>立つと中へ入る（${D.sub}）</small>`,'');
     if(d<40&&!(me.down>0)&&!me.riding){near=true;me.ptT=(me.ptT||0)+dt;if(me.ptT>1.1){me.ptT=0;const T2=cur?D.back:D.start;me.x=T2.x;me.y=T2.y;me.vx=me.vy=0;updateCam(0,true);SFX.area();if(!cur)banner(D.n,D.enter[0],D.enter[1],'cold',true);return}}}
   if(!near)me.ptT=0}
-function statusTab(me){const tab=G._stab||'eq',rows=$('lifeRows'),lct=document.querySelector('#lifeCard .lct');const tabs=`<div style="display:flex;gap:4px;margin-bottom:6px">${[['eq','装備'],['life','くらし'],['chal','お題'],['book','図鑑']].map(([k,n])=>`<button data-tab="${k}" style="flex:1;font:inherit;font-size:11px;font-weight:800;border:2px solid #16283a;border-radius:8px;padding:3px;background:${tab===k?'#ffd23f':'#fff'};cursor:pointer">${n}</button>`).join('')}</div>`;
+function statusTab(me){const tab=G._stab||'eq',rows=$('lifeRows'),lct=document.querySelector('#lifeCard .lct');const tabs=`<div style="display:flex;gap:4px;margin-bottom:6px">${[['eq','装備'],['life','くらし'],['chal','お題'],['book','図鑑'],['clue','手がかり']].map(([k,n])=>`<button data-tab="${k}" style="flex:1;font:inherit;font-size:11px;font-weight:800;border:2px solid #16283a;border-radius:8px;padding:3px;background:${tab===k?'#ffd23f':'#fff'};cursor:pointer">${n}</button>`).join('')}</div>`;
+  if(tab==='clue'){$('rpgBox').innerHTML=tabs+'<div style="font-weight:900;margin:2px 0 4px">手がかり帳</div>'+clueHtml();rows.innerHTML='';lct.style.display='none';return true}
   if(tab==='eq'){$('rpgBox').innerHTML=tabs+rpgBoxHtml(me);rows.innerHTML='';lct.style.display='none';return true}
   if(tab==='life'){$('rpgBox').innerHTML=tabs;lct.style.display='';return false}
   lct.style.display='none';rows.innerHTML='';const c=me.cnt||{},chd=me.chd||[];
   if(tab==='chal'){$('rpgBox').innerHTML=tabs+LIVES.map(k=>`<div style="margin:4px 0"><b style="color:${LIFE[k].c}">${LIFE[k].n}</b>${(CHAL[k]||[]).map((ch,i)=>{const done=chd.includes(k+i);return `<div style="font-size:11.5px;${done?'color:#2f8a3a':''}">${done?'✓':'・'} ${ch[0]} <small>${done?'':`${Math.min(c[ch[1]]||0,ch[2])}/${ch[2]}`}</small></div>`}).join('')}</div>`).join('')+'<small>お題を達成すると、くらしの経験とお金がもらえる</small>';return true}
   const own=me.items||[],all=Object.keys(ITEMS);$('rpgBox').innerHTML=tabs+`<b>装備 ${own.length}/${all.length}</b><div style="font-size:11px;line-height:1.6">${all.map(id=>own.includes(id)?ITEMS[id].n:'？？？').join('・')}</div>
     <b style="display:block;margin-top:6px">魔物 ${BOOK.filter(([id])=>c['bk_'+id]).length}/${BOOK.length}</b><div style="font-size:11px;line-height:1.6">${BOOK.map(([id,n])=>c['bk_'+id]?`${n}（${c['bk_'+id]}）`:'？？？').join('・')}</div>`;return true}
-$('lifeCard').addEventListener('click',e=>{const b=e.target.closest('button[data-tab]');if(!b)return;G._stab=b.dataset.tab;lifeHud(true)});
+$('lifeCard').addEventListener('click',e=>{if(e.target.closest('button[data-deduce]')){$('lifeCard').hidden=true;openDeduce();return}const b=e.target.closest('button[data-tab]');if(!b)return;G._stab=b.dataset.tab;lifeHud(true)});
 
 // ---- workshop recipes: special wood and beast materials become gear
 const MATS={iron:'鉄鉱石',icec:'氷晶',star:'星の結晶',silk:'クモの糸',core:'古木の芯材',icew:'氷結木材',spirit:'精霊の枝',relic:'古代の欠片',steel:'鋼の角',fang:'氷牙',horn:'覇者の角'};
@@ -2150,7 +2151,7 @@ function rpgRestore(p,d){if(!d)return;p.mats=Object.assign({},d.mats||{});p.cnt=
 function gainRX(p,n){if(!p||!isRPG())return;p.rl=p.rl||1;p.rx=(p.rx||0)+n;while(p.rx>=rxNeed(p.rl)){p.rx-=rxNeed(p.rl);p.rl++;float(p.x,p.y,120,`レベルアップ！ Lv${p.rl}`,'gold',true);burst(p.x,p.y,30,30,{c:['#ffe07a','#ffffff','#8ff08f'],s0:60,s1:200,u0:150,u1:320,l0:.6,l1:1.1,add:true,r0:5,r1:9});SFX.rare()}}
 function giveItem(p,id){const it=ITEMS[id];if(!p||!it)return;p.items=p.items||[];if(!p.items.includes(id))p.items.push(id);p.eq=p.eq||{};if(!p.eq[it.s])p.eq[it.s]=id;
   float(p.x,p.y,130,`${it.n} を手に入れた！`,'gold',true);if(p===(G.players[G.me]||G.players[0])&&NET.mode!=='guest')banner('装備を手に入れた！',it.n,itemDesc(it)+'（Lキーで付け替え）','r-SSR',true)}
-const NPCS={snow:[{id:'gordon',n:'猟師のゴードン',pal:1,x:1330,y:1280,o:{hat:'ushanka',beard:true,tool:'gun'}},{id:'mina',n:'パン屋のミーナ',pal:4,x:905,y:1160,o:{apron:true}},{id:'pip',n:'少年ピップ',pal:6,x:1290,y:1100,o:{scale:.75}},{id:'borg',n:'老人ボルグ',pal:2,x:1560,y:1040,o:{beard:true}},{id:'teo',n:'大工のテオ',pal:5,x:1395,y:955,o:{tool:'axe',plaid:true}},{id:'elza',n:'見張りのエルザ',pal:3,x:1470,y:1030,o:{hat:'ushanka',tool:'gun'}}],
+const NPCS={snow:[{id:'gordon',n:'猟師のゴードン',pal:1,x:1330,y:1280,o:{hat:'ushanka',beard:true,tool:'gun'}},{id:'mina',n:'パン屋のミーナ',pal:4,x:905,y:1160,o:{apron:true}},{id:'pip',n:'少年ピップ',pal:6,x:1290,y:1100,o:{scale:.75}},{id:'borg',n:'老人ボルグ',pal:2,x:1560,y:1040,o:{beard:true}},{id:'teo',n:'大工のテオ',pal:5,x:1395,y:955,o:{tool:'axe',plaid:true}},{id:'elza',n:'見張りのエルザ',pal:3,x:1470,y:1030,o:{hat:'ushanka',tool:'gun'}},{id:'olga',n:'村長オルガ',pal:2,x:1085,y:890,o:{apron:true,scale:.95}}],
   desert:[{id:'said',n:'水売りのサイード',pal:1,x:1330,y:1280,o:{}},{id:'lana',n:'踊り子のラナ',pal:4,x:905,y:1160,o:{apron:true}}]};
 const npcName=id=>{for(const k in NPCS)for(const n of NPCS[k])if(n.id===id)return n.n;return ''};
 const npcPos=n=>n.a!=null?{x:CX+Math.cos(n.a)*150,y:CY+Math.sin(n.a)*150}:{x:n.x,y:n.y};
@@ -2175,7 +2176,7 @@ const qS=id=>(G.story&&G.story.q&&G.story.q[id])||null,qDone=id=>{const q=qS(id)
 const bioKey=()=>DES()?'desert':'snow';
 function solvedN(bio){let n=0;const ch=(G.story&&G.story.ch)||1;for(const k in QUESTS){const Q=QUESTS[k];if(Q.bio===bio&&qDone(k)&&(!Q.ch||Q.ch.includes(ch)))n++}return n}
 function npcQuest(nid){let avail=null;const ch=(G.story&&G.story.ch)||1;for(const k in QUESTS){const Q=QUESTS[k];if(Q.npc!==nid||Q.bio!==bioKey())continue;const q=qS(k);if(q&&(q.st===1||q.st===2))return k;if(!q&&!avail&&(!Q.ch||Q.ch.includes(ch))&&(!Q.req||Q.req()))avail=k}return avail}
-function npcMark(nid){const k=npcQuest(nid);if(!k)return '';const q=qS(k);return !q?'！':q.st===2?'？':'…'}
+function npcMark(nid){const mm=mysteryMark(nid);if(mm)return mm;const k=npcQuest(nid);if(!k)return '';const q=qS(k);return !q?'！':q.st===2?'？':'…'}
 // ---- NPC meshes and markers (both host and guest)
 function npcFx(){if(!G||!running)return;const on=isRPG();const L=NPCS[bioKey()];
   if(!on){if(G.npcV)for(const v of G.npcV)v.m.g.visible=false;if(G.escV)G.escV.m.g.visible=false;if(G.findV)G.findV.visible=false;$('dlg').hidden=true;return}
@@ -2203,7 +2204,7 @@ function updateQuests(dt){if(!isRPG())return;const S=G.story;S.q=S.q||{};
       else{const p=G.players[q.f];if(!p||p.down>0){q.f=null}else{const d=dist(p.x,p.y,q.x,q.y);if(d>45){const k2=Math.min(d-40,230*dt);q.x+=(p.x-q.x)/d*k2;q.y+=(p.y-q.y)/d*k2}if(dist(q.x,q.y,CX,CY)<FR-30){q.st=2;const n=NPCS.snow.find(n=>n.id===Q.npc);const np=npcPos(n);q.x=np.x+30;q.y=np.y+20;banner('町に着いた！',Q.nm,`${npcName(Q.npc)}に知らせよう`,'area');SFX.rare()}}}}
     else if(Q.type==='count'){if(Q.chk(q)>=Q.n){q.st=2;banner('依頼達成！',Q.t,`${npcName(Q.npc)}に報告しよう`,'area');SFX.rare()}}
     else if(Q.type==='build'){if(Q.chk()>=Q.n){q.st=2;banner('依頼達成！',Q.t,`${npcName(Q.npc)}に報告しよう`,'area');SFX.rare()}}}}
-function doAct(p,type,id){if(!isRPG()||!p)return;const S=G.story;S.q=S.q||{};
+function doAct(p,type,id){if(!isRPG()||!p)return;const S=G.story;S.q=S.q||{};if(mysteryAct(p,type,id))return;
   if(type==='craft'){const R=RECIPES[id];if(!R)return;const why=craftWhy(p,R);if(why){float(p.x,p.y,90,why,'red',true);return}for(const k in R.m)p.mats[k]-=R.m[k];for(let i=0;i<(R.log||0);i++)take(p,'log');G.cash-=R.cash||0;giveItem(p,R.id);lifeXp(p,R.life||'craft',15);cnt(p,R.life==='smith'?'sm':'cr_eq');cnt(p,'mk_'+R.id);gainRX(p,20);banner('装備を作った！',ITEMS[R.id].n,itemDesc(ITEMS[R.id]),'r-SSR');SFX.ssr();burst(WB.x,WB.y,40,30,{c:['#ffd23f','#ffffff'],s0:60,s1:220,u0:150,u1:320,l0:.6,l1:1.1,add:true});return}
   if(type==='eq'){const it=ITEMS[id];if(!it||!(p.items||[]).includes(id))return;p.eq=p.eq||{};p.eq[it.s]=p.eq[it.s]===id?null:id;return}
   const Q=QUESTS[id];if(!Q)return;let q=S.q[id];
@@ -2214,7 +2215,7 @@ function doAct(p,type,id){if(!isRPG()||!p)return;const S=G.story;S.q=S.q||{};
 function sendAct(type,id){const me=G.players[G.me]||G.players[0];if(NET.mode==='guest'){NET.actN=(NET.actN||0)+1;NET.act=[NET.actN,type,id]}else doAct(me,type,id)}
 // ---- dialog UI (local to each player)
 const DLG={open:false};
-function openTalk(v){const k=npcQuest(v.n.id),q=k?qS(k):null,Q=k?QUESTS[k]:null,me=G.players[G.me]||G.players[0];let pages,ch=null;
+function openTalk(v){{const mt=mysteryTalk(v);if(mt){Object.assign(DLG,{open:true,npc:v,pages:mt.pages,i:0,ch:mt.ch||null});if(NET.mode==='solo')G.paused=true;for(const j of joys)j.on=false;drawDlg();SFX.pop&&SFX.pop();return}}const k=npcQuest(v.n.id),q=k?qS(k):null,Q=k?QUESTS[k]:null,me=G.players[G.me]||G.players[0];let pages,ch=null;
   if(!k)pages=[['いつもありがとう。この町は、あんたたちのおかげで持ってるよ','困ったことがあったら、また頼むね','外は冷える。気をつけてな'][Math.floor(Math.random()*3)]];
   else if(!q){pages=Q.intro.slice();ch=[['引き受ける',()=>sendAct('accept',k)],['やめておく',null]]}
   else if(q.st===2){pages=Q.done.slice();ch=[['受け取る',()=>sendAct('claim',k)]]}
@@ -2355,40 +2356,160 @@ function ruinVis(){const S=G.story,on=!!(S&&S.ch===3&&DES());if(!on){if(G.ruinV)
     const sign=makeTextPlate('古代遺跡',110,28,'rgba(255,250,240,.92)','#8a6a48',.5);sign.position.set(0,140,0);sign.userData.bb=true;g.add(sign);g.userData.sign=sign;world.add(g);G.ruinV=g}
   G.ruinV.visible=true;const t=performance.now()/1000;G.ruinV.userData.beam.visible=S.step===2&&!S.ruin;G.ruinV.userData.beam.material.opacity=.14+Math.sin(t*2)*.06;G.ruinV.userData.sign.quaternion.copy(camera.quaternion);
   if(!G.heartV||!G.heartV.parent){const h=new T.Group();const c=M_(new T.OctahedronGeometry(14,0),glow('#7fd4ff',2.6),false);c.scale.set(1,1.5,1);h.add(c);const l=new T.PointLight(lin('#7fd4ff'),1.6,260,1.6);h.add(l);world.add(h);G.heartV=h}
-  const hv=G.heartV;hv.visible=S.step>=4;if(!hv.visible)return;hv.rotation.y=t*2;
+  const hv=G.heartV;hv.visible=false;if(!hv.visible)return;hv.rotation.y=t*2;
   if(S.hs===1&&G.players[S.hc]){const p=G.players[S.hc];hv.position.set(p.x,70+Math.sin(t*4)*3,p.y)}else if(S.hs===3){hv.position.set(CX,34+Math.sin(t*2)*4,CY)}else hv.position.set(S.hx||RUIN.x,26+Math.sin(t*3)*4,S.hy||RUIN.y);
   const me=G.players[G.me]||G.players[0];if(S.step===4&&S.hs!==1&&S.hs!==3&&me&&dist(me.x,me.y,hv.position.x,hv.position.z)<260)label(hv.position.x,hv.position.z,60,'<b>冬の心臓</b><br>近づくと持てる','')}
 
+// ================================================================ the mystery: clues (手がかり帳), puzzles, chapter 4 「帰郷」
+// Truth: 100 years ago Jorun (Olga's grandfather) stole the sun stone from the southern temple to bring an endless summer north.
+// Away from its altar the stone turned into the "winter heart"; he hid it under the town furnace. North froze, the south went wild.
+const CLUES={
+  c1:{t:'終わらない冬',s:'村長オルガ',x:'暦の上では、もう夏至を過ぎている。それなのに、雪は一日もやんだことがない。'},
+  c2:{t:'ヨルンの手記・その一',s:'氷の洞窟で拾った紙片',x:'「わしは、この凍える北の地に永遠の夏をもたらしてみせる。南の神殿には、陽を宿す石が祀られているという」――ヨルン'},
+  c3:{t:'洞窟の壁画',s:'氷の洞窟・封じられた扉',x:'二つの炉の絵。北の鐘楼と、南の神殿。そのあいだを、四つの季節が輪になって巡っている。'},
+  c4:{t:'ヨルンの手記・その二',s:'氷の洞窟・奥の小部屋',x:'「石を持ち帰った。だが町に着くと、石は青く冷たく光りはじめた。……春が、来ない」'},
+  c5:{t:'王のかけら',s:'白き王の額',x:'白き王の額に埋まっていた、青く光るかけら。南ではなく、町の中心に近づくほど強く震える。'},
+  c6:{t:'ヨルンの手記・その三',s:'凍てつく氷河・光の祭壇',x:'「石の冷気に狼どもが寄ってくる。石は、町でいちばん温かい場所に眠らせた。火が燃え続けるかぎり、冷気は外へ漏れまい」'},
+  c7:{t:'空の台座',s:'砂漠の古代遺跡',x:'神殿の台座は空っぽだった。ここには本来、陽を宿す石が祀られていたらしい。'},
+  c8:{t:'星の壁画',s:'古代遺跡・星の床',x:'北から来た男が石を奪い去る絵。男の指輪には紋章が刻まれている――雪の結晶と炎。この町の紋章だ。'},
+  c9:{t:'隊長ザラの話',s:'砂の町',x:'「100年前から、この砂漠は昼は灼け、夜は凍る。石が台座に戻れば、北にも南にも季節が戻るはずだ」'},
+  t_gordon:{t:'ゴードンの証言',s:'猟師のゴードン',x:'「かまどの火は100年、一度も消したことがない。ヨルン様の遺言なんだとさ」'},
+  t_mina:{t:'ミーナの証言',s:'パン屋のミーナ',x:'「かまどの下の石組み、夏でもひんやりしてるのよね。パン生地を寝かせるのにちょうどいいの」'},
+  t_borg:{t:'ボルグの証言',s:'老人ボルグ',x:'「温泉を掘ったのは、わしが若いころ……30年前じゃ。それより前は、町でいちばん温かいのは、かまどのまわりだけじゃったよ」'}};
+const CLUE_ORDER=['c1','c2','c3','c4','c5','c6','c7','c8','c9','t_gordon','t_mina','t_borg'];
+const hasClue=id=>!!(G&&G.story&&(G.story.clues||[]).includes(id));
+function addClue(id,quiet){const S=G.story;if(!S||!CLUES[id])return;S.clues=S.clues||[];if(S.clues.includes(id))return;S.clues.push(id);if(quiet)return;
+  banner('手がかりを得た！',CLUES[id].t,'Jキーの「手がかり帳」でいつでも読み返せる','r-SSR');SFX.rare&&SFX.rare();toast(`手がかり：${CLUES[id].t}`,'gold');snapSave&&snapSave()}
+function clueHtml(){const S=G.story||{},L=S.clues||[];if(!L.length)return '<small>まだ手がかりはない。町の人の話や、洞窟・遺跡の奥を調べてみよう</small>';
+  let h=CLUE_ORDER.filter(id=>L.includes(id)).map(id=>{const c=CLUES[id];return `<div style="margin:6px 0;padding:6px 8px;background:rgba(255,255,255,.55);border:1.5px solid #d8c38e;border-radius:8px"><b style="font-size:12.5px">${c.t}</b><br><small style="opacity:.7">${c.s}</small><div style="font-size:12px;line-height:1.55;margin-top:2px">${c.x}</div></div>`}).join('');
+  if(S.ch===4&&S.step===1&&!S.deduced)h=`<button data-deduce="1" style="width:100%;font:inherit;font-weight:900;border:2px solid #b8913f;border-radius:8px;padding:7px;background:linear-gradient(180deg,#2b4a73,#1d3150);color:#fff8e2;cursor:pointer;margin-bottom:4px">🔎 推理する：冬の心臓はどこに？</button>`+h;
+  return h}
+const DEDUCE=[['氷の湖の底','ゴードン「湖はもともと凍ってる。“冷気が外へ漏れない”場所じゃないだろう」'],['温泉の底','ボルグ「温泉は30年前に掘ったもんじゃ。100年前にはなかったよ」'],['かまどの下',null],['氷の洞窟の奥','カイ「洞窟は町から遠い。王のかけらは、町の真ん中でいちばん震えてた」']];
+function openDeduce(){Object.assign(DLG,{open:true,npc:{n:{n:'推理'},x:CX,y:CY},pages:['ヨルンが隠した「冬の心臓」は、どこに眠っている？','手記には「町でいちばん温かい場所」「火が燃え続けるかぎり冷気は漏れない」とあった……'],i:0,ch:DEDUCE.map(([t],i)=>[t,()=>sendAct('deduce',i)])});if(NET.mode==='solo')G.paused=true;for(const j of joys)j.on=false;drawDlg()}
+function mysteryAct(p,type,id){const S=G.story;if(!S)return false;
+  if(type==='clue'){addClue(id);return true}
+  if(type==='olga'){if(S.ch===4&&S.step===2)S.olga=1;return true}
+  if(type==='deduce'){if(S.ch!==4||S.step!==1||S.deduced)return true;const a=DEDUCE[id];if(!a)return true;if(a[1]){say(a[1].split('「')[0],'「'+a[1].split('「').slice(1).join('「'));toast('ちがうようだ…手がかり帳を読み返そう','cold')}else{S.deduced=1;banner('推理が当たった！','冬の心臓は、かまどの下に','ヨルンは町でいちばん温かい場所――100年消えない火の下に、石を隠した','r-SSR');SFX.ssr&&SFX.ssr()}return true}
+  return false}
+// ---- NPC lines for the mystery (overrides the normal quest talk when relevant)
+function mysteryTalk(v){const S=G.story;if(!S||!isRPG()||DES())return null;const id=v.n.id;
+  if(id==='olga'){if(S.ch===4&&S.step===2&&!S.olga)return{pages:['……砂の町の壁画、か。','ああ、知っていたよ。祖父ヨルンの日記を、子どものころに読んだ。','町の人には言えなかった。「この町の冬は、わしらの祖先のせいだ」なんて……','かまどの火を落としておくれ。祖父の罪は、わたしが一緒に背負う'],ch:[['……わかった',()=>sendAct('olga',1)]]};
+    const L={1:['暦の上じゃ、もう夏のはずなんだがね。こんな冬は、わたしも初めてだよ','火さえあれば、人は集まってくる。かまどを頼んだよ'],2:['白き王……北の山の伝説の獣さ','南の砂の向こうに冬の原因がある、と聞いたことがあるよ。……ただの言い伝えさ'],3:['砂の町はどうだった？','……無事に帰っておいで'],4:['おかえり。……何か、見つけたのかい？'],5:['春の匂いがする。祖父も、きっと喜んでいるよ']};return{pages:[(L[S.ch]||L[1])[Math.floor((S.t||0)/20)%((L[S.ch]||L[1]).length)]]}}
+  if(S.ch===4&&S.step===0){const k='t_'+id;if(CLUES[k]&&!hasClue(k)){const pre={gordon:'ヨルン様？ ああ、町を作った人だろう。',mina:'かまど？ いつもお世話になってるわよ。',borg:'100年前のことか……わしの爺さんから聞いた話じゃが。'}[id];return{pages:[pre,CLUES[k].x.replace(/^「|」$/g,'')],ch:[['手がかり帳に書きとめる',()=>sendAct('clue',k)]]}}}
+  return null}
+function mysteryMark(nid){const S=G.story;if(!S||DES())return '';if(nid==='olga')return S.ch===4&&S.step===2&&!S.olga?'！':'';if(S.ch===4&&S.step===0&&CLUES['t_'+nid]&&!hasClue('t_'+nid))return '？';return ''}
+// ================================================================ puzzles (host simulates, everyone draws)
+// 1) ice cave: light the four braziers in the order the sun walks (east → south → west → north). Opens the sealed vault.
+const BRZ=[{d:'東',x:2045,y:2230},{d:'南',x:1975,y:2300},{d:'西',x:1905,y:2230},{d:'北',x:1975,y:2160}],BRZ_MURAL={x:1975,y:2230},VAULT_DOOR=[1970,1860,1990,2090],VAULT_NOTE={x:1895,y:1960};
+// 2) glacier: turn three ice mirrors so the light from the crack reaches the altar
+const MR={src:{x:62,y:2160},m:[{x:240,y:2160},{x:240,y:2300},{x:110,y:2300}],alt:{x:110,y:2205},room:[60,2110,300,2340],init:[0,1,0]};
+// 3) desert ruin: draw the "wing" constellation (an X) on the 3x3 star floor
+const SF={x:520,y:540,gap:60,sol:[1,0,1,0,1,0,1,0,1]};const sfPos=i=>({x:SF.x+((i%3)-1)*SF.gap,y:SF.y+(Math.floor(i/3)-1)*SF.gap});
+function mrTrace(st){let x=MR.src.x,y=MR.src.y,dx=1,dy=0;const R=MR.room,segs=[];
+  for(let k=0;k<6;k++){let best=-1,bd=1e9;MR.m.forEach((m,i)=>{const t=dx?(m.x-x)*dx:(m.y-y)*dy,off=dx?Math.abs(m.y-y):Math.abs(m.x-x);if(t>5&&off<6&&t<bd){bd=t;best=i}});
+    const wt=dx>0?R[2]-x:dx<0?x-R[0]:dy>0?R[3]-y:y-R[1];const end=best>=0?bd:wt;
+    const a=MR.alt,ta=dx?(a.x-x)*dx:(a.y-y)*dy,oa=dx?Math.abs(a.y-y):Math.abs(a.x-x);if(ta>0&&ta<end&&oa<14){segs.push([x,y,x+dx*ta,y+dy*ta]);return{segs,hit:true}}
+    segs.push([x,y,x+dx*end,y+dy*end]);if(best<0)break;const m=MR.m[best];x=m.x;y=m.y;if(st[best]===1){const t=dx;dx=dy;dy=t}else{const t=dx;dx=-dy;dy=-t}}
+  return{segs,hit:false}}
+function pzState(){G.pz=G.pz||{br:{lit:[0,0,0,0],seq:[],fail:0},mr:{st:MR.init.slice()},sf:{on:[0,0,0,0,0,0,0,0,0]}};return G.pz}
+function updatePuzzles(dt){if(!isRPG()||!G.story)return;const P=pzState(),S=G.story;
+  if(!DES()){
+    // brazier
+    if(!hasClue('c3')&&G.zones.B){const B=P.br;if(B.fail>0){B.fail-=dt;if(B.fail<=0){B.lit=[0,0,0,0];B.seq=[]}}else
+      BRZ.forEach((b,i)=>{const on=G.players.some(p=>!(p.down>0)&&dist(p.x,p.y,b.x,b.y)<34);b._t=on?(b._t||0)+dt:0;if(on&&b._t>.7&&!B.lit[i]){B.lit[i]=1;B.seq.push(i);SFX.chop&&SFX.chop();burst(b.x,b.y,16,40,{c:['#ffb347','#ffe07a'],s0:30,s1:120,u0:60,u1:200,l0:.3,l1:.7,add:true});
+        const ok=B.seq.every((v,k)=>v===k);if(!ok){B.fail=1.2;toast('炎がふっと消えた…順番がちがうようだ','cold')}else if(B.seq.length===4){addClue('c3');G.shake=10;banner('扉が開いた！','洞窟の壁画','陽の歩みのとおりに火を灯すと、封じられた扉が動いた','area');say('斥候カイ','扉の奥に小部屋がある…何か落ちてるぞ')}}})}
+    if(hasClue('c3')&&!hasClue('c4')&&G.players.some(p=>!(p.down>0)&&dist(p.x,p.y,VAULT_NOTE.x,VAULT_NOTE.y)<45)){addClue('c4');G.cash+=300;G.earned+=300}
+    if(S.ch===2&&S.kingId&&!hasClue('c5')&&G.bears.every(b=>b.id!==S.kingId||b.dead)){addClue('c5');say('斥候カイ','王の額から、青いかけらが落ちた…冷たい。町の方へ引っぱられるみたいに震えてる')}
+    if(!hasClue('c2')&&!S._c2&&G.players.some(p=>p.x>CAVE_BOX[0]&&p.y>CAVE_BOX[1])&&(S._c2=1))setTimeout(()=>{if(running&&G.story&&!hasClue('c2')){addClue('c2');say('斥候カイ','古い紙が落ちてた…「ヨルン」？ この町を作った人の名前だ')}},1800);
+    // mirrors
+    if(!hasClue('c6')&&(S.ch||1)>=2&&G.zones.C){const M=P.mr;MR.m.forEach((m,i)=>{const p=G.players.find(p=>!(p.down>0)&&dist(p.x,p.y,m.x,m.y)<30);if(!p){m._t=0;m._arm=true;return}if(!m._arm)return;m._t=(m._t||0)+dt;if(m._t>.6){m._arm=false;m._t=0;M.st[i]^=1;SFX.pop&&SFX.pop();burst(m.x,m.y,10,30,{c:['#bfe9ff','#ffffff'],s0:30,s1:90,u0:60,u1:150,l0:.2,l1:.5,add:true});
+        if(mrTrace(M.st).hit){addClue('c6');G.shake=8;banner('光が祭壇に届いた！','凍てつく氷河','祭壇の氷がとけて、古い手記が現れた','area');burst(MR.alt.x,MR.alt.y,50,40,{c:['#bfe9ff','#ffffff','#ffe07a'],s0:80,s1:260,u0:150,u1:400,l0:.6,l1:1.2,add:true});for(const q of G.players)addMat(q,'star',1)}}})}
+  }else if(S.ch===3&&S.step>=3&&!hasClue('c8')){const F=P.sf;
+    G.players.forEach(p=>{if(p.down>0)return;let t=-1;for(let i=0;i<9;i++){const q=sfPos(i);if(Math.abs(p.x-q.x)<24&&Math.abs(p.y-q.y)<24){t=i;break}}if(t!==p._sf){p._sf=t;if(t>=0){F.on[t]^=1;SFX.pop&&SFX.pop();const q=sfPos(t);burst(q.x,q.y,8,6,{c:F.on[t]?['#ffe07a','#ffffff']:['#8a6a48'],s0:20,s1:60,u0:20,u1:80,l0:.2,l1:.4,add:!!F.on[t]})}}});
+    if(F.on.every((v,i)=>v===SF.sol[i])){addClue('c8');G.shake=10;say('斥候カイ','壁画が浮かび上がった…北の男が石を奪っていく絵だ');say('斥候カイ','あの指輪の紋章……雪の結晶と炎。俺たちの町の紋章じゃないか！')}}}
+function caveDoorOpen(){return hasClue('c3')}
+// ---- puzzle visuals
+function pzBuild(){const g=new T.Group(),stone=std('#7d858f',{map:TEX.stone,r:.9}),dark=std('#2a323c',{r:1});const U={};
+  if(!DES()){U.br=BRZ.map(b=>{const o=new T.Group();o.position.set(b.x,0,b.y);o.add(at(cyl(10,14,28,stone,8),0,14,0),at(cyl(16,12,6,dark,10),0,30,0));const f=at(cone(10,26,glow('#ffa23d',2.6),8,false),0,44,0);f.visible=false;o.add(f);const l=new T.PointLight(lin('#ffa050'),0,220,1.6);l.position.y=60;o.add(l);g.add(o);return{o,f,l}});
+    const mural=at(box(120,70,10,std('#9aa6b2',{map:TEX.stone,r:.9})),BRZ_MURAL.x,35,2120);g.add(mural);
+    const door=at(box(VAULT_DOOR[2]-VAULT_DOOR[0],70,VAULT_DOOR[3]-VAULT_DOOR[1],std('#4b5866',{map:TEX.stone,r:.95}),true,true),(VAULT_DOOR[0]+VAULT_DOOR[2])/2,35,(VAULT_DOOR[1]+VAULT_DOOR[3])/2);g.add(door);U.door=door;
+    const note=at(box(18,3,14,std('#f3e3bf',{r:1})),VAULT_NOTE.x,8,VAULT_NOTE.y);g.add(note);U.note=note;
+    U.mr=MR.m.map(m=>{const o=new T.Group();o.position.set(m.x,0,m.y);o.add(at(cyl(20,22,6,stone,12),0,3,0));const pl=at(box(40,48,4,std('#dff4ff',{m:.6,r:.08,e:'#4fb8ff',ei:.25})),0,32,0);o.add(pl);g.add(o);return{o,pl}});
+    const src=at(box(8,40,30,glow('#bfe9ff',2)),MR.src.x,30,MR.src.y);g.add(src);
+    const alt=new T.Group();alt.position.set(MR.alt.x,0,MR.alt.y);alt.add(at(cyl(26,30,20,stone,10),0,10,0));const gem=at(new T.Mesh(new T.OctahedronGeometry(10,0),glow('#9fe3ff',1.2)),0,34,0);alt.add(gem);g.add(alt);U.gem=gem;
+    U.beam=[0,1,2,3,4,5].map(()=>{const m=M_(new T.BoxGeometry(1,1,1),new T.MeshBasicMaterial({color:lin('#dff6ff'),transparent:true,opacity:.85,blending:T.AdditiveBlending,depthWrite:false}),false);m.visible=false;g.add(m);return m})}
+  else{U.sf=[];for(let i=0;i<9;i++){const q=sfPos(i);const t=at(box(50,3,50,std('#b9905e',{r:.9})),q.x,1.6,q.y);g.add(t);const s=at(box(20,4,20,glow('#ffe07a',1.8)),q.x,2.5,q.y);s.visible=false;g.add(s);U.sf.push(s)}}
+  g.userData=U;world.add(g);return g}
+function pzFx(){if(!G||!running)return;const on=isRPG()&&G.story;if(!on){if(G.pzV)G.pzV.visible=false;return}const key=DES()?'d':'s';
+  if(!G.pzV||G.pzV.parent!==world||G.pzK!==key){if(G.pzV&&G.pzV.parent)G.pzV.parent.remove(G.pzV);G.pzV=pzBuild();G.pzK=key}
+  const V=G.pzV,U=V.userData,P=pzState(),me=G.players[G.me]||G.players[0],S=G.story;V.visible=true;
+  if(!DES()){const done=hasClue('c3');U.br.forEach((b,i)=>{const lit=done||!!P.br.lit[i];b.f.visible=lit;b.l.intensity=lit?1.6:0;if(me&&dist(me.x,me.y,BRZ[i].x,BRZ[i].y)<260)label(BRZ[i].x,BRZ[i].y,70,`<b>${BRZ[i].d}の燭台</b>${lit?'':'<br><small>そばに立つと火が灯る</small>'}`,'')});
+    U.door.visible=!done;U.note.visible=done&&!hasClue('c4');
+    if(me&&dist(me.x,me.y,BRZ_MURAL.x,2120)<300&&!done)label(BRZ_MURAL.x,2120,90,'<b>壁画</b><br><small>「朝の火、昼の火、夕の火、夜の火――<br>陽の歩みのとおりに灯せ」</small>','note');
+    if(done&&!hasClue('c4')&&me&&dist(me.x,me.y,VAULT_NOTE.x,VAULT_NOTE.y)<260)label(VAULT_NOTE.x,VAULT_NOTE.y,40,'<b>古い紙片</b><br><small>近づいて拾う</small>','');
+    const mdone=hasClue('c6'),st=mdone?[1,0,1]:P.mr.st;U.mr.forEach((m,i)=>{m.pl.rotation.y=(st[i]?-1:1)*Math.PI/4;if(me&&dist(me.x,me.y,MR.m[i].x,MR.m[i].y)<240&&!mdone)label(MR.m[i].x,MR.m[i].y,80,'<b>氷の鏡</b><br><small>上に立つと向きが変わる</small>','')});
+    const tr=mrTrace(st),seen=me&&me.x<MR.room[2]+40&&me.y>MR.room[1]-40;U.beam.forEach((b,i)=>{const s=tr.segs[i];b.visible=!!s&&!!seen;if(!s)return;const L=Math.hypot(s[2]-s[0],s[3]-s[1]);b.position.set((s[0]+s[2])/2,32,(s[1]+s[3])/2);b.scale.set(s[0]===s[2]?5:L,5,s[0]===s[2]?L:5)});
+    if(mdone&&!U.gemDone){U.gemDone=1;U.gem.material=glow('#ffe07a',2.4)}U.gem.rotation.y+=.02;if(seen&&!mdone&&me&&dist(me.x,me.y,MR.alt.x,MR.alt.y)<260)label(MR.alt.x,MR.alt.y,70,'<b>光の祭壇</b><br><small>裂け目の光を、鏡で導け</small>','note')}
+  else{const done=hasClue('c8'),F=P.sf;U.sf.forEach((s,i)=>s.visible=done?!!SF.sol[i]:!!F.on[i]);
+    if(S.ch===3&&S.step>=3&&!done&&me&&dist(me.x,me.y,SF.x,SF.y)<340)label(SF.x,SF.y-110,60,'<b>石板</b><br><small>「空を渡る翼の星座を、床に描け」</small><br><span style="font-family:monospace;font-size:15px;line-height:1.1;letter-spacing:4px">◆・◆<br>・◆・<br>◆・◆</span><br><small>床を踏むと光る／もう一度踏むと消える</small>','note')}}
+// ================================================================ chapter 4 「帰郷」
+const OLGA={id:'olga',n:'村長オルガ',pal:7,x:1085,y:890,o:{apron:true}};
+function spawnGuardian(){const b=spawnBoss('frost',true);b.x=CX+40;b.y=CY+150;b.m.g.position.set(b.x,0,b.y);b.hp=b.max=Math.round(b.max*6*DM().hp);b.nm='心臓の番人';b.m.g.scale.multiplyScalar(1.5);G.story.guard=b.id;G.shake=18;
+  banner('第4章','心臓の番人が目覚めた！','かまどの下から、冷気の獣が這い出してくる','cold');say('斥候カイ','石を守ってやがる…こいつを倒さないと心臓に近づけない！')}
+function updateCh4(dt){const S=G.story;if(!S||S.ch!==4||DES())return;
+  if(S.step===3&&!S.dig){const near=G.players.filter(p=>!(p.down>0)&&dist(p.x,p.y,CX,CY)<130).length;if(near){S.dg=(S.dg||0)+dt;if(Math.random()<dt*6)burst(CX+rnd(-40,40),CY+rnd(-40,40),6,10,{c:['#8a7058','#bfe9ff'],s0:20,s1:80,u0:40,u1:140,l0:.3,l1:.6})}if((S.dg||0)>4){S.dig=1;G.fuel=Math.min(G.fuel,25);burst(CX,CY,60,40,{c:['#9fe0ff','#ffffff'],s0:120,s1:360,u0:200,u1:500,l0:.8,l1:1.5,add:true});spawnGuardian()}}
+  if(S.step===4&&S.dig&&!G.bears.some(b=>b.id===S.guard&&!b.dead)&&!S.gdead){S.gdead=1;S.hs=0;S.hx=CX;S.hy=CY+60;say('村長オルガ','かまどの下から…青い石が。これが、祖父の盗んだ“陽の石”なんだね')}
+  if(S.step===5){if(S.hs===0||S.hs===2){const p=G.players.find(p=>!(p.down>0)&&dist(p.x,p.y,S.hx,S.hy)<60);if(p){S.hs=1;S.hc=p.id;toast('冬の心臓を持った！ 南への道まで運べ','gold');SFX.rare()}}
+    else if(S.hs===1){const p=G.players[S.hc];if(!p||p.down>0){S.hs=2;if(p){S.hx=p.x;S.hy=p.y}toast('心臓を落とした！ 拾い直せ','cold')}else{S.hx=p.x;S.hy=p.y;if(dist(p.x,p.y,ROAD.x,ROAD.y)<130){S.hs=3;S.hx=ROAD.x;S.hy=ROAD.y;burst(ROAD.x,ROAD.y,60,60,{c:['#9fe0ff','#ffffff','#ffe07a'],s0:120,s1:360,u0:200,u1:480,l0:.8,l1:1.5,add:true});SFX.ssr&&SFX.ssr();G.shake=12}}}}}
+function heart4Fx(){const S=G.story,on=!!(isRPG()&&S&&S.ch===4&&!DES()&&S.step>=5);if(!on){if(G.heart4V)G.heart4V.visible=false;return}
+  if(!G.heart4V||G.heart4V.parent!==world){const h=new T.Group();const c=M_(new T.OctahedronGeometry(14,0),glow('#7fd4ff',2.6),false);c.scale.set(1,1.5,1);h.add(c);const l=new T.PointLight(lin('#7fd4ff'),1.6,260,1.6);h.add(l);world.add(h);G.heart4V=h}
+  const hv=G.heart4V,t=performance.now()/1000;hv.visible=true;hv.rotation.y=t*2;if(S.hs===1&&G.players[S.hc]){const p=G.players[S.hc];hv.position.set(p.x,70+Math.sin(t*4)*3,p.y)}else hv.position.set(S.hx||CX,26+Math.sin(t*3)*4,S.hy||CY);
+  const me=G.players[G.me]||G.players[0];if(S.hs!==1&&S.hs!==3&&me&&dist(me.x,me.y,hv.position.x,hv.position.z)<300)label(hv.position.x,hv.position.z,60,'<b>冬の心臓</b><br>近づくと持てる','');
+  if(S.hs===1&&me)label(ROAD.x,ROAD.y,90,'<b>南への道</b><br><small>ここまで心臓を運ぶ</small>','note')}
+function mysterySnap(){const S=G.story;if(!S)return null;const P=G.pz;return{cl:S.clues||[],pz:P?[P.br.lit,P.mr.st,P.sf.on]:null,d4:[S.deduced||0,S.olga||0,S.dig||0,S.guard||0,S.gdead||0]}}
+function mysteryApply(x){if(!x||!G.story)return;G.story.clues=x.cl||[];if(x.pz){const P=pzState();P.br.lit=x.pz[0];P.mr.st=x.pz[1];P.sf.on=x.pz[2]}const d=x.d4||[];G.story.deduced=d[0];G.story.olga=d[1];G.story.dig=d[2];G.story.guard=d[3];G.story.gdead=d[4]}
 // ================================================================ story mode (chapters + morning autosave)
 var gameMode=store.get('mw-mode','story');var SAVE_K='mw-story1';
-var CH={1:{n:'第1章',t:'ホワイトアウト',play:true,open:['その年、冬は終わらなかった。','吹雪は町をのみこみ、\n人々は散り散りになった。','残されたのは、\n消えかけたひとつのかまど――','あなたは、この火を守るために\nこの町へやってきた。'],sub:'目標：町のシンボル像を建て、最後の夜を守りきれ',
+var CH={1:{n:'第1章',t:'ホワイトアウト',play:true,open:['暦の上では、もう夏至を過ぎた。','それなのに、この町の雪は\n一日もやんだことがない。','吹雪は町をのみこみ、\n人々は散り散りになった。','残されたのは、消えかけたひとつのかまど――\nそして、誰も知らない「冬の理由」。'],sub:'目標：町のシンボル像を建て、最後の夜を守りきれ（Jキー：手がかり帳）',
   intro:[['村長オルガ','よく来てくれた…この吹雪で、町のかまどの火が消えかけている'],['村長オルガ','木を切って薪をくべておくれ。火さえあれば、人は集まってくる']],
-  outro:'像のまわりで、みんなが久しぶりに笑った。\nけれどその夜明け、北の山から戻った斥候カイは青ざめていた。\n\n「家より大きな白い影を見た。狼どもは、あいつに従って動いてる…」\n\n町の人はそれを「白き王」と呼んだ。'},
- 2:{n:'第2章',t:'白き王',play:true,open:['像が完成した夜から、ひと月。','北の山から、\n地鳴りのような足音が近づいてくる。','狼たちを束ねる“白き王”――\n町は、ふたたび試されようとしていた。'],sub:'王の正体をつきとめ、町を守りぬけ',
-  intro:[['斥候カイ','北の山で見た白い影…狼どもを束ねる“王”がいる'],['村長オルガ','去年より冬も厳しい。まずは守りを固めよう。見張り台を強くしておくれ']],
-  outro:'白き王は、灯台の光の下で雪に崩れ落ちた。\n吹雪が、ほんの少しだけ弱まった気がする。\n\n村長オルガ「王がいなくなっても、この冬は終わらない。\n南の砂の向こうに、冬の原因があると聞いたことがある…」\n\n斥候カイは、南への道の雪をかきわけはじめた。'},
- 3:{n:'第3章',t:'南への道',play:true,desert:true,open:['白き王は倒れた。\nけれど、冬は終わらなかった。','斥候カイは、南の砂漠に\n“冬の原因”が眠っていると聞く。','雪をかきわけ、たどり着いたのは――\n灼熱の砂の町だった。'],sub:'砂の町で、冬の原因をつきとめろ',
+  outro:'像のまわりで、みんなが久しぶりに笑った。\nけれど、冬は終わらない。\n\n斥候カイ「北の山で、家より大きな白い影を見た。狼どもは、あいつに従って動いてる…」\n\n洞窟で拾った古い手記には、町を作った男「ヨルン」の名があった。\n――この冬には、理由がある。'},
+ 2:{n:'第2章',t:'白き王',play:true,open:['像が完成した夜から、ひと月。','北の山から、\n地鳴りのような足音が近づいてくる。','狼たちを束ねる“白き王”。\nなぜ獣たちは、この町ばかりを狙うのか――'],sub:'白き王の正体と、狼がこの町を狙う理由をつきとめろ',
+  intro:[['斥候カイ','北の山で見た白い影…狼どもを束ねる“王”がいる'],['斥候カイ','妙なんだ。狼どもは、獲物の多い南の谷じゃなく、わざわざこの町を目指してくる'],['村長オルガ','去年より冬も厳しい。まずは守りを固めよう。見張り台を強くしておくれ']],
+  outro:'白き王は、灯台の光の下で雪に崩れ落ちた。\n額から転がり落ちた青いかけらは、なぜか町の中心へ引かれるように震えていた。\n\n氷河の手記にはこうあった。「石は、町でいちばん温かい場所に眠らせた」――\n\n村長オルガ「……南の砂の向こうに、冬の原因があると聞いたことがある。ただの言い伝えさ」\n\n一行は、南への道の雪をかきわけはじめた。'},
+ 3:{n:'第3章',t:'南への道',play:true,desert:true,open:['雪をかきわけ、たどり着いたのは――\n灼熱の砂の町だった。','昼は焼けるように暑く、\n夜は凍えるほど寒い。','この砂漠もまた、\n季節を失っていた。'],sub:'砂漠の古代遺跡で、100年前に何があったのかをつきとめろ',
   intro:[['斥候カイ','ここが砂の町か…昼は焼けるように暑いのに、夜は凍えるほど寒い'],['隊長ザラ','北から来た旅人かい？ ここじゃ水が命だ。湧き水をくんで井戸を満たしな']],
-  outro:'井戸の底に沈めた心臓は、ゆっくりと青い光を失っていった。\nその夜明け、北の空をおおっていた雲が、はじめて割れた。\n\n隊長ザラ「北の町に帰りな。春が来るかもしれないよ」\n\n――第4章「帰郷」は制作中'},
- 4:{n:'第4章',t:'帰郷',play:false,sub:'（制作中）ここからは自由に遊べる'}};
+  outro:'砂の女王は、空の台座の前で静かに崩れた。\n星の壁画が語っていた――100年前、北の男が神殿の「陽の石」を奪った、と。\n男の指輪には、雪の結晶と炎の紋章。\n\n隊長ザラ「石が台座に戻れば、北にも南にも季節が戻る。……頼んだよ、北の旅人」\n\n斥候カイ「かけらは、町に近づくほど震えてた。石は――俺たちの町にある」'},
+ 4:{n:'第4章',t:'帰郷',play:true,open:['砂の町で知った、100年前の盗み。','奪われた「陽の石」は、\n北の町へ持ち去られた。','けれど町の誰も、\nそんな話はしなかった――','手がかりを集め、\n石の隠し場所をつきとめろ。'],sub:'町のみんなに話を聞き、「冬の心臓」の隠し場所を推理しろ',
+  intro:[['斥候カイ','帰ってきたな…さっそく町のみんなに話を聞こう'],['斥候カイ','頭に緑の“？”が出ている人が、何か知ってるはずだ']],
+  outro:'心臓――陽の石が南への道を越えたとき、北の空の雲が、はじめて割れた。\n\n石が台座に戻った朝、砂漠には100年ぶりの雨が降り、\n北の町の軒先から、つららが一粒ずつ落ちはじめた。\n\n村長オルガ「祖父がほしかった夏は、盗まなくても、ちゃんと巡ってくるんだね」\n\n――めちゃホワイト　完'},
+ 5:{n:'エピローグ',t:'春の町',play:true,open:['冬が終わった。','雪どけの町で、\nかまどの火は今日も燃えている。'],sub:'ここからは自由に遊べる。春の町でのんびり暮らそう',intro:[['村長オルガ','おかえり。春の町へようこそ']]}};
 const FP=()=>{const r=ZONES[1].rect;return{x:(r[0]+r[2])/2,y:(r[1]+r[3])/2}};
 const stx=o=>typeof o.t==='function'?o.t():o.t;
 const kingOf=()=>G.bears.find(b=>b.king&&!b.dead);
 const RUIN={x:520,y:330};
 const SOBJ={3:[
   {t:'水くみ係を2人雇え',f:()=>[G.workers.filter(w=>w.role==='fisher').length,2],tg:()=>{const p=G.pads.find(q=>q.id==='fisher');return p&&p.vis()?{x:p.x,y:p.y,h:50}:null}},
-  {t:'キャラバンと2回取引し、砂の町の悩みを1つ解決しろ',p:()=>`取引 ${Math.min(2,(G.stats.car||0)-(G.story.car0||0))}/2・悩み ${Math.min(1,solvedN('desert'))}/1`,f:()=>[Math.min(2,(G.stats.car||0)-(G.story.car0||0))+Math.min(1,solvedN('desert')),3],on:()=>{G.story.car0=G.stats.car||0;say('隊長ザラ','水が回りだしたね。キャラバンの注文に応えてくれたら、とっておきの話をしてやるよ')},tg:()=>G.car&&G.car.state==='here'?{x:CAR_STOP.x,y:CAR_STOP.y,h:60}:null},
-  {t:'北西の古代遺跡を調べろ',f:()=>[G.story.ruin?1:0,1],tg:()=>({x:RUIN.x,y:RUIN.y,h:80}),on:()=>{say('隊長ザラ','約束だ。北西の砂に埋もれた遺跡に、青く光る“冬の心臓”が眠っているって話さ');say('斥候カイ','そいつが冬の原因か…見に行こう')}},
-  {t:'砂の女王をたおせ',f:()=>[G.story.queen&&!G.bears.some(b=>b.id===G.story.queen&&!b.dead)?1:0,1],tg:()=>{const b=G.bears.find(b=>b.id===G.story.queen&&!b.dead);return b&&!b.hide?{x:b.x,y:b.y,h:80}:null},on:()=>{say('斥候カイ','壁画だ…“青い太陽”が北へ冷たい風を送ってる…これが冬の心臓か！');say('斥候カイ','待て、砂が動いてる！ 何か出てくるぞ！')}},
-  {t:'冬の心臓を井戸まで運べ',f:()=>[G.story.hs===3?1:0,1],tg:()=>{const S=G.story;return S.hs===1?{x:CX,y:CY,h:110}:{x:S.hx||RUIN.x,y:S.hy||RUIN.y,h:60}},on:()=>{const S=G.story;S.hs=0;S.hx=RUIN.x;S.hy=RUIN.y;say('隊長ザラ','女王を倒したのかい！ 心臓を井戸の底に沈めれば、力を封じられるはずだ')}},
-  {t:'最後の夜：心臓を狙う群れから井戸を守れ',p:()=>'今夜',f:()=>[0,1],on:()=>{G.finalPending=true;say('斥候カイ','心臓の光に、砂の化け物どもが集まってくる…今夜が最後の勝負だ！')}}],
+  {t:'キャラバンと2回取引し、砂の町の悩みを1つ解決しろ',p:()=>`取引 ${Math.min(2,(G.stats.car||0)-(G.story.car0||0))}/2・悩み ${Math.min(1,solvedN('desert'))}/1`,f:()=>[Math.min(2,(G.stats.car||0)-(G.story.car0||0))+Math.min(1,solvedN('desert')),3],on:()=>{G.story.car0=G.stats.car||0;say('隊長ザラ','水が回りだしたね。キャラバンの注文に応えてくれたら、この砂漠の昔話をしてやるよ')},tg:()=>G.car&&G.car.state==='here'?{x:CAR_STOP.x,y:CAR_STOP.y,h:60}:null},
+  {t:'北西の古代遺跡を調べろ',f:()=>[G.story.ruin?1:0,1],tg:()=>({x:RUIN.x,y:RUIN.y,h:80}),on:()=>{say('隊長ザラ','約束だ。100年前まで、この砂漠にも季節があった。北西の神殿に“陽の石”が祀られていたころの話さ');say('隊長ザラ','ある年、石が消えた。それからずっと、昼は灼けて夜は凍る');say('斥候カイ','陽の石…ヨルンの手記に出てきた石だ。見に行こう')}},
+  {t:'遺跡の「星の床」の謎を解け',f:()=>[hasClue('c8')?1:0,1],tg:()=>({x:SF.x,y:SF.y,h:40}),on:()=>{addClue('c7');say('斥候カイ','台座が空っぽだ…ここに石があったのか');say('斥候カイ','床に星の模様がある。そばの石板に何か書いてあるぞ')}},
+  {t:'砂の女王をたおせ',f:()=>[G.story.queen&&!G.bears.some(b=>b.id===G.story.queen&&!b.dead)?1:0,1],tg:()=>{const b=G.bears.find(b=>b.id===G.story.queen&&!b.dead);return b&&!b.hide?{x:b.x,y:b.y,h:80}:null},on:()=>{say('斥候カイ','待て、砂が動いてる！ 台座の番人か…俺たちを、また石を奪いに来た北の人間だと思ってる！')}},
+  {t:'最後の夜：砂の化け物から井戸を守れ',p:()=>'今夜',f:()=>[0,1],on:()=>{G.finalPending=true;addClue('c9');say('隊長ザラ','女王が静まった…あんたたちは、盗人とはちがうようだね');say('斥候カイ','女王の悲鳴に、砂の化け物どもが集まってくる…今夜を越えたら、町に帰ろう！')}}],
 2:[
   {t:'見張り台を3つともLv2にしろ',f:()=>[TOWERS.filter(t=>G.lv['tw_'+t.id]>=2).length,3],tg:()=>{const t=TOWERS.find(t=>G.lv['tw_'+t.id]<2);return t?{x:t.x,y:t.y,h:50}:null}},
   {t:'襲撃の夜を2回しのぎ、町の悩みを2つ解決しろ',p:()=>`襲撃 ${Math.min(2,G.story.raids||0)}/2・悩み ${Math.min(2,solvedN('snow'))}/2`,f:()=>[Math.min(2,G.story.raids||0)+Math.min(2,solvedN('snow')),4],on:()=>{G.story.raids=0;say('斥候カイ','守りはできた。群れの動きを見たい。2晩しのいでくれ')}},
-  {t:'奥地の森で巨大な足跡を調べろ',f:()=>[G.story.fp?1:0,1],tg:()=>Object.assign(FP(),{h:60}),on:()=>{say('斥候カイ','襲ってくる数が明らかに増えてる。奥地の森に、王の足跡があるはずだ');say('斥候カイ','光っている場所を調べてきてくれ')}},
-  {t:'王の手下（ボスオオカミ）をたおせ',f:()=>[G.story.minion&&!G.bears.some(b=>b.id===G.story.minion&&!b.dead)?1:0,1],tg:()=>{const b=G.bears.find(b=>b.id===G.story.minion&&!b.dead);return b?{x:b.x,y:b.y,h:70}:null},on:()=>{say('斥候カイ','…でかい。しかも町の方へ続いてる。気をつけろ、手下が来るぞ！')}},
-  {t:()=>{const g=goalOf(2);return `${g.n}を建てろ（かまどLv${g.lv}・町人${g.pop}人）`},p:()=>`$${goalOf(2).c.toLocaleString()}`,f:()=>[G.monument?1:0,1],tg:()=>({x:MON.x,y:MON.y,h:60}),on:()=>{say('村長オルガ','手下を倒したか…王は光を嫌うという言い伝えがある');say('村長オルガ','氷の大灯台を建てれば、王をおびき出せるかもしれない')}},
-  {t:'白き王をたおし、灯台を守れ',p:()=>{const k=kingOf();return k?`王 HP ${Math.ceil(k.hp)}`:'今夜'},f:()=>[0,1],tg:()=>{const k=kingOf();return k?{x:k.x,y:k.y,h:90}:null},on:()=>{say('斥候カイ','灯台の光に王が気づいた…今夜、来るぞ！')}}]};
+  {t:'奥地の森で巨大な足跡を調べろ',f:()=>[G.story.fp?1:0,1],tg:()=>Object.assign(FP(),{h:60}),on:()=>{say('斥候カイ','群れは、まっすぐ町の真ん中を目指してくる。まるで何かに引き寄せられてるみたいだ');say('斥候カイ','奥地の森に、王の足跡があるはずだ。光っている場所を調べてきてくれ')}},
+  {t:'王の手下（ボスオオカミ）をたおせ',f:()=>[G.story.minion&&!G.bears.some(b=>b.id===G.story.minion&&!b.dead)?1:0,1],tg:()=>{const b=G.bears.find(b=>b.id===G.story.minion&&!b.dead);return b?{x:b.x,y:b.y,h:70}:null},on:()=>{say('斥候カイ','…でかい。しかも足跡は森の南の氷河から続いてる。気をつけろ、手下が来るぞ！')}},
+  {t:'凍てつく氷河の「光の祭壇」を調べろ（鏡の謎）',f:()=>[hasClue('c6')?1:0,1],tg:()=>G.zones.C?{x:MR.alt.x,y:MR.alt.y,h:60}:null,on:()=>{say('斥候カイ','手下の足跡は、森の南の「凍てつく氷河」へ続いてた');say('斥候カイ','氷河の奥に祭壇があるらしい。氷の鏡で光を導く仕掛けだそうだ')}},
+  {t:()=>{const g=goalOf(2);return `${g.n}を建てろ（かまどLv${g.lv}・町人${g.pop}人）`},p:()=>`$${goalOf(2).c.toLocaleString()}`,f:()=>[G.monument?1:0,1],tg:()=>({x:MON.x,y:MON.y,h:60}),on:()=>{say('斥候カイ','ヨルンの手記…「石は、町でいちばん温かい場所に眠らせた」？ どういう意味だ…');say('村長オルガ','……それより王だよ。王は光を嫌うという言い伝えがある。氷の大灯台を建てて、おびき出そう')}},
+  {t:'白き王をたおし、灯台を守れ',p:()=>{const k=kingOf();return k?`王 HP ${Math.ceil(k.hp)}`:'今夜'},f:()=>[0,1],tg:()=>{const k=kingOf();return k?{x:k.x,y:k.y,h:90}:null},on:()=>{say('斥候カイ','灯台の光に王が気づいた…今夜、来るぞ！')}}],
+4:[
+  {t:'町のみんなに話を聞け（緑の“？”）',f:()=>[['t_gordon','t_mina','t_borg'].filter(hasClue).length,3],tg:()=>{const n=NPCS.snow.find(n=>CLUES['t_'+n.id]&&!hasClue('t_'+n.id));return n?{x:n.x,y:n.y,h:70}:null}},
+  {t:'冬の心臓の隠し場所を推理しろ（Jキー→推理する）',f:()=>[G.story.deduced?1:0,1],on:()=>{say('斥候カイ','手がかりはそろった。手がかり帳（Jキー）を開いて、推理してみよう')}},
+  {t:'村長オルガと話せ',f:()=>[G.story.olga?1:0,1],tg:()=>({x:1085,y:890,h:70}),on:()=>{say('斥候カイ','かまどの下…町の真ん中じゃないか。オルガさんは、何か知ってるはずだ')}},
+  {t:'かまどのそばに立ち、火を落として地下を調べろ',f:()=>[G.story.dig?1:0,1],tg:()=>({x:CX,y:CY,h:110}),on:()=>{say('村長オルガ','100年守ってきた火だ。……でも、もういい。落としておくれ')}},
+  {t:'心臓の番人をたおせ',f:()=>[G.story.gdead?1:0,1],p:()=>{const b=G.bears.find(b=>b.id===G.story.guard&&!b.dead);return b?`HP ${Math.ceil(b.hp)}`:''},tg:()=>{const b=G.bears.find(b=>b.id===G.story.guard&&!b.dead);return b?{x:b.x,y:b.y,h:90}:null}},
+  {t:'冬の心臓を「南への道」の入口まで運べ',f:()=>[G.story.hs===3?1:0,1],tg:()=>{const S=G.story;return S.hs===1?{x:ROAD.x,y:ROAD.y,h:90}:{x:S.hx||CX,y:S.hy||CY,h:60}},on:()=>{say('斥候カイ','石を南へ返そう。心臓を持って、北東の「南への道」まで運ぶんだ！')}},
+  {t:'最後の夜：心臓を追う群れから町を守れ',p:()=>'今夜',f:()=>[0,1],on:()=>{G.finalPending=true;say('斥候カイ','カイが心臓を砂の町へ運んでいく。狼どもは最後の悪あがきだ…今夜を守りきれ！')}}]};
 const TALKQ=[];let talkT=0;
 function say(who,txt,local){if(TALKQ.length<8)TALKQ.push([who,txt]);if(!local&&NET.mode==='host'){NET.outS=NET.outS||[];if(NET.outS.length<6)NET.outS.push([who,txt])}}
 function tickTalk(dt){const el=$('talk');if(!el)return;if(!running){el.hidden=true;talkT=0;TALKQ.length=0;return}if(talkT>0){talkT-=dt;if(talkT<=0)el.hidden=true}
@@ -2410,7 +2531,8 @@ function saveData(){return{v:1,seed:G.seed,diff:G.diff,year:G.year,day:G.day,cas
 function snapSave(){if(!G||!G.story||NET.mode==='guest'||!running)return;store.set(SAVE_K,saveData())}
 function storyNew(np,seed){seed=seed||(1+((Math.random()*1e9)|0));
   if(gameMode!=='story'||dbgBio){newGame(np,{seed,diff:gameDiff,biome:dbgBio});G.story=null;return seed}
-  const d=store.get(SAVE_K,null);if(d&&d.v===1){if(d.fresh&&CH[d.story.ch]&&CH[d.story.ch].desert&&!d.biome){const sd=1+((Math.random()*1e9)|0);newGame(np,{seed:sd,diff:d.diff||0,biome:1});G.year=2;G.story=JSON.parse(JSON.stringify(d.story));G.story.seen=G.story.seen||{};return sd}newGame(np,{seed:d.seed,diff:d.diff||0,biome:d.biome||0});applySave(d);return d.seed}
+  const d=store.get(SAVE_K,null);if(d&&d.v===1&&d.fresh&&d.story.ch===4&&d.biome){const h=store.get(SAVE_K+'-home',null);const st=JSON.parse(JSON.stringify(d.story));if(h){newGame(np,{seed:h.seed,diff:h.diff||0,biome:0});applySave(h);G.players.forEach((p,i)=>{if(d.pl&&d.pl[i]){p.life=Object.assign({},d.pl[i].life||{});rpgRestore(p,d.pl[i])}});G.year=(d.year||h.year||2);G.story=st;G.story.seen=G.story.seen||{};G.finalPending=false;G.raid.on=false;return h.seed}newGame(np,{seed,diff:d.diff||0});G.story=st;return G.seed}
+  if(d&&d.v===1){if(d.fresh&&CH[d.story.ch]&&CH[d.story.ch].desert&&!d.biome){const sd=1+((Math.random()*1e9)|0);newGame(np,{seed:sd,diff:d.diff||0,biome:1});G.year=2;G.story=JSON.parse(JSON.stringify(d.story));keepGear(d.pl);G.story.seen=G.story.seen||{};return sd}newGame(np,{seed:d.seed,diff:d.diff||0,biome:d.biome||0});applySave(d);return d.seed}
   newGame(np,{seed,diff:gameDiff});G.story={ch:1,step:0,seen:{},raids:0};return G.seed}
 function applySave(d){G.year=d.year||1;G.day=d.day;G.t=(d.day-1)*G.DAY+.5;G.cash=d.cash;G.earned=d.earned;G.rep=d.rep;G.fuel=d.fuel;G.woodpile=d.woodpile||0;G.level=d.level;G.rank=d.rank||0;
   Object.assign(G.lv,d.lv);Object.assign(G.pm,d.pm);Object.assign(G.stats,d.stats);G.raidWins=d.raidWins||0;G.mission=d.mission;G.perkCount=d.perk||{};G.yearBonus=d.yb;G.metaGiven=d.mg;G.savePl=d.pl;G._dm=null;
@@ -2421,7 +2543,12 @@ function applySave(d){G.year=d.year||1;G.day=d.day;G.t=(d.day-1)*G.DAY+.5;G.cash
   while(G.sleds.length<(d.sleds||0))G.sleds.push({id:++G.nid,x:1500,y:1300,rider:null});
   G.players.forEach((p,i)=>{if(d.pl&&d.pl[i]){p.lv=Object.assign({gun:0,bag:0},d.pl[i].lv);p.life=Object.assign({},d.pl[i].life||{});rpgRestore(p,d.pl[i])}});
   G.story=JSON.parse(JSON.stringify(d.story));G.story.seen=G.story.seen||{};if(d.mon){G.monument=true;G.monV.visible=true;G.monV.scale.setScalar(.01);G.monPop=0;G.finalPending=true}
-  if(G.story.ch===2&&G.story.step===3)G.story.minion=0;if(G.story.ch===3&&G.story.step===3)G.story.queen=0;if(G.story.hs===1)G.story.hs=2;for(const k in (G.story.q||{})){const q=G.story.q[k];if(q.st===1&&QUESTS[k]&&QUESTS[k].type==='escort'){q.f=null;q.x=QUESTS[k].x;q.y=QUESTS[k].y}}G.story.king=0;G.story.back=!d.fresh}
+  if(G.story.ch===2&&G.story.step===3)G.story.minion=0;if(G.story.ch===3&&G.story.step===4)G.story.queen=0;if(G.story.ch===4&&G.story.step===4&&!G.story.gdead){G.story.step=3;G.story.dig=0;G.story.dg=0}if(G.story.ch===4)G.finalPending=G.story.step>=6;if(G.story.hs===1)G.story.hs=2;for(const k in (G.story.q||{})){const q=G.story.q[k];if(q.st===1&&QUESTS[k]&&QUESTS[k].type==='escort'){q.f=null;q.x=QUESTS[k].x;q.y=QUESTS[k].y}}G.story.king=0;G.story.back=!d.fresh}
+// chapter 4: back to the snow town (its snapshot from the end of chapter 2), keeping everyone's gear from the desert
+function keepGear(pl){if(pl)G.players.forEach((p,i)=>{if(pl[i]){p.life=Object.assign({},pl[i].life||{});rpgRestore(p,pl[i])}})}
+function goHome(st){const h=store.get(SAVE_K+'-home',null),pl=saveData().pl,chars=G.charOf.slice(),diff=G.diff,seed=h?h.seed:1+((Math.random()*1e9)|0);if(NET.mode==='host'){NET.guestPeer=null;NET.endInfo=null}
+  newGame(1,{seed,diff,biome:0,chars});if(h)applySave(h);G.players.forEach((p,i)=>{if(pl&&pl[i]){p.life=Object.assign({},pl[i].life||{});rpgRestore(p,pl[i])}});G.story=st;G.story.seen=G.story.seen||{};G.finalPending=false;G.raid.on=false;G.year=Math.max(G.year||1,3);
+  if(NET.mode==='host')NET.room.presence({role:'host',seed,ch:meta.pick||'Rogue_Hooded',df:diff,bi:0,trip:1}).catch(()=>{});updateCam(0,true);hudInit();const d=saveData();d.fresh=0;store.set(SAVE_K,d)}
 function storyIntro(){const S=G.story,C=CH[S.ch];if(!C)return;
   if(!S.seen.intro){S.seen.intro=1;const go=()=>{if(!running||G.story!==S)return;banner(C.n,C.t,C.sub,'area');setTimeout(()=>{if(running&&G.story===S)for(const [w,t] of C.intro||[])say(w,t)},1600);trackerFlash()};if(C.open){NET.opCh=S.ch;playOpening(C,go)}else setTimeout(go,1500);return}
   setTimeout(()=>{if(running&&G.story===S)banner(C.n,C.t,C.sub,'area')},3400);
@@ -2435,26 +2562,27 @@ function spawnKing(){spawnRaider(true);const b=G.bears[G.bears.length-1];b.king=
   setTimeout(()=>{if(running)banner('第2章','白き王が現れた！','巨大な王が灯台へ向かっている。囲んでたおせ','cold')},900);say('斥候カイ','あれが…白き王だ！ みんなで囲め！')}
 function updateStory(dt){const S=G.story;if(!S)return;S.t=(S.t||0)+dt;const ph=(G.t%G.DAY)/G.DAY;
   if(S.ch===1){
+    if(G.day>=2&&!isNight())beat('cal',()=>{say('村長オルガ','今朝、暦をめくって驚いたよ。……暦の上じゃ、もう夏至を過ぎてるんだ');say('村長オルガ','こんなに雪がやまない年は、わたしも初めてさ');addClue('c1')});
     if(isNight()&&G.day===1)beat('n1',()=>say('斥候カイ','日が落ちると一気に冷える。かまどのそばを離れるなよ'));
     if(G.day>=2&&ph>.45&&!isNight())beat('r1',()=>say('斥候カイ','北の森で狼どもがうろついてる。今夜あたり来るぞ。見張り台を建てておけ'));
     if(G.day>=1&&S.t>40)beat('q1',()=>{say('村長オルガ','町のみんなも、それぞれ困りごとを抱えてるんだ');say('村長オルガ','頭に“！”が出ている人に近づいて、Eキーで話しかけてごらん')});
     if(!S.shopOpen&&G.stations.steak.shelf>0)beat('shop',()=>{S.shopOpen=1;G.stations.steak.custT=14;say('村長オルガ','焼いた肉のいい匂いが、吹雪に乗って流れていく…');setTimeout(()=>{if(!running||G.story!==S)return;spawnCustomer(G.stations.steak);say('旅人','いい匂いにつられて来ちまった…一切れ売ってもらえないか？');toast('はじめてのお客さん！ レジに立って売ろう','gold')},3500)});
     if(S.shopOpen&&(G.stats.sold||0)>=1)beat('fame1',()=>{say('旅人','うまい！ この町の肉のこと、みんなに話しておくよ');say('村長オルガ','うわさが広まれば、お客さんはどんどん増えるはずさ')});
     if((G.stats.sold||0)>=15)beat('fame2',()=>say('村長オルガ','うわさが隣の村まで届いたらしい。行列ができはじめたね'));
-    if(G.zones.B)beat('zB',()=>say('村長オルガ','氷の湖か…昔はみんなで魚を焼いて冬を越したもんさ'));
+    if(G.zones.B)beat('zB',()=>{say('村長オルガ','氷の湖か…昔はみんなで魚を焼いて冬を越したもんさ');say('斥候カイ','湖の南東に氷の洞窟がある。奥に、昔の人が封じた扉があるって話だ')});
     if(G.zones.C)beat('zC',()=>say('斥候カイ','奥地の森で妙な足跡を見た。家ほどもある…ただの狼じゃない'));
     if(G.zones.D)beat('zD',()=>say('村長オルガ','温泉が戻った！ これでみんな凍えずにすむ'));
     if(G.monument)beat('mon',()=>{say('村長オルガ','像ができた…町の灯りがよみがえったね');say('斥候カイ','待て、森が騒がしい。今夜は総出で来るぞ！')})}
+  updatePuzzles(dt);updateCh4(dt);
   const L=SOBJ[S.ch];if(!L)return;
   if(S.step===0&&!S.seen.s0&&S.t>9){S.seen.s0=1;L[0].on&&L[0].on()}
   if(S.ch===2){if(S.step===3&&S.minion){const mb=G.bears.find(b=>b.id===S.minion);if(mb&&!mb.bt)setBt(mb,'alpha')}const kb=G.bears.find(b=>b.king&&!b.dead);if(kb&&kb.bt!=='king')setBt(kb,'king')}
   if(S.ch===2){if(S.step===2&&!S.fp&&G.players.some(p=>dist(p.x,p.y,FP().x,FP().y)<95)){S.fp=1;burst(FP().x,FP().y,30,40,{c:['#9fe0ff','#ffffff'],s0:60,s1:220,u0:120,u1:320,l0:.6,l1:1.2,add:true})}
     if(S.step===3&&!S.minion)spawnMinion();
-    if(S.step>=5&&G.raid.on&&G.raid.final&&!S.king){S.king=1;spawnKing()}}
+    if(S.step>=6&&G.raid.on&&G.raid.final&&!S.king){S.king=1;spawnKing()}}
   if(S.ch===3&&DES()){if(S.step===2&&!S.ruin&&G.players.some(p=>dist(p.x,p.y,RUIN.x,RUIN.y)<120))S.ruin=1;
-    if(S.step===3&&!S.queen){const b=spawnBoss('queen');b.x=RUIN.x+160;b.y=RUIN.y+60;b.m.g.position.set(b.x,0,b.y);b.hp=b.max=Math.round(240*DM().hp);S.queen=b.id}
-    if(S.step===4){if(S.hs===0||S.hs===2){const p=G.players.find(p=>!(p.down>0)&&dist(p.x,p.y,S.hx,S.hy)<60);if(p){S.hs=1;S.hc=p.id;toast('冬の心臓を持った！ 井戸まで運べ','gold');SFX.rare()}}
-      else if(S.hs===1){const p=G.players[S.hc];if(!p||p.down>0){S.hs=2;if(p){S.hx=p.x;S.hy=p.y}toast('心臓を落とした！ 拾い直せ','cold')}else{S.hx=p.x;S.hy=p.y;if(dist(p.x,p.y,CX,CY)<120){S.hs=3;S.hx=CX;S.hy=CY;burst(CX,CY,60,60,{c:['#9fe0ff','#ffffff','#7fd4ff'],s0:120,s1:360,u0:200,u1:480,l0:.8,l1:1.5,add:true});SFX.ssr();G.shake=12}}}}}
+    if(S.step===4&&!S.queen){const b=spawnBoss('queen');b.x=RUIN.x+160;b.y=RUIN.y+60;b.m.g.position.set(b.x,0,b.y);b.hp=b.max=Math.round(240*DM().hp);S.queen=b.id}
+}
   const o=L[S.step];if(o&&S.step<L.length-1){const [c,g]=o.f();if(c>=g){S.step++;const n=L[S.step];banner('目標達成！',stx(n),'','area');SFX.rare();n.on&&n.on();snapSave();trackerFlash()}}}
 function storyHud(){const S=G.story,L=S&&SOBJ[S.ch];if(!L)return false;const i=Math.min(S.step||0,L.length-1),o=L[i],[c,g]=o.f();$('mN').textContent=`${CH[S.ch].n} ${i+1}/${L.length}`;$('mT').textContent=stx(o);$('mP').textContent=o.p?o.p():`${Math.min(c,g)}/${g}`;return true}
 function storyT(gp){const S=G.story,L=S&&SOBJ[S.ch];if(!L)return null;const o=L[Math.min(S.step||0,L.length-1)];return o.tg?o.tg(gp):null}
@@ -2469,7 +2597,7 @@ function storyVis(){if(!G)return;ruinVis();const S=G.story,on=!!(S&&S.ch===2&&S.
 function storyEnd(cleared,why){$('again').textContent='もう一度';show('again',true);$('endTitle').style.fontSize='';$('endMsg').style.whiteSpace='pre-line';if(!G.story)return;const C=CH[G.story.ch]||CH[3];
   if(cleared){$('endTitle').innerHTML=`<span style="display:block;font-size:.5em">${C.n}</span>${C.t}<em> 完</em>`;$('endTitle').style.fontSize='46px';show('again',false);$('endMsg').textContent=C.outro||$('endMsg').textContent;const N=CH[G.story.ch+1];$('cont').textContent=N&&N.play?`${N.n}「${N.t}」へ`:'このまま続ける（続きの章は制作中）';
     if(NET.mode==='guest')$('endBest').textContent='ホストが次の章に進むのを待っています…';
-    else{if(G.story.ch===2)store.set(SAVE_K+'-home',saveData());const d=saveData();d.year=G.year+1;d.day=G.day+1;d.yb=(G.yearBonus||0)+15*G.year;d.mon=0;d.fuel=100;d.story={ch:G.story.ch+1,step:0,seen:{},raids:0};d.fresh=1;store.set(SAVE_K,d)}}
+    else{if(G.story.ch===2)store.set(SAVE_K+'-home',saveData());const d=saveData();d.year=G.year+1;d.day=G.day+1;d.yb=(G.yearBonus||0)+15*G.year;d.mon=0;d.fuel=100;d.story={ch:G.story.ch+1,step:0,seen:{},raids:0,clues:(G.story.clues||[]).slice()};d.fresh=1;store.set(SAVE_K,d)}}
   else{$('endMsg').textContent+='\n\nものがたりは「今日の朝」から続けられる。';$('again').textContent=NET.mode==='guest'?'もう一度参加':'今日の朝からやり直す'}}
 
 function startGame(){audioOn();
@@ -2517,7 +2645,7 @@ $('p1').addEventListener('click',()=>setPlayers(1));$('p2').addEventListener('cl
 $('start').addEventListener('click',startGame);$('again').addEventListener('click',startGame);$('toTitle').addEventListener('click',toTitle);$('quit').addEventListener('click',toTitle);
 function nextYear(){G.yearBonus=(G.yearBonus||0)+15*G.year;G.year++;G.monument=false;G.monPop=0;G.finalPending=false;G.raid.on=false;G.mission=MISSIONS.length;G.endless=false;NET.endInfo=null;
   const g=goalOf(G.year);banner(`${G.year}年目`,'もっと厳しい冬が来る',`寒さ・燃料・襲撃・食費が強くなった。目標：${g.n}（$${g.c.toLocaleString()}・町人${g.pop}人・かまどLv${g.lv}）`,'cold');SFX.wave()}
-$('cont').addEventListener('click',()=>{nextYear();if(G.story){G.story={ch:G.story.ch+1,step:0,seen:{},raids:0};if(CH[G.story.ch]&&CH[G.story.ch].desert&&!DES()){const st=G.story;startTrip();G.story=st;G.year=2;const d=saveData();d.fresh=0;store.set(SAVE_K,d)}storyIntro()}running=true;show('end',false);show('hud',true);show('bottom',true);show('side',true)});
+$('cont').addEventListener('click',()=>{nextYear();if(G.story){G.story={ch:G.story.ch+1,step:0,seen:{},raids:0,clues:(G.story.clues||[]).slice()};if(G.story.ch===4&&DES())goHome(G.story);else if(CH[G.story.ch]&&CH[G.story.ch].desert&&!DES()){const st=G.story,pl0=saveData().pl;startTrip();G.story=st;keepGear(pl0);G.year=2;const d=saveData();d.fresh=0;store.set(SAVE_K,d)}storyIntro()}running=true;show('end',false);show('hud',true);show('bottom',true);show('side',true)});
 // adaptive quality: drop bloom and shadow resolution on slow devices
 const QL=[{n:'低',pr:.7,sh:0,fx:0,decor:0,snow:.3},{n:'中',pr:1,sh:2048,fx:0,decor:.45,snow:.55},{n:'高',pr:Math.min(devicePixelRatio||1,2),sh:4096,fx:1,decor:1,snow:1}];
 window.GQ=null;const GQ=window.GQ={mode:store.get('mw2-gfx','auto'),tier:2,snow:1};const FX0=composer;
@@ -2536,7 +2664,7 @@ function checkPerf(){tickFps(Math.min(.25,(performance.now()-(checkPerf.l||perfo
 
 $('gfx').addEventListener('click',()=>{const order=['auto',2,1,0];GQ.mode=order[(order.indexOf(GQ.mode)+1)%4];store.set('mw2-gfx',GQ.mode);applyGfx(GQ.mode==='auto'?2:GQ.mode);perf={t0:0,f:0,skip:0};toast(GQ.mode==='auto'?'画質：自動（重いと自動で下げます）':'画質：'+QL[GQ.tier].n,'gold')});
 function gpuWarn(){if(!SOFTGL)return;const el=$('gpuWarn');el.hidden=false;el.innerHTML='⚠ ブラウザの<b>グラフィックアクセラレーションがオフ</b>になっていて、とても重くなります。<br>Chromeの「設定 → システム →<br>グラフィック アクセラレーションが使用可能な場合は使用する」をオンにして再起動してね';setTimeout(()=>toast('グラフィックアクセラレーションがオフなので重いです（タイトル画面に直し方）','cold',true),1500)}
-addEventListener('keydown',e=>{if(e.code==='KeyL'&&!e.repeat&&running&&!(e.target&&e.target.tagName==='INPUT')){toggleLife();return}if(e.code==='KeyQ'&&!e.repeat&&running&&!DLG.open&&isRPG()){const me=G.players[G.me]||G.players[0];if(me&&dist(me.x,me.y,WB.x,WB.y)<90){openCraft();return}}if(DLG.open&&!e.repeat&&(e.code==='KeyE'||e.code==='Space'||e.code==='Enter'||/^Digit[1-9]$/.test(e.code))){dlgKey(e.code);e.preventDefault();return}if(e.code!=='KeyE'||e.repeat||!running)return;if(e.target&&e.target.tagName==='INPUT')return;const me=G.players[G.me]||G.players[0];if(!me)return;const nn=npcNear(me);if(nn){openTalk(nn);return}if(isRPG()&&dist(me.x,me.y,WB.x,WB.y)<90&&!(snowy()&&has(me,'log'))){openCraft();return}const gr=craftGrade();if(NET.mode==='guest'){NET.eCount=(NET.eCount||0)+1;NET.eGrade=gr}else{me.ePress=true;me.eGrade=gr}});
+addEventListener('keydown',e=>{if(e.code==='KeyJ'&&!e.repeat&&running&&isRPG()&&!DLG.open&&!(e.target&&e.target.tagName==='INPUT')){const el=$('lifeCard');if(!el.hidden&&G._stab==='clue'){el.hidden=true}else{G._stab='clue';el.hidden=false;lifeHud(true)}return}if(e.code==='KeyL'&&!e.repeat&&running&&!(e.target&&e.target.tagName==='INPUT')){toggleLife();return}if(e.code==='KeyQ'&&!e.repeat&&running&&!DLG.open&&isRPG()){const me=G.players[G.me]||G.players[0];if(me&&dist(me.x,me.y,WB.x,WB.y)<90){openCraft();return}}if(DLG.open&&!e.repeat&&(e.code==='KeyE'||e.code==='Space'||e.code==='Enter'||/^Digit[1-9]$/.test(e.code))){dlgKey(e.code);e.preventDefault();return}if(e.code!=='KeyE'||e.repeat||!running)return;if(e.target&&e.target.tagName==='INPUT')return;const me=G.players[G.me]||G.players[0];if(!me)return;const nn=npcNear(me);if(nn){openTalk(nn);return}if(isRPG()&&dist(me.x,me.y,WB.x,WB.y)<90&&!(snowy()&&has(me,'log'))){openCraft();return}const gr=craftGrade();if(NET.mode==='guest'){NET.eCount=(NET.eCount||0)+1;NET.eGrade=gr}else{me.ePress=true;me.eGrade=gr}});
 addEventListener('keydown',e=>{if(e.code==='KeyR'&&!e.repeat&&running&&isRPG()&&!(e.target&&e.target.tagName==='INPUT'))skillPress()});
 addEventListener('keydown',e=>{if(e.code!=='KeyF'||e.repeat||!running)return;if(e.target&&e.target.tagName==='INPUT')return;if(NET.mode==='guest'){NET.fCount=(NET.fCount||0)+1}else{const me=G.players[G.me]||G.players[0];if(me)me.fPress=true}});
 setTimeout(()=>dbgLine(),0);
