@@ -1219,7 +1219,7 @@ for(const tw of TOWERS)P.push(padDef({id:'tw_'+tw.id,x:tw.x,y:tw.y,name:`見張�
 }
 function makePadMesh(pad){
   const S=pad.big?128:92,c=document.createElement('canvas');c.width=c.height=256;const tex=new T.CanvasTexture(c);tex.encoding=T.sRGBEncoding;
-  const mesh=M_(new T.PlaneGeometry(S,S),new T.MeshBasicMaterial({map:tex,alphaTest:.35,depthWrite:false,depthTest:false}),false);mesh.rotation.set(-Math.PI/2,0,YAW);mesh.position.set(pad.x,1.2,pad.y);mesh.renderOrder=5;
+  const mesh=M_(new T.PlaneGeometry(S,S),new T.MeshBasicMaterial({map:tex,alphaTest:.35,transparent:true,depthWrite:false,depthTest:false}),false);mesh.rotation.set(-Math.PI/2,0,YAW);mesh.position.set(pad.x,1.2,pad.y);mesh.renderOrder=5;
   const icon=new T.Group();icon.position.set(pad.x,56,pad.y);const money=pad.pay==='cash';
   const coin=M_(geo('coin',()=>new T.CylinderGeometry(16,16,5,28)),std(pad.big?'#f7c948':money?'#8ac66a':'#f0a15a',{m:.2,r:.45,e:pad.big?'#d19a1c':money?'#3f7a2c':'#b8661e',ei:.2}));coin.rotation.x=Math.PI/2;icon.add(coin);
   const face_=makeTextPlate(pad.k,26,26,'none','#ffffff');face_.position.z=2.8;icon.add(face_);
