@@ -1,5 +1,5 @@
 /* めちゃホワイト — built from src/*.js by tools/build.py. Edit the sources, not this file. */
-(()=>{const BUILD='20260927195845';
+(()=>{const BUILD='20260927205956';
 const $=id=>document.getElementById(id);
 if(!window.THREE){$('loading').textContent='3Dの読み込みに失敗しました。再読み込みしてください';return}
 const T=THREE;
@@ -2722,14 +2722,15 @@ function updateTwins(dt){if(!isRPG())return;G.tw=G.tw||{};for(const T2 of twinLi
       const v=Math.round(300*(1+D.i*.5)*(1+G.day*.05));G.cash+=v;G.earned+=v;banner('双子の宝箱が開いた！',`+$${v}`,G.players.length>1?'息ぴったり！ 2人の装備がもらえた':'ひとりで走りきった！','r-SSR');SFX.ssr&&SFX.ssr();burst(T2.c.x,T2.c.y,50,40,{c:['#ffd23f','#ffffff','#9fe3ff'],s0:80,s1:300,u0:200,u1:450,l0:.7,l1:1.3,add:true})}}}
 // ---- hidden chests scattered in the wild (only visible up close)
 const HIDDEN={snow:[[420,330],[1760,260],[2250,520],[180,1100],[560,1480],[2280,980],[1600,1640],[860,560],[1980,1720],[300,760]],desert:[[260,300],[2150,300],[1500,1300],[620,1850],[1300,2250],[2250,1150],[900,1000],[1900,1900]]};
+function hidLocked(x,y){if(DES())return false;const z=inZone(x,y);return !!(z&&!G.zones[z.id])}
 function updateHidden(dt){if(!isRPG())return;const L=HIDDEN[DES()?'desert':'snow'];G.hid=G.hid||{};const H=G.hid[DES()?'d':'s']=G.hid[DES()?'d':'s']||L.map(()=>({open:0,rt:0}));
-  L.forEach(([x,y],i)=>{const s=H[i];if(s.open){s.rt-=dt;if(s.rt<=0)s.open=0;return}const p=G.players.find(p=>!(p.down>0)&&dist(p.x,p.y,x,y)<40);if(!p){s.t=0;return}s.t=(s.t||0)+dt;if(s.t<.9)return;s.open=1;s.rt=G.DAY*1.5;
+  L.forEach(([x,y],i)=>{const s=H[i];if(s.open){s.rt-=dt;if(s.rt<=0)s.open=0;return}if(hidLocked(x,y))return;const p=G.players.find(p=>!(p.down>0)&&dist(p.x,p.y,x,y)<40);if(!p){s.t=0;return}s.t=(s.t||0)+dt;if(s.t<.9)return;s.open=1;s.rt=G.DAY*1.5;
     const v=Math.round(rnd(60,160)*(1+G.day*.05));G.cash+=v;G.earned+=v;const mats=DES()?['relic','herb','iron']:['iron','herb','core','icec'];const m=mats[Math.floor(Math.random()*mats.length)];addMat(p,m,2);cnt(p,'chest');
     if(Math.random()<.25){const pool=Object.keys(ITEMS).filter(k=>ITEMS[k].s!=='c'&&!/queen|king|glking|sunspear|starsword/.test(k));const id=pool[Math.floor(Math.random()*pool.length)];giveItem(p,id);grantStar(p,id,0)}
     banner('隠された宝箱！',`+$${v}`,`${MATS[m]}を見つけた`,'r-SSR');SFX.chest&&SFX.chest();burst(x,y,26,24,{c:['#ffd23f','#ffffff'],s0:60,s1:200,u0:150,u1:300,l0:.6,l1:1,add:true})})}
 // ---- golden beasts: a rare shiny enemy wanders the wild some days
 function updateGold(dt){if(!isRPG()||ADV()&&false)return;G.goldT=(G.goldT==null?60:G.goldT)-dt;if(G.goldT>0)return;G.goldT=G.DAY*.8;if(G.bears.some(b=>b.gold&&!b.dead)||Math.random()<.4)return;
-  const b=spawnBear(DES()?'A':'C',true);b.kind='big';b.gold=1;b.nm=DES()?'金色のサソリ':'金色の狼';b.hp=b.max=Math.round(60*DM().hp);b.m.g.traverse(o=>{if(o.isMesh&&o!==b.m.ring&&o.material){o.material=o.material.clone();o.material.color&&o.material.color.set('#ffd23f');o.material.emissive=lin('#a86a00');o.material.emissiveIntensity=.45;o.material.metalness=.6}});b.m.g.scale.multiplyScalar(1.25);
+  const b=spawnBear(DES()||!G.zones.C?'A':'C',true);b.kind='big';b.gold=1;b.nm=DES()?'金色のサソリ':'金色の狼';b.hp=b.max=Math.round(60*DM().hp);b.m.g.traverse(o=>{if(o.isMesh&&o!==b.m.ring&&o.material){o.material=o.material.clone();o.material.color&&o.material.color.set('#ffd23f');o.material.emissive=lin('#a86a00');o.material.emissiveIntensity=.45;o.material.metalness=.6}});b.m.g.scale.multiplyScalar(1.25);
   toast(`${b.nm}が現れた！ 地図の赤い点をさがせ`,'gold')}
 function goldKilled(b,p){if(!b.gold||!p||!G.players.includes(p))return;const v=Math.round(400*(1+G.day*.05));G.cash+=v;G.earned+=v;addMat(p,DES()?'relic':'star',DES()?4:1);const pool=['w_icesword','a_icearmor','w_frostbow','c_star','w_sunbow','a_pharaoh'].filter(k=>ITEMS[k]);const id=pool[Math.floor(Math.random()*pool.length)];giveItem(p,id);grantStar(p,id,.3);banner(`${b.nm}をたおした！`,`+$${v}`,'レアな装備を落とした','r-SSR')}
 // ---- friendship: chat once a day, give a dish; hearts unlock small thank-you gifts
@@ -2742,7 +2743,7 @@ const hearts=id=>{const n=((G.story&&G.story.aff)||{})[id]||0,l=affLv(n);return 
 // ---- visuals for plates / hidden chests
 function extrasFx(){if(!G||!running||!isRPG())return;const me=G.players[G.me]||G.players[0];if(!me)return;
   for(const T2 of twinList()){const s=(G.tw||{})[T2.d]||{};for(const k of ['a','b']){const q=T2[k];if(dist(me.x,me.y,q.x,q.y)<300)label(q.x,q.y,24,`<b>${s.open?'✓':'◎'} 双子の石</b><br><small>${s.open?'開いた':'2つ同時に踏む'}</small>`,s[k]>0?'gold':'')}if(!s.open&&dist(me.x,me.y,T2.c.x,T2.c.y)<300)label(T2.c.x,T2.c.y,50,`<b>${T2.n}</b><br><small>${G.players.length>1?'2人で双子の石を同時に踏め':'石を踏んで3.5秒以内にもう片方へ'}</small>`,'note')}
-  const L=HIDDEN[DES()?'desert':'snow'],H=(G.hid||{})[DES()?'d':'s']||[];L.forEach(([x,y],i)=>{if(H[i]&&H[i].open)return;const d=dist(me.x,me.y,x,y);if(d<230){if(Math.random()<.15)psA.emit({x:x+rnd(-8,8),y:6,z:y+rnd(-8,8),vx:0,vy:50,vz:0,g:0,life:.6,max:.6,r:4,c:C('#ffe07a'),air:true,fade:.2});if(d<150)label(x,y,24,'<b>✦ 何か光っている</b>','gold')}});
+  const L=HIDDEN[DES()?'desert':'snow'],H=(G.hid||{})[DES()?'d':'s']||[];L.forEach(([x,y],i)=>{if(H[i]&&H[i].open)return;if(hidLocked(x,y))return;const d=dist(me.x,me.y,x,y);if(d<230){if(Math.random()<.15)psA.emit({x:x+rnd(-8,8),y:6,z:y+rnd(-8,8),vx:0,vy:50,vz:0,g:0,life:.6,max:.6,r:4,c:C('#ffe07a'),air:true,fade:.2});if(d<150)label(x,y,24,'<b>✦ 何か光っている</b>','gold')}});
   for(const b of G.bears)if(b.gold&&!b.dead&&dist(me.x,me.y,b.x,b.y)<500)label(b.x,b.y,90,`<b>${b.nm}</b>`,'gold')}
 function extrasSnap(){return{tw:G.tw||null,hid:G.hid||null}}
 function extrasApply(x){if(!x)return;if(x.tw)G.tw=x.tw;if(x.hid)G.hid=x.hid}
