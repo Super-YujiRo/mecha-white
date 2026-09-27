@@ -1,0 +1,127 @@
+{
+"bt_Wolf": {
+"f": "bt_Wolf.glb"
+},
+"bt_Stag": {
+"f": "bt_Stag.glb"
+},
+"bt_Spider": {
+"f": "bt_Spider.glb"
+},
+"pr_Chest_Closed": {
+"f": "pr_Chest_Closed.glb"
+},
+"pr_Chest_Open": {
+"f": "pr_Chest_Open.glb"
+},
+"pr_Crystal1": {
+"f": "pr_Crystal1.glb"
+},
+"pr_Crystal3": {
+"f": "pr_Crystal3.glb"
+},
+"pr_Mineral": {
+"f": "pr_Mineral.glb"
+},
+"pr_Gold_Ingots": {
+"f": "pr_Gold_Ingots.glb"
+},
+"pr_Sword": {
+"f": "pr_Sword.glb"
+},
+"pr_Axe": {
+"f": "pr_Axe.glb"
+},
+"pr_Bow_Wooden": {
+"f": "pr_Bow_Wooden.glb"
+},
+"pr_Hammer_Small": {
+"f": "pr_Hammer_Small.glb"
+},
+"ch_Knight": {
+"f": "ch_Knight.glb"
+},
+"ch_Barbarian": {
+"f": "ch_Barbarian.glb"
+},
+"ch_Mage": {
+"f": "ch_Mage.glb"
+},
+"ch_Rogue": {
+"f": "ch_Rogue.glb"
+},
+"ch_Rogue_Hooded": {
+"f": "ch_Rogue_Hooded.glb"
+},
+"anims": {
+"f": "anims.glb"
+},
+"kit": {
+"f": "kit.glb"
+},
+"tx_leaf": {
+"f": "tx_leaf.rgba",
+"w": 256,
+"h": 256
+},
+"tx_bark": {
+"f": "tx_bark.rgba",
+"w": 128,
+"h": 128
+},
+"tx_rock": {
+"f": "tx_rock.rgba",
+"w": 128,
+"h": 128
+},
+"pine5": {
+"f": "pine5.glb"
+},
+"pine4": {
+"f": "pine4.glb"
+},
+"pine2": {
+"f": "pine2.glb"
+},
+"rock1": {
+"f": "rock1.glb"
+},
+"rock2": {
+"f": "rock2.glb"
+},
+"rock3": {
+"f": "rock3.glb"
+},
+"tx_bush": {
+"f": "tx_bush.rgba",
+"w": 256,
+"h": 256
+},
+"tx_dead": {
+"f": "tx_dead.rgba",
+"w": 128,
+"h": 128
+},
+"tx_grass": {
+"f": "tx_grass.rgba",
+"w": 128,
+"h": 128
+},
+"tx_peb": {
+"f": "tx_peb.rgba",
+"w": 128,
+"h": 128
+},
+"bush": {
+"f": "bush.glb"
+},
+"dead": {
+"f": "dead.glb"
+},
+"grass": {
+"f": "grass.glb"
+},
+"peb": {
+"f": "peb.glb"
+}
+}
