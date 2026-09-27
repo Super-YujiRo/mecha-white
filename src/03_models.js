@@ -377,7 +377,12 @@ function makeTower(){const g=new T.Group(),wood=std('#a8743f',{map:TEX.wood}),da
   if(KK&&KK.kit.tower){kkSkin(l1,[gun]);l1.add(kkP('tower',54,0,0,0,Math.PI/4));gun.position.set(0,122,0);gun.scale.setScalar(.8);
     kkSkin(l2,[]);l2.add(kkP('d_banner_r',20,0,52,30),kkP('d_banner_r',20,30,52,0,Math.PI/2));kkSkin(l3,[]);l3.add(kkP('d_torch',10,-26,0,24),kkP('d_torch',10,26,0,24),kkP('d_barrel',20,-30,0,-26),kkP('d_crates',26,30,0,-24))}
   return{g,gun,tiers:[l1,l2,l3]}}
-function makeTrap(){const g=new T.Group(),m=std('#a9b5c1',{m:.7,r:.35});g.add(at(cyl(44,44,1.4,std('#6a5040',{r:.95}),20,false),0,.8,0));for(let i=0;i<16;i++){const a=rnd(0,TAU),r=rnd(5,38);const c=at(cone(3.2,rnd(10,17),m,5),Math.cos(a)*r,5,Math.sin(a)*r);c.rotation.z=rnd(-.3,.3);g.add(c)}bake(g);return g}
+function makeTrap(){const g=new T.Group(),base=new T.Group(),iron=std('#5d6670',{m:.25,r:.55}),rim=std('#a7aeb6',{map:TEX.stone,r:.9}),hole=std('#23272c',{r:1});
+  base.add(at(cyl(47,49,4,rim,28),0,2,0),at(cyl(40,40,1,iron,28),0,4.2,0));
+  for(let i=0;i<14;i++){const a=i/14*TAU;base.add(at(rot(box(4,1,9,std(i%2?'#2a2a2a':'#f2c230',{r:.8})),0,-a,0),Math.cos(a)*43.5,4.3,Math.sin(a)*43.5))}
+  const P=[];for(let r=0;r<3;r++){const n=r?r*7:1;for(let k=0;k<n;k++){const a=k/n*TAU+r*.3,d=r*13;P.push([Math.cos(a)*d,Math.sin(a)*d])}}
+  for(const [x,z] of P)base.add(at(cyl(3.4,3.4,.6,hole,8),x,4.9,z));bake(base);g.add(base);
+  const sp=new T.Group(),steel=std('#e4eaf0',{m:.35,r:.28});for(const [x,z] of P){sp.add(at(cone(3,20,steel,6),x,10,z));sp.add(at(cyl(3.2,3.2,3,iron,6),x,1.5,z))}bake(sp);sp.position.y=-22;g.add(sp);g.userData.sp=sp;g.userData.up=0;return g}
 function makeTent(i){const g=new T.Group();const t=rot(cone(30,40,std(HCOL[i%5],{r:.9}),4),0,Math.PI/4,0);t.position.y=20;t.scale.set(1,1,1.3);g.add(t);g.add(at(box(12,20,2,std('#3a2a1e'),false),0,10,20));g.add(at(cyl(1.2,1.2,14,std('#5a3a20'),5),0,44,0));g.add(at(box(10,6,1,std('#ffd23f',{side:T.DoubleSide}),false),5,49,0));bake(g);g.add(blob(34));return g}
 function makeHouse(i){const g=new T.Group(),wood=std('#a86f3c',{map:TEX.wood}),roof=std(HCOL[i%5],{r:.8}),snowM=std('#f7fbff',{r:.9});g.add(at(rbox(58,34,46,2,wood),0,17,0));
   g.add(at(rot(box(66,5,34,roof),-.62,0,0),0,45,-12));g.add(at(rot(box(66,5,34,roof),.62,0,0),0,45,12));g.add(at(rot(box(60,4,30,snowM),-.62,0,0),0,49,-12));g.add(at(rot(box(60,4,30,snowM),.62,0,0),0,49,12));

@@ -42,7 +42,7 @@ function sync(dt){
     if(m.mx)beastAnim(m,b);const s=b.moving?Math.sin(b.step):0;m.legs.forEach((l,i)=>l.rotation.x=s*(i%2?-1:1)*(i<2?1:-1)*.6);m.head.rotation.x=b.swipe>0?-.4:Math.sin(G.t*2+b.x)*.05;
     m.fur.emissive.copy(C(b.hit>0?'#ff2020':'#000000'));m.fur.emissiveIntensity=b.hit>0?.5:0;m.brow.visible=b.state==='chase';m.ring.material.opacity=b.state==='chase'?.6+Math.sin(G.t*14)*.35:.7;
     if(b.hp<b.max||b.kind==='boss')label(b.x,b.y,68*S,bar(100*b.hp/b.max,b.kind==='boss'?'wide':''),'');
-    if(b.kind==='boss')if(b.rbi!=null&&rbList()[b.rbi]){const R=rbList()[b.rbi],me=G.players[G.me]||G.players[0],ok=lifeRank(me,'hunt')>=R.rq;label(b.x,b.y,86*S,`${R.n}${ok?'':`<br><small>🔒 狩人「${LR[R.rq].n}」で攻撃が通る</small>`}`,ok?'red':'note')}else label(b.x,b.y,86*S,b.bt?BTN[b.bt]:'BOSS','red');if(b.ph==='st'||b.stn)label(b.x,b.y,104*S,'★ ピヨピヨ ★ 大ダメージ','gold');
+    if(b.kind==='boss')if(b.rbi!=null&&rbList()[b.rbi]){const R=rbList()[b.rbi],me=G.players[G.me]||G.players[0],ok=lifeRank(me,'hunt')>=R.rq;label(b.x,b.y,86*S,`${R.n}${ok?'':`<br><small>🔒 狩人「${LR[R.rq].n}」で攻撃が通る</small>`}`,ok?'red':'note')}else label(b.x,b.y,86*S,b.nm||(b.bt?BTN[b.bt]:'BOSS'),'red');if(b.ph==='st'||b.stn)label(b.x,b.y,104*S,'★ ピヨピヨ ★ 大ダメージ','gold');
     if(b.roar>0)label(b.x,b.y,86*S+(b.kind==='boss'?20:0),DES()?'シャーッ！':'ガオッ！','red',1,1+b.roar*.4)}
   for(const m of G.pickups){m.mesh.position.set(m.x,m.h+2+(m.h<=0?Math.sin(G.t*4+m.x)*1.5:0),m.y);m.mesh.rotation.y=m.spin+G.t*(m.h>0?6:1)}
   // workers
@@ -127,7 +127,9 @@ function syncSleds(dt){while(G.sledV.length<G.sleds.length){const v=makeSledMesh
 function syncTown(dt){syncRescue(dt);syncSleds(dt);const v=G.v;v.f._pos={x:CX,y:CY};const ft=G.level>=7?3:G.level>=5?2:G.level>=3?1:0;tierPop(v.f,ft,v.f.tiers,dt);if(ft>=3)v.f.tiers[2].rotation.y=G.t*.5;
   for(const id in G.stations){const st=G.stations[id];if(!st.open)continue;st.ct._pos={x:st.def.counter.x,y:st.def.counter.y};tierPop(st.ct,shopTier(id),st.ct.tiers,dt)}
   for(const tw of TOWERS){const m=G.towerV[tw.id],lv=G.lv['tw_'+tw.id];m.g.visible=lv>0;m._pos={x:tw.mx,y:tw.my};tierPop(m,lv,m.tiers,dt)}
-  G.trapV.forEach(m=>{m.visible=G.lv.trap>0;m.scale.setScalar(.75+G.lv.trap*.15)});
+  G.trapV.forEach((m,i)=>{m.visible=G.lv.trap>0;m.scale.setScalar(.8+G.lv.trap*.12);if(!m.visible)return;const a=GATE_ANG[i],gx=CX+Math.cos(a)*FR,gy=CY+Math.sin(a)*FR;
+    const foe=G.bears.some(b=>!b.dead&&!b.hide&&dist(b.x,b.y,gx,gy)<78),U=m.userData;const was=U.up>.5;U.up=foe?Math.min(1,U.up+dt*9):Math.max(0,U.up-dt*1.6);
+    if(foe&&!was&&U.up>.5){SFX.chop&&SFX.chop();burst(gx,gy,8,4,{c:['#d9d0c0','#ffffff'],s0:30,s1:90,u0:60,u1:140,l0:.25,l1:.5,r0:3,r1:6})}U.sp.position.y=-22+22*(foe?easeOutBack(U.up):U.up);U.sp.visible=U.up>0})
   const pop=G.surv.filter(s=>!s.frozen).length+G.workers.length;
   const rk=G.rank||0;syncStages(dt);
   if((G.level||1)>=8&&isNight()&&Math.random()<dt*1.2){const x=rnd(900,1500),y=rnd(900,1500),c=['#ffd23f','#ff8ad8','#7fe3ff','#8ff08f'][Math.floor(rnd(0,4))];burst(x,y,rnd(260,380),40,{c:[c,'#ffffff'],s0:80,s1:200,u0:-40,u1:60,g:60,l0:.8,l1:1.4,add:true,r0:5,r1:9});if(Math.random()<.5)tone(rnd(300,500),.15,'triangle',.02,-.5)}
