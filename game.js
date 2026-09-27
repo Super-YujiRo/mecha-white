@@ -1,5 +1,5 @@
 /* めちゃホワイト — built from src/*.js by tools/build.py. Edit the sources, not this file. */
-(()=>{const BUILD='20260927185901';
+(()=>{const BUILD='20260927194012';
 const $=id=>document.getElementById(id);
 if(!window.THREE){$('loading').textContent='3Dの読み込みに失敗しました。再読み込みしてください';return}
 const T=THREE;
@@ -811,7 +811,7 @@ const RANKS=[{n:'集落',p:0},{n:'村',p:8},{n:'町',p:14},{n:'街',p:20},{n:'�
 const rankOf=n=>RANKS.reduce((a,r,i)=>n>=r.p?i:a,0);
 const popNow=()=>G.surv.filter(s=>!s.frozen).length+G.workers.length;
 const HCAP=[0,3,6,10],HNAME=['','テント','小屋','宿屋'],HCOST=[[100,380,1100],[140,450,1250],[180,520,1400],[220,600,1600],[260,700,1800]];
-const houseLv=i=>G.lv['house_'+i]||0,nextHouse=()=>{for(let l=0;l<3;l++)for(let i=0;i<HOUSES.length;i++)if(houseLv(i)===l)return i;return -1},houseCap=()=>Math.max(6,G.baseCap||6)+HOUSES.reduce((a,_,i)=>a+HCAP[houseLv(i)],0),houseFull=()=>popNow()>=houseCap();
+const houseLv=i=>G.lv['house_'+i]||0,nextHouse=()=>{for(let l=0;l<3;l++)for(let i=0;i<HOUSES.length;i++)if(houseLv(i)===l)return i;return -1},houseCap=()=>Math.max(REB()?2:6,G.baseCap||6)+HOUSES.reduce((a,_,i)=>a+HCAP[houseLv(i)],0),houseFull=()=>popNow()>=houseCap();
 const tempC=()=>DES()?Math.round((isNight()?6:43)+(G.wx&&G.wx.type==='snap'?6:0)+Math.min(8,G.day*.5)):Math.round((G.mod?G.mod.temp:0)-(G.wx&&G.wx.type==='snap'?15:G.wx&&G.wx.type==='clear'?-8:0)-12-G.day*2.5-(isNight()?10:0)-(G.wave?15:0));
 const price=id=>Math.round((STN[id].base+STN[id].step*G.lv['price_'+id]+G.pm.price*(id==='steak'?1:id==='fish'?2.5:6))*(G.mod?G.mod.price:1)*(G&&G._dm?G._dm.price:1));
 const logFuel=()=>9+G.level*1.2+G.pm.wood+(G.mod?G.mod.wood:0);
@@ -1018,6 +1018,7 @@ function workerMesh(w){const role=w.role,stId=w.st&&w.st.id;
 
 // ================================================================ missions & achievements
 const MISSIONS=[
+  {t:'広場の瓦礫を3つ片付けろ（そばに立つ）',f:()=>REB()?[rbState().length,3]:[1,1],cash:20,tg:p=>{if(!REB())return null;const L=rubbleList();let b=null,bd=1e9;L.forEach((r,i)=>{if(rbGone(i))return;const d=dist(p.x,p.y,r.x,r.y);if(d<bd){bd=d;b=r}});return b?{x:b.x,y:b.y,h:50}:null}},
   {t:'柵の外でオオカミをたおせ',f:()=>[G.stats.bears,1],cash:20,tg:p=>nearestBear(p)},
   {t:'肉をグリルに入れろ',f:()=>[G.stats.grilled,8],cash:25,tg:p=>has(p,'meat')?stT('steak'):nearestMeat(p)},
   {t:'レジに立って肉を売れ',f:()=>[G.stats.sold,5],cash:30,tg:p=>{const st=G.stations.steak;if(st.shelf>0)return{x:st.def.stand.x,y:st.def.stand.y,h:70};return has(p,'meat')?stT('steak'):nearestMeat(p)}},
@@ -1128,7 +1129,7 @@ function pushRect(e,x0,y0,x1,y1,r){const nx=clamp(e.x,x0,x1),ny=clamp(e.y,y0,y1)
   if(d<r){if(d>0){e.x=nx+dx/d*r;e.y=ny+dy/d*r}else{const l=e.x-x0,r_=x1-e.x,t=e.y-y0,b=y1-e.y,m=Math.min(l,r_,t,b);if(m===l)e.x=x0-r;else if(m===r_)e.x=x1+r;else if(m===t)e.y=y0-r;else e.y=y1+r}}}
 const angGap=an=>GATE_ANG.some(g=>Math.abs(Math.atan2(Math.sin(an-g),Math.cos(an-g)))<.11)||(an>SOUTH[0]&&an<SOUTH[1]);
 function fenceCollide(e,px,py){if(ADV())return;const d=dist(e.x,e.y,CX,CY),dp=dist(px,py,CX,CY);if(Math.abs(d-FR)<14||(dp<FR)!==(d<FR)){const an=Math.atan2(e.y-CY,e.x-CX);if(angGap(an))return;const r=dp<FR?FR-14:FR+14;e.x=CX+Math.cos(an)*r;e.y=CY+Math.sin(an)*r}}
-function solids(e,r){pushCircle(e,CX,CY,70);advSolids(e,r);for(const d of G.drifts||[])pushCircle(e,d.x,d.y,20*d.s);if(isRPG())pushCircle(e,WB.x,WB.y,24);caveWalls(e,r);if(G.monV&&G.monV.visible)pushCircle(e,MON.x,MON.y,52*G.monV.scale.x);for(const id in G.stations){const st=G.stations[id];if(!st.open)continue;const s=st.def;pushRect(e,s.conv.x-34,s.conv.y-16,s.conv.x+34,s.conv.y+16,r*.6);pushRect(e,s.counter.x-52,s.counter.y-12,s.counter.x+52,s.counter.y+12,r*.6);pushCircle(e,s.pile.x,s.pile.y,14)}
+function solids(e,r){pushCircle(e,CX,CY,70);advSolids(e,r);rebSolids(e,r);for(const d of G.drifts||[])pushCircle(e,d.x,d.y,20*d.s);if(isRPG())pushCircle(e,WB.x,WB.y,24);caveWalls(e,r);if(G.monV&&G.monV.visible)pushCircle(e,MON.x,MON.y,52*G.monV.scale.x);for(const id in G.stations){const st=G.stations[id];if(!st.open)continue;const s=st.def;pushRect(e,s.conv.x-34,s.conv.y-16,s.conv.x+34,s.conv.y+16,r*.6);pushRect(e,s.counter.x-52,s.counter.y-12,s.counter.x+52,s.counter.y+12,r*.6);pushCircle(e,s.pile.x,s.pile.y,14)}
   if(G.zones.D){pushCircle(e,SPA.boiler.x,SPA.boiler.y,28)}
   for(const z of ZONES)if(!G.zones[z.id]){const [x0,y0,x1,y1]=z.rect;pushRect(e,x0,y0,x1,y1,r)}}
 function nav(e,tx,ty){const ia=dist(e.x,e.y,CX,CY)<FR,ib=dist(tx,ty,CX,CY)<FR;if(ia===ib)return{x:tx,y:ty};
@@ -1834,7 +1835,7 @@ function sync(dt){
     if(!st.cashier&&!st.staffed&&st.queue.length&&st.shelf>0)label(d.stand.x,d.stand.y,60,'ここに立って販売','note');
     if(cooking)label(d.conv.x,d.conv.y,70,bar(100*st.cookT/(d.time*Math.pow(.74,G.lv['cook_'+id])*G.pm.cook),'gold'),'')}
   // pads
-  for(const pad of G.pads){const vis=(!pad.zone||G.zones[pad.zone])&&pad.vis();if(vis&&!pad.shown){pad.shown=true;pad.rise=0;pad.mesh.g.visible=true}if(!vis&&pad.shown){pad.shown=false;pad.mesh.g.visible=false}
+  for(const pad of G.pads){const vis=(!pad.zone||G.zones[pad.zone])&&pad.vis()&&!padBlocked(pad);if(vis&&!pad.shown){pad.shown=true;pad.rise=0;pad.mesh.g.visible=true}if(!vis&&pad.shown){pad.shown=false;pad.mesh.g.visible=false}
     if(!pad.shown)continue;if(pad.personal){const q=meP(),mine=q&&pad.costP(q)!=null;if(pad.mesh.g.visible!==mine)pad.mesh.g.visible=mine;if(!mine)continue}pad.rise=Math.min(1,pad.rise+dt*2);const on=G.onPads&&G.onPads.has(pad);const req=pad.req?pad.req():(pad.pop&&!idleSurvivors().length?'生存者を待っています':null);
     if(pad.personal){const q=meP();pad.paid=q?(pad.pp[q.id]||0):0}pad.mesh.draw(pad.cost(),pad.paid,pad.lvText(),on,req,mixLeft(pad));pad.mesh.mesh.scale.setScalar(easeOutBack(pad.rise)*(1+pad.pulse*.3+(on?.06:0)));{const mm=pad.mesh.mesh,rz=isRPG()?CAMS.cur:YAW;if(mm.rotation.z!==rz)mm.rotation.set(-Math.PI/2,0,rz)}pad.mesh.icon.position.y=56+Math.sin(G.t*2.4+pad.x)*4;pad.mesh.icon.rotation.y=G.t*1.2+pad.y;pad.mesh.icon.scale.setScalar(easeOutBack(pad.rise))}
   // zones
@@ -1934,7 +1935,7 @@ function frame(dt){hideIdle();monBar();frozenFx();vigFx();hideIdleFx(dt);
     const top=150,m=44,mx=86,on=!behind&&sx>m&&sx<W-m&&sy>top&&sy<H-90;if(on)el.hidden=true;else{el.hidden=false;const cx=W/2,cy=(top+H-90)/2;let dx=sx-cx,dy=sy-cy;const k=Math.min((W/2-mx)/Math.abs(dx||1e-3),((H-90-top)/2)/Math.abs(dy||1e-3));const ex=cx+dx*Math.min(1,k),ey=cy+dy*Math.min(1,k);
       const d=Math.round(dist(gp.x,gp.y,R.x,R.y)/10);el.style.transform=`translate(${ex|0}px,${ey|0}px) translate(-50%,-50%)`;el.firstChild.style.transform=`rotate(${Math.atan2(dy,dx)+Math.PI/2}rad)`;$('sosTxt').textContent=`SOS ${Math.ceil(R.t)}秒・${d}m`}}else el.hidden=true}
   {const _gt=running?(coldT||(G.fuel<25&&!G.raid.on?(has(gp,DES()?'water':'log')?{x:CX,y:CY,h:110}:(DES()?freeHole(gp):nearestTree(gp))):null)||rescueT(gp)||storyT(gp)||(MISSIONS[G.mission]?MISSIONS[G.mission].tg(gp):flow(gp))):null;G._gt=_gt;guide.set(_gt,gp,G.t)}
-  storyVis();warnFx();driftFx();fireFx();npcFx();rankFx();caveFx();pzFx();heart4Fx();advFx();occFx();survDesertFx();extrasFx();cullWorld();if(composer)composer.render();else renderer.render(scene,camera);endLabels();
+  storyVis();warnFx();driftFx();fireFx();npcFx();rankFx();caveFx();pzFx();heart4Fx();advFx();occFx();survDesertFx();extrasFx();rebuildFx();cullWorld();if(composer)composer.render();else renderer.render(scene,camera);endLabels();
   joys.forEach((j,i)=>{const el=$('joy'+i);if(!j.on){el.hidden=true;return}el.hidden=false;el.style.left=j.ox+'px';el.style.top=j.oy+'px';const dx=j.x-j.ox,dy=j.y-j.oy,m=Math.hypot(dx,dy),k=m>50?50/m:1;el.firstChild.style.transform=`translate(${dx*k}px,${dy*k}px)`;el.firstChild.style.background=nPlayers===2?HERO[i].tag:'#fff'});
 }
 // ================================================================ HUD
@@ -2100,6 +2101,7 @@ let _tkT=0;function trackerHud(){const el=$('tracker');{const on=!!(isRPG()&&run
   else{const g=goalOf(YR());const rows=[[`かまど Lv${G.level} / ${g.lv}`,G.level>=g.lv],[`町人 ${popNow()} / ${g.pop}人`,popNow()>=g.pop],[`お金 $${Math.floor(G.cash).toLocaleString()} / $${g.c.toLocaleString()}`,G.cash>=g.c]];
     if(G.mission<MISSIONS.length){const m=MISSIONS[G.mission],[c,gg]=m.f();h+=`<div class="sec now"><i>▶ いまやること</i><b>${m.t}</b>${pg(c,gg)}</div>`}
     const fm=Math.round(custFame()*5);h+=`<div class="sec"><i>★ 町の知名度（お客さんの多さ）</i><b style="color:#e8a020">${G.story.shopOpen?'★'.repeat(fm)+'☆'.repeat(5-fm):'<small>まだ誰にも知られていない</small>'}</b></div>`;h+=`<div class="sec"><i>◆ 章の目標</i><b>${G.monument?'今夜、像を守りぬけ！':g.n+'を建てて、最後の夜を守れ'}</b>${G.monument?'':rows.map(([t,ok])=>`<div class="ck ${ok?'ok':'ng'}">${t}</div>`).join('')}</div>`}
+  h+=rebuildHtml();
   const qs=[];for(const k in (S.q||{})){const Q=QUESTS[k],q=S.q[k];if(!Q||Q.bio!==bioKey()||q.st===3)continue;const pr=q.st===2?`→ ${npcName(Q.npc)}に報告`:Q.type==='bring'?`${{log:'薪',fish:'魚',meat:'肉'}[Q.k]||Q.k} ${q.p||0}/${Q.n}`:Q.type==='build'?`${Math.min(Q.chk(),Q.n)}/${Q.n}`:Q.type==='count'?`${Math.min(Q.chk(q),Q.n)}/${Q.n}`:Q.where?`（${Q.where}）`:'';qs.push(`<div class="q ${q.st===2?'ok':''}">・${Q.t} ${pr}</div>`)}
   const avail=G.npcV?G.npcV.filter(v=>npcMark(v.n.id)==='！').length:0;
   h+=`<div class="sec"><i>✉ 住人の依頼</i>${qs.join('')||'<div class="q">受けている依頼はない</div>'}${avail?`<div class="q" style="color:#e8703a">“！”の住人が${avail}人いる（Eキーで話す）</div>`:''}</div>`;
@@ -2180,14 +2182,14 @@ const QUESTS={
 const qS=id=>(G.story&&G.story.q&&G.story.q[id])||null,qDone=id=>{const q=qS(id);return !!(q&&q.st===3)};
 const bioKey=()=>DES()?'desert':'snow';
 function solvedN(bio){let n=0;const ch=(G.story&&G.story.ch)||1;for(const k in QUESTS){const Q=QUESTS[k];if(Q.bio===bio&&qDone(k)&&(!Q.ch||Q.ch.includes(ch)))n++}return n}
-function npcQuest(nid){let avail=null;const ch=(G.story&&G.story.ch)||1;for(const k in QUESTS){const Q=QUESTS[k];if(Q.npc!==nid||Q.bio!==bioKey())continue;const q=qS(k);if(q&&(q.st===1||q.st===2))return k;if(!q&&!avail&&(!Q.ch||Q.ch.includes(ch))&&(!Q.req||Q.req()))avail=k}return avail}
+function npcQuest(nid){if(!joined(nid))return null;let avail=null;const ch=(G.story&&G.story.ch)||1;for(const k in QUESTS){const Q=QUESTS[k];if(Q.npc!==nid||Q.bio!==bioKey())continue;const q=qS(k);if(q&&(q.st===1||q.st===2))return k;if(!q&&!avail&&(!Q.ch||Q.ch.includes(ch))&&(!Q.req||Q.req()))avail=k}return avail}
 function npcMark(nid){const mm=advMark(nid)||mysteryMark(nid);if(mm)return mm;const k=npcQuest(nid);if(!k)return '';const q=qS(k);return !q?'！':q.st===2?'？':'…'}
 // ---- NPC meshes and markers (both host and guest)
 function npcFx(){if(!G||!running)return;const on=isRPG();const L=NPCS[bioKey()];
   if(!on){if(G.npcV)for(const v of G.npcV)v.m.g.visible=false;if(G.escV)G.escV.m.g.visible=false;if(G.findV)G.findV.visible=false;$('dlg').hidden=true;return}
   if(!G.npcV||G.npcBio!==bioKey()||(G.npcV[0]&&!G.npcV[0].m.g.parent)){if(G.npcV)for(const v of G.npcV)world.remove(v.m.g);G.npcBio=bioKey();G.npcV=L.map(n=>{const m=makeVillager(PALS[n.pal%PALS.length],Object.assign({noShadow:false},n.o));const q=npcPos(n);m.g.position.set(q.x,0,q.y);m.g.rotation.y=Math.atan2(CX-q.x,CY-q.y)+Math.PI;world.add(m.g);return{n,m,x:q.x,y:q.y}})}
   const me=G.players[G.me]||G.players[0];
-  for(const v of G.npcV){v.m.g.visible=!v.n.adv||ADV();if(!v.m.g.visible)continue;animWalk(v.m,0,false);const mk=npcMark(v.n.id),d=me?dist(me.x,me.y,v.x,v.y):1e9;v.m.g.rotation.y=d<200&&me?Math.atan2(me.x-v.x,me.y-v.y):Math.atan2(CX-v.x,CY-v.y)+Math.PI;
+  for(const v of G.npcV){v.m.g.visible=(!v.n.adv||ADV())&&joined(v.n.id);if(!v.m.g.visible)continue;animWalk(v.m,0,false);const mk=npcMark(v.n.id),d=me?dist(me.x,me.y,v.x,v.y):1e9;v.m.g.rotation.y=d<200&&me?Math.atan2(me.x-v.x,me.y-v.y):Math.atan2(CX-v.x,CY-v.y)+Math.PI;
     if(mk)label(v.x,v.y,74,`<b style="font-size:${mk==='…'?16:26}px;color:${mk==='？'?'#3fc157':mk==='！'?'#ffb020':'#9aa3ad'};-webkit-text-stroke:3px #16283a;paint-order:stroke fill">${mk}</b>`,'');
     if(d<220)label(v.x,v.y,d<75?108:96,`<small>${v.n.n}<span style="color:#e0506a">${hearts(v.n.id)}</span></small>${d<75&&!DLG.open?'<br><b>Eキーで話す</b>':''}`,'')}
   // escort follower, find spot
@@ -2199,7 +2201,7 @@ function npcFx(){if(!G||!running)return;const on=isRPG();const L=NPCS[bioKey()];
     const F=G.findV;F.visible=true;F.position.set(fnd[1].x,0,fnd[1].y);F.userData.gem.rotation.y+=.05;if(me&&dist(me.x,me.y,fnd[1].x,fnd[1].y)<240)label(fnd[1].x,fnd[1].y,40,fnd[2].p>0?bar(100*fnd[2].p/1.5,'gold'):`<small>${fnd[1].nm}？ そばに立って探す</small>`,'')}
   else if(G.findV)G.findV.visible=false;
   const me2=me;if(DLG.open&&DLG.npc&&me2&&dist(me2.x,me2.y,DLG.npc.x,DLG.npc.y)>140)closeTalk()}
-function npcNear(p){if(!isRPG()||!G.npcV)return null;let b=null,bd=75;for(const v of G.npcV){const d=dist(p.x,p.y,v.x,v.y);if(d<bd){bd=d;b=v}}return b}
+function npcNear(p){if(!isRPG()||!G.npcV)return null;let b=null,bd=75;for(const v of G.npcV){if(!v.m.g.visible)continue;const d=dist(p.x,p.y,v.x,v.y);if(d<bd){bd=d;b=v}}return b}
 // ---- quest progress (host)
 function updateQuests(dt){if(!isRPG())return;const S=G.story;S.q=S.q||{};
   for(const k in S.q){const Q=QUESTS[k],q=S.q[k];if(!Q||q.st!==1||Q.bio!==bioKey())continue;
@@ -2499,8 +2501,8 @@ function heart4Fx(){const S=G.story,on=!!(isRPG()&&S&&S.ch===4&&!DES()&&S.step>=
   const hv=G.heart4V,t=performance.now()/1000;hv.visible=true;hv.rotation.y=t*2;if(S.hs===1&&G.players[S.hc]){const p=G.players[S.hc];hv.position.set(p.x,70+Math.sin(t*4)*3,p.y)}else hv.position.set(S.hx||CX,26+Math.sin(t*3)*4,S.hy||CY);
   const me=G.players[G.me]||G.players[0];if(S.hs!==1&&S.hs!==3&&me&&dist(me.x,me.y,hv.position.x,hv.position.z)<300)label(hv.position.x,hv.position.z,60,'<b>冬の心臓</b><br>近づくと持てる','');
   if(S.hs===1&&me)label(ROAD.x,ROAD.y,90,'<b>南への道</b><br><small>ここまで心臓を運ぶ</small>','note')}
-function mysterySnap(){const S=G.story;if(!S)return null;const P=G.pz;return{ex:extrasSnap(),cl:S.clues||[],pz:P?[P.br.lit,P.mr.st,P.sf.on]:null,d4:[S.deduced||0,S.olga||0,S.dig||0,S.guard||0,S.gdead||0,S.zara||0,S.camp||0,S.hamid||0,S.worm||0,S.wend||0,S.ruin||0],adv:G.adv?G.adv.tr:null,aff:S.aff||null}}
-function mysteryApply(x){if(!x||!G.story)return;extrasApply(x.ex);if(x.aff)G.story.aff=x.aff;G.story.clues=x.cl||[];if(x.pz){const P=pzState();P.br.lit=x.pz[0];P.mr.st=x.pz[1];P.sf.on=x.pz[2]}const d=x.d4||[];G.story.deduced=d[0];G.story.olga=d[1];G.story.dig=d[2];G.story.guard=d[3];G.story.gdead=d[4];G.story.zara=d[5];G.story.camp=d[6];G.story.hamid=d[7];G.story.worm=d[8];G.story.wend=d[9];G.story.ruin=d[10];if(x.adv){G.adv=G.adv||{tr:[],rt:[]};G.adv.tr=x.adv}}
+function mysterySnap(){const S=G.story;if(!S)return null;const P=G.pz;return{rb:rebSnap(),ex:extrasSnap(),cl:S.clues||[],pz:P?[P.br.lit,P.mr.st,P.sf.on]:null,d4:[S.deduced||0,S.olga||0,S.dig||0,S.guard||0,S.gdead||0,S.zara||0,S.camp||0,S.hamid||0,S.worm||0,S.wend||0,S.ruin||0],adv:G.adv?G.adv.tr:null,aff:S.aff||null}}
+function mysteryApply(x){if(!x||!G.story)return;extrasApply(x.ex);rebApply(x.rb);if(x.aff)G.story.aff=x.aff;G.story.clues=x.cl||[];if(x.pz){const P=pzState();P.br.lit=x.pz[0];P.mr.st=x.pz[1];P.sf.on=x.pz[2]}const d=x.d4||[];G.story.deduced=d[0];G.story.olga=d[1];G.story.dig=d[2];G.story.guard=d[3];G.story.gdead=d[4];G.story.zara=d[5];G.story.camp=d[6];G.story.hamid=d[7];G.story.worm=d[8];G.story.wend=d[9];G.story.ruin=d[10];if(x.adv){G.adv=G.adv||{tr:[],rt:[]};G.adv.tr=x.adv}}
 // ================================================================ chapter 3 as an adventure: the sand town Razul is a finished hub, the desert is for exploring
 // (survival mode's desert trip keeps the old town-building rules; this only applies to story chapter 3)
 const ADV=()=>!!(G&&G.story&&G.story.ch===3&&DES());
@@ -2744,10 +2746,67 @@ function extrasFx(){if(!G||!running||!isRPG())return;const me=G.players[G.me]||G
   for(const b of G.bears)if(b.gold&&!b.dead&&dist(me.x,me.y,b.x,b.y)<500)label(b.x,b.y,90,`<b>${b.nm}</b>`,'gold')}
 function extrasSnap(){return{tw:G.tw||null,hid:G.hid||null}}
 function extrasApply(x){if(!x)return;if(x.tw)G.tw=x.tw;if(x.hid)G.hid=x.hid}
+// ================================================================ chapter 1 「再建」: the town starts in ruins, you clear rubble, repair buildings and gather its people back
+const REB=()=>!!(G&&G.story&&G.story.ch===1&&!DES());
+// who comes back, and what brings them
+const JOIN={
+  teo:{why:'家を1軒直す（テントでOK）',ok:()=>houseLv(0)+houseLv(1)+houseLv(2)+houseLv(3)+houseLv(4)>0,msg:['大工のテオ','屋根のある家ができたって？ 大工の出番だな！ 住まわせてくれ']},
+  mina:{why:'肉屋ではじめて売る',ok:()=>!!(G.story&&G.story.shopOpen)&&(G.stats.sold||0)>=1,msg:['パン屋のミーナ','いい匂いがしたから来ちゃった。わたしもここでパンを焼かせて！']},
+  gordon:{why:'北の森で凍えている猟師を助ける',spot:{x:760,y:420},ok:null,msg:['猟師のゴードン','助かった…狼に追われて動けなくなってたんだ。町まで連れてってくれ']},
+  elza:{why:'見張り台を1つ建てる',ok:()=>TOWERS.some(t=>G.lv['tw_'+t.id]>0),msg:['見張りのエルザ','見張り台が立ったのね。夜の見張りはわたしに任せて']},
+  pip:{why:'氷の湖のほとりで迷子の少年を見つける',spot:{x:1840,y:1480},ok:null,need:()=>G.zones.B,msg:['少年ピップ','…ひとりで寒かった。この町に、ぼくの居場所はある？']},
+  borg:{why:'温泉郷を解放する',ok:()=>G.zones.D,msg:['老人ボルグ','温泉がよみがえったか…わしも昔はこの町に住んでおったんじゃ']}};
+const JOIN_ORDER=['teo','mina','gordon','elza','pip','borg'];
+function joined(id){const S=G&&G.story;if(!S||DES())return true;if(!JOIN[id])return true;if(S.ch>=2)return true;return(S.joined||[]).includes(id)}
+const joinedN=()=>JOIN_ORDER.filter(joined).length;
+// rubble: piles of broken beams and stones sitting on every build spot around the plaza
+function rubbleList(){if(G._rbl)return G._rbl;const skip=/^(furnace|zone_|monument|cook_|cashier_|price_)/;const L=[];for(const p of G.pads||[]){if(skip.test(p.id))continue;if(dist(p.x,p.y,CX,CY)>560)continue;L.push({x:p.x+14,y:p.y-8,pad:p.id})}
+  for(const [a,r] of [[.3,230],[1.2,260],[2.1,240],[2.8,220],[3.6,250],[4.4,230],[5.3,260]])L.push({x:CX+Math.cos(a)*r,y:CY+Math.sin(a)*r});return G._rbl=L}
+function rbState(){const S=G.story;S.rb=S.rb||[];return S.rb}
+const rbGone=i=>rbState().includes(i);
+function padBlocked(pad){if(!REB())return false;const L=rubbleList();return L.some((r,i)=>r.pad===pad.id&&!rbGone(i))}
+function rebSolids(e,r){if(!REB())return;const L=rubbleList();for(let i=0;i<L.length;i++)if(!rbGone(i))pushCircle(e,L[i].x,L[i].y,24)}
+function updateRebuild(dt){if(!REB())return;const S=G.story;S.joined=S.joined||[];S.rbh=S.rbh||{};const L=rubbleList();
+  // clear rubble by standing next to it (like chopping)
+  for(const p of G.players){if(p.down>0||p.shooting)continue;let best=-1,bd=52;L.forEach((r,i)=>{if(rbGone(i))return;const d=dist(p.x,p.y,r.x,r.y);if(d<bd){bd=d;best=i}});if(best<0){p._rbT=0;continue}
+    const r=L[best];p.chopping={x:r.x,y:r.y};p.aimDir=Math.atan2(r.x-p.x,r.y-p.y);p._rbT=(p._rbT||0)+dt;if(p._rbT<.4)continue;p._rbT=0;S.rbh[best]=(S.rbh[best]||0)+1;SFX.chop&&SFX.chop();G.shake=Math.max(G.shake,2);burst(r.x,r.y,8,20,{c:['#8a7058','#c9c2b8','#ffffff'],s0:30,s1:110,u0:60,u1:160,l0:.3,l1:.6});
+    if(S.rbh[best]>=5){rbState().push(best);give(p,'log',2);if(Math.random()<.35)addMat(p,'iron',1);lifeXp(p,'wood',2);cnt(p,'rubble');gainRX(p,3);float(r.x,r.y,70,'瓦礫を片付けた！','gold');burst(r.x,r.y,20,30,{c:['#ffe07a','#ffffff'],s0:60,s1:180,u0:120,u1:260,l0:.5,l1:.9,add:true});
+      const left=L.filter((_,i)=>!rbGone(i)).length;if(left===L.length-1)say('村長オルガ','その調子だ。瓦礫の下には、昔の建物の土台が残ってる。片付ければ直せるようになるよ');if(left===0)say('斥候カイ','広場の瓦礫はぜんぶ片付いた！ これで町を建て直せる')}}
+  // people come back when the town is ready for them
+  for(const id of JOIN_ORDER){if(S.joined.includes(id))continue;const J=JOIN[id];if(J.need&&!J.need())continue;
+    if(J.spot){if(G.players.some(p=>!(p.down>0)&&dist(p.x,p.y,J.spot.x,J.spot.y)<70)){S.joined.push(id);joinFx(id)}}
+    else if(J.ok()){S.joined.push(id);joinFx(id)}}}
+function joinFx(id){const J=JOIN[id];banner('仲間が町に戻ってきた！',npcName(id),J.why+'ことで、町に戻ってきた','r-SSR');say(J.msg[0],J.msg[1]);SFX.ssr&&SFX.ssr();G.rep=Math.min(5,(G.rep||0)+.4);
+  const n=joinedN();if(n===2)setTimeout(()=>{if(running)say('村長オルガ','人が戻ってくると、町に灯りが増えるね。頭に“！”が出ている人は、困りごとを抱えてるよ')},4000);if(n===6)setTimeout(()=>{if(running)say('村長オルガ','みんな戻ってきた…！ あとは町のシンボルを建てるだけだね')},4000)}
+// ---- visuals: rubble piles, ruined houses & towers, stranded villagers waiting for rescue
+function makeRubble(i){const g=new T.Group(),st=std('#8f949a',{map:TEX.stone,r:.95}),wd=std('#6b4a2e',{map:TEX.bark,r:.9}),sn=std('#f4f8fb',{r:.9});
+  for(let k=0;k<6;k++){const a=k*1.7+i,r=6+k*3;g.add(at(rot(box(14+k%3*6,8+k%2*6,12,st),0,a,.2*(k%2)),Math.cos(a)*r,5,Math.sin(a)*r))}
+  for(let k=0;k<3;k++)g.add(at(rot(box(46,5,6,wd),.25*(k-1),k*1.1+i,.35),rnd(-8,8),10+k*3,rnd(-8,8)));g.add(at(scl(sph(20,sn,false,10,6),1.3,.35,1.1),0,15,0));return g}
+function makeRuinHouse(){const g=new T.Group(),w=std('#7a6552',{map:TEX.bark,r:.95}),st=std('#8f949a',{map:TEX.stone,r:.95}),sn=std('#f4f8fb',{r:.9});
+  g.add(at(box(64,14,6,w,true),0,7,-24),at(box(6,26,44,w,true),-30,13,0),at(box(6,10,30,w,true),30,5,6),at(rot(box(70,5,8,w),0,.3,.4),6,18,0),at(rot(box(60,5,8,w),.2,-.5,-.3),-4,12,10));
+  g.add(at(box(66,4,54,st),0,2,0),at(scl(sph(22,sn,false,10,6),1.5,.3,1.2),8,6,4));return g}
+function makeRuinTower(){const g=new T.Group(),w=std('#5a4030',{map:TEX.bark,r:.95});for(const [x,z] of [[-12,-12],[12,-12],[-12,12],[12,12]])g.add(at(cyl(3,3.5,18+Math.abs(x+z)*.5,w,6),x,9,z));g.add(at(rot(box(40,4,6,w),0,.4,.6),0,14,0),at(scl(sph(14,std('#f4f8fb',{r:.9}),false,8,5),1.4,.3,1.4),0,3,0));return g}
+function rebuildFx(){if(!G||!running)return;const on=REB();G.rebV=G.rebV||{};const me=G.players[G.me]||G.players[0];
+  const L=rubbleList();if(!G.rebV.rb||G.rebV.rb.parent!==world){const g=new T.Group();G.rebV.items=L.map((r,i)=>{const m=makeRubble(i);m.position.set(r.x,0,r.y);g.add(m);return m});world.add(g);G.rebV.rb=g}
+  G.rebV.rb.visible=on;if(on)G.rebV.items.forEach((m,i)=>{m.visible=!rbGone(i)});
+  // ruined houses (until the first repair) and burnt watchtowers
+  (G.houses||[]).forEach((h,i)=>{if(!h.ruin){h.ruin=makeRuinHouse();h.g.add(h.ruin)}h.ruin.visible=isRPG()&&!DES()&&houseLv(i)===0});
+  if(!G.rebV.tw||G.rebV.tw.parent!==world){const g=new T.Group();G.rebV.tws=TOWERS.map(t=>{const m=makeRuinTower();m.position.set(t.mx,0,t.my);g.add(m);return m});world.add(g);G.rebV.tw=g}
+  G.rebV.tw.visible=isRPG()&&!DES();TOWERS.forEach((t,i)=>{G.rebV.tws[i].visible=!(G.lv['tw_'+t.id]>0)});
+  if(!on||!me)return;
+  {let bi=-1,bd=170;L.forEach((r,i)=>{if(rbGone(i))return;const d=dist(me.x,me.y,r.x,r.y);if(d<bd){bd=d;bi=i}});if(bi>=0){const r=L[bi],h=(G.story.rbh||{})[bi]||0;label(r.x,r.y,52,`<b>瓦礫</b><br><small>${h?`${'■'.repeat(h)}${'□'.repeat(5-h)}`:'そばに立つと片付ける'}</small>`,'')}}
+  // stranded villagers (rescue spots)
+  G.rebV.sp=G.rebV.sp||{};for(const id of JOIN_ORDER){const J=JOIN[id];if(!J.spot)continue;let v=G.rebV.sp[id];const show=!joined(id)&&(!J.need||J.need());
+    if(show&&(!v||v.g.parent!==world)){const n=NPCS.snow.find(n=>n.id===id);const m=makeVillager(PALS[n.pal%PALS.length],Object.assign({noShadow:false},n.o));m.g.position.set(J.spot.x,0,J.spot.y);world.add(m);v=G.rebV.sp[id]=m}
+    if(v){v.g.visible=show;if(show){animWalk(v,0,false);v.g.rotation.y=Math.sin(performance.now()/300)*.15;if(dist(me.x,me.y,J.spot.x,J.spot.y)<420)label(J.spot.x,J.spot.y,80,`<b>${npcName(id)}</b><br><small>${id==='gordon'?'凍えて動けない…近づいて助けよう':'ひとりで震えている…近づいて声をかけよう'}</small>`,'gold')}}}}
+function rebuildHtml(){if(!REB())return '';const L=rubbleList(),left=L.filter((_,i)=>!rbGone(i)).length,n=joinedN();const next=JOIN_ORDER.find(id=>!joined(id));
+  return `<div class="sec"><i>🏚 町の再建</i><small>瓦礫 残り${left}/${L.length}・戻った仲間 ${n}/6</small>${next?`<div class="q">次の仲間：${npcName(next)}（${JOIN[next].why}）</div>`:''}</div>`}
+function rebSnap(){const S=G.story;return S?{j:S.joined||[],rb:S.rb||[],rbh:S.rbh||{}}:null}
+function rebApply(x){if(!x||!G.story)return;G.story.joined=x.j;G.story.rb=x.rb;G.story.rbh=x.rbh}
 // ================================================================ story mode (chapters + morning autosave)
 var gameMode=store.get('mw-mode','story');var SAVE_K='mw-story1';
-var CH={1:{n:'第1章',t:'ホワイトアウト',play:true,open:['暦の上では、もう夏至を過ぎた。','それなのに、この町の雪は\n一日もやんだことがない。','吹雪は町をのみこみ、\n人々は散り散りになった。','残されたのは、消えかけたひとつのかまど――\nそして、誰も知らない「冬の理由」。'],sub:'目標：町のシンボル像を建て、最後の夜を守りきれ（Jキー：手がかり帳）',
-  intro:[['村長オルガ','よく来てくれた…この吹雪で、町のかまどの火が消えかけている'],['村長オルガ','木を切って薪をくべておくれ。火さえあれば、人は集まってくる']],
+var CH={1:{n:'第1章',t:'ホワイトアウト',play:true,open:['暦の上では、もう夏至を過ぎた。','それなのに、この町の雪は\n一日もやんだことがない。','吹雪は家々を押しつぶし、\n人々は散り散りになった。','残っていたのは、村長オルガと、\n消えかけたひとつのかまどだけ――','瓦礫を片付け、町を建て直し、\nもう一度みんなを呼び戻そう。'],sub:'瓦礫を片付けて町を建て直し、散り散りになった仲間を呼び戻せ（Jキー：手がかり帳）',
+  intro:[['村長オルガ','よく来てくれた…見てのとおり、町は吹雪でぼろぼろさ'],['村長オルガ','まずは広場の瓦礫を片付けて、かまどに薪をくべておくれ'],['村長オルガ','家や店が直れば、散り散りになったみんなも、きっと戻ってくる']],
   outro:'像のまわりで、みんなが久しぶりに笑った。\nけれど、冬は終わらない。\n\n斥候カイ「北の山で、家より大きな白い影を見た。狼どもは、あいつに従って動いてる…」\n\n洞窟で拾った古い手記には、町を作った男「ヨルン」の名があった。\n――この冬には、理由がある。'},
  2:{n:'第2章',t:'白き王',play:true,open:['像が完成した夜から、ひと月。','北の山から、\n地鳴りのような足音が近づいてくる。','狼たちを束ねる“白き王”。\nなぜ獣たちは、この町ばかりを狙うのか――'],sub:'白き王の正体と、狼がこの町を狙う理由をつきとめろ',
   intro:[['斥候カイ','北の山で見た白い影…狼どもを束ねる“王”がいる'],['斥候カイ','妙なんだ。狼どもは、獲物の多い南の谷じゃなく、わざわざこの町を目指してくる'],['村長オルガ','去年より冬も厳しい。まずは守りを固めよう。見張り台を強くしておくれ']],
@@ -2809,7 +2868,7 @@ function storyNew(np,seed){seed=seed||(1+((Math.random()*1e9)|0));
   if(gameMode!=='story'||dbgBio){newGame(np,{seed,diff:gameDiff,biome:dbgBio});G.story=null;return seed}
   const d=store.get(SAVE_K,null);if(d&&d.v===1&&d.fresh&&d.story.ch===4&&d.biome){const h=store.get(SAVE_K+'-home',null);const st=JSON.parse(JSON.stringify(d.story));if(h){newGame(np,{seed:h.seed,diff:h.diff||0,biome:0});applySave(h);G.players.forEach((p,i)=>{if(d.pl&&d.pl[i]){p.life=Object.assign({},d.pl[i].life||{});rpgRestore(p,d.pl[i])}});G.year=(d.year||h.year||2);G.story=st;G.story.seen=G.story.seen||{};G.finalPending=false;G.raid.on=false;return h.seed}newGame(np,{seed,diff:d.diff||0});G.story=st;return G.seed}
   if(d&&d.v===1){if(d.fresh&&CH[d.story.ch]&&CH[d.story.ch].desert&&!d.biome){const sd=1+((Math.random()*1e9)|0);newGame(np,{seed:sd,diff:d.diff||0,biome:1});G.year=2;G.story=JSON.parse(JSON.stringify(d.story));keepGear(d.pl);G.story.seen=G.story.seen||{};return sd}newGame(np,{seed:d.seed,diff:d.diff||0,biome:d.biome||0});applySave(d);return d.seed}
-  newGame(np,{seed,diff:gameDiff});G.story={ch:1,step:0,seen:{},raids:0};return G.seed}
+  newGame(np,{seed,diff:gameDiff});G.story={ch:1,step:0,seen:{},raids:0,joined:[],rb:[]};for(const q of G.surv.splice(1))world.remove(q.m.g);G.baseCap=3;G.survT=40;return G.seed}
 function applySave(d){G.year=d.year||1;G.day=d.day;G.t=(d.day-1)*G.DAY+.5;G.cash=d.cash;G.earned=d.earned;G.rep=d.rep;G.fuel=d.fuel;G.woodpile=d.woodpile||0;G.level=d.level;G.rank=d.rank||0;
   Object.assign(G.lv,d.lv);Object.assign(G.pm,d.pm);Object.assign(G.stats,d.stats);G.raidWins=d.raidWins||0;G.mission=d.mission;G.perkCount=d.perk||{};G.yearBonus=d.yb;G.metaGiven=d.mg;G.savePl=d.pl;G._dm=null;
   if(G.secrets&&d.sec)G.secrets.forEach((q,i)=>{if(d.sec[i]){q.found=true;if(q.m)q.m.visible=false}});G.secretS=d.secS||0;G.stele=d.stele||0;
@@ -2849,7 +2908,7 @@ function updateStory(dt){const S=G.story;if(!S)return;S.t=(S.t||0)+dt;const ph=(
     if(G.zones.C)beat('zC',()=>say('斥候カイ','奥地の森で妙な足跡を見た。家ほどもある…ただの狼じゃない'));
     if(G.zones.D)beat('zD',()=>say('村長オルガ','温泉が戻った！ これでみんな凍えずにすむ'));
     if(G.monument)beat('mon',()=>{say('村長オルガ','像ができた…町の灯りがよみがえったね');say('斥候カイ','待て、森が騒がしい。今夜は総出で来るぞ！')})}
-  updatePuzzles(dt);updateCh4(dt);updateAdv(dt);updateTwins(dt);updateHidden(dt);updateGold(dt);
+  updateRebuild(dt);updatePuzzles(dt);updateCh4(dt);updateAdv(dt);updateTwins(dt);updateHidden(dt);updateGold(dt);
   const L=SOBJ[S.ch];if(!L)return;
   if(S.step===0&&!S.seen.s0&&S.t>9){S.seen.s0=1;L[0].on&&L[0].on()}
   if(S.ch===2){if(S.step===3&&S.minion){const mb=G.bears.find(b=>b.id===S.minion);if(mb&&!mb.bt)setBt(mb,'alpha')}const kb=G.bears.find(b=>b.king&&!b.dead);if(kb&&kb.bt!=='king')setBt(kb,'king')}

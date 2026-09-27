@@ -34,14 +34,14 @@ const QUESTS={
 const qS=id=>(G.story&&G.story.q&&G.story.q[id])||null,qDone=id=>{const q=qS(id);return !!(q&&q.st===3)};
 const bioKey=()=>DES()?'desert':'snow';
 function solvedN(bio){let n=0;const ch=(G.story&&G.story.ch)||1;for(const k in QUESTS){const Q=QUESTS[k];if(Q.bio===bio&&qDone(k)&&(!Q.ch||Q.ch.includes(ch)))n++}return n}
-function npcQuest(nid){let avail=null;const ch=(G.story&&G.story.ch)||1;for(const k in QUESTS){const Q=QUESTS[k];if(Q.npc!==nid||Q.bio!==bioKey())continue;const q=qS(k);if(q&&(q.st===1||q.st===2))return k;if(!q&&!avail&&(!Q.ch||Q.ch.includes(ch))&&(!Q.req||Q.req()))avail=k}return avail}
+function npcQuest(nid){if(!joined(nid))return null;let avail=null;const ch=(G.story&&G.story.ch)||1;for(const k in QUESTS){const Q=QUESTS[k];if(Q.npc!==nid||Q.bio!==bioKey())continue;const q=qS(k);if(q&&(q.st===1||q.st===2))return k;if(!q&&!avail&&(!Q.ch||Q.ch.includes(ch))&&(!Q.req||Q.req()))avail=k}return avail}
 function npcMark(nid){const mm=advMark(nid)||mysteryMark(nid);if(mm)return mm;const k=npcQuest(nid);if(!k)return '';const q=qS(k);return !q?'！':q.st===2?'？':'…'}
 // ---- NPC meshes and markers (both host and guest)
 function npcFx(){if(!G||!running)return;const on=isRPG();const L=NPCS[bioKey()];
   if(!on){if(G.npcV)for(const v of G.npcV)v.m.g.visible=false;if(G.escV)G.escV.m.g.visible=false;if(G.findV)G.findV.visible=false;$('dlg').hidden=true;return}
   if(!G.npcV||G.npcBio!==bioKey()||(G.npcV[0]&&!G.npcV[0].m.g.parent)){if(G.npcV)for(const v of G.npcV)world.remove(v.m.g);G.npcBio=bioKey();G.npcV=L.map(n=>{const m=makeVillager(PALS[n.pal%PALS.length],Object.assign({noShadow:false},n.o));const q=npcPos(n);m.g.position.set(q.x,0,q.y);m.g.rotation.y=Math.atan2(CX-q.x,CY-q.y)+Math.PI;world.add(m.g);return{n,m,x:q.x,y:q.y}})}
   const me=G.players[G.me]||G.players[0];
-  for(const v of G.npcV){v.m.g.visible=!v.n.adv||ADV();if(!v.m.g.visible)continue;animWalk(v.m,0,false);const mk=npcMark(v.n.id),d=me?dist(me.x,me.y,v.x,v.y):1e9;v.m.g.rotation.y=d<200&&me?Math.atan2(me.x-v.x,me.y-v.y):Math.atan2(CX-v.x,CY-v.y)+Math.PI;
+  for(const v of G.npcV){v.m.g.visible=(!v.n.adv||ADV())&&joined(v.n.id);if(!v.m.g.visible)continue;animWalk(v.m,0,false);const mk=npcMark(v.n.id),d=me?dist(me.x,me.y,v.x,v.y):1e9;v.m.g.rotation.y=d<200&&me?Math.atan2(me.x-v.x,me.y-v.y):Math.atan2(CX-v.x,CY-v.y)+Math.PI;
     if(mk)label(v.x,v.y,74,`<b style="font-size:${mk==='…'?16:26}px;color:${mk==='？'?'#3fc157':mk==='！'?'#ffb020':'#9aa3ad'};-webkit-text-stroke:3px #16283a;paint-order:stroke fill">${mk}</b>`,'');
     if(d<220)label(v.x,v.y,d<75?108:96,`<small>${v.n.n}<span style="color:#e0506a">${hearts(v.n.id)}</span></small>${d<75&&!DLG.open?'<br><b>Eキーで話す</b>':''}`,'')}
   // escort follower, find spot
@@ -53,7 +53,7 @@ function npcFx(){if(!G||!running)return;const on=isRPG();const L=NPCS[bioKey()];
     const F=G.findV;F.visible=true;F.position.set(fnd[1].x,0,fnd[1].y);F.userData.gem.rotation.y+=.05;if(me&&dist(me.x,me.y,fnd[1].x,fnd[1].y)<240)label(fnd[1].x,fnd[1].y,40,fnd[2].p>0?bar(100*fnd[2].p/1.5,'gold'):`<small>${fnd[1].nm}？ そばに立って探す</small>`,'')}
   else if(G.findV)G.findV.visible=false;
   const me2=me;if(DLG.open&&DLG.npc&&me2&&dist(me2.x,me2.y,DLG.npc.x,DLG.npc.y)>140)closeTalk()}
-function npcNear(p){if(!isRPG()||!G.npcV)return null;let b=null,bd=75;for(const v of G.npcV){const d=dist(p.x,p.y,v.x,v.y);if(d<bd){bd=d;b=v}}return b}
+function npcNear(p){if(!isRPG()||!G.npcV)return null;let b=null,bd=75;for(const v of G.npcV){if(!v.m.g.visible)continue;const d=dist(p.x,p.y,v.x,v.y);if(d<bd){bd=d;b=v}}return b}
 // ---- quest progress (host)
 function updateQuests(dt){if(!isRPG())return;const S=G.story;S.q=S.q||{};
   for(const k in S.q){const Q=QUESTS[k],q=S.q[k];if(!Q||q.st!==1||Q.bio!==bioKey())continue;

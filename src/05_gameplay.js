@@ -32,6 +32,7 @@ function workerMesh(w){const role=w.role,stId=w.st&&w.st.id;
 
 // ================================================================ missions & achievements
 const MISSIONS=[
+  {t:'広場の瓦礫を3つ片付けろ（そばに立つ）',f:()=>REB()?[rbState().length,3]:[1,1],cash:20,tg:p=>{if(!REB())return null;const L=rubbleList();let b=null,bd=1e9;L.forEach((r,i)=>{if(rbGone(i))return;const d=dist(p.x,p.y,r.x,r.y);if(d<bd){bd=d;b=r}});return b?{x:b.x,y:b.y,h:50}:null}},
   {t:'柵の外でオオカミをたおせ',f:()=>[G.stats.bears,1],cash:20,tg:p=>nearestBear(p)},
   {t:'肉をグリルに入れろ',f:()=>[G.stats.grilled,8],cash:25,tg:p=>has(p,'meat')?stT('steak'):nearestMeat(p)},
   {t:'レジに立って肉を売れ',f:()=>[G.stats.sold,5],cash:30,tg:p=>{const st=G.stations.steak;if(st.shelf>0)return{x:st.def.stand.x,y:st.def.stand.y,h:70};return has(p,'meat')?stT('steak'):nearestMeat(p)}},
@@ -142,7 +143,7 @@ function pushRect(e,x0,y0,x1,y1,r){const nx=clamp(e.x,x0,x1),ny=clamp(e.y,y0,y1)
   if(d<r){if(d>0){e.x=nx+dx/d*r;e.y=ny+dy/d*r}else{const l=e.x-x0,r_=x1-e.x,t=e.y-y0,b=y1-e.y,m=Math.min(l,r_,t,b);if(m===l)e.x=x0-r;else if(m===r_)e.x=x1+r;else if(m===t)e.y=y0-r;else e.y=y1+r}}}
 const angGap=an=>GATE_ANG.some(g=>Math.abs(Math.atan2(Math.sin(an-g),Math.cos(an-g)))<.11)||(an>SOUTH[0]&&an<SOUTH[1]);
 function fenceCollide(e,px,py){if(ADV())return;const d=dist(e.x,e.y,CX,CY),dp=dist(px,py,CX,CY);if(Math.abs(d-FR)<14||(dp<FR)!==(d<FR)){const an=Math.atan2(e.y-CY,e.x-CX);if(angGap(an))return;const r=dp<FR?FR-14:FR+14;e.x=CX+Math.cos(an)*r;e.y=CY+Math.sin(an)*r}}
-function solids(e,r){pushCircle(e,CX,CY,70);advSolids(e,r);for(const d of G.drifts||[])pushCircle(e,d.x,d.y,20*d.s);if(isRPG())pushCircle(e,WB.x,WB.y,24);caveWalls(e,r);if(G.monV&&G.monV.visible)pushCircle(e,MON.x,MON.y,52*G.monV.scale.x);for(const id in G.stations){const st=G.stations[id];if(!st.open)continue;const s=st.def;pushRect(e,s.conv.x-34,s.conv.y-16,s.conv.x+34,s.conv.y+16,r*.6);pushRect(e,s.counter.x-52,s.counter.y-12,s.counter.x+52,s.counter.y+12,r*.6);pushCircle(e,s.pile.x,s.pile.y,14)}
+function solids(e,r){pushCircle(e,CX,CY,70);advSolids(e,r);rebSolids(e,r);for(const d of G.drifts||[])pushCircle(e,d.x,d.y,20*d.s);if(isRPG())pushCircle(e,WB.x,WB.y,24);caveWalls(e,r);if(G.monV&&G.monV.visible)pushCircle(e,MON.x,MON.y,52*G.monV.scale.x);for(const id in G.stations){const st=G.stations[id];if(!st.open)continue;const s=st.def;pushRect(e,s.conv.x-34,s.conv.y-16,s.conv.x+34,s.conv.y+16,r*.6);pushRect(e,s.counter.x-52,s.counter.y-12,s.counter.x+52,s.counter.y+12,r*.6);pushCircle(e,s.pile.x,s.pile.y,14)}
   if(G.zones.D){pushCircle(e,SPA.boiler.x,SPA.boiler.y,28)}
   for(const z of ZONES)if(!G.zones[z.id]){const [x0,y0,x1,y1]=z.rect;pushRect(e,x0,y0,x1,y1,r)}}
 function nav(e,tx,ty){const ia=dist(e.x,e.y,CX,CY)<FR,ib=dist(tx,ty,CX,CY)<FR;if(ia===ib)return{x:tx,y:ty};

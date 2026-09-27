@@ -139,7 +139,7 @@ const RANKS=[{n:'集落',p:0},{n:'村',p:8},{n:'町',p:14},{n:'街',p:20},{n:'�
 const rankOf=n=>RANKS.reduce((a,r,i)=>n>=r.p?i:a,0);
 const popNow=()=>G.surv.filter(s=>!s.frozen).length+G.workers.length;
 const HCAP=[0,3,6,10],HNAME=['','テント','小屋','宿屋'],HCOST=[[100,380,1100],[140,450,1250],[180,520,1400],[220,600,1600],[260,700,1800]];
-const houseLv=i=>G.lv['house_'+i]||0,nextHouse=()=>{for(let l=0;l<3;l++)for(let i=0;i<HOUSES.length;i++)if(houseLv(i)===l)return i;return -1},houseCap=()=>Math.max(6,G.baseCap||6)+HOUSES.reduce((a,_,i)=>a+HCAP[houseLv(i)],0),houseFull=()=>popNow()>=houseCap();
+const houseLv=i=>G.lv['house_'+i]||0,nextHouse=()=>{for(let l=0;l<3;l++)for(let i=0;i<HOUSES.length;i++)if(houseLv(i)===l)return i;return -1},houseCap=()=>Math.max(REB()?2:6,G.baseCap||6)+HOUSES.reduce((a,_,i)=>a+HCAP[houseLv(i)],0),houseFull=()=>popNow()>=houseCap();
 const tempC=()=>DES()?Math.round((isNight()?6:43)+(G.wx&&G.wx.type==='snap'?6:0)+Math.min(8,G.day*.5)):Math.round((G.mod?G.mod.temp:0)-(G.wx&&G.wx.type==='snap'?15:G.wx&&G.wx.type==='clear'?-8:0)-12-G.day*2.5-(isNight()?10:0)-(G.wave?15:0));
 const price=id=>Math.round((STN[id].base+STN[id].step*G.lv['price_'+id]+G.pm.price*(id==='steak'?1:id==='fish'?2.5:6))*(G.mod?G.mod.price:1)*(G&&G._dm?G._dm.price:1));
 const logFuel=()=>9+G.level*1.2+G.pm.wood+(G.mod?G.mod.wood:0);
