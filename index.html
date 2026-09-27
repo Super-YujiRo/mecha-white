@@ -217,6 +217,19 @@
 #rpgBox .lvl{display:flex;align-items:center;gap:8px;margin-bottom:6px}#rpgBox .lvl b{font-size:18px}#rpgBox .xp{flex:1;height:8px;background:#e3d8c6;border-radius:4px;overflow:hidden}#rpgBox .xp i{display:block;height:100%;background:#ffb020}
 #rpgBox .eq{display:grid;grid-template-columns:44px 1fr;gap:3px 6px;font-size:12px;margin-bottom:6px}#rpgBox .eq span:nth-child(odd){font-weight:800;color:#8a5a30}
 #rpgBox .inv{display:flex;flex-direction:column;gap:3px;margin-bottom:8px;max-height:150px;overflow:auto}#rpgBox .inv button{font:inherit;font-size:11px;text-align:left;border:1.5px solid #16283a;border-radius:8px;background:#fff;padding:3px 6px;cursor:pointer}#rpgBox .inv button.on{background:#c6f3cc}
+#opening{position:fixed;inset:0;z-index:60;background:radial-gradient(ellipse at center,rgba(8,16,30,.55),rgba(4,8,16,.92));display:grid;place-items:center;cursor:pointer}
+#opening .opbar{position:absolute;left:0;right:0;height:11vh;background:#05080f}#opening .opbar.t{top:0}#opening .opbar.b{bottom:0}
+#opTxt{color:#f4f8fc;font-size:clamp(20px,2.6vw,32px);font-weight:700;letter-spacing:.08em;text-align:center;line-height:1.9;padding:0 8vw;text-shadow:0 2px 16px rgba(0,0,0,.8);white-space:pre-line;opacity:0;transition:opacity .9s}
+#opTxt.on{opacity:1}#opTxt .chn{display:block;font-size:.6em;letter-spacing:.3em;color:#ffd23f;margin-bottom:6px}#opTxt .cht{display:block;font-size:1.7em;letter-spacing:.12em}
+#opSkip{position:absolute;right:24px;bottom:calc(11vh + 14px);font:inherit;font-size:13px;color:#fff;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.4);border-radius:20px;padding:6px 14px;cursor:pointer}
+#tracker{position:fixed;right:12px;top:196px;width:262px;z-index:19;background:rgba(255,250,240,.94);border:3px solid #16283a;border-radius:14px;padding:8px 10px;color:#16283a;font-size:12px;box-shadow:0 4px 14px rgba(0,0,0,.2);pointer-events:none}
+#tracker .tk-h{font-weight:900;font-size:13px;border-bottom:2px dashed #d6c7ab;padding-bottom:4px;margin-bottom:6px}#tracker .tk-h em{font-style:normal;color:#e8703a}
+#tracker .sec{margin-bottom:7px}#tracker .sec i{display:block;font-style:normal;font-size:10px;font-weight:900;letter-spacing:.1em;color:#8a5a30}#tracker .sec b{display:block;font-size:13.5px;line-height:1.4}
+#tracker .sec.now{background:#fff3c4;border-radius:10px;padding:5px 7px;border:2px solid #ffd23f}#tracker .sec.now i{color:#c0392b}
+#tracker .pg{display:flex;align-items:center;gap:6px;margin-top:2px}#tracker .pg span{flex:1;height:7px;background:#e3d8c6;border-radius:4px;overflow:hidden}#tracker .pg span u{display:block;height:100%;background:#3fc157}
+#tracker .ck{font-size:12px;margin-top:1px;padding-left:2px}#tracker .ck.ok{color:#2f8a3a}#tracker .ck.ok:before{content:'✓ '}#tracker .ck.ng:before{content:'・'}
+#tracker .q{font-size:11.5px;margin-top:2px}#tracker .q.ok{color:#2f8a3a;font-weight:800}
+#tracker.flash{animation:tkf .9s ease-out}@keyframes tkf{0%{transform:scale(1.08);box-shadow:0 0 0 6px #ffd23f}100%{transform:scale(1)}}
 #storyLine{margin-top:4px}#storyLine b{color:#e8703a}
 </style>
 
@@ -253,6 +266,8 @@
 <div id="lifeCard" hidden><div id="rpgBox"></div><b class="lct">くらしランク</b><div id="lifeRows"></div><small>木を切る・狩る・釣る・工房で作るほど上がる</small></div>
 <div id="dlg" hidden><b id="dlgWho"></b><p id="dlgTxt"></p><div id="dlgCh"></div><small id="dlgHint">Eキー / クリックで進む</small></div>
 <div id="qlog" hidden></div>
+<div id="tracker" hidden></div>
+<div id="opening" hidden><div class="opbar t"></div><div class="opbar b"></div><div id="opTxt"></div><button id="opSkip">スキップ ▶▶</button></div>
 <div id="talk" hidden><b id="talkWho"></b><span id="talkTxt"></span></div>
 <div class="banner" id="banner" hidden><small id="bnSub"></small><b id="bnMain"></b><span id="bnNote"></span></div>
 <div id="joy0" hidden><i></i></div><div id="joy1" hidden><i></i></div>
@@ -1509,7 +1524,7 @@ function applyInbox(){const I=NET.inbox;
     c.ps.forEach((v,i)=>{const p=G.players[i];if(!p)return;const was=p.down>0;if(v[11])p.lv={gun:v[11][0],bag:v[11][1]};p.bag=dec(v[3]);p.warm=v[4];p.hp=v[5];p.down=v[6];p.inHeat=!!v[7];p.shooting=v[8]&1?true:null;p.chopping=v[8]&2?true:null;p.fishing=v[8]&4&&v[10]>=0?G.holes[v[10]]:null;if(v[8]&8)p.flash=.07;p.buddy=!!(v[8]&16);p.ko=!!(v[8]&32);p.actT=v[9];
       if(i===G.me){if(was&&!(p.down>0)){p.x=CX+rnd(-40,40);p.y=CY+100}}else{p.nx=v[0];p.ny=v[1];p.dirN=v[2]}});
     for(const f of c.fl||[])float(f[0],f[1],f[2],f[3],f[4],f[5],true);for(const b of c.bn||[])banner(b[0],b[1],b[2],b[3],true);for(const t of c.tq||[])toast(t[0],t[1],true);
-    for(const t of c.sy||[])say(t[0],t[1],true);if(c.rq&&G.story){G.story.q={};for(const r of c.rq)G.story.q[r[0]]={st:r[1],p:r[2],x:r[3],y:r[4],f:r[5]<0?null:r[5]}}if(c.rp)c.rp.forEach((v,i)=>{const q=G.players[i];if(!q)return;q.rl=v[0];q.rx=v[1];const inv=v[2]?v[2].split('.'):[];if(i===G.me&&q.items)for(const id of inv)if(!q.items.includes(id)&&ITEMS[id])banner('装備を手に入れた！',ITEMS[id].n,itemDesc(ITEMS[id]),'r-SSR',true);q.items=inv;q.eq={w:v[3]||null,a:v[4]||null,c:v[5]||null}});if(c.lf)c.lf.forEach((v,i)=>{const q=G.players[i];if(q){q.life={};LIVES.forEach((k,j)=>q.life[k]=v[j])}});if(c.so){G.story=G.story||{seen:{}};G.story.ch=c.so[0];G.story.step=c.so[1];G.story.raids=c.so[2];G.story.minion=c.so[3];G.story.fp=c.so[4];G.story.hs=c.so[5];G.story.hc=c.so[6];G.story.hx=c.so[7];G.story.hy=c.so[8];G.story.ruin=c.so[9];G.story.queen=c.so[10]}else G.story=null;
+    for(const t of c.sy||[])say(t[0],t[1],true);if(c.rq&&G.story){G.story.q={};for(const r of c.rq)G.story.q[r[0]]={st:r[1],p:r[2],x:r[3],y:r[4],f:r[5]<0?null:r[5]}}if(c.rp)c.rp.forEach((v,i)=>{const q=G.players[i];if(!q)return;q.rl=v[0];q.rx=v[1];const inv=v[2]?v[2].split('.'):[];if(i===G.me&&q.items)for(const id of inv)if(!q.items.includes(id)&&ITEMS[id])banner('装備を手に入れた！',ITEMS[id].n,itemDesc(ITEMS[id]),'r-SSR',true);q.items=inv;q.eq={w:v[3]||null,a:v[4]||null,c:v[5]||null}});if(c.lf)c.lf.forEach((v,i)=>{const q=G.players[i];if(q){q.life={};LIVES.forEach((k,j)=>q.life[k]=v[j])}});if(c.so){G.story=G.story||{seen:{}};G.story.ch=c.so[0];if(NET.opCh!==c.so[0]){NET.opCh=c.so[0];const C=CH[c.so[0]];if(C&&C.open&&c.so[1]===0&&(c.so[0]>1||G.day<=1))playOpening(C,()=>{})}G.story.step=c.so[1];G.story.raids=c.so[2];G.story.minion=c.so[3];G.story.fp=c.so[4];G.story.hs=c.so[5];G.story.hc=c.so[6];G.story.hx=c.so[7];G.story.hy=c.so[8];G.story.ruin=c.so[9];G.story.queen=c.so[10]}else G.story=null;
     if(c.end){if(running)endGame(!!c.end.c,c.end.w);return}}
   const a=I['s.a'];if(a){I['s.a']=null;
     recon(G.bears,a.b,r=>{const kind=BK[r[6]]||'normal';const b={id:r[0],x:r[1],y:r[2],kind,rot:r[3],step:0,hit:0,roar:0,dead:false,deadT:0};b.m=makeBear(kind);b.m.g.position.set(b.x,0,b.y);world.add(b.m.g);return b},
@@ -2165,7 +2180,7 @@ function frame(dt){hideIdle();monBar();frozenFx();vigFx();hideIdleFx(dt);
 // ================================================================ HUD
 function vigFx(){const el=$('vig');if(!el)return;const me=G.players[G.me]||G.players[0];let c='';if(running&&me){if(!me.inHeat&&me.warm<30&&!me.down)c=DES()?'heat':'frost';else if(G.raid&&G.raid.on)c='raid';else if(G.fuel<15)c='dim'}if(el._c!==c){el._c=c;el.className=c}}
 function hudInit(){const fn=$('hFurnN');if(fn)fn.textContent=DES()?'井戸':'かまど';const ft=$('hFuelTxt');if(ft)ft.textContent=DES()?'水位':'燃料';const fz=$('hFrzN');if(fz)fz.textContent=DES()?'倒れた町人':'凍った町人';$('hBody').innerHTML=[G.players[G.me]||G.players[0]].map(p=>`<div class="bodyt" id="bt${p.id}"><i id="bti${p.id}"></i><span><span id="btt${p.id}">体温</span></span></div>`).join('');$('bottom').innerHTML=`<div class="pill" id="lvBox"><span class="lvb">Lv <span id="hPlv">1</span></span><span class="xpb"><i id="hXp"></i></span></div>`+G.players.map(p=>`<div class="pill pc" id="pc${p.id}">${G.players.length>1?`<span class="tg" style="background:${HERO[p.id].tag}">${HERO[p.id].tagText}</span>`:''}<svg class="icon" viewBox="0 0 26 22"><path d="M4 8h18l-2 12H6z" fill="#c98a4b"/><path d="M4 8h18" stroke="#8a5a30" stroke-width="2.4" stroke-linecap="round"/><path d="M8 8c0-5 10-5 10 0" fill="none" stroke="#8a5a30" stroke-width="2"/><path d="M7 12h12M7.5 16h11" stroke="#a8743f" stroke-width="1.4"/></svg><span class="num sm" id="pcv${p.id}"></span><span class="hpb"><i id="hp${p.id}"></i></span></div>`).join('')}
-function hud(){lifeHud();qlogHud();G.cashShow+=(G.cash-G.cashShow)*.2;if(Math.abs(G.cash-G.cashShow)<1)G.cashShow=G.cash;$('hCash').textContent=Math.round(G.cashShow).toLocaleString();
+function hud(){lifeHud();qlogHud();trackerHud();G.cashShow+=(G.cash-G.cashShow)*.2;if(Math.abs(G.cash-G.cashShow)<1)G.cashShow=G.cash;$('hCash').textContent=Math.round(G.cashShow).toLocaleString();
   $('hDay').textContent=G.day;$('hTemp').textContent=tempC()+'℃';$('hDayIco').textContent=isNight()?'☾':'☀';$('hDayBox').classList.toggle('night',isNight());
   $('hLv').textContent=G.level;$('hFuel').style.width=G.fuel+'%';$('hFuelBar').classList.toggle('low',G.fuel<20);$('hFuelTxt').textContent=DES()?(G.fuel<20?'水がない！':'水位'):G.wave?'大寒波！':G.fuel<20?'燃料がない！':'燃料';
   const idle=idleSurvivors().length;$('hIdle').textContent=popNow();$('hPop').textContent=houseCap();$('hPopBox').classList.toggle('warn',popNow()>=houseCap());$('hFrz').textContent=G.frozen;$('hFrzBox').classList.toggle('warn',G.frozen>=3);
@@ -2185,6 +2200,30 @@ function show(el,on){$(el).hidden=!on}
 
 
 
+
+
+// ---- chapter openings (letterboxed text over the town) and the objective tracker
+let OPN=null;
+function playOpening(C,done){const el=$('opening'),tx=$('opTxt');const slides=C.open.map(t=>({t})).concat([{card:1}]);let i=0,tm=null;OPN={done};
+  if(NET.mode==='solo')G.paused=true;for(const j of joys)j.on=false;el.hidden=false;G.camPan={x:CX,y:CY-80,t:0,z:.42,d:slides.length*3.6+1};
+  const show=()=>{clearTimeout(tm);tx.classList.remove('on');setTimeout(()=>{if(!OPN)return;const sl=slides[i];tx.innerHTML=sl.card?`<span class="chn">${C.n}</span><span class="cht">${C.t}</span>`:sl.t.replace(/</g,'&lt;');void tx.offsetWidth;tx.classList.add('on');if(sl.card)SFX.area();tm=setTimeout(next,sl.card?2600:3400)},i?450:150)};
+  const next=()=>{i++;if(i>=slides.length){end();return}show()};
+  const end=()=>{clearTimeout(tm);if(!OPN)return;const d=OPN.done;OPN=null;el.hidden=true;tx.classList.remove('on');if(NET.mode==='solo'&&G)G.paused=false;if(G.camPan)G.camPan.t=Math.max(G.camPan.t,(G.camPan.d||2)-.5);d&&d()};
+  OPN.next=next;OPN.end=end;show()}
+$('opening').addEventListener('click',e=>{if(!OPN)return;if(e.target.id==='opSkip'){OPN.end();return}OPN.next()});
+addEventListener('keydown',e=>{if(!OPN)return;if(e.code==='Escape'){OPN.end();e.preventDefault()}else if(e.code==='Space'||e.code==='Enter'||e.code==='KeyE'){OPN.next();e.preventDefault()}},true);
+function trackerFlash(){const el=$('tracker');el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash')}
+let _tkT=0;function trackerHud(){const el=$('tracker');if(!isRPG()||!running){el.hidden=true;return}const now=performance.now();if(now-_tkT<250)return;_tkT=now;const S=G.story,C=CH[S.ch]||CH[4],L=SOBJ[S.ch];
+  const pg=(c,g)=>`<div class="pg"><span><u style="width:${Math.round(100*Math.min(1,c/Math.max(1,g)))}%"></u></span><small>${Math.min(c,g)}/${g}</small></div>`;
+  let h=`<div class="tk-h">${C.n}<em>「${C.t}」</em></div>`;
+  if(L){const i=Math.min(S.step||0,L.length-1),o=L[i],[c,g]=o.f();h+=`<div class="sec now"><i>▶ いまやること（${i+1}/${L.length}）</i><b>${stx(o)}</b>${o.p?`<small>${o.p()}</small>`:pg(c,g)}</div>`}
+  else{const g=goalOf(YR());const rows=[[`かまど Lv${G.level} / ${g.lv}`,G.level>=g.lv],[`町人 ${popNow()} / ${g.pop}人`,popNow()>=g.pop],[`お金 $${Math.floor(G.cash).toLocaleString()} / $${g.c.toLocaleString()}`,G.cash>=g.c]];
+    if(G.mission<MISSIONS.length){const m=MISSIONS[G.mission],[c,gg]=m.f();h+=`<div class="sec now"><i>▶ いまやること</i><b>${m.t}</b>${pg(c,gg)}</div>`}
+    h+=`<div class="sec"><i>◆ 章の目標</i><b>${G.monument?'今夜、像を守りぬけ！':g.n+'を建てて、最後の夜を守れ'}</b>${G.monument?'':rows.map(([t,ok])=>`<div class="ck ${ok?'ok':'ng'}">${t}</div>`).join('')}</div>`}
+  const qs=[];for(const k in (S.q||{})){const Q=QUESTS[k],q=S.q[k];if(!Q||Q.bio!==bioKey()||q.st===3)continue;const pr=q.st===2?`→ ${npcName(Q.npc)}に報告`:Q.type==='bring'?`${{log:'薪',fish:'魚',meat:'肉'}[Q.k]||Q.k} ${q.p||0}/${Q.n}`:Q.type==='build'?`${Math.min(Q.chk(),Q.n)}/${Q.n}`:Q.where?`（${Q.where}）`:'';qs.push(`<div class="q ${q.st===2?'ok':''}">・${Q.t} ${pr}</div>`)}
+  const avail=G.npcV?G.npcV.filter(v=>npcMark(v.n.id)==='！').length:0;
+  h+=`<div class="sec"><i>✉ 住人の依頼</i>${qs.join('')||'<div class="q">受けている依頼はない</div>'}${avail?`<div class="q" style="color:#e8703a">“！”の住人が${avail}人いる（Eキーで話す）</div>`:''}</div>`;
+  if(el._h!==h){el.innerHTML=h;el._h=h}el.hidden=false}
 
 // ================================================================ RPG (story mode): townsfolk troubles, equipment, personal level
 const ITEMS={w_bear:{n:'熊爪のナックル',s:'w',atk:.15},w_gordon:{n:'片耳殺しの刃',s:'w',atk:.3},w_elza:{n:'エルザの銀の槍',s:'w',atk:.4},w_said:{n:'サイードの曲刀',s:'w',atk:.45},w_gordon2:{n:'群れ断ちの大斧',s:'w',atk:.6},
@@ -2266,7 +2305,7 @@ function dlgKey(code){const last=DLG.i>=DLG.pages.length-1;if(last&&DLG.ch){cons
 function closeTalk(){DLG.open=false;$('dlg').hidden=true;if(NET.mode==='solo'&&G)G.paused=false}
 $('dlg').addEventListener('click',()=>{if(!DLG.open)return;const last=DLG.i>=DLG.pages.length-1;if(last&&DLG.ch)return;dlgKey('KeyE')});
 // ---- quest log + status panel
-let _qlT=0;function qlogHud(){const el=$('qlog');if(!isRPG()){el.hidden=true;return}const now=performance.now();if(now-_qlT<250)return;_qlT=now;const rows=[];
+let _qlT=0;function qlogHud(){const el=$('qlog');el.hidden=true;return;const now=performance.now();if(now-_qlT<250)return;_qlT=now;const rows=[];
   for(const k in (G.story.q||{})){const Q=QUESTS[k],q=G.story.q[k];if(!Q||Q.bio!==bioKey()||q.st===3)continue;
     const pr=q.st===2?`${npcName(Q.npc)}に報告`:Q.type==='bring'?`${{log:'薪',fish:'魚',meat:'肉'}[Q.k]||Q.k} ${q.p||0}/${Q.n}`:Q.type==='build'?`${Math.min(Q.chk(),Q.n)}/${Q.n}`:Q.where||'';
     rows.push(`<div class="${q.st===2?'ok':''}"><i>依頼</i>${Q.t}：${pr}</div>`)}
@@ -2400,13 +2439,13 @@ function ruinVis(){const S=G.story,on=!!(S&&S.ch===3&&DES());if(!on){if(G.ruinV)
 
 // ================================================================ story mode (chapters + morning autosave)
 var gameMode=store.get('mw-mode','story');var SAVE_K='mw-story1';
-var CH={1:{n:'第1章',t:'ホワイトアウト',play:true,sub:'目標：町のシンボル像を建て、最後の夜を守りきれ',
+var CH={1:{n:'第1章',t:'ホワイトアウト',play:true,open:['その年、冬は終わらなかった。','吹雪は町をのみこみ、\n人々は散り散りになった。','残されたのは、\n消えかけたひとつのかまど――','あなたは、この火を守るために\nこの町へやってきた。'],sub:'目標：町のシンボル像を建て、最後の夜を守りきれ',
   intro:[['村長オルガ','よく来てくれた…この吹雪で、町のかまどの火が消えかけている'],['村長オルガ','木を切って薪をくべておくれ。火さえあれば、人は集まってくる']],
   outro:'像のまわりで、みんなが久しぶりに笑った。\nけれどその夜明け、北の山から戻った斥候カイは青ざめていた。\n\n「家より大きな白い影を見た。熊どもは、あいつに従って動いてる…」\n\n町の人はそれを「白き王」と呼んだ。'},
- 2:{n:'第2章',t:'白き王',play:true,sub:'王の正体をつきとめ、町を守りぬけ',
+ 2:{n:'第2章',t:'白き王',play:true,open:['像が完成した夜から、ひと月。','北の山から、\n地鳴りのような足音が近づいてくる。','熊たちを束ねる“白き王”――\n町は、ふたたび試されようとしていた。'],sub:'王の正体をつきとめ、町を守りぬけ',
   intro:[['斥候カイ','北の山で見た白い影…熊どもを束ねる“王”がいる'],['村長オルガ','去年より冬も厳しい。まずは守りを固めよう。見張り台を強くしておくれ']],
   outro:'白き王は、灯台の光の下で雪に崩れ落ちた。\n吹雪が、ほんの少しだけ弱まった気がする。\n\n村長オルガ「王がいなくなっても、この冬は終わらない。\n南の砂の向こうに、冬の原因があると聞いたことがある…」\n\n斥候カイは、南への道の雪をかきわけはじめた。'},
- 3:{n:'第3章',t:'南への道',play:true,desert:true,sub:'砂の町で、冬の原因をつきとめろ',
+ 3:{n:'第3章',t:'南への道',play:true,desert:true,open:['白き王は倒れた。\nけれど、冬は終わらなかった。','斥候カイは、南の砂漠に\n“冬の原因”が眠っていると聞く。','雪をかきわけ、たどり着いたのは――\n灼熱の砂の町だった。'],sub:'砂の町で、冬の原因をつきとめろ',
   intro:[['斥候カイ','ここが砂の町か…昼は焼けるように暑いのに、夜は凍えるほど寒い'],['隊長ザラ','北から来た旅人かい？ ここじゃ水が命だ。湧き水をくんで井戸を満たしな']],
   outro:'井戸の底に沈めた心臓は、ゆっくりと青い光を失っていった。\nその夜明け、北の空をおおっていた雲が、はじめて割れた。\n\n隊長ザラ「北の町に帰りな。春が来るかもしれないよ」\n\n――第4章「帰郷」は制作中'},
  4:{n:'第4章',t:'帰郷',play:false,sub:'（制作中）ここからは自由に遊べる'}};
@@ -2461,9 +2500,10 @@ function applySave(d){G.year=d.year||1;G.day=d.day;G.t=(d.day-1)*G.DAY+.5;G.cash
   G.players.forEach((p,i)=>{if(d.pl&&d.pl[i]){p.lv=Object.assign({gun:0,bag:0},d.pl[i].lv);p.life=Object.assign({},d.pl[i].life||{});rpgRestore(p,d.pl[i])}});
   G.story=JSON.parse(JSON.stringify(d.story));G.story.seen=G.story.seen||{};if(d.mon){G.monument=true;G.monV.visible=true;G.monV.scale.setScalar(.01);G.monPop=0;G.finalPending=true}
   if(G.story.ch===2&&G.story.step===3)G.story.minion=0;if(G.story.ch===3&&G.story.step===3)G.story.queen=0;if(G.story.hs===1)G.story.hs=2;for(const k in (G.story.q||{})){const q=G.story.q[k];if(q.st===1&&QUESTS[k]&&QUESTS[k].type==='escort'){q.f=null;q.x=QUESTS[k].x;q.y=QUESTS[k].y}}G.story.king=0;G.story.back=!d.fresh}
-function storyIntro(){const S=G.story,C=CH[S.ch];if(!C)return;setTimeout(()=>{if(running&&G.story===S)banner(C.n,C.t,C.sub,'area')},3400);
-  if(!S.seen.intro){S.seen.intro=1;setTimeout(()=>{if(running&&G.story===S)for(const [w,t] of C.intro||[])say(w,t)},4500)}
-  else if(S.back)setTimeout(()=>{if(running&&G.story===S)say('村長オルガ',`おかえり。DAY ${G.day}の朝から続きだよ`)},4500)}
+function storyIntro(){const S=G.story,C=CH[S.ch];if(!C)return;
+  if(!S.seen.intro){S.seen.intro=1;const go=()=>{if(!running||G.story!==S)return;banner(C.n,C.t,C.sub,'area');setTimeout(()=>{if(running&&G.story===S)for(const [w,t] of C.intro||[])say(w,t)},1600);trackerFlash()};if(C.open){NET.opCh=S.ch;playOpening(C,go)}else setTimeout(go,1500);return}
+  setTimeout(()=>{if(running&&G.story===S)banner(C.n,C.t,C.sub,'area')},3400);
+  if(S.back)setTimeout(()=>{if(running&&G.story===S)say(DES()?'隊長ザラ':'村長オルガ',`おかえり。DAY ${G.day}の朝から続きだよ`)},4500)}
 function storyRaidEnd(){if(G.story)G.story.raids=(G.story.raids||0)+1}
 function beat(id,fn){const S=G.story;if(S.seen[id])return;S.seen[id]=1;fn()}
 function spawnMinion(){spawnBoss('alpha');const b=G.bears[G.bears.length-1],f=FP();b.x=f.x+140;b.y=f.y+40;b.m.g.position.set(b.x,0,b.y);b.hp=b.max=Math.round(b.max*1.3);G.story.minion=b.id}
@@ -2488,7 +2528,7 @@ function updateStory(dt){const S=G.story;if(!S)return;S.t=(S.t||0)+dt;const ph=(
     if(S.step===3&&!S.queen){const b=spawnBoss('queen');b.x=RUIN.x+160;b.y=RUIN.y+60;b.m.g.position.set(b.x,0,b.y);b.hp=b.max=Math.round(240*DM().hp);S.queen=b.id}
     if(S.step===4){if(S.hs===0||S.hs===2){const p=G.players.find(p=>!(p.down>0)&&dist(p.x,p.y,S.hx,S.hy)<60);if(p){S.hs=1;S.hc=p.id;toast('冬の心臓を持った！ 井戸まで運べ','gold');SFX.rare()}}
       else if(S.hs===1){const p=G.players[S.hc];if(!p||p.down>0){S.hs=2;if(p){S.hx=p.x;S.hy=p.y}toast('心臓を落とした！ 拾い直せ','cold')}else{S.hx=p.x;S.hy=p.y;if(dist(p.x,p.y,CX,CY)<120){S.hs=3;S.hx=CX;S.hy=CY;burst(CX,CY,60,60,{c:['#9fe0ff','#ffffff','#7fd4ff'],s0:120,s1:360,u0:200,u1:480,l0:.8,l1:1.5,add:true});SFX.ssr();G.shake=12}}}}}
-  const o=L[S.step];if(o&&S.step<L.length-1){const [c,g]=o.f();if(c>=g){S.step++;const n=L[S.step];banner('目標達成！',stx(n),'','area');SFX.rare();n.on&&n.on();snapSave()}}}
+  const o=L[S.step];if(o&&S.step<L.length-1){const [c,g]=o.f();if(c>=g){S.step++;const n=L[S.step];banner('目標達成！',stx(n),'','area');SFX.rare();n.on&&n.on();snapSave();trackerFlash()}}}
 function storyHud(){const S=G.story,L=S&&SOBJ[S.ch];if(!L)return false;const i=Math.min(S.step||0,L.length-1),o=L[i],[c,g]=o.f();$('mN').textContent=`${CH[S.ch].n} ${i+1}/${L.length}`;$('mT').textContent=stx(o);$('mP').textContent=o.p?o.p():`${Math.min(c,g)}/${g}`;return true}
 function storyT(gp){const S=G.story,L=S&&SOBJ[S.ch];if(!L)return null;const o=L[Math.min(S.step||0,L.length-1)];return o.tg?o.tg(gp):null}
 function storyVis(){if(!G)return;ruinVis();const S=G.story,on=!!(S&&S.ch===2&&S.step===2&&!S.fp&&!DES());if(!on){if(G.fpV)G.fpV.visible=false;return}
