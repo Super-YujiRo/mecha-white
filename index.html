@@ -971,7 +971,7 @@ function makeTownStages(){const S=[];for(let i=0;i<8;i++){const g=new T.Group();
   const rv=makeRankVisuals();const mv=(src,dst,fx)=>{for(const c of [...src.children]){if(fx)fx(c);dst.add(c)}world.remove(src)};
   const roads=[[-Math.PI/2,FR+10],[0,FR+10],[Math.PI,FR+10],[Math.PI/2,380]];
   const strip=(a,len,wd,cob,y)=>{const t=roadTex(cob).clone();t.needsUpdate=true;t.wrapS=T.ClampToEdgeWrapping;t.wrapT=T.RepeatWrapping;t.repeat.set(1,len/(cob?110:200));
-    const m=M_(new T.PlaneGeometry(wd,len),new T.MeshStandardMaterial({map:t,transparent:true,depthWrite:false,roughness:.95}),false,true);m.rotation.set(-Math.PI/2,0,-a+Math.PI/2);const r0=100,mid=r0+len/2;m.position.set(CX+Math.cos(a)*mid,y,CY+Math.sin(a)*mid);m.renderOrder=1;return m};
+    const m=M_(new T.PlaneGeometry(wd,len),new T.MeshStandardMaterial({map:t,alphaTest:.45,depthWrite:false,roughness:.95}),false,true);m.rotation.set(-Math.PI/2,0,-a+Math.PI/2);const r0=100,mid=r0+len/2;m.position.set(CX+Math.cos(a)*mid,y,CY+Math.sin(a)*mid);m.renderOrder=1;return m};
   // Lv2 灯りの集落: trampled roads + string lights and gate flags
   for(const [a,r] of roads)S[1].add(strip(a,r-100,86,false,.32));mv(rv[0],S[1]);
   // Lv3 きこりの村: lamps along the roads + lumber mill
@@ -1245,7 +1245,7 @@ for(const tw of TOWERS)P.push(padDef({id:'tw_'+tw.id,x:tw.x,y:tw.y,name:`見張�
 }
 function makePadMesh(pad){
   const S=pad.big?128:92,c=document.createElement('canvas');c.width=c.height=256;const tex=new T.CanvasTexture(c);tex.encoding=T.sRGBEncoding;
-  const mesh=M_(new T.PlaneGeometry(S,S),new T.MeshBasicMaterial({map:tex,alphaTest:.35,transparent:true,depthWrite:false,depthTest:false}),false);mesh.rotation.set(-Math.PI/2,0,YAW);mesh.position.set(pad.x,1.2,pad.y);mesh.renderOrder=5;
+  const mesh=M_(new T.PlaneGeometry(S,S),new T.MeshBasicMaterial({map:tex,alphaTest:.35,depthWrite:false,depthTest:false}),false);mesh.rotation.set(-Math.PI/2,0,YAW);mesh.position.set(pad.x,1.2,pad.y);mesh.renderOrder=5;
   const icon=new T.Group();icon.position.set(pad.x,56,pad.y);const money=pad.pay==='cash';
   const coin=M_(geo('coin',()=>new T.CylinderGeometry(16,16,5,28)),std(pad.big?'#f7c948':money?'#8ac66a':'#f0a15a',{m:.2,r:.45,e:pad.big?'#d19a1c':money?'#3f7a2c':'#b8661e',ei:.2}));coin.rotation.x=Math.PI/2;icon.add(coin);
   const face_=makeTextPlate(pad.k,26,26,'none','#ffffff');face_.position.z=2.8;icon.add(face_);
@@ -1883,7 +1883,7 @@ function updateStations(dt){
       burst(d.conv.x,d.conv.y,34,5,{c:['#ffd166','#ff8a3d'],s0:20,s1:60,u0:60,u1:140,l0:.3,l1:.5,add:true,r0:4,r1:6})}}
     if(Math.random()<dt*(st.q.length&&!st.frozen?6:1.2))puff(d.conv.x+rnd(-16,16),d.conv.y+rnd(-8,8),48,{c:'#9aa3ad',r:12,life:1.6,a:.4,vy:30,grow:2});
     // customers
-    st.custT-=dt;if(st.custT<=0&&st.queue.length<(id==='steak'?6:10)){st.custT=Math.max(2.7,(3.8-G.t/800)*(1.5-G.rep*.12))/(1+(G.rank||0)*.1)/(wxIs('clear')?1.5:1)*(id==='coat'?1.6:id==='fish'?1.2:1);spawnCustomer(st)}
+    st.custT-=dt;if(st.custT<=0&&st.queue.length<(id==='steak'?6:10)&&custOK(id)){st.custT=Math.max(2.7,(3.8-G.t/800)*(1.5-G.rep*.12))/(1+(G.rank||0)*.1)/(wxIs('clear')?1.5:1)*(id==='coat'?1.6:id==='fish'?1.2:1)/custFame();spawnCustomer(st)}
     const staffed=!!st.cashier||G.players.some(p=>dist(p.x,p.y,d.stand.x,d.stand.y)<40);st.staffed=staffed;
     st.queue.forEach((c,i)=>{c.fade=Math.min(1,c.fade+dt*2);const dd=moveTo(c,d.lane,d.counter.y+44+i*25,72,dt);c.arrived=dd<=3;if(c.arrived)c.dirT=Math.PI;
       if(c.y<1760){c.wait+=dt;if(c.wait>c.patience){c.state='leave';c.angry=1.6;G.rep=Math.max(1,G.rep-.5);SFX.bad();float(c.x,c.y,64,'プンプン！','red',true);toast('お客さんが帰っちゃった…','cold')}}});
@@ -2219,7 +2219,7 @@ let _tkT=0;function trackerHud(){const el=$('tracker');if(!isRPG()||!running){el
   if(L){const i=Math.min(S.step||0,L.length-1),o=L[i],[c,g]=o.f();h+=`<div class="sec now"><i>▶ いまやること（${i+1}/${L.length}）</i><b>${stx(o)}</b>${o.p?`<small>${o.p()}</small>`:pg(c,g)}</div>`}
   else{const g=goalOf(YR());const rows=[[`かまど Lv${G.level} / ${g.lv}`,G.level>=g.lv],[`町人 ${popNow()} / ${g.pop}人`,popNow()>=g.pop],[`お金 $${Math.floor(G.cash).toLocaleString()} / $${g.c.toLocaleString()}`,G.cash>=g.c]];
     if(G.mission<MISSIONS.length){const m=MISSIONS[G.mission],[c,gg]=m.f();h+=`<div class="sec now"><i>▶ いまやること</i><b>${m.t}</b>${pg(c,gg)}</div>`}
-    h+=`<div class="sec"><i>◆ 章の目標</i><b>${G.monument?'今夜、像を守りぬけ！':g.n+'を建てて、最後の夜を守れ'}</b>${G.monument?'':rows.map(([t,ok])=>`<div class="ck ${ok?'ok':'ng'}">${t}</div>`).join('')}</div>`}
+    const fm=Math.round(custFame()*5);h+=`<div class="sec"><i>★ 町の知名度（お客さんの多さ）</i><b style="color:#e8a020">${G.story.shopOpen?'★'.repeat(fm)+'☆'.repeat(5-fm):'<small>まだ誰にも知られていない</small>'}</b></div>`;h+=`<div class="sec"><i>◆ 章の目標</i><b>${G.monument?'今夜、像を守りぬけ！':g.n+'を建てて、最後の夜を守れ'}</b>${G.monument?'':rows.map(([t,ok])=>`<div class="ck ${ok?'ok':'ng'}">${t}</div>`).join('')}</div>`}
   const qs=[];for(const k in (S.q||{})){const Q=QUESTS[k],q=S.q[k];if(!Q||Q.bio!==bioKey()||q.st===3)continue;const pr=q.st===2?`→ ${npcName(Q.npc)}に報告`:Q.type==='bring'?`${{log:'薪',fish:'魚',meat:'肉'}[Q.k]||Q.k} ${q.p||0}/${Q.n}`:Q.type==='build'?`${Math.min(Q.chk(),Q.n)}/${Q.n}`:Q.where?`（${Q.where}）`:'';qs.push(`<div class="q ${q.st===2?'ok':''}">・${Q.t} ${pr}</div>`)}
   const avail=G.npcV?G.npcV.filter(v=>npcMark(v.n.id)==='！').length:0;
   h+=`<div class="sec"><i>✉ 住人の依頼</i>${qs.join('')||'<div class="q">受けている依頼はない</div>'}${avail?`<div class="q" style="color:#e8703a">“！”の住人が${avail}人いる（Eキーで話す）</div>`:''}</div>`;
@@ -2504,6 +2504,8 @@ function storyIntro(){const S=G.story,C=CH[S.ch];if(!C)return;
   if(!S.seen.intro){S.seen.intro=1;const go=()=>{if(!running||G.story!==S)return;banner(C.n,C.t,C.sub,'area');setTimeout(()=>{if(running&&G.story===S)for(const [w,t] of C.intro||[])say(w,t)},1600);trackerFlash()};if(C.open){NET.opCh=S.ch;playOpening(C,go)}else setTimeout(go,1500);return}
   setTimeout(()=>{if(running&&G.story===S)banner(C.n,C.t,C.sub,'area')},3400);
   if(S.back)setTimeout(()=>{if(running&&G.story===S)say(DES()?'隊長ザラ':'村長オルガ',`おかえり。DAY ${G.day}の朝から続きだよ`)},4500)}
+function custOK(id){if(!isRPG()||id!=='steak')return true;const S=G.story;return S.ch>=2||!!S.shopOpen}
+function custFame(){if(!isRPG()||G.story.ch>=2)return 1;return clamp(.35+(G.stats.sold||0)*.025+(G.rank||0)*.2,.35,1)}
 function storyRaidEnd(){if(G.story)G.story.raids=(G.story.raids||0)+1}
 function beat(id,fn){const S=G.story;if(S.seen[id])return;S.seen[id]=1;fn()}
 function spawnMinion(){spawnBoss('alpha');const b=G.bears[G.bears.length-1],f=FP();b.x=f.x+140;b.y=f.y+40;b.m.g.position.set(b.x,0,b.y);b.hp=b.max=Math.round(b.max*1.3);G.story.minion=b.id}
@@ -2514,6 +2516,9 @@ function updateStory(dt){const S=G.story;if(!S)return;S.t=(S.t||0)+dt;const ph=(
     if(isNight()&&G.day===1)beat('n1',()=>say('斥候カイ','日が落ちると一気に冷える。かまどのそばを離れるなよ'));
     if(G.day>=2&&ph>.45&&!isNight())beat('r1',()=>say('斥候カイ','北の森で熊どもがうろついてる。今夜あたり来るぞ。見張り台を建てておけ'));
     if(G.day>=1&&S.t>40)beat('q1',()=>{say('村長オルガ','町のみんなも、それぞれ困りごとを抱えてるんだ');say('村長オルガ','頭に“！”が出ている人に近づいて、Eキーで話しかけてごらん')});
+    if(!S.shopOpen&&G.stations.steak.shelf>0)beat('shop',()=>{S.shopOpen=1;G.stations.steak.custT=14;say('村長オルガ','焼いた肉のいい匂いが、吹雪に乗って流れていく…');setTimeout(()=>{if(!running||G.story!==S)return;spawnCustomer(G.stations.steak);say('旅人','いい匂いにつられて来ちまった…一切れ売ってもらえないか？');toast('はじめてのお客さん！ レジに立って売ろう','gold')},3500)});
+    if(S.shopOpen&&(G.stats.sold||0)>=1)beat('fame1',()=>{say('旅人','うまい！ この町の肉のこと、みんなに話しておくよ');say('村長オルガ','うわさが広まれば、お客さんはどんどん増えるはずさ')});
+    if((G.stats.sold||0)>=15)beat('fame2',()=>say('村長オルガ','うわさが隣の村まで届いたらしい。行列ができはじめたね'));
     if(G.zones.B)beat('zB',()=>say('村長オルガ','氷の湖か…昔はみんなで魚を焼いて冬を越したもんさ'));
     if(G.zones.C)beat('zC',()=>say('斥候カイ','奥地の森で妙な足跡を見た。家ほどもある…ただの熊じゃない'));
     if(G.zones.D)beat('zD',()=>say('村長オルガ','温泉が戻った！ これでみんな凍えずにすむ'));
