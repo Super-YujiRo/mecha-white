@@ -211,7 +211,7 @@
 .cbar i{position:absolute;top:-5px;width:5px;height:20px;background:#fff;border:2px solid #16283a;border-radius:3px;transform:translateX(-50%)}
 #dlg{position:fixed;left:50%;bottom:86px;transform:translateX(-50%);width:min(660px,90vw);background:rgba(255,250,240,.98);color:#16283a;border:3px solid #16283a;border-radius:16px;padding:12px 18px 10px;z-index:45;box-shadow:0 8px 28px rgba(0,0,0,.35);cursor:pointer}
 #dlg b{display:inline-block;background:#e8703a;color:#fff;border-radius:8px;padding:2px 10px;font-size:13px;margin-bottom:4px}#dlg p{margin:4px 0 6px;font-size:16px;line-height:1.6;min-height:48px}
-#dlg small{display:block;text-align:right;opacity:.55;font-size:11px}#dlgCh{display:flex;gap:8px;flex-wrap:wrap}#dlgCh button{font:inherit;font-weight:800;border:2px solid #16283a;border-radius:10px;padding:6px 14px;background:#ffd23f;cursor:pointer}#dlgCh button.no{background:#fff}
+#dlg small{display:block;text-align:right;opacity:.55;font-size:11px}#dlgCh{display:flex;gap:6px;flex-wrap:wrap;max-height:46vh;overflow:auto}#dlgCh button{font:inherit;font-weight:800;border:2px solid #16283a;border-radius:10px;padding:6px 14px;background:#ffd23f;cursor:pointer}#dlgCh button.no{background:#fff}
 #qlog{position:fixed;left:50%;top:150px;transform:translateX(-50%);z-index:20;pointer-events:none;display:flex;flex-direction:column;gap:3px;align-items:center}
 #qlog div{background:rgba(255,250,240,.9);border:2px solid #16283a;border-radius:10px;padding:2px 10px;font-size:12px;font-weight:700;color:#16283a}#qlog div i{font-style:normal;color:#e8703a;margin-right:6px}#qlog div.ok{background:#fff3c4}
 #rpgBox .lvl{display:flex;align-items:center;gap:8px;margin-bottom:6px}#rpgBox .lvl b{font-size:18px}#rpgBox .xp{flex:1;height:8px;background:#e3d8c6;border-radius:4px;overflow:hidden}#rpgBox .xp i{display:block;height:100%;background:#ffb020}
@@ -1499,12 +1499,12 @@ function sendSnap(){
     st:STIDS.map(id=>{const t=G.stations[id];return[t.q.length,t.shelf,r1(t.pile),r2(t.cookT)]}),pd:G.pads.map(q=>q.personal?{p:G.players.map(pl=>q.pp[pl.id]||0)}:q.mp?[q.paid,q.mp.fish,q.mp.fur]:q.paid),
     tr:G.trees.map(t=>t.alive?(t.fall>0?'f':t.grow<1?'g':'a'):'d').join(''),tf:G.trees.filter(t=>t.fall>0).map(t=>[t.i,r2(t.fall),r2(t.fallDir)]),
     ps:G.players.map(p=>[r1(p.x),r1(p.y),r2(p.dir),enc(p.bag),r1(p.warm),r1(p.hp),p.down>0?r2(p.down):0,p.inHeat?1:0,(p.shooting?1:0)|(p.chopping?2:0)|(p.fishing?4:0)|(p.flash>0?8:0)|(p.buddy?16:0)|(p.ko?32:0),r2(p.actT),p.fishing?G.holes.indexOf(p.fishing):-1,[p.lv.gun,p.lv.bag]]),
-    fl:NET.outF.splice(0),sy:(NET.outS||[]).splice(0),lf:G.players.map(p=>LIVES.map(k=>(p.life||{})[k]||0)),rt:(G.rtrees||[]).map(t=>[t.alive?1:0,t.hp]),rq:G.story?Object.entries(G.story.q||{}).map(([k,v])=>[k,v.st,v.p||0,r1(v.x||0),r1(v.y||0),v.f==null?-1:v.f]):0,rp:G.players.map(p=>[p.rl||1,p.rx||0,(p.items||[]).join('.'),(p.eq&&p.eq.w)||'',(p.eq&&p.eq.a)||'',(p.eq&&p.eq.c)||'']),so:G.story?[G.story.ch,G.story.step,G.story.raids||0,G.story.minion||0,G.story.fp?1:0,G.story.hs||0,G.story.hc||0,r1(G.story.hx||0),r1(G.story.hy||0),G.story.ruin?1:0,G.story.queen||0]:0,bn:NET.outB.splice(0),tq:NET.outT.splice(0),end:NET.endInfo});
+    fl:NET.outF.splice(0),sy:(NET.outS||[]).splice(0),lf:G.players.map(p=>LIVES.map(k=>(p.life||{})[k]||0)),rt:(G.rtrees||[]).map(t=>[t.alive?1:0,t.hp]),rq:G.story?Object.entries(G.story.q||{}).map(([k,v])=>[k,v.st,v.p||0,r1(v.x||0),r1(v.y||0),v.f==null?-1:v.f]):0,rp:G.players.map(p=>[p.rl||1,p.rx||0,(p.items||[]).join('.'),(p.eq&&p.eq.w)||'',(p.eq&&p.eq.a)||'',(p.eq&&p.eq.c)||'',Object.entries(p.mats||{}).map(([k,n])=>k+':'+n).join(',')]),so:G.story?[G.story.ch,G.story.step,G.story.raids||0,G.story.minion||0,G.story.fp?1:0,G.story.hs||0,G.story.hc||0,r1(G.story.hx||0),r1(G.story.hy||0),G.story.ruin?1:0,G.story.queen||0]:0,bn:NET.outB.splice(0),tq:NET.outT.splice(0),end:NET.endInfo});
   safeEmit('s.a',{b:G.bears.map(b=>[b.id,r1(b.x),r1(b.y),r2(b.rot),Math.max(0,Math.ceil(b.hp)),b.max,BK.indexOf(b.kind),b.state==='chase'?1:0,b.dead?r2(b.deadT):-1,b.hit>0?1:0,b.roar>0?1:0,b.moving?1:0,b.raid?1:b.flee?2:0,b.king?1:0,BTS.indexOf(b.bt||''),(b.hide?1:0)|(b.ph==='st'?2:0),b.rbi==null?-1:b.rbi]),
     k:G.pickups.map(m=>[m.id,r1(m.x),r1(m.y),r1(m.h),KC[m.k],m.n||1]),h:G.chests.map(c=>[c.id,r1(c.x),r1(c.y),r1(c.h),c.open<0?-1:r2(c.open),c.rar?RAR.indexOf(c.rar):-1]),
     ho:G.holes.map(h=>r2(h.t)+(h.jump>0?.001:0)),hl:G.hauls.map(h=>[h.id,r1(h.x),r1(h.y),h.big,h.carried?1:0]),wn:(G.warns||[]).map(w=>[w.id,WK.indexOf(w.k),r1(w.x),r1(w.y),r2(w.a),r1(w.r),r2(w.t),r2(w.max)])});
   safeEmit('s.b',{c:G.customers.map(c=>[c.id,r1(c.x),r1(c.y),r2(c.dir),STIDS.indexOf(c.st.id),c.state==='leave'?1:0,c.hold.visible?1:0,r2(Math.max(0,c.happy||0)),r2(Math.max(0,c.angry||0)),c.state==='queue'?r2(c.wait/c.patience):0,c.pal,r2(c.fade==null?1:c.fade)]),
-    dr:(G.drifts||[]).map(d=>[d.id,r1(d.x),r1(d.y),r2(d.p),r2(d.s)]),s:G.surv.map(v=>[v.id,r1(v.x),r1(v.y),r2(v.dir),r1(v.warm),v.frozen?1:0,v.arrived?1:0,r2(Math.max(0,v.happy||0)),r2(v.freezeAnim),v.pal]),
+    dr:(G.drifts||[]).map(d=>[d.id,r1(d.x),r1(d.y),r2(d.p),r2(d.s)]),s:G.surv.map(v=>[v.id,r1(v.x),r1(v.y),r2(v.dir),r1(v.warm),v.frozen?1:0,v.arrived?1:0,r2(Math.max(0,v.happy||0)),r2(v.freezeAnim),v.pal,v.shotN||0,v.mtg||0]),
     w:G.workers.map(w=>[w.id,ROLES.indexOf(w.role),r1(w.x),r1(w.y),r2(w.dir),enc(w.bag),(w.chop?1:0)|(w.flash>0?2:0),w.st?STIDS.indexOf(w.st.id):-1,w.hole?G.holes.indexOf(w.hole):-1,r2(w.t),r1(w.warm==null?100:w.warm),(w.frozen?1:0)|(w.hurt>0?2:0)|(w.goWarm?4:0)|(w.shelter?8:0)])})}
 function recon(list,rows,make,apply,kill){if(!list._map)list._map=new Map();const map=list._map,seen=new Set();
   for(const row of rows||[]){const id=row[0];seen.add(id);let o=map.get(id);if(!o){o=make(row);map.set(id,o);list.push(o)}apply(o,row)}
@@ -1525,7 +1525,7 @@ function applyInbox(){const I=NET.inbox;
     c.ps.forEach((v,i)=>{const p=G.players[i];if(!p)return;const was=p.down>0;if(v[11])p.lv={gun:v[11][0],bag:v[11][1]};p.bag=dec(v[3]);p.warm=v[4];p.hp=v[5];p.down=v[6];p.inHeat=!!v[7];p.shooting=v[8]&1?true:null;p.chopping=v[8]&2?true:null;p.fishing=v[8]&4&&v[10]>=0?G.holes[v[10]]:null;if(v[8]&8)p.flash=.07;p.buddy=!!(v[8]&16);p.ko=!!(v[8]&32);p.actT=v[9];
       if(i===G.me){if(was&&!(p.down>0)){p.x=CX+rnd(-40,40);p.y=CY+100}}else{p.nx=v[0];p.ny=v[1];p.dirN=v[2]}});
     for(const f of c.fl||[])float(f[0],f[1],f[2],f[3],f[4],f[5],true);for(const b of c.bn||[])banner(b[0],b[1],b[2],b[3],true);for(const t of c.tq||[])toast(t[0],t[1],true);
-    for(const t of c.sy||[])say(t[0],t[1],true);if(c.rt&&G.rtrees)c.rt.forEach((v,i)=>{const t=G.rtrees[i];if(!t)return;if(v[1]<t.hp)t.shake=.3;t.alive=!!v[0];t.hp=v[1]});if(c.rq&&G.story){G.story.q={};for(const r of c.rq)G.story.q[r[0]]={st:r[1],p:r[2],x:r[3],y:r[4],f:r[5]<0?null:r[5]}}if(c.rp)c.rp.forEach((v,i)=>{const q=G.players[i];if(!q)return;q.rl=v[0];q.rx=v[1];const inv=v[2]?v[2].split('.'):[];if(i===G.me&&q.items)for(const id of inv)if(!q.items.includes(id)&&ITEMS[id])banner('装備を手に入れた！',ITEMS[id].n,itemDesc(ITEMS[id]),'r-SSR',true);q.items=inv;q.eq={w:v[3]||null,a:v[4]||null,c:v[5]||null}});if(c.lf)c.lf.forEach((v,i)=>{const q=G.players[i];if(q){q.life={};LIVES.forEach((k,j)=>q.life[k]=v[j])}});if(c.so){G.story=G.story||{seen:{}};G.story.ch=c.so[0];if(NET.opCh!==c.so[0]){NET.opCh=c.so[0];const C=CH[c.so[0]];if(C&&C.open&&c.so[1]===0&&(c.so[0]>1||G.day<=1))playOpening(C,()=>{})}G.story.step=c.so[1];G.story.raids=c.so[2];G.story.minion=c.so[3];G.story.fp=c.so[4];G.story.hs=c.so[5];G.story.hc=c.so[6];G.story.hx=c.so[7];G.story.hy=c.so[8];G.story.ruin=c.so[9];G.story.queen=c.so[10]}else G.story=null;
+    for(const t of c.sy||[])say(t[0],t[1],true);if(c.rt&&G.rtrees)c.rt.forEach((v,i)=>{const t=G.rtrees[i];if(!t)return;if(v[1]<t.hp)t.shake=.3;t.alive=!!v[0];t.hp=v[1]});if(c.rq&&G.story){G.story.q={};for(const r of c.rq)G.story.q[r[0]]={st:r[1],p:r[2],x:r[3],y:r[4],f:r[5]<0?null:r[5]}}if(c.rp)c.rp.forEach((v,i)=>{const q=G.players[i];if(!q)return;q.rl=v[0];q.rx=v[1];const inv=v[2]?v[2].split('.'):[];if(i===G.me&&q.items)for(const id of inv)if(!q.items.includes(id)&&ITEMS[id])banner('装備を手に入れた！',ITEMS[id].n,itemDesc(ITEMS[id]),'r-SSR',true);q.items=inv;q.eq={w:v[3]||null,a:v[4]||null,c:v[5]||null};q.mats={};for(const t of (v[6]||'').split(','))if(t){const [k,n]=t.split(':');q.mats[k]=+n}});if(c.lf)c.lf.forEach((v,i)=>{const q=G.players[i];if(q){q.life={};LIVES.forEach((k,j)=>q.life[k]=v[j])}});if(c.so){G.story=G.story||{seen:{}};G.story.ch=c.so[0];if(NET.opCh!==c.so[0]){NET.opCh=c.so[0];const C=CH[c.so[0]];if(C&&C.open&&c.so[1]===0&&(c.so[0]>1||G.day<=1))playOpening(C,()=>{})}G.story.step=c.so[1];G.story.raids=c.so[2];G.story.minion=c.so[3];G.story.fp=c.so[4];G.story.hs=c.so[5];G.story.hc=c.so[6];G.story.hx=c.so[7];G.story.hy=c.so[8];G.story.ruin=c.so[9];G.story.queen=c.so[10]}else G.story=null;
     if(c.end){if(running)endGame(!!c.end.c,c.end.w);return}}
   const a=I['s.a'];if(a){I['s.a']=null;
     recon(G.bears,a.b,r=>{const kind=BK[r[6]]||'normal';const b={id:r[0],x:r[1],y:r[2],kind,rot:r[3],step:0,hit:0,roar:0,dead:false,deadT:0};b.m=makeBear(kind);b.m.g.position.set(b.x,0,b.y);world.add(b.m.g);return b},
@@ -1540,7 +1540,7 @@ function applyInbox(){const I=NET.inbox;
       (c,r)=>{c.nx=r[1];c.ny=r[2];c.dirT=r[3];c.state=r[5]?'leave':'queue';if(r[6]&&!c.hold.visible)c.hold.visible=true;c.happy=r[7];c.angry=r[8];c.wait=r[9];c.patience=1;c.fade=r[11]},c=>world.remove(c.m.g));
     for(const id of STIDS){const st=G.stations[id];st.queue=G.customers.filter(c=>c.st===st&&c.state==='queue')}
     recon(G.surv,b.s,r=>{const s={id:r[0],x:r[1],y:r[2],dir:r[3],pal:r[9]||0,step:0,breath:1,freezeAnim:0,happy:0,warm:100};survMesh(s);G.surv.pop();return s},
-      (s,r)=>{s.nx=r[1];s.ny=r[2];s.dirT=r[3];s.warm=r[4];s.frozen=!!r[5];s.arrived=!!r[6];s.happy=r[7];s.freezeAnim=r[8]},s=>world.remove(s.m.g));
+      (s,r)=>{s.nx=r[1];s.ny=r[2];s.dirT=r[3];s.warm=r[4];s.frozen=!!r[5];s.arrived=!!r[6];s.happy=r[7];s.freezeAnim=r[8];if((r[10]||0)!==(s.shotN||0)){s.shotN=r[10];const b=G.bears.find(q=>q.id===r[11]);if(b)milShot(s,b)}},s=>world.remove(s.m.g));
     recon(G.workers,b.w,r=>{const w={id:r[0],role:ROLES[r[1]]||'hunter',x:r[2],y:r[3],dir:r[4],step:0,bag:[],t:0,flash:0,st:r[7]>=0?G.stations[STIDS[r[7]]]:null};workerMesh(w);return w},
       (w,r)=>{w.nx=r[2];w.ny=r[3];w.dirT=r[4];w.bag=dec(r[5]);w.chop=!!(r[6]&1);if(r[6]&2)w.flash=.07;w.hole=r[8]>=0?G.holes[r[8]]:null;w.t=r[9];w.warm=r[10];w.frozen=!!(r[11]&1);w.hurt=r[11]&2?1:0;w.goWarm=!!(r[11]&4);w.shelter=!!(r[11]&8)},w=>world.remove(w.m.g));
     for(const id of STIDS){const st=G.stations[id];st.cashier=G.workers.find(w=>w.role==='cashier'&&w.st===st)||null}}}
@@ -1592,7 +1592,7 @@ function update(dt){
   if(G.fuel<=0&&!G.outWarned){G.outWarned=true;banner(DES()?'井戸が干上がった！':'かまどの火が消えた！',DES()?'町の人が倒れていく':'町の人が凍っていく',DES()?'湧き水をくんで井戸を満たせ。倒れた町人が5人でゲームオーバー':'薪をくべて火を戻せ。凍った町人が5人でゲームオーバー','cold');SFX.wave()}if(G.fuel>5)G.outWarned=false;
   // stations frozen state
   for(const id in G.stations){const st=G.stations[id];const d=dist(st.def.conv.x,st.def.conv.y,CX,CY);const fz=st.open&&d>R;if(fz&&!st.frozen){toast(`${st.def.name}が凍った！ かまどを強化・燃料を`,'cold')}st.frozen=fz}
-  updateWoodpile(dt);updateTrees(dt);updateBears(dt);updateRaid(dt);tickTowers(dt,true);updateHauls(dt);updatePickups(dt);updateWorkers(dt);updateStations(dt);updateSurvivors(dt,R);updateSpa(dt);updateHoles(dt);updateRescue(dt);updateTax(dt);updateSecrets(dt);updateRoad(dt);updateCaravan(dt);
+  updateWoodpile(dt);updateTrees(dt);updateBears(dt);updateRaid(dt);tickTowers(dt,true);updateHauls(dt);updatePickups(dt);updateWorkers(dt);updateStations(dt);updateSurvivors(dt,R);updateMilitia(dt);updateSpa(dt);updateHoles(dt);updateRescue(dt);updateTax(dt);updateSecrets(dt);updateRoad(dt);updateCaravan(dt);
   checkMission(dt);updateStory(dt);updateDrifts(dt);updateFireside(dt);updateCraft(dt);updateQuests(dt);updateRankObj(dt);G.achT-=dt;if(G.achT<=0){G.achT=.5;checkAch()}
   if(G.pendingLv>0&&!G.paused)openPerk();
   if(G.frozen>=5&&!G.endless)endGame(false,'freeze');
@@ -1845,7 +1845,7 @@ function raidReport(){const R=G.raid;let left=0;while(popNow()>houseCap()){const
   if(parts.length)setTimeout(()=>{if(running)toast('昨夜の被害：'+parts.join('・'),'cold',true)},2200)}
 function updateRaid(dt){const ph=(G.t%G.DAY)/G.DAY,night=ph>.72,R=G.raid;
   if(G.day>=2&&!night&&ph>.6&&R.warn!==G.day){R.warn=G.day;setTimeout(()=>{if(running)toast(`明日の朝、町の食費 $${upkeepCost()}`,'cash')},2500);const tw=TOWERS.some(t=>G.lv['tw_'+t.id]>0);toast(tw?'今夜も襲撃！ 見張り台を強化しよう':'今夜シロクマが襲ってくる！ 見張り台を','cold')}
-  if(night&&G.day>=2&&R.night!==G.day){R.night=G.day;R.on=true;const fin=!!G.finalPending;G.finalPending=false;R.final=fin;
+  if(night&&G.day>=2&&R.night!==G.day){R.night=G.day;R.on=true;const fin=!!G.finalPending;if(idleSurvivors().length)setTimeout(()=>{if(running)toast('町の人たちも武器を取った！ 総出で迎え撃て','gold')},1800);G.finalPending=false;R.final=fin;
     R.total=fin?Math.round((34+G.day*2)*G.mod.raid*DM().raid*(1+(YR()-1)*.3)):Math.min(40,Math.round((2+Math.floor(G.day*1.8*(waveDayN(G.day)?.8:1))+(G.level-1)*2+popNow()*.25)*G.mod.raid*DM().raid*(1+(YR()-1)*.3)));
     R.bosses=fin?3:G.day>=5?1+Math.floor((G.day-5)/4):0;R.total+=R.bosses;R.spawn=R.total;R.spawnT=1;R.kills=0;R.left=R.total;R.dmgH=R.dmgW=R.dmgT=0;if(fin&&G.monument){G.monHP=G.monMax=Math.round(60+G.day*4);toast('像を壊されたら負け！ 像を守りきれ','cold',true)}else if(fin){G.monHP=G.monMax=0;toast('夜明けまで井戸を守りぬけ！','cold',true)}
     if(fin)banner('最終決戦！',`シロクマ ${R.total}頭・ボス${R.bosses}頭`,'朝まで町と像を守りきれ！','cold');else banner(DES()?'夜の襲撃！ 大サソリの群れ':'夜の襲撃！',`${DES()?'サソリ':'シロクマ'} ${R.total}頭${R.bosses?`・ボス${R.bosses}`:''}`,DES()?'門から入って井戸や家を狙う。見張り台・罠・武器で守れ':'門から入ってかまどを狙う。見張り台・罠・銃で守れ','cold');SFX.wave();G.shake=10}
@@ -1911,6 +1911,15 @@ function updateSurvivors(dt,R){
     s.breath-=dt;if(s.breath<=0&&!s.frozen&&!inR){s.breath=rnd(1,1.6);puff(s.x+Math.sin(s.dir)*8,s.y+Math.cos(s.dir)*8,32,{r:5,life:1,a:.8,vy:10,grow:1.4})}
     if(s.frozen)frozen++}
   G.frozen=frozen}
+
+// ---- raids: idle townsfolk take up arms around the fire
+function milShot(s,b){const a=Math.atan2(b.x-s.x,b.y-s.y);for(let i=0;i<6;i++){const k=i/6;psA.emit({x:lerp(s.x,b.x,k),y:lerp(30,24,k),z:lerp(s.y,b.y,k),vx:0,vy:0,vz:0,g:0,life:.06+k*.05,max:.1,r:4,c:C('#ffe0a0'),air:true,fade:.1})}s.dirT=a;if(s.m&&s.m.hand)s.happy=0}
+function updateMilitia(dt){const R=G.raid;const raiders=R.on?G.bears.filter(b=>b.raid&&!b.dead&&!b.hide&&dist(b.x,b.y,CX,CY)<FR+220):[];
+  for(const s of G.surv){if(!s.arrived||s.frozen)continue;
+    if(raiders.length){let tg=null,bd=1e9;for(const b of raiders){const d=dist(s.x,s.y,b.x,b.y);if(d<bd){bd=d;tg=b}}
+      const a=Math.atan2(tg.y-CY,tg.x-CX)+((s.id%5)-2)*.18,r=125+(s.id%3)*14,gx=CX+Math.cos(a)*r,gy=CY+Math.sin(a)*r;s.mil=1;if(dist(s.x,s.y,gx,gy)>8){moveTo(s,gx,gy,110,dt)}else s.moving=false;
+      s.mcd=(s.mcd||rnd(0,1))-dt;if(bd<250&&s.mcd<=0){s.mcd=1.3+Math.random()*.4;const dmg=.7*(1+(G.level-1)*.12)*(1+(G.rank||0)*.1);s.shotN=(s.shotN||0)+1;s.mtg=tg.id;milShot(s,tg);shoot(s,tg,dmg,false,'none');SFX.shot&&Math.random()<.3&&SFX.shot()}}
+    else if(s.mil){if(dist(s.x,s.y,s.tx,s.ty)>6)moveTo(s,s.tx,s.ty,80,dt);else{s.mil=0;s.moving=false}}}}
 // ---- SOS: stranded people outside the fence, reach them before time runs out and they join the town
 const RKIND=['walk','hot','sled','bears'],SPECN={hunter:'猟師',lumber:'木こり',fisher:'釣り人'};
 function rescueT(p){const R=G.rescue;if(!R||R.state!=='wait')return null;p=p||G.players[G.me]||G.players[0];
@@ -2204,6 +2213,19 @@ function show(el,on){$(el).hidden=!on}
 
 
 
+
+// ---- workshop recipes: special wood and beast materials become gear
+const MATS={core:'古木の芯材',icew:'氷結木材',spirit:'精霊の枝',steel:'鋼の毛皮',fang:'氷牙',horn:'覇者の角'};
+function addMat(p,k,n){if(!p||!k)return;p.mats=p.mats||{};p.mats[k]=(p.mats[k]||0)+n;float(p.x,p.y,100,`${MATS[k]} +${n}`,'gold',true)}
+const RECIPES={
+  bow_old:{id:'w_oldbow',m:{core:3},log:10,cash:100,rk:1},shield_old:{id:'a_oldshield',m:{core:2,steel:1},log:6,cash:150,rk:1},
+  staff_ice:{id:'w_icestaff',m:{icew:3,fang:1},log:8,cash:300,rk:2},armor_ice:{id:'a_icearmor',m:{icew:2,steel:2},log:8,cash:400,rk:3},
+  charm_spirit:{id:'c_spiritcharm',m:{spirit:1,core:3},log:5,cash:400,rk:3},bow_spirit:{id:'w_spiritbow',m:{spirit:2,horn:1,icew:2},log:12,cash:800,rk:4}};
+function craftWhy(p,R){if(lifeRank(p,'craft')<R.rk)return `木工職人「${LR[R.rk].n}」が必要`;for(const k in R.m)if(((p.mats||{})[k]||0)<R.m[k])return `${MATS[k]}が足りない`;if(p.bag.filter(x=>x==='log').length<(R.log||0))return `薪が${R.log}本必要`;if(G.cash<(R.cash||0))return `お金が$${R.cash}必要`;if((p.items||[]).includes(R.id))return 'もう持っている';return null}
+function openCraft(){const me=G.players[G.me]||G.players[0];const mt=Object.entries(me.mats||{}).filter(([k,n])=>n>0&&MATS[k]).map(([k,n])=>`${MATS[k]}×${n}`).join('・')||'なし';
+  const ch=Object.keys(RECIPES).map(k=>{const R=RECIPES[k],it=ITEMS[R.id],why=craftWhy(me,R);const need=Object.entries(R.m).map(([m,n])=>`${MATS[m]}${n}`).join('+')+(R.log?`+薪${R.log}`:'')+(R.cash?`+$${R.cash}`:'');
+    return [`${why?'🔒':'⚒'} ${it.n}（${itemDesc(it)}）… ${need}`,()=>{const w=craftWhy(G.players[G.me]||G.players[0],R);if(w){toast(w,'cold',true);return}sendAct('craft',k)}]});
+  ch.push(['やめる',null]);Object.assign(DLG,{open:true,npc:{n:{n:'工房'},x:WB.x,y:WB.y},pages:[`何を作る？（持っている素材：${mt}）`],i:0,ch});if(NET.mode==='solo')G.paused=true;for(const j of joys)j.on=false;drawDlg()}
 // ---- chapter openings (letterboxed text over the town) and the objective tracker
 let OPN=null;
 function playOpening(C,done){const el=$('opening'),tx=$('opTxt');const slides=C.open.map(t=>({t})).concat([{card:1}]);let i=0,tm=null;OPN={done};
@@ -2222,7 +2244,7 @@ let _tkT=0;function trackerHud(){const el=$('tracker');if(!isRPG()||!running){el
   else{const g=goalOf(YR());const rows=[[`かまど Lv${G.level} / ${g.lv}`,G.level>=g.lv],[`町人 ${popNow()} / ${g.pop}人`,popNow()>=g.pop],[`お金 $${Math.floor(G.cash).toLocaleString()} / $${g.c.toLocaleString()}`,G.cash>=g.c]];
     if(G.mission<MISSIONS.length){const m=MISSIONS[G.mission],[c,gg]=m.f();h+=`<div class="sec now"><i>▶ いまやること</i><b>${m.t}</b>${pg(c,gg)}</div>`}
     const fm=Math.round(custFame()*5);h+=`<div class="sec"><i>★ 町の知名度（お客さんの多さ）</i><b style="color:#e8a020">${G.story.shopOpen?'★'.repeat(fm)+'☆'.repeat(5-fm):'<small>まだ誰にも知られていない</small>'}</b></div>`;h+=`<div class="sec"><i>◆ 章の目標</i><b>${G.monument?'今夜、像を守りぬけ！':g.n+'を建てて、最後の夜を守れ'}</b>${G.monument?'':rows.map(([t,ok])=>`<div class="ck ${ok?'ok':'ng'}">${t}</div>`).join('')}</div>`}
-  const qs=[];for(const k in (S.q||{})){const Q=QUESTS[k],q=S.q[k];if(!Q||Q.bio!==bioKey()||q.st===3)continue;const pr=q.st===2?`→ ${npcName(Q.npc)}に報告`:Q.type==='bring'?`${{log:'薪',fish:'魚',meat:'肉'}[Q.k]||Q.k} ${q.p||0}/${Q.n}`:Q.type==='build'?`${Math.min(Q.chk(),Q.n)}/${Q.n}`:Q.where?`（${Q.where}）`:'';qs.push(`<div class="q ${q.st===2?'ok':''}">・${Q.t} ${pr}</div>`)}
+  const qs=[];for(const k in (S.q||{})){const Q=QUESTS[k],q=S.q[k];if(!Q||Q.bio!==bioKey()||q.st===3)continue;const pr=q.st===2?`→ ${npcName(Q.npc)}に報告`:Q.type==='bring'?`${{log:'薪',fish:'魚',meat:'肉'}[Q.k]||Q.k} ${q.p||0}/${Q.n}`:Q.type==='build'?`${Math.min(Q.chk(),Q.n)}/${Q.n}`:Q.type==='count'?`${Math.min(Q.chk(q),Q.n)}/${Q.n}`:Q.where?`（${Q.where}）`:'';qs.push(`<div class="q ${q.st===2?'ok':''}">・${Q.t} ${pr}</div>`)}
   const avail=G.npcV?G.npcV.filter(v=>npcMark(v.n.id)==='！').length:0;
   h+=`<div class="sec"><i>✉ 住人の依頼</i>${qs.join('')||'<div class="q">受けている依頼はない</div>'}${avail?`<div class="q" style="color:#e8703a">“！”の住人が${avail}人いる（Eキーで話す）</div>`:''}</div>`;
   if(el._h!==h){el.innerHTML=h;el._h=h}el.hidden=false}
@@ -2230,12 +2252,12 @@ let _tkT=0;function trackerHud(){const el=$('tracker');if(!isRPG()||!running){el
 
 // ================================================================ rank-gated world (story mode): big trees, armored beasts, the big fish hole
 const BIGHOLE={x:2240,y:1660};
-const UNL={wood:[[2,'大きな古木を切れる'],[3,'氷結樹を切れる'],[5,'精霊の大樹を切れる']],hunt:[[2,'鋼毛のシロクマに攻撃が通る'],[3,'氷の魔獣に攻撃が通る'],[4,'雪原の覇者に攻撃が通る']],fish:[[2,'氷の湖の“ぬしの穴”で大物が釣れる']],craft:[[2,'木彫りのクマ（高く売れる）'],[4,'からくり箱'],[6,'伝説の大彫刻']]};
-const RTK={old:{n:'大きな古木',rq:2,hp:8,h:240,col:null,em:null,cash:40,item:null},ice:{n:'氷結樹',rq:3,hp:12,h:250,col:'#bfe9ff',em:'#4fb8ff',cash:150,item:'c_icegem'},spirit:{n:'精霊の大樹',rq:5,hp:20,h:340,col:'#ffe9a8',em:'#ffc629',cash:500,item:'c_spirit'}};
+const UNL={wood:[[2,'大きな古木（古木の芯材）を切れる'],[3,'氷結樹（氷結木材）を切れる'],[5,'精霊の大樹（精霊の枝）を切れる']],hunt:[[2,'鋼毛のシロクマに攻撃が通る'],[3,'氷の魔獣に攻撃が通る'],[4,'雪原の覇者に攻撃が通る']],fish:[[2,'氷の湖の“ぬしの穴”で大物が釣れる']],craft:[[1,'古木の大弓・古木の盾を作れる'],[2,'氷結樹の杖を作れる'],[3,'氷結の鎧・精霊のお守りを作れる'],[4,'精霊の弓を作れる']]};
+const RTK={old:{mat:'core',n:'大きな古木',rq:2,hp:8,h:240,col:null,em:null,cash:40,item:null},ice:{mat:'icew',n:'氷結樹',rq:3,hp:12,h:250,col:'#bfe9ff',em:'#4fb8ff',cash:150,item:'c_icegem'},spirit:{mat:'spirit',n:'精霊の大樹',rq:5,hp:20,h:340,col:'#ffe9a8',em:'#ffc629',cash:500,item:'c_spirit'}};
 const RTREES_SNOW=[['old',700,480],['old',1660,470],['old',1000,260],['old',560,1480],['old',1850,230],['ice',400,300],['ice',2050,520],['ice',300,1080],['spirit',180,1650]];
-const RB_SNOW=[{n:'鋼毛のシロクマ',rq:2,bt:'charge',hpm:2.5,x:820,y:250,rw:{cash:150,xp:30,item:'a_steel',ic:.5}},{n:'鋼毛のシロクマ',rq:2,bt:'charge',hpm:2.5,x:1880,y:330,rw:{cash:150,xp:30,item:'a_steel',ic:.5}},
-  {n:'氷の魔獣',rq:3,bt:'frost',hpm:3.5,x:250,y:1260,rw:{cash:300,xp:60,item:'w_frost',ic:.6}},{n:'雪原の覇者',rq:4,bt:'king',hpm:5,x:1260,y:210,rw:{cash:600,xp:120,item:'w_king',ic:1}}];
-const RB_DES=[{n:'鋼殻の大サソリ',rq:2,bt:'charge',hpm:2.5,x:620,y:240,rw:{cash:200,xp:40,item:'a_scorp',ic:.6}},{n:'砂嵐の化身',rq:3,bt:'queen',hpm:3.5,x:1900,y:330,rw:{cash:400,xp:80,item:'w_frost',ic:.5}}];
+const RB_SNOW=[{mat:'steel',n:'鋼毛のシロクマ',rq:2,bt:'charge',hpm:2.5,x:820,y:250,rw:{cash:150,xp:30,item:'a_steel',ic:.5}},{mat:'steel',n:'鋼毛のシロクマ',rq:2,bt:'charge',hpm:2.5,x:1880,y:330,rw:{cash:150,xp:30,item:'a_steel',ic:.5}},
+  {mat:'fang',n:'氷の魔獣',rq:3,bt:'frost',hpm:3.5,x:250,y:1260,rw:{cash:300,xp:60,item:'w_frost',ic:.6}},{mat:'horn',n:'雪原の覇者',rq:4,bt:'king',hpm:5,x:1260,y:210,rw:{cash:600,xp:120,item:'w_king',ic:1}}];
+const RB_DES=[{mat:'steel',n:'鋼殻の大サソリ',rq:2,bt:'charge',hpm:2.5,x:620,y:240,rw:{cash:200,xp:40,item:'a_scorp',ic:.6}},{mat:'fang',n:'砂嵐の化身',rq:3,bt:'queen',hpm:3.5,x:1900,y:330,rw:{cash:400,xp:80,item:'w_frost',ic:.5}}];
 const rbList=()=>DES()?RB_DES:RB_SNOW;
 function rtInit(){if(G.rtrees)return;G.rtrees=DES()?[]:RTREES_SNOW.map(([k,x,y])=>({k,x,y,alive:true,hp:RTK[k].hp,rt:0,zone:(inZone(x,y)||{}).id||null}))}
 function updateRankObj(dt){rtInit();if(!isRPG())return;
@@ -2243,11 +2265,11 @@ function updateRankObj(dt){rtInit();if(!isRPG())return;
     for(const p of G.players){if(p.down>0||p.riding||dist(p.x,p.y,t.x,t.y)>72)continue;
       if(lifeRank(p,'wood')<K.rq){if(!p._tk||G.t-p._tk>2){p._tk=G.t;float(t.x,t.y,120,`木こり「${LR[K.rq].n}」で切れる`,'red')}continue}
       if(p.bag.length>=cap(p))continue;p.rtT=(p.rtT||0)+dt;if(p.rtT<.4/lifeB(p,'wood',.07))continue;p.rtT=0;t.hp--;t.shake=.3;give(p,'log',1);lifeXp(p,'wood',1);SFX.chop();burst(t.x,t.y,30,5,{c:['#c9955b','#e7c08e','#ffffff'],s0:40,s1:120,u0:60,u1:180,l0:.3,l1:.6,r0:3,r1:6});
-      if(t.hp<=0){t.alive=false;t.rt=150;give(p,'log',4);lifeXp(p,'wood',6);const v=Math.round(K.cash*(1+G.day*.05));G.cash+=v;G.earned+=v;gainRX(p,K.rq*10);if(K.item&&Math.random()<.5)giveItem(p,K.item);
+      if(t.hp<=0){t.alive=false;t.rt=150;give(p,'log',4);addMat(p,RTK[t.k].mat,t.k==='spirit'?1:2);lifeXp(p,'wood',6);const v=Math.round(K.cash*(1+G.day*.05));G.cash+=v;G.earned+=v;gainRX(p,K.rq*10);if(K.item&&Math.random()<.5)giveItem(p,K.item);
         banner(`${K.n}を切りたおした！`,`+$${v}・薪たくさん`,'','r-SSR');SFX.ssr();G.shake=12;burst(t.x,t.y,60,40,{c:[K.em||'#c9955b','#ffffff','#ffe07a'],s0:80,s1:260,u0:150,u1:360,l0:.7,l1:1.3,add:!!K.em,r0:5,r1:10})}}}
   const L=rbList();G.rbT=G.rbT||L.map(()=>8);L.forEach((R,i)=>{if(G.bears.some(b=>b.rbi===i&&!b.dead))return;G.rbT[i]-=dt;if(G.rbT[i]>0)return;const z=R.y<690?null:DES()?null:'C';if(z&&!G.zones[z])return;
     const b=spawnBoss(R.bt,true);b.rbi=i;b.rq=R.rq;b.home={x:R.x,y:R.y};b.zone=R.y<690?'A':'C';b.x=R.x;b.y=R.y;b.m.g.position.set(b.x,0,b.y);b.hp=b.max=Math.round(b.max*R.hpm);G.rbT[i]=180})}
-function rbKilled(b,p){const R=rbList()[b.rbi];if(!R)return;const v=Math.round(R.rw.cash*(1+G.day*.05));G.cash+=v;G.earned+=v;gainRX(p,R.rw.xp);lifeXp(p,'hunt',12);if(R.rw.item&&Math.random()<R.rw.ic)giveItem(p,R.rw.item);
+function rbKilled(b,p){const R=rbList()[b.rbi];if(!R)return;if(R.mat)addMat(p,R.mat,R.rq>=4?1:2);const v=Math.round(R.rw.cash*(1+G.day*.05));G.cash+=v;G.earned+=v;gainRX(p,R.rw.xp);lifeXp(p,'hunt',12);if(R.rw.item&&Math.random()<R.rw.ic)giveItem(p,R.rw.item);
   setTimeout(()=>{if(running)banner(`${R.n}をたおした！`,`+$${v}・EXP+${R.rw.xp}`,'しばらくすると、また現れる','r-SSR')},700)}
 function mkRankTree(k){const K=RTK[k],g=new T.Group();let tr;
   if(KK&&KK.nat&&KK.nat.pine5){tr=KK.nat.pine5.clone(true);tr.scale.setScalar(K.h/(KK.natH.pine5||1));tr.traverse(o=>{if(o.isMesh){o.material=o.material.clone();if(K.col)o.material.color.lerp(lin(K.col),.55);if(K.em){o.material.emissive=lin(K.em);o.material.emissiveIntensity=.35}o.castShadow=true}})}
@@ -2268,12 +2290,12 @@ function rankFx(){if(!G||!running)return;rtInit();const now=performance.now(),dt
 // ================================================================ RPG (story mode): townsfolk troubles, equipment, personal level
 const ITEMS={w_bear:{n:'熊爪のナックル',s:'w',atk:.15},w_gordon:{n:'片耳殺しの刃',s:'w',atk:.3},w_elza:{n:'エルザの銀の槍',s:'w',atk:.4},w_said:{n:'サイードの曲刀',s:'w',atk:.45},w_gordon2:{n:'群れ断ちの大斧',s:'w',atk:.6},
   a_bear:{n:'白熊の毛皮',s:'a',def:.12,cold:.08},a_borg:{n:'年代物の毛皮コート',s:'a',def:.2,cold:.12},a_said:{n:'砂漠の外套',s:'a',def:.15,cold:.25},
-  c_mina:{n:'ぽかぽかミトン',s:'c',cold:.15},c_pip:{n:'ルゥの手編みマフラー',s:'c',cold:.25},c_teo:{n:'テオ特製の背負い袋',s:'c',cap:8},c_mina2:{n:'ミーナのお守りパン',s:'c',spd:.1},c_lana:{n:'砂漠の鈴',s:'c',spd:.12,cold:.05},a_steel:{n:'鋼毛の鎧',s:'a',def:.3,cold:.1},w_frost:{n:'氷牙の槍',s:'w',atk:.55},w_king:{n:'覇者の大剣',s:'w',atk:.8},c_icegem:{n:'樹氷のペンダント',s:'c',cold:.3},c_spirit:{n:'精霊の葉',s:'c',cold:.2,spd:.12,cap:5},a_scorp:{n:'鋼殻の胸当て',s:'a',def:.32,cold:.15}};
+  c_mina:{n:'ぽかぽかミトン',s:'c',cold:.15},c_pip:{n:'ルゥの手編みマフラー',s:'c',cold:.25},c_teo:{n:'テオ特製の背負い袋',s:'c',cap:8},c_mina2:{n:'ミーナのお守りパン',s:'c',spd:.1},c_lana:{n:'砂漠の鈴',s:'c',spd:.12,cold:.05},a_steel:{n:'鋼毛の鎧',s:'a',def:.3,cold:.1},w_frost:{n:'氷牙の槍',s:'w',atk:.55},w_king:{n:'覇者の大剣',s:'w',atk:.8},c_icegem:{n:'樹氷のペンダント',s:'c',cold:.3},c_spirit:{n:'精霊の葉',s:'c',cold:.2,spd:.12,cap:5},a_scorp:{n:'鋼殻の胸当て',s:'a',def:.32,cold:.15},w_fang:{n:'牙折りの弓',s:'w',atk:.5},c_soup:{n:'ミーナの特製スープ瓶',s:'c',cold:.3},c_rabbit:{n:'雪うさぎのお守り',s:'c',spd:.15},a_hero:{n:'古の勇者の鎧',s:'a',def:.35,cold:.15},c_tool:{n:'大工の腰袋',s:'c',cap:12},w_elza2:{n:'銀狼の大弓',s:'w',atk:.7},w_oldbow:{n:'古木の大弓',s:'w',atk:.45},a_oldshield:{n:'古木の盾',s:'a',def:.25,cold:.05},w_icestaff:{n:'氷結樹の杖',s:'w',atk:.65,cold:.1},a_icearmor:{n:'氷結の鎧',s:'a',def:.38,cold:.25},c_spiritcharm:{n:'精霊のお守り',s:'c',cold:.35,spd:.15,cap:8},w_spiritbow:{n:'精霊の弓',s:'w',atk:1,spd:.1}};
 const SLOTN={w:'武器',a:'防具',c:'お守り'};
 const itemDesc=it=>[it.atk?`攻撃+${Math.round(it.atk*100)}%`:'',it.def?`防御+${Math.round(it.def*100)}%`:'',it.cold?`${DES()?'暑さ':'寒さ'}に強い+${Math.round(it.cold*100)}%`:'',it.cap?`運べる数+${it.cap}`:'',it.spd?`足の速さ+${Math.round(it.spd*100)}%`:''].filter(Boolean).join('・');
 function eqv(p,k){if(!p||!p.eq||!isRPG())return 0;let v=0;for(const sl of ['w','a','c']){const it=ITEMS[p.eq[sl]];if(it&&it[k])v+=it[k]}return v}
 const rlv=p=>(p&&p.rl)||1,rxNeed=l=>20+l*18;
-function rpgRestore(p,d){if(!d)return;p.rl=d.rl||1;p.rx=d.rx||0;p.items=(d.items||[]).slice();p.eq=Object.assign({},d.eq||{})}
+function rpgRestore(p,d){if(!d)return;p.mats=Object.assign({},d.mats||{});p.rl=d.rl||1;p.rx=d.rx||0;p.items=(d.items||[]).slice();p.eq=Object.assign({},d.eq||{})}
 function gainRX(p,n){if(!p||!isRPG())return;p.rl=p.rl||1;p.rx=(p.rx||0)+n;while(p.rx>=rxNeed(p.rl)){p.rx-=rxNeed(p.rl);p.rl++;float(p.x,p.y,120,`レベルアップ！ Lv${p.rl}`,'gold',true);burst(p.x,p.y,30,30,{c:['#ffe07a','#ffffff','#8ff08f'],s0:60,s1:200,u0:150,u1:320,l0:.6,l1:1.1,add:true,r0:5,r1:9});SFX.rare()}}
 function giveItem(p,id){const it=ITEMS[id];if(!p||!it)return;p.items=p.items||[];if(!p.items.includes(id))p.items.push(id);p.eq=p.eq||{};if(!p.eq[it.s])p.eq[it.s]=id;
   float(p.x,p.y,130,`${it.n} を手に入れた！`,'gold',true);if(p===(G.players[G.me]||G.players[0])&&NET.mode!=='guest')banner('装備を手に入れた！',it.n,itemDesc(it)+'（Lキーで付け替え）','r-SSR',true)}
@@ -2282,20 +2304,26 @@ const NPCS={snow:[{id:'gordon',n:'猟師のゴードン',pal:1,x:1235,y:1335,o:{
 const npcName=id=>{for(const k in NPCS)for(const n of NPCS[k])if(n.id===id)return n.n;return ''};
 const npcPos=n=>n.a!=null?{x:CX+Math.cos(n.a)*150,y:CY+Math.sin(n.a)*150}:{x:n.x,y:n.y};
 const QUESTS={
-  gordon1:{npc:'gordon',bio:'snow',t:'仇の“片耳”',type:'hunt',bt:'charge',x:1500,y:380,hpm:1.6,where:'北の森',intro:['……北の森に“片耳”って呼ばれてる暴れグマがいる。','仲間があいつにやられた。俺ひとりじゃ敵わねえ…','仇をとってくれないか？'],act:'片耳は北の森だ。赤い線が見えたら横に飛べ！',done:['……やったのか。本当に、ありがとう。','こいつを受け取ってくれ。片耳を仕留めるために研いだ刃だ'],rw:{cash:120,item:'w_gordon',xp:40}},
-  mina1:{npc:'mina',bio:'snow',t:'パンを焼く薪',type:'bring',k:'log',n:10,intro:['かまどの火が弱くて、パンがうまく焼けないの…','薪を10本持ってきてくれないかしら？'],act:'薪を10本お願いね',done:['わあ、ありがとう！ これで焼きたてのパンを配れるわ','お礼にこれ。わたしの手作りミトンよ'],rw:{cash:80,item:'c_mina',xp:25}},
-  pip1:{npc:'pip',bio:'snow',t:'迷子のルゥ',type:'escort',x:560,y:470,nm:'ルゥ',where:'西の森',intro:['妹のルゥが…雪遊びに行ったまま帰ってこないんだ！','西の森のほうに行ったと思う。','お願い、ルゥを連れて帰って！'],act:'ルゥは西の森のほう！ 見つけたら町まで連れてきて',done:['ルゥ！ よかった…ほんとにありがとう！','ルゥが編んだマフラー、おにいちゃんにあげるって'],rw:{cash:60,item:'c_pip',xp:40}},
-  borg1:{npc:'borg',bio:'snow',t:'妻の形見',type:'find',x:1640,y:650,nm:'形見の指輪',where:'東の雪原',intro:['死んだ妻の形見の指輪を、東の雪原で落としてしまってな…','年寄りの足じゃ、もう探しに行けんのじゃ'],act:'東の雪原あたりじゃ。キラッと光るはずじゃよ',done:['おお…まさしく妻の指輪じゃ。ありがとう…','わしが若いころ着ておったコートじゃ。まだまだ暖かいぞ'],rw:{cash:100,item:'a_borg',xp:40}},
-  teo1:{npc:'teo',bio:'snow',t:'テント暮らし',type:'build',chk:()=>G.houses.filter((h,i)=>houseLv(i)>=2).length,n:2,intro:['家が足りなくて、みんなテント暮らしなんだ','「家を建てる」で小屋を2軒建ててくれれば、あとは俺が仕上げる'],act:'小屋を2軒（テント→小屋）',done:['いい家だ！ みんなよく眠れるようになった','俺特製の背負い袋だ。たくさん運べるぞ'],rw:{cash:150,item:'c_teo',xp:40}},
-  elza1:{npc:'elza',bio:'snow',t:'眠れない夜',type:'build',chk:()=>TOWERS.filter(t=>G.lv['tw_'+t.id]>=2).length,n:2,intro:['夜の襲撃が怖くて、見張りの交代でちっとも眠れないの','見張り台を2つ、Lv2まで強くしてくれない？'],act:'見張り台を2つLv2に',done:['これで交代で休めるわ。ありがとう','わたしの銀の槍よ。あなたのほうが上手く使えそう'],rw:{cash:200,item:'w_elza',xp:50}},
-  mina2:{npc:'mina',bio:'snow',req:()=>qDone('mina1')&&G.zones.B,t:'魚のパイ',type:'bring',k:'fish',n:8,intro:['氷の湖のお魚でパイを作りたいの','8匹あれば、町のみんなに配れるわ'],act:'お魚8匹、待ってるね',done:['いい匂い…みんな喜ぶわ！','旅のお守りに、特製のパンをどうぞ'],rw:{cash:150,item:'c_mina2',xp:35}},
-  gordon2:{npc:'gordon',bio:'snow',req:()=>qDone('gordon1')&&G.zones.C,t:'群れの長“黒たてがみ”',type:'hunt',bt:'alpha',x:360,y:900,hpm:2,where:'奥地の森',intro:['奥地の森に、群れを率いる“黒たてがみ”がいる。','あいつを倒せば、町を襲う熊もきっと減る'],act:'黒たてがみは奥地の森。仲間を呼ばれる前に叩け',done:['見事だ…お前はもう一人前の狩人だよ','俺の自慢の大斧だ。持っていけ'],rw:{cash:300,item:'w_gordon2',xp:80}},
-  said1:{npc:'said',bio:'desert',t:'水泥棒',type:'hunt',bt:'charge',x:1700,y:420,hpm:1.8,where:'北東の砂丘',intro:['井戸の水を夜な夜な荒らす、あばれサソリがいるんだ','北東の砂丘がねぐらだ。退治してくれたら礼ははずむよ'],act:'北東の砂丘だ。突進に気をつけな',done:['助かった！ これで水を売れる','おれの曲刀と…ついでに外套もやるよ'],rw:{cash:250,item:'w_said',item2:'a_said',xp:60}},
-  lana1:{npc:'lana',bio:'desert',t:'なくした鈴',type:'find',x:1000,y:560,nm:'踊り子の鈴',where:'北の砂丘',intro:['踊りで使う鈴を、北の砂丘で落としちゃったの','あれがないと踊れないのよ…'],act:'北の砂丘のどこか。チリンと光ってるはず',done:['その音色！ ありがとう、今夜は踊るわ','片方あげる。持ってると足が軽くなるのよ'],rw:{cash:120,item:'c_lana',xp:35}}};
+  gordon1:{ch:[1],npc:'gordon',bio:'snow',t:'仇の“片耳”',type:'hunt',bt:'charge',x:1500,y:380,hpm:1.6,where:'北の森',intro:['……北の森に“片耳”って呼ばれてる暴れグマがいる。','仲間があいつにやられた。俺ひとりじゃ敵わねえ…','仇をとってくれないか？'],act:'片耳は北の森だ。赤い線が見えたら横に飛べ！',done:['……やったのか。本当に、ありがとう。','こいつを受け取ってくれ。片耳を仕留めるために研いだ刃だ'],rw:{cash:120,item:'w_gordon',xp:40}},
+  mina1:{ch:[1],npc:'mina',bio:'snow',t:'パンを焼く薪',type:'bring',k:'log',n:10,intro:['かまどの火が弱くて、パンがうまく焼けないの…','薪を10本持ってきてくれないかしら？'],act:'薪を10本お願いね',done:['わあ、ありがとう！ これで焼きたてのパンを配れるわ','お礼にこれ。わたしの手作りミトンよ'],rw:{cash:80,item:'c_mina',xp:25}},
+  pip1:{ch:[1],npc:'pip',bio:'snow',t:'迷子のルゥ',type:'escort',x:560,y:470,nm:'ルゥ',where:'西の森',intro:['妹のルゥが…雪遊びに行ったまま帰ってこないんだ！','西の森のほうに行ったと思う。','お願い、ルゥを連れて帰って！'],act:'ルゥは西の森のほう！ 見つけたら町まで連れてきて',done:['ルゥ！ よかった…ほんとにありがとう！','ルゥが編んだマフラー、おにいちゃんにあげるって'],rw:{cash:60,item:'c_pip',xp:40}},
+  borg1:{ch:[1],npc:'borg',bio:'snow',t:'妻の形見',type:'find',x:1640,y:650,nm:'形見の指輪',where:'東の雪原',intro:['死んだ妻の形見の指輪を、東の雪原で落としてしまってな…','年寄りの足じゃ、もう探しに行けんのじゃ'],act:'東の雪原あたりじゃ。キラッと光るはずじゃよ',done:['おお…まさしく妻の指輪じゃ。ありがとう…','わしが若いころ着ておったコートじゃ。まだまだ暖かいぞ'],rw:{cash:100,item:'a_borg',xp:40}},
+  teo1:{ch:[1],npc:'teo',bio:'snow',t:'テント暮らし',type:'build',chk:()=>G.houses.filter((h,i)=>houseLv(i)>=2).length,n:2,intro:['家が足りなくて、みんなテント暮らしなんだ','「家を建てる」で小屋を2軒建ててくれれば、あとは俺が仕上げる'],act:'小屋を2軒（テント→小屋）',done:['いい家だ！ みんなよく眠れるようになった','俺特製の背負い袋だ。たくさん運べるぞ'],rw:{cash:150,item:'c_teo',xp:40}},
+  elza1:{ch:[1],npc:'elza',bio:'snow',t:'眠れない夜',type:'build',chk:()=>TOWERS.filter(t=>G.lv['tw_'+t.id]>=2).length,n:2,intro:['夜の襲撃が怖くて、見張りの交代でちっとも眠れないの','見張り台を2つ、Lv2まで強くしてくれない？'],act:'見張り台を2つLv2に',done:['これで交代で休めるわ。ありがとう','わたしの銀の槍よ。あなたのほうが上手く使えそう'],rw:{cash:200,item:'w_elza',xp:50}},
+  mina2:{ch:[1,2],npc:'mina',bio:'snow',req:()=>qDone('mina1')&&G.zones.B,t:'魚のパイ',type:'bring',k:'fish',n:8,intro:['氷の湖のお魚でパイを作りたいの','8匹あれば、町のみんなに配れるわ'],act:'お魚8匹、待ってるね',done:['いい匂い…みんな喜ぶわ！','旅のお守りに、特製のパンをどうぞ'],rw:{cash:150,item:'c_mina2',xp:35}},
+  gordon2:{ch:[1,2],npc:'gordon',bio:'snow',req:()=>qDone('gordon1')&&G.zones.C,t:'群れの長“黒たてがみ”',type:'hunt',bt:'alpha',x:360,y:900,hpm:2,where:'奥地の森',intro:['奥地の森に、群れを率いる“黒たてがみ”がいる。','あいつを倒せば、町を襲う熊もきっと減る'],act:'黒たてがみは奥地の森。仲間を呼ばれる前に叩け',done:['見事だ…お前はもう一人前の狩人だよ','俺の自慢の大斧だ。持っていけ'],rw:{cash:300,item:'w_gordon2',xp:80}},
+  gordon3:{ch:[2],npc:'gordon',bio:'snow',t:'王の手下“牙折れ”',type:'hunt',bt:'frost',x:1750,y:300,hpm:2.4,where:'北東の雪原',intro:['白き王の手下が、猟場を荒らしてやがる。','“牙折れ”って呼ばれてる、氷の息を吐く大熊だ。','こいつを放っておいたら、町の食い扶持がなくなる'],act:'牙折れは北東の雪原だ。青い扇からは離れろよ',done:['やってくれたか…これで猟場が戻る','王とやり合うなら、こいつが要るだろう'],rw:{cash:300,item:'w_fang',xp:70}},
+  mina3:{ch:[2],npc:'mina',bio:'snow',t:'避難した人のシチュー',type:'bring',k:'meat',n:12,intro:['襲撃のたびに、みんな怖がって眠れないの','温かいシチューを作ってあげたい…','お肉を12個、集めてくれる？'],act:'お肉12個でシチューが作れるわ',done:['ありがとう！ みんな、少し笑顔になったわ','残ったスープを瓶に詰めたの。体が芯から温まるわよ'],rw:{cash:220,item:'c_soup',xp:50}},
+  pip2:{ch:[2],npc:'pip',bio:'snow',t:'雪うさぎのお守り',type:'find',x:420,y:520,nm:'雪うさぎのお守り',where:'北西の雪原',intro:['ルゥがね、お守りをなくして泣いてるんだ','雪うさぎの形の、白いお守り…','北西の雪原で遊んでたときに落としたんだって'],act:'北西の雪原のどこか！ キラキラしてるはず',done:['それだ！ ルゥ、すっごく喜ぶよ！','ルゥが「おにいちゃんにも」って。もう一つあったんだって'],rw:{cash:120,item:'c_rabbit',xp:45}},
+  borg2:{ch:[2],npc:'borg',bio:'snow',t:'勇者の日誌',type:'find',x:1500,y:230,nm:'古い日誌',where:'北の雪原の奥',intro:['わしの祖父は、昔“白き王”と戦った勇者の一人でな','その日誌が、北の雪原の奥に埋まっておるはずじゃ','王の弱点が書いてあるかもしれん'],act:'北の雪原の奥じゃ。雪を掘ってみておくれ',done:['…“王は光を嫌う。突進のあとに隙が生まれる”…','これは祖父の鎧じゃ。今度はお前さんが着るといい'],rw:{cash:200,item:'a_hero',xp:60}},
+  teo2:{ch:[2],npc:'teo',bio:'snow',t:'門を固めろ',type:'build',chk:()=>G.lv.trap,n:2,intro:['襲撃のたびに門が破られて、家が壊される','門のトゲ罠をLv2にしてくれないか？','そうすりゃ、俺が家の修理に回れる'],act:'「門のトゲ罠」をLv2に',done:['これで門は安心だ！','俺の腰袋をやる。道具も荷物もたっぷり入るぞ'],rw:{cash:250,item:'c_tool',xp:50}},
+  elza2:{ch:[2],npc:'elza',bio:'snow',t:'夜の偵察隊',type:'count',chk:q=>(G.stats.raidKills||0)-(q.base||0),n:15,intro:['王の手下が、夜のうちに町を偵察してるみたい','襲撃のとき、熊を15頭倒して追い払って！','わたしも見張り台から援護するから'],act:'襲撃で熊を15頭たおす',done:['すごい…これで王も簡単には近づけないわ','銀狼の大弓。わたしの一族の宝よ'],rw:{cash:350,item:'w_elza2',xp:80}},
+  said1:{ch:[3],npc:'said',bio:'desert',t:'水泥棒',type:'hunt',bt:'charge',x:1700,y:420,hpm:1.8,where:'北東の砂丘',intro:['井戸の水を夜な夜な荒らす、あばれサソリがいるんだ','北東の砂丘がねぐらだ。退治してくれたら礼ははずむよ'],act:'北東の砂丘だ。突進に気をつけな',done:['助かった！ これで水を売れる','おれの曲刀と…ついでに外套もやるよ'],rw:{cash:250,item:'w_said',item2:'a_said',xp:60}},
+  lana1:{ch:[3],npc:'lana',bio:'desert',t:'なくした鈴',type:'find',x:1000,y:560,nm:'踊り子の鈴',where:'北の砂丘',intro:['踊りで使う鈴を、北の砂丘で落としちゃったの','あれがないと踊れないのよ…'],act:'北の砂丘のどこか。チリンと光ってるはず',done:['その音色！ ありがとう、今夜は踊るわ','片方あげる。持ってると足が軽くなるのよ'],rw:{cash:120,item:'c_lana',xp:35}}};
 const qS=id=>(G.story&&G.story.q&&G.story.q[id])||null,qDone=id=>{const q=qS(id);return !!(q&&q.st===3)};
 const bioKey=()=>DES()?'desert':'snow';
-function solvedN(bio){let n=0;for(const k in QUESTS)if(QUESTS[k].bio===bio&&qDone(k))n++;return n}
-function npcQuest(nid){let avail=null;for(const k in QUESTS){const Q=QUESTS[k];if(Q.npc!==nid||Q.bio!==bioKey())continue;const q=qS(k);if(q&&(q.st===1||q.st===2))return k;if(!q&&!avail&&(!Q.req||Q.req()))avail=k}return avail}
+function solvedN(bio){let n=0;const ch=(G.story&&G.story.ch)||1;for(const k in QUESTS){const Q=QUESTS[k];if(Q.bio===bio&&qDone(k)&&(!Q.ch||Q.ch.includes(ch)))n++}return n}
+function npcQuest(nid){let avail=null;const ch=(G.story&&G.story.ch)||1;for(const k in QUESTS){const Q=QUESTS[k];if(Q.npc!==nid||Q.bio!==bioKey())continue;const q=qS(k);if(q&&(q.st===1||q.st===2))return k;if(!q&&!avail&&(!Q.ch||Q.ch.includes(ch))&&(!Q.req||Q.req()))avail=k}return avail}
 function npcMark(nid){const k=npcQuest(nid);if(!k)return '';const q=qS(k);return !q?'！':q.st===2?'？':'…'}
 // ---- NPC meshes and markers (both host and guest)
 function npcFx(){if(!G||!running)return;const on=isRPG();const L=NPCS[bioKey()];
@@ -2322,11 +2350,13 @@ function updateQuests(dt){if(!isRPG())return;const S=G.story;S.q=S.q||{};
     else if(Q.type==='find'){const near=G.players.some(p=>!(p.down>0)&&dist(p.x,p.y,Q.x,Q.y)<55);if(near){q.p=(q.p||0)+dt;if(q.p>=1.5){q.st=2;burst(Q.x,Q.y,20,30,{c:['#ffe38a','#ffffff'],s0:60,s1:200,u0:150,u1:300,l0:.6,l1:1,add:true});SFX.rare();banner('見つけた！',Q.nm,`${npcName(Q.npc)}に届けよう`,'area')}}else q.p=Math.max(0,(q.p||0)-dt*.5)}
     else if(Q.type==='escort'){if(q.x==null){q.x=Q.x;q.y=Q.y}if(q.f==null){const p=G.players.find(p=>!(p.down>0)&&dist(p.x,p.y,q.x,q.y)<60);if(p){q.f=p.id;say(Q.nm,'…ぐすっ。おうちに帰りたい…ついていっていい？')}}
       else{const p=G.players[q.f];if(!p||p.down>0){q.f=null}else{const d=dist(p.x,p.y,q.x,q.y);if(d>45){const k2=Math.min(d-40,230*dt);q.x+=(p.x-q.x)/d*k2;q.y+=(p.y-q.y)/d*k2}if(dist(q.x,q.y,CX,CY)<FR-30){q.st=2;const n=NPCS.snow.find(n=>n.id===Q.npc);const np=npcPos(n);q.x=np.x+30;q.y=np.y+20;banner('町に着いた！',Q.nm,`${npcName(Q.npc)}に知らせよう`,'area');SFX.rare()}}}}
+    else if(Q.type==='count'){if(Q.chk(q)>=Q.n){q.st=2;banner('依頼達成！',Q.t,`${npcName(Q.npc)}に報告しよう`,'area');SFX.rare()}}
     else if(Q.type==='build'){if(Q.chk()>=Q.n){q.st=2;banner('依頼達成！',Q.t,`${npcName(Q.npc)}に報告しよう`,'area');SFX.rare()}}}}
 function doAct(p,type,id){if(!isRPG()||!p)return;const S=G.story;S.q=S.q||{};
+  if(type==='craft'){const R=RECIPES[id];if(!R)return;const why=craftWhy(p,R);if(why){float(p.x,p.y,90,why,'red',true);return}for(const k in R.m)p.mats[k]-=R.m[k];for(let i=0;i<(R.log||0);i++)take(p,'log');G.cash-=R.cash||0;giveItem(p,R.id);lifeXp(p,'craft',15);gainRX(p,20);banner('装備を作った！',ITEMS[R.id].n,itemDesc(ITEMS[R.id]),'r-SSR');SFX.ssr();burst(WB.x,WB.y,40,30,{c:['#ffd23f','#ffffff'],s0:60,s1:220,u0:150,u1:320,l0:.6,l1:1.1,add:true});return}
   if(type==='eq'){const it=ITEMS[id];if(!it||!(p.items||[]).includes(id))return;p.eq=p.eq||{};p.eq[it.s]=p.eq[it.s]===id?null:id;return}
   const Q=QUESTS[id];if(!Q)return;let q=S.q[id];
-  if(type==='accept'&&!q){S.q[id]={st:1,p:0};if(Q.type==='escort'){S.q[id].x=Q.x;S.q[id].y=Q.y}toast(`依頼「${Q.t}」を受けた${Q.where?'（'+Q.where+'）':''}`,'gold');SFX.pop&&SFX.pop();return}
+  if(type==='accept'&&!q){S.q[id]={st:1,p:0};if(Q.type==='count')S.q[id].base=G.stats.raidKills||0;if(Q.type==='escort'){S.q[id].x=Q.x;S.q[id].y=Q.y}toast(`依頼「${Q.t}」を受けた${Q.where?'（'+Q.where+'）':''}`,'gold');SFX.pop&&SFX.pop();return}
   if(type==='give'&&q&&q.st===1&&Q.type==='bring'){let n=0;while(q.p<Q.n&&take(p,Q.k)){q.p++;n++}if(n){flyItem(Q.k,p.x,p.y,30,p.x,p.y,60,null,3);SFX.coin(3)}if(q.p>=Q.n)q.st=2;else toast(`${Q.t}：あと${Q.n-q.p}個`,'cash');if(q.st!==2)return;type='claim'}
   if(type==='claim'&&q&&q.st===2){q.st=3;const R=Q.rw;G.cash+=R.cash;G.earned+=R.cash;gainRX(p,R.xp);if(R.item)giveItem(p,R.item);if(R.item2)giveItem(p,R.item2);
     banner('町の悩みを解決！',Q.t,`+$${R.cash}・EXP+${R.xp}${R.item?'・'+ITEMS[R.item].n:''}`,'r-SSR');SFX.ssr();burst(p.x,p.y,40,40,{c:['#ffd23f','#ffffff','#8ff08f'],s0:80,s1:260,u0:200,u1:400,l0:.8,l1:1.3,add:true})}}
@@ -2337,11 +2367,11 @@ function openTalk(v){const k=npcQuest(v.n.id),q=k?qS(k):null,Q=k?QUESTS[k]:null,
   if(!k)pages=[['いつもありがとう。この町は、あんたたちのおかげで持ってるよ','困ったことがあったら、また頼むね','外は冷える。気をつけてな'][Math.floor(Math.random()*3)]];
   else if(!q){pages=Q.intro.slice();ch=[['引き受ける',()=>sendAct('accept',k)],['やめておく',null]]}
   else if(q.st===2){pages=Q.done.slice();ch=[['受け取る',()=>sendAct('claim',k)]]}
-  else{pages=[Q.act+(Q.type==='bring'?`（${q.p||0}/${Q.n}）`:Q.type==='build'?`（${Math.min(Q.chk(),Q.n)}/${Q.n}）`:'')];if(Q.type==='bring'&&has(me,Q.k))ch=[[`渡す（持っている${me.bag.filter(x=>x===Q.k).length}個）`,()=>sendAct('give',k)],['あとで',null]]}
+  else{pages=[Q.act+(Q.type==='bring'?`（${q.p||0}/${Q.n}）`:Q.type==='build'?`（${Math.min(Q.chk(),Q.n)}/${Q.n}）`:Q.type==='count'?`（${Math.min(Q.chk(q),Q.n)}/${Q.n}）`:'')];if(Q.type==='bring'&&has(me,Q.k))ch=[[`渡す（持っている${me.bag.filter(x=>x===Q.k).length}個）`,()=>sendAct('give',k)],['あとで',null]]}
   Object.assign(DLG,{open:true,npc:v,pages,i:0,ch});if(NET.mode==='solo')G.paused=true;for(const j of joys)j.on=false;drawDlg();SFX.pop&&SFX.pop()}
 function drawDlg(){$('dlg').hidden=!DLG.open;if(!DLG.open)return;$('dlgWho').textContent=DLG.npc.n.n;$('dlgTxt').textContent=DLG.pages[DLG.i];const last=DLG.i>=DLG.pages.length-1,box=$('dlgCh');box.innerHTML='';
   if(last&&DLG.ch){DLG.ch.forEach(([t,fn],i)=>{const b=document.createElement('button');b.textContent=`${i+1}. ${t}`;if(!fn)b.className='no';b.addEventListener('click',e=>{e.stopPropagation();closeTalk();if(fn)fn()});box.appendChild(b)});$('dlgHint').textContent='数字キーかクリックで選ぶ'}else $('dlgHint').textContent=last?'Eキー / クリックで閉じる':'Eキー / クリックで次へ'}
-function dlgKey(code){const last=DLG.i>=DLG.pages.length-1;if(last&&DLG.ch){const i=code==='Digit2'?1:code==='Digit1'||code==='KeyE'||code==='Enter'||code==='Space'?0:-1;if(i<0||!DLG.ch[i])return;const fn=DLG.ch[i][1];closeTalk();if(fn)fn();return}if(last){closeTalk();return}DLG.i++;drawDlg()}
+function dlgKey(code){const last=DLG.i>=DLG.pages.length-1;if(last&&DLG.ch){const i=/^Digit/.test(code)?(+code.slice(5)-1):(code==='KeyE'||code==='Enter'||code==='Space')&&DLG.ch.length<3?0:-1;if(i<0||!DLG.ch[i])return;const fn=DLG.ch[i][1];closeTalk();if(fn)fn();return}if(last){closeTalk();return}DLG.i++;drawDlg()}
 function closeTalk(){DLG.open=false;$('dlg').hidden=true;if(NET.mode==='solo'&&G)G.paused=false}
 $('dlg').addEventListener('click',()=>{if(!DLG.open)return;const last=DLG.i>=DLG.pages.length-1;if(last&&DLG.ch)return;dlgKey('KeyE')});
 // ---- quest log + status panel
@@ -2351,8 +2381,9 @@ let _qlT=0;function qlogHud(){const el=$('qlog');el.hidden=true;return;const now
     rows.push(`<div class="${q.st===2?'ok':''}"><i>依頼</i>${Q.t}：${pr}</div>`)}
   el.innerHTML=rows.slice(0,3).join('');el.hidden=!rows.length}
 function rpgBoxHtml(me){if(!isRPG())return '';const l=rlv(me),x=me.rx||0,need=rxNeed(l);const eq=me.eq||{},inv=me.items||[];
-  return `<div class="lvl"><b>Lv ${l}</b><span class="xp"><i style="width:${Math.round(100*x/need)}%"></i></span><small>${x}/${need}</small></div>
+  const mt=Object.entries(me.mats||{}).filter(([k,n])=>n>0&&MATS[k]).map(([k,n])=>`${MATS[k]}×${n}`).join('・');return `<div class="lvl"><b>Lv ${l}</b><span class="xp"><i style="width:${Math.round(100*x/need)}%"></i></span><small>${x}/${need}</small></div>
   <div class="eq">${['w','a','c'].map(sl=>`<span>${SLOTN[sl]}</span><span>${eq[sl]&&ITEMS[eq[sl]]?ITEMS[eq[sl]].n+'<br><small>'+itemDesc(ITEMS[eq[sl]])+'</small>':'<small>なし</small>'}</span>`).join('')}</div>
+  <div style="font-size:11px;margin:-2px 0 6px"><b>素材</b> ${mt||'<small>なし（特別な木や強い敵から手に入る）</small>'}</div>
   ${inv.length?`<div class="inv">${inv.map(id=>ITEMS[id]?`<button data-eq="${id}" class="${eq[ITEMS[id].s]===id?'on':''}">${eq[ITEMS[id].s]===id?'✓ ':''}${ITEMS[id].n}　<small>${itemDesc(ITEMS[id])}</small></button>`:'').join('')}</div>`:'<small>依頼を解決すると装備がもらえる</small>'}`}
 $('lifeCard').addEventListener('click',e=>{const b=e.target.closest('button[data-eq]');if(!b)return;sendAct('eq',b.dataset.eq);setTimeout(()=>lifeHud(true),120)});
 
@@ -2405,9 +2436,9 @@ function updateFireside(dt){if(!isRPG())return;const on=snowy();const key=G.day+
     if(p.taleT>4&&G.taleKey!==key){G.taleKey=key;const i=(G.stats.tales||0)%TALES.length;G.stats.tales=(G.stats.tales||0)+1;say(DES()?'隊長ザラ':'村長オルガ',TALES[i]);if(!G.taleEnd)G.pm.dmg+=.25;G.taleEnd=G.t+G.DAY;banner('焚き火の昔話','みんなの攻撃力 +25%','明日のこの時間まで','area');SFX.rare()}}
   if(G.taleEnd&&G.t>G.taleEnd){G.taleEnd=0;G.pm.dmg=Math.max(0,G.pm.dmg-.25);toast('昔話の元気が切れた','cold')}}
 function fireFx(){if(!G||!running)return;if(G.benchV)G.benchV.visible=isRPG();if(!isRPG()){if(snowy()&&!G.wxDisc){G.wxDisc=1;toast('吹雪の間は大工仕事がはかどる：建設費20%オフ','gold')}if(!snowy())G.wxDisc=0;return}const me=G.players[G.me]||G.players[0];if(!me)return;const on=snowy();
-  const dw=dist(me.x,me.y,WB.x,WB.y);if(dw<170){if(!on)label(WB.x,WB.y,70,'<b>工房</b><br><small>吹雪の間だけ開く内職（薪→木工品）</small>','');
-    else if(!has(me,'log'))label(WB.x,WB.y,70,'<b>工房</b><br><small>薪を持ってくると木工品を作れる</small>','');
-    else label(WB.x,WB.y,76,`<b>工房</b> 緑でEキー！<div class="cbar"><i style="left:${(craftV()*100).toFixed(1)}%"></i></div>`,'')}
+  const dw=dist(me.x,me.y,WB.x,WB.y);if(dw<170){if(!on)label(WB.x,WB.y,70,'<b>工房</b><br><small>Eキーで装備を作る（特別な木材や素材を使う）</small>','');
+    else if(!has(me,'log'))label(WB.x,WB.y,70,'<b>工房</b><br><small>Eキーで装備を作る・薪があれば吹雪の内職</small>','');
+    else label(WB.x,WB.y,76,`<b>工房</b> 緑でEキー！（Qで装備づくり）<div class="cbar"><i style="left:${(craftV()*100).toFixed(1)}%"></i></div>`,'')}
   if(on&&dist(me.x,me.y,CX,CY)<175&&dw>=170&&G.taleKey!==G.day+(G.wave?'w':'b'))label(CX,CY,150,`<small>焚き火のそばにいると、${DES()?'ザラ':'オルガ'}が昔話をしてくれる…</small>`,'')}
 
 // ================================================================ boss types (each with its own tell and counterplay)
@@ -2522,7 +2553,7 @@ $('storyReset').addEventListener('click',e=>{const b=e.currentTarget;if(!b.datas
 setTimeout(()=>{try{modeUI()}catch(_){}},0);
 function saveData(){return{v:1,seed:G.seed,diff:G.diff,year:G.year,day:G.day,cash:Math.floor(G.cash),earned:Math.floor(G.earned),rep:G.rep,fuel:Math.max(45,G.fuel),woodpile:G.woodpile,level:G.level,rank:G.rank||0,
   zones:Object.assign({},G.zones),lv:Object.assign({},G.lv),pm:Object.assign({},G.pm),stats:Object.assign({},G.stats),raidWins:G.raidWins,mission:G.mission,perk:Object.assign({},G.perkCount),yb:G.yearBonus||0,mg:G.metaGiven||0,
-  sec:G.secrets?G.secrets.map(q=>q.found?1:0):[],secS:G.secretS||0,stele:G.stele||0,pl:[0,1].map(i=>G.players[i]&&!(NET.mode==='host'&&i===1&&!NET.guestPeer)?{lv:Object.assign({},G.players[i].lv),life:Object.assign({},G.players[i].life||{}),rl:G.players[i].rl||1,rx:G.players[i].rx||0,items:(G.players[i].items||[]).slice(),eq:Object.assign({},G.players[i].eq||{})}:(G.savePl&&G.savePl[i])||null),
+  sec:G.secrets?G.secrets.map(q=>q.found?1:0):[],secS:G.secretS||0,stele:G.stele||0,pl:[0,1].map(i=>G.players[i]&&!(NET.mode==='host'&&i===1&&!NET.guestPeer)?{lv:Object.assign({},G.players[i].lv),life:Object.assign({},G.players[i].life||{}),rl:G.players[i].rl||1,rx:G.players[i].rx||0,mats:Object.assign({},G.players[i].mats||{}),items:(G.players[i].items||[]).slice(),eq:Object.assign({},G.players[i].eq||{})}:(G.savePl&&G.savePl[i])||null),
   wk:G.workers.map(w=>({r:w.role,st:w.st?w.st.id:null,tw:w.tw,slot:w.slot})),surv:G.surv.filter(q=>!q.frozen&&q.arrived).length,sleds:G.sleds.length,mon:G.monument?1:0,
   story:JSON.parse(JSON.stringify(G.story)),biome:G.biome||0,at:Date.now()}}
 function snapSave(){if(!G||!G.story||NET.mode==='guest'||!running)return;store.set(SAVE_K,saveData())}
@@ -2654,7 +2685,7 @@ function checkPerf(){tickFps(Math.min(.25,(performance.now()-(checkPerf.l||perfo
 
 $('gfx').addEventListener('click',()=>{const order=['auto',2,1,0];GQ.mode=order[(order.indexOf(GQ.mode)+1)%4];store.set('mw2-gfx',GQ.mode);applyGfx(GQ.mode==='auto'?2:GQ.mode);perf={t0:0,f:0,skip:0};toast(GQ.mode==='auto'?'画質：自動（重いと自動で下げます）':'画質：'+QL[GQ.tier].n,'gold')});
 function gpuWarn(){if(!SOFTGL)return;const el=$('gpuWarn');el.hidden=false;el.innerHTML='⚠ ブラウザの<b>グラフィックアクセラレーションがオフ</b>になっていて、とても重くなります。<br>Chromeの「設定 → システム →<br>グラフィック アクセラレーションが使用可能な場合は使用する」をオンにして再起動してね';setTimeout(()=>toast('グラフィックアクセラレーションがオフなので重いです（タイトル画面に直し方）','cold',true),1500)}
-addEventListener('keydown',e=>{if(e.code==='KeyL'&&!e.repeat&&running&&!(e.target&&e.target.tagName==='INPUT')){toggleLife();return}if(DLG.open&&!e.repeat&&(e.code==='KeyE'||e.code==='Space'||e.code==='Enter'||e.code==='Digit1'||e.code==='Digit2')){dlgKey(e.code);e.preventDefault();return}if(e.code!=='KeyE'||e.repeat||!running)return;if(e.target&&e.target.tagName==='INPUT')return;const me=G.players[G.me]||G.players[0];if(!me)return;const nn=npcNear(me);if(nn){openTalk(nn);return}const gr=craftGrade();if(NET.mode==='guest'){NET.eCount=(NET.eCount||0)+1;NET.eGrade=gr}else{me.ePress=true;me.eGrade=gr}});
+addEventListener('keydown',e=>{if(e.code==='KeyL'&&!e.repeat&&running&&!(e.target&&e.target.tagName==='INPUT')){toggleLife();return}if(e.code==='KeyQ'&&!e.repeat&&running&&!DLG.open&&isRPG()){const me=G.players[G.me]||G.players[0];if(me&&dist(me.x,me.y,WB.x,WB.y)<90){openCraft();return}}if(DLG.open&&!e.repeat&&(e.code==='KeyE'||e.code==='Space'||e.code==='Enter'||/^Digit[1-9]$/.test(e.code))){dlgKey(e.code);e.preventDefault();return}if(e.code!=='KeyE'||e.repeat||!running)return;if(e.target&&e.target.tagName==='INPUT')return;const me=G.players[G.me]||G.players[0];if(!me)return;const nn=npcNear(me);if(nn){openTalk(nn);return}if(isRPG()&&dist(me.x,me.y,WB.x,WB.y)<90&&!(snowy()&&has(me,'log'))){openCraft();return}const gr=craftGrade();if(NET.mode==='guest'){NET.eCount=(NET.eCount||0)+1;NET.eGrade=gr}else{me.ePress=true;me.eGrade=gr}});
 addEventListener('keydown',e=>{if(e.code!=='KeyF'||e.repeat||!running)return;if(e.target&&e.target.tagName==='INPUT')return;if(NET.mode==='guest'){NET.fCount=(NET.fCount||0)+1}else{const me=G.players[G.me]||G.players[0];if(me)me.fPress=true}});
 setTimeout(()=>dbgLine(),0);
 function boot(){gpuWarn();setPlayers(new URLSearchParams(location.search).get('room')?2:1);toTitle();applyGfx(GQ.mode==='auto'?2:GQ.mode);$('loading').hidden=true;if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(G&&G.pads)for(const q of G.pads)q._key=null});requestAnimationFrame(loop)}
