@@ -31,8 +31,8 @@ function paintDesert(g,S){const k=S/WORLD;g.save();g.scale(k,k);
   g.lineWidth=5;for(let i=0;i<260;i++){const x=rnd(0,WORLD),y=rnd(0,WORLD),w=rnd(120,320);g.strokeStyle=Math.random()<.5?'rgba(180,120,60,.18)':'rgba(255,240,210,.35)';g.beginPath();for(let t=0;t<=1;t+=.1){const px=x+t*w,py=y+Math.sin(t*6+i)*10;t?g.lineTo(px,py):g.moveTo(px,py)}g.stroke()}
   for(let i=0;i<6000;i++){g.fillStyle=Math.random()<.5?'rgba(160,100,50,.12)':'rgba(255,245,220,.4)';g.fillRect(rnd(0,WORLD),rnd(0,WORLD),rnd(1,3),rnd(1,2))}
   // salt flat (zone B)
-  g.fillStyle='#f4eee8';g.beginPath();g.ellipse(2040,1200,360,500,0,0,TAU);g.fill();g.strokeStyle='rgba(190,170,160,.55)';g.lineWidth=3;
-  for(let j=0;j<140;j++){const cx=2040+rnd(-320,320),cy=1200+rnd(-450,450);g.beginPath();for(let q=0;q<6;q++){const a=q/6*TAU;const px=cx+Math.cos(a)*34,py=cy+Math.sin(a)*34;q?g.lineTo(px,py):g.moveTo(px,py)}g.closePath();g.stroke()}
+  {const sg=g.createRadialGradient(2040,1200,60,2040,1200,520);sg.addColorStop(0,'#efe7dc');sg.addColorStop(.8,'#eadcc6');sg.addColorStop(1,'rgba(234,210,170,0)');g.fillStyle=sg;g.beginPath();g.ellipse(2040,1200,380,520,0,0,TAU);g.fill()}g.lineWidth=2;
+  for(let j=0;j<160;j++){const cx=2040+rnd(-320,320),cy=1200+rnd(-450,450),R=rnd(18,40);g.strokeStyle=`rgba(175,150,130,${rnd(.12,.3)})`;g.beginPath();for(let q=0;q<6;q++){const a=q/6*TAU+rnd(-.2,.2);const px=cx+Math.cos(a)*R*rnd(.8,1.15),py=cy+Math.sin(a)*R*rnd(.8,1.15);q?g.lineTo(px,py):g.moveTo(px,py)}g.closePath();g.stroke()}
   // red canyon floor (zone C)
   const cg2=g.createLinearGradient(40,0,680,0);cg2.addColorStop(0,'#a8502e');cg2.addColorStop(1,'#cf8a52');g.fillStyle=cg2;g.globalAlpha=.75;g.fillRect(40,640,640,1120);g.globalAlpha=1;
   for(let j=0;j<40;j++){g.strokeStyle='rgba(90,40,20,.35)';g.lineWidth=rnd(2,6);g.beginPath();let x=rnd(60,660),y=rnd(660,1740);g.moveTo(x,y);for(let q=0;q<5;q++){x+=rnd(-50,50);y+=rnd(-40,40);g.lineTo(x,y)}g.stroke()}
@@ -86,7 +86,7 @@ let snowTint=false;const snow=(()=>{const N=2400,pos=new Float32Array(N*3),col=n
   for(let i=0;i<N;i++){pos[i*3]=rnd(-900,900);pos[i*3+1]=rnd(0,700);pos[i*3+2]=rnd(-900,900);const z=Math.random();size[i]=2.5+z*4.5;alpha[i]=.6+z*.4;v.push(.5+z)}
   const g=new T.BufferGeometry();g.setAttribute('position',new T.BufferAttribute(pos,3));g.setAttribute('aColor',new T.BufferAttribute(col,3));g.setAttribute('aSize',new T.BufferAttribute(size,1));g.setAttribute('aAlpha',new T.BufferAttribute(alpha,1));
   const m=new T.ShaderMaterial({uniforms:{uScale:{value:1}},vertexShader:PS_V,fragmentShader:PS_F,transparent:true,depthWrite:false});const pts=new T.Points(g,m);pts.frustumCulled=false;pts.renderOrder=9;scene.add(pts);
-  return{update(dt,cx,cz,wind,storm,scale){const t=performance.now()/900;for(let i=0;i<N;i++){pos[i*3+1]-=v[i]*70*dt*(1+storm);pos[i*3]+=(20+wind*70)*v[i]*dt*(1+storm);pos[i*3+2]+=Math.sin(i+t)*9*dt;
+  return{pts,update(dt,cx,cz,wind,storm,scale){const t=performance.now()/900;for(let i=0;i<N;i++){pos[i*3+1]-=v[i]*70*dt*(1+storm);pos[i*3]+=(20+wind*70)*v[i]*dt*(1+storm);pos[i*3+2]+=Math.sin(i+t)*9*dt;
       if(pos[i*3+1]<0)pos[i*3+1]+=700;const dx=pos[i*3]-cx,dz=pos[i*3+2]-cz;if(dx>900)pos[i*3]-=1800;if(dx<-900)pos[i*3]+=1800;if(dz>900)pos[i*3+2]-=1800;if(dz<-900)pos[i*3+2]+=1800}
     if(snowTint!==DES()){snowTint=DES();const c=snowTint?[.95,.8,.55]:[1,1,1];for(let i=0;i<N;i++){col[i*3]=c[0];col[i*3+1]=c[1];col[i*3+2]=c[2]}g.attributes.aColor.needsUpdate=true}
     g.setDrawRange(0,Math.floor(N*storm*GQ.snow*(snowTint?.5:1)));g.attributes.position.needsUpdate=true;m.uniforms.uScale.value=scale}}})();

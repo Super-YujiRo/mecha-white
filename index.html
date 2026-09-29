@@ -280,6 +280,40 @@ body.mlock #keyBar .kbUn,body:not(.mlock) #keyBar .kbLk{display:none}
 #kbSk.cd{opacity:.55}#kbSk.ready kbd{background:#f1d27a;animation:flb .6s ease-in-out infinite alternate}
 #dlgX{position:absolute;top:8px;right:10px;width:34px;height:34px;border-radius:50%;border:2px solid #16283a;background:#fff;font:inherit;font-weight:900;font-size:16px;cursor:pointer;z-index:2;line-height:1}#dlgX:hover{background:#e8703a;color:#fff}#dlgCh.many{display:grid;grid-template-columns:1fr 1fr;max-height:40vh}#dlgCh.many button{font-size:12.5px;padding:5px 8px;text-align:left;line-height:1.35}
 #abyHud{position:fixed;left:50%;top:78px;transform:translateX(-50%);z-index:30;display:none;align-items:center;gap:12px;background:linear-gradient(180deg,rgba(30,20,50,.92),rgba(12,8,24,.92));border:2px solid #b08aff;border-radius:12px;padding:6px 16px;color:#efe6ff;font-weight:800;box-shadow:0 6px 18px rgba(0,0,0,.4);pointer-events:none}#abyHud b{font-size:18px;color:#fff}#abyHud small{font-size:12px;color:#c9a2ff}#abyHud span{font-size:13px}#abyHud i{font-style:normal;font-size:11px;opacity:.75}body.aby #abyHud{display:flex}body.aby #mini{display:none}
+.p2hide{display:none!important}
+body.rpg #hRepBox{display:none!important}
+body.rpg #bottom{bottom:62px}
+body.rpg #side{bottom:16px;gap:5px}
+body.rpg #side>button{font-size:12px;padding:5px 12px;min-width:0}
+body.rpg #side:not(.open)>button:not(#menuBtn),body.rpg #side:not(.open)>#hModTxt{display:none}
+#menuBtn{display:none}body.rpg #menuBtn{display:inline-flex;align-items:center;gap:6px;font-family:var(--fl-head);font-weight:700}
+body.rpg #side.open #menuBtn{background:linear-gradient(180deg,var(--fl-navy2),var(--fl-navy));color:#fff8e2;border-color:var(--fl-gold2)}
+body.rpg #keyBar{font-size:11px;padding:5px 10px;gap:8px;background:rgba(18,28,46,.62)}
+#lifeCard button[data-tab]{white-space:nowrap;font-size:10.5px!important;padding:3px 2px!important}
+body.aby #tracker,body.aby #mission,body.aby .cardS.furn,body.aby #hBody,body.aby #hPopBox,body.aby #hFrzBox,body.aby #hWx{display:none!important}
+body.rpg #lifeCard{left:50%!important;top:50%!important;right:auto!important;bottom:auto!important;transform:translate(-50%,-50%);width:min(620px,92vw)!important;max-height:78vh!important;overflow:auto;padding:0 18px 14px!important;z-index:40;border:3px solid var(--fl-gold)!important;box-shadow:var(--fl-frame),0 20px 50px rgba(20,14,6,.5)!important}
+body.rpg #lifeCard::before{content:"ステータス";display:block;margin:0 -18px 12px;padding:10px 18px;background:linear-gradient(180deg,var(--fl-navy2),var(--fl-navy));color:#fff8e2;font-family:var(--fl-head);font-weight:700;letter-spacing:.12em;font-size:15px;border-bottom:2px solid var(--fl-gold2)}
+body.rpg #lifeCard button[data-tab]{background:linear-gradient(180deg,#fffdf5,#f1e2bd)!important;border:2px solid var(--fl-gold)!important;border-radius:8px 8px 3px 3px!important;color:var(--fl-ink)!important;font-family:var(--fl-head);font-size:12.5px!important;padding:6px 4px!important;box-shadow:0 2px 0 rgba(120,90,30,.3)}
+body.rpg #lifeCard button[data-tab][style*="#ffd23f"]{background:linear-gradient(180deg,var(--fl-navy2),var(--fl-navy))!important;color:#fff8e2!important;border-color:var(--fl-gold2)!important}
+body.rpg #lifeCard .inv button{font-size:12px}
+body.rpg #lifeCard .inv button{background:linear-gradient(180deg,#fffdf6,#f6ead0)!important;border:1.5px solid #cdb27a!important;border-left:5px solid #cdb27a!important;border-radius:8px!important;color:var(--fl-ink)!important;box-shadow:0 1px 0 rgba(120,90,30,.25)}
+body.rpg #lifeCard .inv button.on{background:linear-gradient(180deg,#fff4cf,#ffe39a)!important;border-color:var(--fl-gold2)!important;border-left-color:#e0a21c!important}
+body.rpg #lifeCard .inv button:hover{border-left-color:var(--fl-navy)!important}
+.bkh{display:flex;align-items:center;gap:8px;margin:10px 0 6px;font-weight:900}.bkh span{font-family:var(--fl-head,inherit);color:#1d3150}.bkh em{font-style:normal;font-size:12px;color:#8a6a3a}.bkh u{flex:1;height:6px;background:#e7d9bb;border-radius:4px;overflow:hidden;text-decoration:none}.bkh u s{display:block;height:100%;background:linear-gradient(90deg,#e8b64a,#c98a1a)}
+.bkg{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px}
+.bk{display:grid;justify-items:center;gap:2px;padding:6px 4px;border-radius:8px;background:rgba(120,100,70,.08);border:1.5px dashed rgba(140,110,60,.35);text-align:center}
+.bk i{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#cfc3ad;color:#fff;font-style:normal;font-weight:900;font-size:14px;box-shadow:inset 0 -2px 0 rgba(0,0,0,.15)}
+.bk b{font-size:10.5px;line-height:1.25;color:#8a7a60}.bk small{font-size:9.5px;color:#b08a3a}
+.bk.on{background:linear-gradient(180deg,#fffdf5,#f6ead0);border:1.5px solid #cdb27a}.bk.on b{color:#3b2a1a}
+@media (max-height:820px){.logo{font-size:46px;margin-top:-34px}#title .card{padding:20px 20px 14px;gap:10px}}
+#title:has(#mStory[aria-pressed="true"]) .card{background:linear-gradient(180deg,#fffaf0 0%,#f5e7c8 100%);border:3px solid #b8913f;border-radius:18px;box-shadow:inset 0 0 0 2px #fff8e2,inset 0 0 0 4px rgba(184,145,63,.4),0 24px 60px rgba(20,14,6,.45)}
+#title:has(#mStory[aria-pressed="true"]) .seg{background:#ecdcb6;border-radius:10px;box-shadow:inset 0 1px 2px rgba(90,60,20,.25)}
+#title:has(#mStory[aria-pressed="true"]) .seg button{border-radius:8px;font-family:"Kaisei Decol","Zen Maru Gothic",serif;color:#7a6242}
+#title:has(#mStory[aria-pressed="true"]) .seg button[aria-pressed="true"]{background:linear-gradient(180deg,#2b4a73,#1d3150);color:#fff8e2;box-shadow:0 0 0 1.5px #f1d27a inset,0 2px 0 rgba(10,15,30,.4)}
+#title:has(#mStory[aria-pressed="true"]) #start{border-radius:12px;background:linear-gradient(180deg,#ffe28a,#e8b64a);color:#3b2a1a;font-family:"Kaisei Decol","Zen Maru Gothic",serif;box-shadow:inset 0 0 0 2px #fff4c8,0 4px 0 #9a6a12,0 12px 24px rgba(120,80,10,.35);border:2px solid #9a6a12}
+#title:has(#mStory[aria-pressed="true"]) .logo{-webkit-text-stroke-color:#1d3150;text-shadow:0 6px 0 #1d3150,0 12px 22px rgba(20,30,60,.3)}
+#title:has(#mStory[aria-pressed="true"]) .logo em{color:#ffe7a0}
+#fadeOv{position:fixed;inset:0;background:#07060c;opacity:0;pointer-events:none;z-index:60}
 </style>
 
 <canvas id="c"></canvas><div id="vig"></div><div id="netWarn" hidden style="position:fixed;left:50%;top:150px;transform:translateX(-50%);z-index:30;background:rgba(40,52,70,.88);color:#fff;font-weight:900;font-size:13px;padding:8px 16px;border-radius:999px;pointer-events:none"></div>
@@ -308,7 +342,7 @@ body.mlock #keyBar .kbUn,body:not(.mlock) #keyBar .kbLk{display:none}
   <div class="fever" id="fever"><i></i><span>FEVER</span></div>
 </div>
 <div class="bottom" id="bottom" hidden></div>
-<div class="side" id="side" hidden><button id="quit">タイトルへ</button><button id="mute">音 ON</button><button id="gfx">画質：自動</button><button id="lifeBtn">ステータス（L）</button><button id="sensBtn">マウス感度 1</button><div class="modp" id="hModTxt"></div></div>
+<div class="side" id="side" hidden><button id="menuBtn">☰ メニュー</button><button id="quit">タイトルへ</button><button id="mute">音 ON</button><button id="gfx">画質：自動</button><button id="lifeBtn">ステータス（L）</button><button id="sensBtn">マウス感度 1</button><div class="modp" id="hModTxt"></div></div>
 <div id="combo" hidden></div>
 <div id="sosArrow" hidden><i></i><b id="sosTxt">SOS</b></div>
 <div class="toast" id="toast"></div>
@@ -377,4 +411,4 @@ body.mlock #keyBar .kbUn,body:not(.mlock) #keyBar .kbLk{display:none}
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js"></script>
 
-<script src="game.js?v=20260930001953"></script>
+<script src="game.js?v=20260930014030"></script>

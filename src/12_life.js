@@ -47,8 +47,8 @@ function updateFireside(dt){if(!isRPG())return;const on=snowy();const key=G.day+
     if(p.taleT>4&&G.taleKey!==key){G.taleKey=key;const i=(G.stats.tales||0)%TALES.length;G.stats.tales=(G.stats.tales||0)+1;say(DES()?'隊長ザラ':'村長オルガ',TALES[i]);if(!G.taleEnd)G.pm.dmg+=.25;G.taleEnd=G.t+G.DAY;banner('焚き火の昔話','みんなの攻撃力 +25%','明日のこの時間まで','area');SFX.rare()}}
   if(G.taleEnd&&G.t>G.taleEnd){G.taleEnd=0;G.pm.dmg=Math.max(0,G.pm.dmg-.25);toast('昔話の元気が切れた','cold')}}
 function fireFx(){if(!G||!running)return;if(G.benchV)G.benchV.visible=isRPG();if(!isRPG()){if(snowy()&&!G.wxDisc){G.wxDisc=1;toast('吹雪の間は大工仕事がはかどる：建設費20%オフ','gold')}if(!snowy())G.wxDisc=0;return}const me=G.players[G.me]||G.players[0];if(!me)return;const on=snowy();
-  const dw=dist(me.x,me.y,WB.x,WB.y);if(dw<170){if(!on)label(WB.x,WB.y,70,'<b>工房</b><br><small>Eキーで装備を作る（特別な木材や素材を使う）</small>','');
-    else if(!has(me,'log'))label(WB.x,WB.y,70,'<b>工房</b><br><small>Eキーで装備を作る・薪があれば吹雪の内職</small>','');
+  const dw=dist(me.x,me.y,WB.x,WB.y);if(dw<170){if(!on)label(WB.x,WB.y,70,'<b>工房</b><br><small>Qキー：装備づくり・鍛える・合成</small>','');
+    else if(!has(me,'log'))label(WB.x,WB.y,70,'<b>工房</b><br><small>Qキー：装備・鍛える・合成／薪があれば吹雪の内職（E）</small>','');
     else label(WB.x,WB.y,76,`<b>工房</b> 緑でEキー！（Qで装備づくり）<div class="cbar"><i style="left:${(craftV()*100).toFixed(1)}%"></i></div>`,'')}
   if(on&&dist(me.x,me.y,CX,CY)<175&&dw>=170&&G.taleKey!==G.day+(G.wave?'w':'b'))label(CX,CY,150,`<small>焚き火のそばにいると、${DES()?'ザラ':'オルガ'}が昔話をしてくれる…</small>`,'')}
 

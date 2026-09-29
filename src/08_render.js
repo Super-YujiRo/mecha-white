@@ -3,7 +3,7 @@ function sync(dt){
   const R=heatR(),f=G.fuel/100,v=G.v,two=G.players.length>1;
   // fire
   const rate=G.fuel>0?60+f*140+(G.level-1)*14:0;let n=rate*dt;
-  while(n>0){if(Math.random()<n){const sp=12+f*14+G.level*2;psA.emit({x:CX+rnd(-sp,sp),y:44,z:CY+rnd(-sp,sp),vx:rnd(-8,8)+G.wind*14,vz:rnd(-8,8),vy:rnd(60,120)*(.7+f*.6),g:-20,life:rnd(.4,.9)*(.7+f*.5),max:.9,r:rnd(12,20)*(.7+f*.5+G.level*.05),a:.8,fire:true,air:true,fade:.4})}n-=1}
+  while(n>0){if(Math.random()<n){const sp=12+f*14+G.level*2;psA.emit({x:CX+rnd(-sp,sp),y:44,z:CY+rnd(-sp,sp),vx:rnd(-8,8)+G.wind*14,vz:rnd(-8,8),vy:rnd(60,120)*(.7+f*.6),g:-20,life:rnd(.4,.9)*(.7+f*.5),max:.9,r:rnd(12,20)*(.7+f*.5+G.level*.05)*(isRPG()?.62:1),a:isRPG()?.7:.8,fire:true,air:true,fade:.4})}n-=1}
   if(G.fuel>0&&Math.random()<dt*(4+f*10))psA.emit({x:CX+rnd(-10,10),y:70,z:CY+rnd(-10,10),vx:rnd(-30,30)+G.wind*25,vz:rnd(-30,30),vy:rnd(80,180),g:20,life:rnd(.8,1.6),max:1.6,r:4,c:C(Math.random()<.5?'#ffd166':'#ff9a4d'),air:true});
   if(Math.random()<dt*(G.fuel>0?3:5))puff(CX+rnd(-8,8),CY+rnd(-8,8),120+f*40,{c:'#7a8491',r:18,life:2.4,a:.3,vy:40,vx:G.wind*20,grow:2.4});
   v.f.flames.forEach((fl,i)=>{const h=(G.fuel>0?(.35+f*.75+G.level*.07):0)*(1+Math.sin(G.t*(11+i*5))*.12);fl.scale.set(.6+f*.5,Math.max(.001,h),.6+f*.5);fl.visible=G.fuel>0;fl.rotation.y=G.t*(1+i)});
@@ -138,7 +138,7 @@ function syncTown(dt){syncRescue(dt);syncSleds(dt);const v=G.v;v.f._pos={x:CX,y:
 const guide=(()=>{const g=new T.Group();const gm=glow('#ffd23f',1.2);const arrow=grp(at(rot(cone(10,18,gm,4,false),Math.PI,0,0),0,0,0),at(box(8,14,8,gm,false),0,15,0));
   const ring=rot(M_(new T.RingGeometry(22,28,32),basic('#ffd23f',{transparent:true,opacity:.85,side:T.DoubleSide,depthWrite:false}),false),-Math.PI/2,0,0);g.add(arrow,ring);scene.add(g);
   const chev=[0,1,2].map(()=>{const m=M_(new T.ShapeGeometry(new T.Shape([new T.Vector2(-9,-4),new T.Vector2(0,7),new T.Vector2(9,-4),new T.Vector2(0,0)])),basic('#ffd23f',{transparent:true,side:T.DoubleSide,depthWrite:false}),false);m.rotation.x=-Math.PI/2;scene.add(m);return m});
-  return{set(tg,p,t){const show=!!tg&&running;g.visible=show;chev.forEach(c=>c.visible=false);if(!show)return;g.position.set(tg.x,0,tg.y);arrow.position.y=(tg.h||60)+Math.abs(Math.sin(t*4))*12;arrow.rotation.y=t*2;ring.scale.setScalar(1+Math.sin(t*5)*.1);
+  return{set(tg,p,t){const show=!!tg&&running;g.visible=show&&!isRPG();chev.forEach(c=>c.visible=false);if(!show)return;g.position.set(tg.x,0,tg.y);arrow.position.y=(tg.h||60)+Math.abs(Math.sin(t*4))*12;arrow.rotation.y=t*2;ring.scale.setScalar(1+Math.sin(t*5)*.1);
     const d=dist(p.x,p.y,tg.x,tg.y);if(d>110){const a=Math.atan2(tg.x-p.x,tg.y-p.y);chev.forEach((c,i)=>{c.visible=true;const k=30+i*15+((t*40)%15);c.position.set(p.x+Math.sin(a)*k,1.5,p.y+Math.cos(a)*k);c.rotation.set(-Math.PI/2,0,-a+Math.PI);c.material.opacity=.9-i*.25})}}}})();
 
 // ================================================================ camera & frame
@@ -182,8 +182,8 @@ function frame(dt){hideIdle();monBar();frozenFx();vigFx();hideIdleFx(dt);
   {const el=$('sosArrow'),R=G.rescue;if(running&&R&&R.state==='wait'){pv.set(R.x,60,R.y).project(camera);let sx=(pv.x+1)/2*W,sy=(1-pv.y)/2*H;const behind=pv.z>1;if(behind){sx=W-sx;sy=H-sy}
     const top=150,m=44,mx=86,on=!behind&&sx>m&&sx<W-m&&sy>top&&sy<H-90;if(on)el.hidden=true;else{el.hidden=false;const cx=W/2,cy=(top+H-90)/2;let dx=sx-cx,dy=sy-cy;const k=Math.min((W/2-mx)/Math.abs(dx||1e-3),((H-90-top)/2)/Math.abs(dy||1e-3));const ex=cx+dx*Math.min(1,k),ey=cy+dy*Math.min(1,k);
       const d=Math.round(dist(gp.x,gp.y,R.x,R.y)/10);el.style.transform=`translate(${ex|0}px,${ey|0}px) translate(-50%,-50%)`;el.firstChild.style.transform=`rotate(${Math.atan2(dy,dx)+Math.PI/2}rad)`;$('sosTxt').textContent=`SOS ${Math.ceil(R.t)}秒・${d}m`}}else el.hidden=true}
-  {const _gt=running?(coldT||(G.fuel<25&&!G.raid.on?(has(gp,DES()?'water':'log')?{x:CX,y:CY,h:110}:(DES()?freeHole(gp):nearestTree(gp))):null)||rescueT(gp)||storyT(gp)||(MISSIONS[G.mission]?MISSIONS[G.mission].tg(gp):flow(gp))):null;G._gt=_gt;guide.set(_gt,gp,G.t)}
-  storyVis();warnFx();driftFx();fireFx();npcFx();rankFx();caveFx();pzFx();heart4Fx();advFx();occFx();survDesertFx();extrasFx();rebuildFx();wpFx();abyFx();cullWorld();if(composer)composer.render();else renderer.render(scene,camera);endLabels();
+  {const _gt=running?(coldT||(G.fuel<25&&!G.raid.on?(has(gp,DES()?'water':'log')?{x:CX,y:CY,h:110}:(DES()?freeHole(gp):nearestTree(gp))):null)||rescueT(gp)||storyT(gp)||(MISSIONS[G.mission]?MISSIONS[G.mission].tg(gp):flow(gp))):null;const _g2=(gp&&inAby(gp.x))?null:_gt;G._gt=_g2;guide.set(_g2,gp,G.t)}
+  storyVis();warnFx();driftFx();fireFx();npcFx();rankFx();caveFx();pzFx();heart4Fx();advFx();occFx();survDesertFx();extrasFx();rebuildFx();wpFx();abyFx();storyPolish();cullWorld();if(composer)composer.render();else renderer.render(scene,camera);endLabels();
   joys.forEach((j,i)=>{const el=$('joy'+i);if(!j.on){el.hidden=true;return}el.hidden=false;el.style.left=j.ox+'px';el.style.top=j.oy+'px';const dx=j.x-j.ox,dy=j.y-j.oy,m=Math.hypot(dx,dy),k=m>50?50/m:1;el.firstChild.style.transform=`translate(${dx*k}px,${dy*k}px)`;el.firstChild.style.background=nPlayers===2?HERO[i].tag:'#fff'});
 }
 // ================================================================ HUD

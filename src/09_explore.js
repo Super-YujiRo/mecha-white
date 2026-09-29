@@ -14,7 +14,7 @@ const BOOK=[['normal','雪オオカミ'],['big','黒オオカミ'],['boss','森�
 const RTK_MINE={iron:{life:'mine',mat:'iron',n:'鉄鉱石の岩',rq:0,hp:5,prop:'Mineral',tint:'#8a8f99',h:44,cash:20},icec:{life:'mine',mat:'icec',n:'氷晶の結晶',rq:2,hp:6,prop:'Crystal1',tint:'#bfe9ff',em:'#4fb8ff',h:64,cash:70},star:{life:'mine',mat:'star',n:'星の結晶',rq:4,hp:8,prop:'Crystal3',tint:'#ffe38a',em:'#ffc629',h:74,cash:220}};
 const NODES_SNOW=[['iron',1500,640],['iron',900,650],['iron',2120,300],['iron',1845,2130],['iron',2040,2325],['iron',2050,2140],['icec',2160,2300],['icec',2310,2190],['icec',160,900],['icec',230,2230],['icec',540,2020],['star',95,2150],['star',2310,1890]];
 function mkNode(k){const K=RTK[k],g=new T.Group();let tr;const P=KK&&KK.prop&&KK.prop[K.prop];
-  if(P){tr=P.scene.clone(true);tr.scale.setScalar(K.h/Math.max(.01,P.h));tr.traverse(o=>{if(o.isMesh){o.material=o.material.clone();o.material.color.lerp(lin(K.tint),.6);if(K.em){o.material.emissive=lin(K.em);o.material.emissiveIntensity=.5}o.castShadow=true}})}
+  if(P){tr=P.scene.clone(true);tr.scale.setScalar(K.h/Math.max(.01,P.h));tr.traverse(o=>{if(o.isMesh){o.material=o.material.clone();if(o.isSkinnedMesh)o.material.skinning=true;o.material.color.lerp(lin(K.tint),.6);if(K.em){o.material.emissive=lin(K.em);o.material.emissiveIntensity=.5}o.castShadow=true}})}
   else{tr=at(M_(new T.OctahedronGeometry(K.h*.4,0),std(K.tint,{e:K.em||'#000000',ei:K.em?.5:0}),true),0,K.h*.4,0)}
   const grp2=new T.Group();grp2.add(tr);for(const [dx,dz,s2] of [[26,10,.55],[-22,14,.45]]){const c=tr.clone(true);c.scale.multiplyScalar(s2);c.position.set(dx,0,dz);c.rotation.y=dx;grp2.add(c)}
   g.add(grp2);g.userData.tr=grp2;const ring=M_(new T.RingGeometry(40,46,32),new T.MeshBasicMaterial({color:lin(K.em||'#9aa3ad'),transparent:true,opacity:.6,side:T.DoubleSide,depthWrite:false}),false);ring.rotation.x=-Math.PI/2;ring.position.y=1.4;g.add(ring);
@@ -86,7 +86,7 @@ function dgBuild(D){const L=D.look,g=new T.Group();const stone=std(L.wall,{map:T
   const ms=makeTextPlate(D.n,90,24,'rgba(255,250,240,.92)','#3a4a5a',.5);ms.position.set(0,110,0);ms.userData.bb=true;mouth.add(ms);g.userData.ms=ms;g.add(mouth);
   const ring=(c,x,y,r0,r1)=>{const m=M_(new T.RingGeometry(r0,r1,32),new T.MeshBasicMaterial({color:lin(c),transparent:true,opacity:.85,side:T.DoubleSide,depthWrite:false}),false);m.rotation.x=-Math.PI/2;m.position.set(x,1.5,y);g.add(m)};
   ring(L.ring,D.ring.x,D.ring.y,34,42);ring('#ffd166',D.out.x,D.out.y,30,38);
-  g.userData.chests=D.chests.map(c=>{const cg=new T.Group();cg.position.set(c.x,0,c.y);const mk=nm=>{const P=KK&&KK.prop&&KK.prop[nm];if(!P)return at(box(30,22,20,std(c.tier===3?'#ffcf4a':'#8a5a30')),0,11,0);const o=P.scene.clone(true);o.scale.setScalar(34/Math.max(.01,P.w));if(c.tier===3)o.traverse(q=>{if(q.isMesh){q.material=q.material.clone();q.material.emissive=lin('#a86a00');q.material.emissiveIntensity=.4}});return o};const cl=mk('Chest_Closed'),op=mk('Chest_Open');op.visible=false;cg.add(cl,op);g.add(cg);return{cg,cl,op}});
+  g.userData.chests=D.chests.map(c=>{const cg=new T.Group();cg.position.set(c.x,0,c.y);const mk=nm=>{const P=KK&&KK.prop&&KK.prop[nm];if(!P)return at(box(30,22,20,std(c.tier===3?'#ffcf4a':'#8a5a30')),0,11,0);const o=P.scene.clone(true);o.scale.setScalar(34/Math.max(.01,P.w));if(c.tier===3)o.traverse(q=>{if(q.isMesh){q.material=q.material.clone();if(q.isSkinnedMesh)q.material.skinning=true;q.material.emissive=lin('#a86a00');q.material.emissiveIntensity=.4}});return o};const cl=mk('Chest_Closed'),op=mk('Chest_Open');op.visible=false;cg.add(cl,op);g.add(cg);return{cg,cl,op}});
   world.add(g);return g}
 let _cvT=0;
 function caveFx(){if(!G||!running)return;const me=G.players[G.me]||G.players[0];G.dgV=G.dgV||{};const L=dgMap();
@@ -106,13 +106,19 @@ function statusTab(me){const tab=G._stab||'eq',rows=$('lifeRows'),lct=document.q
   if(tab==='life'){$('rpgBox').innerHTML=tabs;lct.style.display='';return false}
   lct.style.display='none';rows.innerHTML='';const c=me.cnt||{},chd=me.chd||[];
   if(tab==='chal'){$('rpgBox').innerHTML=tabs+LIVES.map(k=>`<div style="margin:4px 0"><b style="color:${LIFE[k].c}">${LIFE[k].n}</b>${(CHAL[k]||[]).map((ch,i)=>{const done=chd.includes(k+i);return `<div style="font-size:11.5px;${done?'color:#2f8a3a':''}">${done?'✓':'・'} ${ch[0]} <small>${done?'':`${Math.min(c[ch[1]]||0,ch[2])}/${ch[2]}`}</small></div>`}).join('')}</div>`).join('')+'<small>お題を達成すると、くらしの経験とお金がもらえる</small>';return true}
-  const own=(me.items||[]).filter(id=>ITEMS[id]&&!ITEMS[id].syn),all=Object.keys(ITEMS).filter(id=>!ITEMS[id].syn);$('rpgBox').innerHTML=tabs+`<b>装備 ${own.length}/${all.length}</b><div style="font-size:11px;line-height:1.6">${all.map(id=>own.includes(id)?ITEMS[id].n:'？？？').join('・')}</div>
-    <b style="display:block;margin-top:6px">魔物 ${BOOK.filter(([id])=>c['bk_'+id]).length}/${BOOK.length}</b><div style="font-size:11px;line-height:1.6">${BOOK.map(([id,n])=>c['bk_'+id]?`${n}（${c['bk_'+id]}）`:'？？？').join('・')}</div>`;return true}
+  const own=(me.items||[]).filter(id=>ITEMS[id]&&!ITEMS[id].syn),all=Object.keys(ITEMS).filter(id=>!ITEMS[id].syn);const SI={w:'⚔',a:'🛡',c:'✦'};
+    const tile=(on,ic,nm,sub,col)=>`<div class="bk ${on?'on':''}"><i style="${on?`background:${col}`:''}">${on?ic:'？'}</i><b>${on?nm:'？？？'}</b>${on&&sub?`<small>${sub}</small>`:''}</div>`;
+    const sec=(t,n,m,body)=>`<div class="bkh"><span>${t}</span><em>${n} / ${m}</em><u><s style="width:${Math.round(100*n/Math.max(1,m))}%"></s></u></div><div class="bkg">${body}</div>`;
+    const mons=BOOK.map(([id,n])=>tile(c['bk_'+id],n[0],n,c['bk_'+id]?`討伐 ${c['bk_'+id]}`:'','#7a4f3a')).join('');
+    const eqs=['w','a','c'].map(sl=>all.filter(id=>ITEMS[id].s===sl).map(id=>tile(own.includes(id),SI[sl],ITEMS[id].n,own.includes(id)?starTxt(starOf(me,id)):'',ITEMS[id].lg?'#b8860b':sl==='w'?'#8a3a3a':sl==='a'?'#3a5a8a':'#3a7a5a')).join('')).join('');
+    const mt=Object.keys(MATS).map(k=>tile((me.mats||{})[k]>0||c['mt_'+k],'◆',MATS[k],(me.mats||{})[k]?`×${me.mats[k]}`:'','#5a6a8a')).join('');
+    const mc=Object.keys(MATS).filter(k=>(me.mats||{})[k]>0||c['mt_'+k]).length;
+    $('rpgBox').innerHTML=tabs+sec('魔物',BOOK.filter(([id])=>c['bk_'+id]).length,BOOK.length,mons)+sec('装備',own.length,all.length,eqs)+sec('素材',mc,Object.keys(MATS).length,mt);return true}
 $('lifeCard').addEventListener('click',e=>{if(e.target.closest('button[data-deduce]')){$('lifeCard').hidden=true;openDeduce();return}const b=e.target.closest('button[data-tab]');if(!b)return;G._stab=b.dataset.tab;lifeHud(true)});
 
 // ---- workshop recipes: special wood and beast materials become gear
 const MATS={iron:'鉄鉱石',icec:'氷晶',star:'星の結晶',silk:'クモの糸',core:'古木の芯材',icew:'氷結木材',spirit:'精霊の枝',relic:'古代の欠片',herb:'香草',steel:'鋼の角',fang:'氷牙',horn:'覇者の角'};
-function addMat(p,k,n){if(!p||!k)return;p.mats=p.mats||{};p.mats[k]=(p.mats[k]||0)+n;float(p.x,p.y,100,`${MATS[k]} +${n}`,'gold',true)}
+function addMat(p,k,n){if(!p||!k)return;p.mats=p.mats||{};p.mats[k]=(p.mats[k]||0)+n;p.cnt=p.cnt||{};p.cnt['mt_'+k]=1;float(p.x,p.y,100,`${MATS[k]} +${n}`,'gold',true)}
 const RECIPES={
   bow_old:{id:'w_oldbow',m:{core:3},log:10,cash:100,rk:1},shield_old:{id:'a_oldshield',m:{core:2,steel:1},log:6,cash:150,rk:1},
   staff_ice:{id:'w_icestaff',m:{icew:3,fang:1},log:8,cash:300,rk:2},armor_ice:{id:'a_icearmor',m:{icew:2,steel:2},log:8,cash:400,rk:3},

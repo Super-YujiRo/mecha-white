@@ -35,12 +35,12 @@ function makeStall(s){const g=new T.Group(),wood=std('#8a5a30',{r:.9}),cloth=std
   g.add(at(box(56,4,34,cloth),0,42,0));g.add(at(box(52,16,26,wood),0,8,0));for(let i=0;i<4;i++)g.add(at(sph(5,std(['#f0c040','#e0703a','#8ac66a','#d9534f'][i]),false,6,5),-18+i*12,19,0));
   g.position.set(s.x,0,s.y);g.rotation.y=s.a;return g}
 function advBuild(){const g=new T.Group(),L=advLayout();for(const h of L.houses)g.add(makeAdobe(h));for(const s of L.stalls)g.add(makeStall(s));for(const p of L.palms){const m=makePalm();m.position.set(p[0],0,p[1]);m.rotation.y=p[0]*.7;g.add(m)}
-  for(const o of OASES){const oa=makeOasis();oa.g.position.set(o.x,0,o.y);oa.g.scale.setScalar(o.r/260);g.add(oa.g);const sg=makeTextPlate(o.n,120,26,'rgba(255,250,240,.92)','#1f6f8b',.5);sg.position.set(o.x,120,o.y);sg.userData.bb=true;g.add(sg)}
-  const camp=new T.Group();camp.position.set(CAMP.x,0,CAMP.y);for(let i=0;i<3;i++){const t=makeTent(i+1);t.scale.setScalar(1.4);t.position.set(Math.cos(i*2.1)*80,0,Math.sin(i*2.1)*80);t.rotation.y=-i*2.1;camp.add(t)}
+  for(const o of OASES){const oa=makeOasis();oa.g.position.set(o.x,0,o.y);oa.g.scale.setScalar(o.r/260);g.add(oa.g);const sg=makeSignpost(o.n,'#1f5f7b');{const a=Math.atan2(CY-o.y,CX-o.x);sg.position.set(o.x+Math.cos(a)*o.r*.85,0,o.y+Math.sin(a)*o.r*.85);sg.rotation.y=-a+Math.PI/2}g.add(sg)}
+  const camp=new T.Group();camp.position.set(CAMP.x,0,CAMP.y);for(let i=0;i<3;i++){const t=makeNomadTent(i);t.scale.setScalar(1.05);t.position.set(Math.cos(i*2.1)*80,0,Math.sin(i*2.1)*80);t.rotation.y=-i*2.1;camp.add(t)}
   camp.add(at(cyl(14,18,6,std('#3a2618'),10),0,3,0),at(cone(10,24,glow('#ffa23d',2.4),8,false),0,18,0));const cl=new T.PointLight(lin('#ffa050'),1.2,260,1.6);cl.position.y=50;camp.add(cl);g.add(camp);
   const vy=new T.Group();vy.position.set(VALLEY.x,0,VALLEY.y);const sand=M_(new T.RingGeometry(40,230,40),std('#c99a5e',{r:1}),false,true);sand.rotation.x=-Math.PI/2;sand.position.y=.6;vy.add(sand);
   const pit=M_(new T.CircleGeometry(40,30),std('#6b4a2a',{r:1}),false,true);pit.rotation.x=-Math.PI/2;pit.position.y=.7;vy.add(pit);g.userData.pit=pit;for(let i=0;i<8;i++){const a=i/8*TAU;vy.add(at(rot(cyl(6,9,40+i*7%30,std('#d8cfc0',{r:.8}),6),.5*Math.cos(a),0,.5*Math.sin(a)),Math.cos(a)*250,15,Math.sin(a)*250))}
-  const vs=makeTextPlate(VALLEY.n,110,26,'rgba(255,250,240,.92)','#8a5a30',.5);vs.position.set(0,130,0);vs.userData.bb=true;vy.add(vs);g.add(vy);
+  const vs=makeSignpost(VALLEY.n,'#7a3a1a');vs.position.set(0,0,210);vy.add(vs);g.add(vy);
   world.add(g);return g}
 function advSetup(){if(!ADV()||(G.advV&&G.advV.parent===world))return;
   for(const pd of G.pads){pd.vis=()=>false;if(pd.mesh)pd.mesh.g.visible=false}

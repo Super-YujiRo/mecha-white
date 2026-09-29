@@ -208,8 +208,8 @@ function newGame(np,opts){opts=opts||{};CUR_BIO=opts.biome||0;zoneNames();let RS
   G.rankV=makeRankVisuals();G.rankO={};
   G.houses=HOUSES.map(([x,y],i)=>{const tent=KK?kkProp('tent',54):makeTent(i),cab=DES()?makeAdobe({x:0,y:0,w:62,d:50,h:42,a:0,c:['#e3c093','#d9b07e','#e8caa0','#cfa06c','#e3c093'][i],aw:i%2===0}):KK?kkProp(['home_A_red','home_B_blue','home_A_blue','home_B_red','home_A_red'][i],66):makeHouse(i),man=DES()?makeAdobe({x:0,y:0,w:92,d:70,h:64,a:0,c:'#e8caa0',aw:true}):KK?kkProp('tavern',80):makeManor(i);man.visible=false;const g=grp(tent,cab,man);g.position.set(x,0,y);g.rotation.y=Math.atan2(CX-x,CY-y);tent.visible=cab.visible=false;world.add(g);return{x,y,g,tent,cab,man,lv:0,pop:1,need:[7,10,13,17,21][i]}});
   // zone fog curtains
-  for(const z of ZONES){const [x0,y0,x1,y1]=z.rect;const fogM=new T.MeshStandardMaterial({color:lin(DES()?'#ecc98f':'#eef5fb'),transparent:true,opacity:.93,roughness:1});
-    const m=M_(new T.BoxGeometry(x1-x0,240,y1-y0),fogM,false);m.position.set((x0+x1)/2,120,(y0+y1)/2);world.add(m);
+  for(const z of ZONES){const [x0,y0,x1,y1]=z.rect;const fogM=makeFogMat(x0,y0,x1,y1,DES()?'#f1d7a6':'#f4f8fc');fogM.opacity=.93;
+    const m=M_(new T.BoxGeometry(x1-x0,110,y1-y0),fogM,false);m.position.set((x0+x1)/2,55,(y0+y1)/2);m.renderOrder=3;world.add(m);
     const sign=makeTextPlate(`${z.name}`,140,40,'#fffaf0','#5b4636',.55);sign.position.set(z.pad.x,120,z.pad.y);sign.userData.bb=true;world.add(sign);
     G.zones[z.id]=false;z.fog=m;z.sign=sign;z.fogT=-1}
   // trees

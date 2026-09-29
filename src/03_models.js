@@ -177,7 +177,7 @@ function makeScorpion(kind){const g=new T.Group();const c=kind==='boss'?'#3b1f18
 function beastKK(kind,key){const B=KK&&KK.beast;if(!B)return null;key=key||'Wolf';const src=B[key];if(!src)return null;
   const model=T.SkeletonUtils.clone(src.scene);const L=key==='Stag'?76:key==='Spider'?60:84;model.scale.setScalar(L/Math.max(1,src.l));
   const tint=kind==='boss'?'#f3f6fa':kind==='big'?'#8f98a3':'#e6edf4';const mats=new Map();let fur=null;
-  model.traverse(o=>{if(!o.isMesh)return;const cl=m=>{let c=mats.get(m);if(!c){c=m.clone();c.metalness=0;c.roughness=Math.max(.6,c.roughness||0);mats.set(m,c);if(key==='Wolf'&&/Main/.test(m.name||'')){c.color.copy(lin(/Light/.test(m.name)?'#ffffff':tint));if(!fur&&!/Light/.test(m.name))fur=c}}return c};o.material=Array.isArray(o.material)?o.material.map(cl):cl(o.material)});
+  model.traverse(o=>{if(!o.isMesh)return;const cl=m=>{let c=mats.get(m);if(!c){c=m.clone();c.metalness=0;c.roughness=Math.max(.6,c.roughness||0);mats.set(m,c);if(key==='Wolf'&&/Main/.test(m.name||'')){c.color.copy(lin(/Light/.test(m.name)?'#ffffff':tint));if(!fur&&!/Light/.test(m.name))fur=c}}return c};o.material=Array.isArray(o.material)?o.material.map(cl):cl(o.material);if(o.isSkinnedMesh)[].concat(o.material).forEach(m=>{if(!m.skinning){m.skinning=true;m.needsUpdate=true}})});
   if(!fur)fur=[...mats.values()].sort((a,b)=>(b.color.r+b.color.g+b.color.b)-(a.color.r+a.color.g+a.color.b))[0]||new T.MeshStandardMaterial();if(!fur.emissive)fur.emissive=new T.Color(0);
   const g=new T.Group();g.add(model);const mixer=new T.AnimationMixer(model),acts={};for(const k in src.clips)acts[k]=mixer.clipAction(src.clips[k]);const idle=acts.Idle;if(idle){idle.play();mixer.update(Math.random()*2)}
   const ring=M_(geo('bring',()=>new T.RingGeometry(26,35,36)),new T.MeshBasicMaterial({color:lin('#ff3b4a'),transparent:true,opacity:.75,side:T.DoubleSide,depthWrite:false}),false);ring.rotation.x=-Math.PI/2;ring.position.y=.9;g.add(ring);
@@ -260,7 +260,7 @@ function desertDecor(){const sand=std('#e7bf82',{r:1}),rock=std('#b86a3e',{r:.95
   // dunes
   for(let i=0;i<26;i++){const x=rnd(100,2300),y=rnd(80,2320);if(dist(x,y,CX,CY)<FR+220||inZone(x,y))continue;const d=scl(sph(1,sand,false,16,8),rnd(120,260),rnd(18,40),rnd(70,150));d.position.set(x,-6,y);d.rotation.y=rnd(0,TAU);d.receiveShadow=true;world.add(d)}
   // canyon mesas in zone C
-  for(let i=0;i<16;i++){const x=rnd(70,650),y=rnd(680,1740);if(desertClear(x,y,90))continue;const h=rnd(60,150),w=rnd(40,90);const m=grp(at(cyl(w*.8,w,h,i%2?rock:rock2,7),0,h/2,0),at(cyl(w*.85,w*.8,8,rock2,7),0,h+2,0));m.position.set(x,0,y);m.rotation.y=rnd(0,TAU);world.add(m)}
+  for(let i=0;i<16;i++){const x=rnd(70,650),y=rnd(680,1740);if(desertClear(x,y,90))continue;const h=rnd(60,150),w=rnd(40,90);const m=makeMesaRock(w,h,i);m.position.set(x,0,y);m.rotation.y=rnd(0,TAU);world.add(m)}
   // ancient ruins
   for(let i=0;i<10;i++){const x=rnd(300,2100),y=rnd(140,640);const r=new T.Group();r.position.set(x,0,y);for(let k=0;k<4;k++){const h=rnd(20,70);r.add(at(cyl(7,8,h,stone,10),Math.cos(k*1.6)*40,h/2,Math.sin(k*1.6)*40))}r.add(at(rot(box(60,8,14,stone),0,0,.15),10,6,-20));world.add(r)}}
 function makeFurnace(){
@@ -282,7 +282,7 @@ function makeFurnace(){
   const light=new T.PointLight(lin('#ff9a4a'),2.4,700,1.4);light.position.set(0,90,0);g.add(light);
   const plate=makeTextPlate('Lv1',70,28,'#5b4636','#ffe38a');plate.position.set(0,2,78);plate.rotation.set(-Math.PI/2,0,YAW);g.add(plate);
   if(KK&&KK.kit.d_pillar){kkSkin(g,[plate,...flames,coals]);for(const f of flames)f.position.y-=26;coals.position.y-=26;
-    for(let i=0;i<12;i++){const a=i/12*TAU;g.add(kkP('d_pillar',15,Math.cos(a)*52,0,Math.sin(a)*52,-a))}g.add(kkP('lumber',64,0,2,0,.3),kkP('lumber',56,0,8,0,1.9));
+    {const bm=[std('#8a9099',{map:TEX.stone,r:.92}),std('#767d86',{map:TEX.stone,r:.92}),std('#9aa1a9',{map:TEX.stone,r:.92})];for(let row=0;row<3;row++)for(let i=0;i<24;i++){const a=(i+row*.5)/24*TAU,r=54-row*1.5;const b=at(rbox(14.5,8.6,11,2,bm[(i+row)%3]),Math.cos(a)*r,4.6+row*8.8,Math.sin(a)*r);b.rotation.y=-a;g.add(b)}g.add(at(rot(tor(52,3.2,std('#3a3f48',{m:.6,r:.45}),true,8,48),Math.PI/2,0,0),0,28,0));for(let i=0;i<8;i++){const a=i/8*TAU+.2;g.add(at(box(4,30,4,std('#3a3f48',{m:.6,r:.45}),true),Math.cos(a)*56,15,Math.sin(a)*56))}}{const lb=std('#5a3e2a',{map:TEX.bark,r:.9}),ce=std('#2a1d16',{r:1});for(const [r,y] of [[.3,5],[1.35,8],[2.4,11]]){const l=at(rot(cyl(4.2,4.2,58,lb,8,true),Math.PI/2,r,0),0,y,0);g.add(l)}g.add(at(cyl(30,34,3,ce,20),0,2,0))}
     const T3=[[['d_torch',12,4,70]],[['d_banner_r',22,4,80]],[['d_banner_b',22,4,96],['d_crates',30,2,110]]];
     tiers.forEach((t,ti)=>{kkSkin(t,[]);for(const [nm,w,n,r] of T3[ti])for(let k=0;k<n;k++){const a=k/n*TAU+ti*.4+.39;t.add(kkP(nm,w,Math.cos(a)*r,nm==='d_banner_r'||nm==='d_banner_b'?0:0,Math.sin(a)*r,-a-Math.PI/2))}})}
   return{g,flames,light,coals,plate,tiers}
@@ -358,7 +358,7 @@ function makeOre(){const g=new T.Group();const r=M_(geo('ore',()=>new T.Dodecahe
   for(let i=0;i<5;i++){const c=M_(geo('orec',()=>new T.OctahedronGeometry(4,0)),std('#1f2227',{flat:true,r:.4,m:.3}));c.position.set(rnd(-16,16),rnd(8,22),rnd(-12,12));g.add(c)}
   g.add(at(scl(sph(14,std('#f7fbff',{r:.9}),false,10,6),1.2,.4,1),0,24,0));return g}
 function makeMonument(){const g=new T.Group(),goldM=std('#ffcf4a',{m:.85,r:.25});g.add(at(rbox(90,30,90,4,std('#8b96a3',{map:TEX.stone})),0,15,0));g.add(at(rbox(60,20,60,3,std('#a4afbb',{map:TEX.stone})),0,40,0));
-  const b=makeBear('normal');b.g.scale.setScalar(2.2);b.g.position.y=50;b.g.traverse(o=>{if(o.isMesh&&o.material&&o.material.color&&!o.material.transparent)o.material=goldM});b.head.rotation.x=-.4;b.ring.visible=false;g.add(b.g);
+  const b=makeBear('normal');b.g.scale.setScalar(2.2);b.g.position.y=50;const goldS=goldM.clone();goldS.skinning=true;b.g.traverse(o=>{if(o.isMesh&&o.material&&o.material.color&&!o.material.transparent)o.material=o.isSkinnedMesh?goldS:goldM});b.head.rotation.x=-.4;b.ring.visible=false;g.add(b.g);
   const fl=at(cone(10,30,std('#ffa23d',{e:'#ffa23d',ei:2.5,t:true,op:.95}),10,false),0,150,40);g.add(fl);g.userData.flame=fl;return g}
 function makeLamp(){if(KK&&KK.kit.h_post_lantern){const g=new T.Group();g.add(kkP('h_post_lantern',16,0,0,0,rnd(0,TAU)));g.add(at(sph(3,glow('#ffcf7a',3),false,8,6),0,58,6));return g}const g=new T.Group();g.add(at(cyl(2,2.6,60,std('#2b3440',{m:.5,r:.4}),8),0,30,0));g.add(at(rbox(12,14,12,2,std('#2b3440',{m:.5,r:.4})),0,64,0));g.add(at(sph(4.6,glow('#ffcf7a',3),false,10,8),0,64,0));g.add(at(cone(9,7,std('#2b3440',{m:.5,r:.4}),4),0,74,0));g.add(blob(8));return g}
 function kkInst(name,w,list){const src=KK.kit[name];const _ims=[];if(!src||!list.length)return _ims;src.updateMatrixWorld(true);const sc=w/(KK.kitW[name]||1),o3=new T.Object3D(),m4=new T.Matrix4();
