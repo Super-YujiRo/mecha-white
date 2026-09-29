@@ -11,14 +11,14 @@ makeRubble=function(i){const g=new T.Group(),R=k=>{const v=Math.sin((i+1)*(k+3)*
   const s=M_(geo('snp',()=>new T.SphereGeometry(8,12,6,0,TAU,0,Math.PI/2)),sn,false,true);s.scale.set(1.1,.16,.9);s.position.set(-3,12,2);g.add(s);
   return g};
 // ---- guide marker for story: a floating golden crystal with a soft light beam instead of the blocky arrow
-const guideRPG=(()=>{const g=new T.Group();const cm=std('#ffd76a',{e:'#ffb020',ei:1.1,m:.3,r:.25});const cry=M_(new T.OctahedronGeometry(8,0),cm,false);cry.scale.set(1,1.7,1);g.add(cry);
+const guideRPG=(()=>{const g=new T.Group();const cm=std('#ffd76a',{e:'#ffb020',ei:.8,m:.3,r:.25});const cry=M_(new T.OctahedronGeometry(6,0),cm,false);cry.scale.set(1,1.6,1);g.add(cry);
   const beam=M_(new T.CylinderGeometry(4,10,120,16,1,true),new T.MeshBasicMaterial({color:lin('#ffe39a'),transparent:true,opacity:.18,blending:T.AdditiveBlending,depthWrite:false,side:T.DoubleSide}),false);beam.position.y=60;g.add(beam);
   const ring=rot(M_(new T.RingGeometry(16,19,40),new T.MeshBasicMaterial({color:lin('#ffd76a'),transparent:true,opacity:.7,side:T.DoubleSide,depthWrite:false}),false),-Math.PI/2,0,0);ring.position.y=1.2;g.add(ring);
   g.visible=false;scene.add(g);return{g,cry,beam,ring}})();
 function guideStory(t){const tg=G._gt,me0=G.players[G.me]||G.players[0],on=!!(running&&isRPG()&&tg&&!(me0&&inAby(me0.x)));guideRPG.g.visible=on;if(!on)return;
   guideRPG.g.position.set(tg.x,0,tg.y);guideRPG.cry.position.y=(tg.h||60)+Math.sin(t*2.2)*5;guideRPG.cry.rotation.y=t*1.4;guideRPG.ring.scale.setScalar(1+Math.sin(t*3)*.08);guideRPG.beam.material.opacity=.12+Math.sin(t*2)*.05}
 // ---- per frame: fade price tiles, signs and survival HUD bits in story mode
-function storyPolish(){fogTick();if(!G||!running)return;const rpg=isRPG();const me=G.players[G.me]||G.players[0];if(!me)return;const now=performance.now();
+function storyPolish(){fogTick();flameTick();if(!G||!running)return;const rpg=isRPG();const me=G.players[G.me]||G.players[0];if(!me)return;const now=performance.now();
   guideStory(G.t);
   if(typeof bloom!=='undefined'&&bloom)bloom.strength=rpg?.34:.5;
   const v=G.v;if(v&&rpg){if(v.embers)for(const e of v.embers)e.visible=false;if(v.ring){v.ring.material.transparent=true;v.ring.material.opacity=.32}if(v.f){if(v.f.plate)v.f.plate.visible=false;if(v.f.flames)v.f.flames.forEach((fl,i)=>{fl.scale.x*=.72;fl.scale.z*=.72;fl.scale.y*=1.05;const M=fl.material;if(!M._p2){M._p2=1;M.transparent=true;M.opacity=[.5,.6,.75][i]||.6;M.depthWrite=false;M.blending=T.AdditiveBlending;M.needsUpdate=true}});if(v.f.coals&&!v.f.coals.material._p2){const M=v.f.coals.material=v.f.coals.material.clone();M._p2=1;M.color.set(lin('#7a2a10'));M.emissive&&M.emissive.set(lin('#ff5a1a'))}}}else if(v&&v.ring&&v.ring.material.opacity!==1){v.ring.material.opacity=1}
@@ -80,3 +80,18 @@ function makeMesaRock(w,h,seed){const g=new T.Group(),cols=['#b8683c','#a0552f',
   const cap=M_(new T.CylinderGeometry(r*.96,r,5,9),std('#c9925e',{r:.95,flat:true}),true,true);cap.position.y=y+2.5;g.add(cap);
   for(let k=0;k<3;k++){const s=rnd(4,9),b=M_(rockG(s|0),std('#a0552f',{r:.95,flat:true}),true,true);b.position.set(rnd(-r*.5,r*.5),y+5+s*.3,rnd(-r*.5,r*.5));g.add(b)}
   return g}
+// story mode: world labels are gathered each frame and only the nearest few are shown in full (no more walls of floating text)
+const LQ=[];const _labelNow=label,_endLabelsNow=endLabels;
+label=function(x,y,h,html,cls,op,sc){if(running&&G&&isRPG()){LQ.push([x,y,h,html,cls,op,sc]);return}_labelNow(x,y,h,html,cls,op,sc)};
+endLabels=function(){if(LQ.length){const me=G&&(G.players[G.me]||G.players[0]);const L=LQ.splice(0);if(me){for(const q of L)q.d=dist(me.x,me.y,q[0],q[1])+(/bar|cbar|■/.test(q[3])?-1e4:0)+(q[4]==='gold'?-40:0);L.sort((a,b)=>a.d-b.d)}
+    let full=0;for(const q of L){const keep=q.d<0;if(keep||full<3){if(!keep)full++;_labelNow(q[0],q[1],q[2],q[3],q[4],q[5],q[6])}else if(q.d<320){const m=/^<b>[^<]*<\/b>/.exec(q[3]);if(m)_labelNow(q[0],q[1],q[2],m[0],(q[4]||'')+' lbmini',.8,.86)}}}
+  _endLabelsNow()};
+// soft layered flame (additive), flickers every frame; replaces the solid glowing cones
+const FLAMES=[];const _fm={};const flameMat=(c,o)=>_fm[c+o]||(_fm[c+o]=new T.MeshBasicMaterial({color:lin(c),transparent:true,opacity:o,blending:T.AdditiveBlending,depthWrite:false}));
+function makeFlame(r,h,col){const g=new T.Group();const outer=M_(geo('flo',()=>new T.ConeGeometry(1,1,10,1,true)),flameMat(col||'#ff7a2a',.45),false);outer.scale.set(r,h,r);outer.position.y=h*.45;
+  const inner=M_(geo('fli',()=>new T.ConeGeometry(1,1,10)),flameMat('#ffc04a',.7),false);inner.scale.set(r*.6,h*.72,r*.6);inner.position.y=h*.34;
+  const core=M_(geo('flc',()=>new T.SphereGeometry(1,10,8)),flameMat('#fff3c0',.85),false);core.scale.set(r*.42,r*.5,r*.42);core.position.y=r*.3;
+  const halo=M_(geo('flh',()=>new T.SphereGeometry(1,12,8)),flameMat(col||'#ff8a3a',.12),false);halo.scale.setScalar(Math.max(r,h)*.9);halo.position.y=h*.4;
+  g.add(outer,inner,core,halo);g.userData.fl={outer,inner,r,h,ph:Math.random()*9};FLAMES.push(g);return g}
+function flameTick(){const t=performance.now()/1000;for(let i=FLAMES.length-1;i>=0;i--){const g=FLAMES[i];if(!g.parent){FLAMES.splice(i,1);continue}if(!g.visible)continue;const F=g.userData.fl,k=1+Math.sin(t*13+F.ph)*.09+Math.sin(t*23+F.ph*2)*.06;F.outer.scale.set(F.r*(1.05-.05*k),F.h*k,F.r*(1.05-.05*k));F.inner.scale.set(F.r*.6,F.h*.72*(2-k),F.r*.6);F.outer.rotation.y=t*2+F.ph;
+  if(Math.random()<.12){const p=new T.Vector3();g.getWorldPosition(p);psA.emit({x:p.x+rnd(-F.r*.4,F.r*.4),y:p.y+F.h*.7,z:p.z+rnd(-F.r*.4,F.r*.4),vx:rnd(-6,6),vy:rnd(30,60),vz:rnd(-6,6),g:-10,life:.6,max:.6,r:rnd(2,3.5),c:C(Math.random()<.5?'#ffb347':'#ffe08a'),air:true,fade:.3})}}}

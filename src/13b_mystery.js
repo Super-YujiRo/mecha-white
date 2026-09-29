@@ -68,7 +68,7 @@ function updatePuzzles(dt){if(!isRPG()||!G.story)return;const P=pzState(),S=G.st
 function caveDoorOpen(){return hasClue('c3')}
 // ---- puzzle visuals
 function pzBuild(){const g=new T.Group(),stone=std('#7d858f',{map:TEX.stone,r:.9}),dark=std('#2a323c',{r:1});const U={};
-  if(!DES()){U.br=BRZ.map(b=>{const o=new T.Group();o.position.set(b.x,0,b.y);o.add(at(cyl(10,14,28,stone,8),0,14,0),at(cyl(16,12,6,dark,10),0,30,0));const f=at(cone(10,26,glow('#ffa23d',2.6),8,false),0,44,0);f.visible=false;o.add(f);const l=new T.PointLight(lin('#ffa050'),0,220,1.6);l.position.y=60;o.add(l);g.add(o);return{o,f,l}});
+  if(!DES()){U.br=BRZ.map(b=>{const o=new T.Group();o.position.set(b.x,0,b.y);o.add(at(cyl(10,14,28,stone,8),0,14,0),at(cyl(16,12,6,dark,10),0,30,0));const f=at(makeFlame(10,30),0,32,0);f.visible=false;o.add(f);const l=new T.PointLight(lin('#ffa050'),0,220,1.6);l.position.y=60;o.add(l);g.add(o);return{o,f,l}});
     const mural=at(box(120,70,10,std('#9aa6b2',{map:TEX.stone,r:.9})),BRZ_MURAL.x,35,2120);g.add(mural);
     const door=at(box(VAULT_DOOR[2]-VAULT_DOOR[0],70,VAULT_DOOR[3]-VAULT_DOOR[1],std('#4b5866',{map:TEX.stone,r:.95}),true,true),(VAULT_DOOR[0]+VAULT_DOOR[2])/2,35,(VAULT_DOOR[1]+VAULT_DOOR[3])/2);g.add(door);U.door=door;
     const note=at(box(18,3,14,std('#f3e3bf',{r:1})),VAULT_NOTE.x,8,VAULT_NOTE.y);g.add(note);U.note=note;

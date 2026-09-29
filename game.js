@@ -1,5 +1,5 @@
 /* めちゃホワイト — built from src/*.js by tools/build.py. Edit the sources, not this file. */
-(()=>{const BUILD='20260930014030';
+(()=>{const BUILD='20260930020154';
 const $=id=>document.getElementById(id);
 if(!window.THREE){$('loading').textContent='3Dの読み込みに失敗しました。再読み込みしてください';return}
 const T=THREE;
@@ -2048,7 +2048,7 @@ function dgBuild(D){const L=D.look,g=new T.Group();const stone=std(L.wall,{map:T
   const fl=M_(new T.PlaneGeometry(B[2]-B[0],B[3]-B[1]),(L.nomap?std(L.floor,{r:.55}):std(L.floor,{map:TEX.stone,r:1})),false,true);fl.rotation.x=-Math.PI/2;fl.position.set((B[0]+B[2])/2,.25,(B[1]+B[3])/2);g.add(fl);
   for(const w of D.walls){const WH=70;const m=M_(new T.BoxGeometry(w[2]-w[0],WH,w[3]-w[1]),stone,true,true);m.position.set((w[0]+w[2])/2,WH/2,(w[1]+w[3])/2);g.add(m);const cap=M_(new T.BoxGeometry(w[2]-w[0]+4,8,w[3]-w[1]+4),std(L.cap,{r:.9}),false);cap.position.set((w[0]+w[2])/2,WH+4,(w[1]+w[3])/2);g.add(cap)}
   for(let i=0;i<24;i++){const x=rnd(B[0]+50,B[2]-50),y=rnd(B[1]+50,B[3]-50);if(D.walls.some(w=>x>w[0]-20&&x<w[2]+20&&y>w[1]-20&&y<w[3]+20))continue;if(D.chests.some(c=>dist(x,y,c.x,c.y)<50))continue;g.add(at(rot(cone(rnd(4,8),rnd(14,30),glow(L.crys[i%2],1.4),5,false),0,0,rnd(-.3,.3)),x,6,y))}
-  for(const h of D.heats){g.add(at(cyl(16,20,10,dark,10),h.x,5,h.y));g.add(at(cone(12,26,glow(L.fire,2.4),8,false),h.x,24,h.y));const l=new T.PointLight(lin('#ffa050'),1.6,300,1.5);l.position.set(h.x,60,h.y);g.add(l)}
+  for(const h of D.heats){g.add(at(cyl(16,20,10,dark,10),h.x,5,h.y));g.add(at(makeFlame(12,32,L.fire),h.x,10,h.y));const l=new T.PointLight(lin('#ffa050'),1.6,300,1.5);l.position.set(h.x,60,h.y);g.add(l)}
   const mouth=new T.Group();mouth.position.set(D.inp.x,0,D.inp.y);const mb=new T.Group();mb.rotation.y=D.rotY||0;mb.add(at(scl(sph(70,std(L.mouth,{map:TEX.stone,r:.95}),true,12,8),1.4,1,1),0,20,-30),at(box(90,70,6,dark),0,35,8));mouth.add(mb);
   const ms=makeTextPlate(D.n,90,24,'rgba(255,250,240,.92)','#3a4a5a',.5);ms.position.set(0,110,0);ms.userData.bb=true;mouth.add(ms);g.userData.ms=ms;g.add(mouth);
   const ring=(c,x,y,r0,r1)=>{const m=M_(new T.RingGeometry(r0,r1,32),new T.MeshBasicMaterial({color:lin(c),transparent:true,opacity:.85,side:T.DoubleSide,depthWrite:false}),false);m.rotation.x=-Math.PI/2;m.position.set(x,1.5,y);g.add(m)};
@@ -2484,7 +2484,7 @@ function updatePuzzles(dt){if(!isRPG()||!G.story)return;const P=pzState(),S=G.st
 function caveDoorOpen(){return hasClue('c3')}
 // ---- puzzle visuals
 function pzBuild(){const g=new T.Group(),stone=std('#7d858f',{map:TEX.stone,r:.9}),dark=std('#2a323c',{r:1});const U={};
-  if(!DES()){U.br=BRZ.map(b=>{const o=new T.Group();o.position.set(b.x,0,b.y);o.add(at(cyl(10,14,28,stone,8),0,14,0),at(cyl(16,12,6,dark,10),0,30,0));const f=at(cone(10,26,glow('#ffa23d',2.6),8,false),0,44,0);f.visible=false;o.add(f);const l=new T.PointLight(lin('#ffa050'),0,220,1.6);l.position.y=60;o.add(l);g.add(o);return{o,f,l}});
+  if(!DES()){U.br=BRZ.map(b=>{const o=new T.Group();o.position.set(b.x,0,b.y);o.add(at(cyl(10,14,28,stone,8),0,14,0),at(cyl(16,12,6,dark,10),0,30,0));const f=at(makeFlame(10,30),0,32,0);f.visible=false;o.add(f);const l=new T.PointLight(lin('#ffa050'),0,220,1.6);l.position.y=60;o.add(l);g.add(o);return{o,f,l}});
     const mural=at(box(120,70,10,std('#9aa6b2',{map:TEX.stone,r:.9})),BRZ_MURAL.x,35,2120);g.add(mural);
     const door=at(box(VAULT_DOOR[2]-VAULT_DOOR[0],70,VAULT_DOOR[3]-VAULT_DOOR[1],std('#4b5866',{map:TEX.stone,r:.95}),true,true),(VAULT_DOOR[0]+VAULT_DOOR[2])/2,35,(VAULT_DOOR[1]+VAULT_DOOR[3])/2);g.add(door);U.door=door;
     const note=at(box(18,3,14,std('#f3e3bf',{r:1})),VAULT_NOTE.x,8,VAULT_NOTE.y);g.add(note);U.note=note;
@@ -3074,14 +3074,14 @@ makeRubble=function(i){const g=new T.Group(),R=k=>{const v=Math.sin((i+1)*(k+3)*
   const s=M_(geo('snp',()=>new T.SphereGeometry(8,12,6,0,TAU,0,Math.PI/2)),sn,false,true);s.scale.set(1.1,.16,.9);s.position.set(-3,12,2);g.add(s);
   return g};
 // ---- guide marker for story: a floating golden crystal with a soft light beam instead of the blocky arrow
-const guideRPG=(()=>{const g=new T.Group();const cm=std('#ffd76a',{e:'#ffb020',ei:1.1,m:.3,r:.25});const cry=M_(new T.OctahedronGeometry(8,0),cm,false);cry.scale.set(1,1.7,1);g.add(cry);
+const guideRPG=(()=>{const g=new T.Group();const cm=std('#ffd76a',{e:'#ffb020',ei:.8,m:.3,r:.25});const cry=M_(new T.OctahedronGeometry(6,0),cm,false);cry.scale.set(1,1.6,1);g.add(cry);
   const beam=M_(new T.CylinderGeometry(4,10,120,16,1,true),new T.MeshBasicMaterial({color:lin('#ffe39a'),transparent:true,opacity:.18,blending:T.AdditiveBlending,depthWrite:false,side:T.DoubleSide}),false);beam.position.y=60;g.add(beam);
   const ring=rot(M_(new T.RingGeometry(16,19,40),new T.MeshBasicMaterial({color:lin('#ffd76a'),transparent:true,opacity:.7,side:T.DoubleSide,depthWrite:false}),false),-Math.PI/2,0,0);ring.position.y=1.2;g.add(ring);
   g.visible=false;scene.add(g);return{g,cry,beam,ring}})();
 function guideStory(t){const tg=G._gt,me0=G.players[G.me]||G.players[0],on=!!(running&&isRPG()&&tg&&!(me0&&inAby(me0.x)));guideRPG.g.visible=on;if(!on)return;
   guideRPG.g.position.set(tg.x,0,tg.y);guideRPG.cry.position.y=(tg.h||60)+Math.sin(t*2.2)*5;guideRPG.cry.rotation.y=t*1.4;guideRPG.ring.scale.setScalar(1+Math.sin(t*3)*.08);guideRPG.beam.material.opacity=.12+Math.sin(t*2)*.05}
 // ---- per frame: fade price tiles, signs and survival HUD bits in story mode
-function storyPolish(){fogTick();if(!G||!running)return;const rpg=isRPG();const me=G.players[G.me]||G.players[0];if(!me)return;const now=performance.now();
+function storyPolish(){fogTick();flameTick();if(!G||!running)return;const rpg=isRPG();const me=G.players[G.me]||G.players[0];if(!me)return;const now=performance.now();
   guideStory(G.t);
   if(typeof bloom!=='undefined'&&bloom)bloom.strength=rpg?.34:.5;
   const v=G.v;if(v&&rpg){if(v.embers)for(const e of v.embers)e.visible=false;if(v.ring){v.ring.material.transparent=true;v.ring.material.opacity=.32}if(v.f){if(v.f.plate)v.f.plate.visible=false;if(v.f.flames)v.f.flames.forEach((fl,i)=>{fl.scale.x*=.72;fl.scale.z*=.72;fl.scale.y*=1.05;const M=fl.material;if(!M._p2){M._p2=1;M.transparent=true;M.opacity=[.5,.6,.75][i]||.6;M.depthWrite=false;M.blending=T.AdditiveBlending;M.needsUpdate=true}});if(v.f.coals&&!v.f.coals.material._p2){const M=v.f.coals.material=v.f.coals.material.clone();M._p2=1;M.color.set(lin('#7a2a10'));M.emissive&&M.emissive.set(lin('#ff5a1a'))}}}else if(v&&v.ring&&v.ring.material.opacity!==1){v.ring.material.opacity=1}
@@ -3143,6 +3143,21 @@ function makeMesaRock(w,h,seed){const g=new T.Group(),cols=['#b8683c','#a0552f',
   const cap=M_(new T.CylinderGeometry(r*.96,r,5,9),std('#c9925e',{r:.95,flat:true}),true,true);cap.position.y=y+2.5;g.add(cap);
   for(let k=0;k<3;k++){const s=rnd(4,9),b=M_(rockG(s|0),std('#a0552f',{r:.95,flat:true}),true,true);b.position.set(rnd(-r*.5,r*.5),y+5+s*.3,rnd(-r*.5,r*.5));g.add(b)}
   return g}
+// story mode: world labels are gathered each frame and only the nearest few are shown in full (no more walls of floating text)
+const LQ=[];const _labelNow=label,_endLabelsNow=endLabels;
+label=function(x,y,h,html,cls,op,sc){if(running&&G&&isRPG()){LQ.push([x,y,h,html,cls,op,sc]);return}_labelNow(x,y,h,html,cls,op,sc)};
+endLabels=function(){if(LQ.length){const me=G&&(G.players[G.me]||G.players[0]);const L=LQ.splice(0);if(me){for(const q of L)q.d=dist(me.x,me.y,q[0],q[1])+(/bar|cbar|■/.test(q[3])?-1e4:0)+(q[4]==='gold'?-40:0);L.sort((a,b)=>a.d-b.d)}
+    let full=0;for(const q of L){const keep=q.d<0;if(keep||full<3){if(!keep)full++;_labelNow(q[0],q[1],q[2],q[3],q[4],q[5],q[6])}else if(q.d<320){const m=/^<b>[^<]*<\/b>/.exec(q[3]);if(m)_labelNow(q[0],q[1],q[2],m[0],(q[4]||'')+' lbmini',.8,.86)}}}
+  _endLabelsNow()};
+// soft layered flame (additive), flickers every frame; replaces the solid glowing cones
+const FLAMES=[];const _fm={};const flameMat=(c,o)=>_fm[c+o]||(_fm[c+o]=new T.MeshBasicMaterial({color:lin(c),transparent:true,opacity:o,blending:T.AdditiveBlending,depthWrite:false}));
+function makeFlame(r,h,col){const g=new T.Group();const outer=M_(geo('flo',()=>new T.ConeGeometry(1,1,10,1,true)),flameMat(col||'#ff7a2a',.45),false);outer.scale.set(r,h,r);outer.position.y=h*.45;
+  const inner=M_(geo('fli',()=>new T.ConeGeometry(1,1,10)),flameMat('#ffc04a',.7),false);inner.scale.set(r*.6,h*.72,r*.6);inner.position.y=h*.34;
+  const core=M_(geo('flc',()=>new T.SphereGeometry(1,10,8)),flameMat('#fff3c0',.85),false);core.scale.set(r*.42,r*.5,r*.42);core.position.y=r*.3;
+  const halo=M_(geo('flh',()=>new T.SphereGeometry(1,12,8)),flameMat(col||'#ff8a3a',.12),false);halo.scale.setScalar(Math.max(r,h)*.9);halo.position.y=h*.4;
+  g.add(outer,inner,core,halo);g.userData.fl={outer,inner,r,h,ph:Math.random()*9};FLAMES.push(g);return g}
+function flameTick(){const t=performance.now()/1000;for(let i=FLAMES.length-1;i>=0;i--){const g=FLAMES[i];if(!g.parent){FLAMES.splice(i,1);continue}if(!g.visible)continue;const F=g.userData.fl,k=1+Math.sin(t*13+F.ph)*.09+Math.sin(t*23+F.ph*2)*.06;F.outer.scale.set(F.r*(1.05-.05*k),F.h*k,F.r*(1.05-.05*k));F.inner.scale.set(F.r*.6,F.h*.72*(2-k),F.r*.6);F.outer.rotation.y=t*2+F.ph;
+  if(Math.random()<.12){const p=new T.Vector3();g.getWorldPosition(p);psA.emit({x:p.x+rnd(-F.r*.4,F.r*.4),y:p.y+F.h*.7,z:p.z+rnd(-F.r*.4,F.r*.4),vx:rnd(-6,6),vy:rnd(30,60),vz:rnd(-6,6),g:-10,life:.6,max:.6,r:rnd(2,3.5),c:C(Math.random()<.5?'#ffb347':'#ffe08a'),air:true,fade:.3})}}}
 // ================================================================ story mode (chapters + morning autosave)
 var gameMode=store.get('mw-mode','story');var SAVE_K='mw-story1';
 var CH={1:{n:'第1章',t:'ホワイトアウト',play:true,open:['暦の上では、もう夏至を過ぎた。','それなのに、この町の雪は\n一日もやんだことがない。','吹雪は家々を押しつぶし、\n人々は散り散りになった。','残っていたのは、村長オルガと、\n消えかけたひとつのかまどだけ――','瓦礫を片付け、町を建て直し、\nもう一度みんなを呼び戻そう。'],sub:'瓦礫を片付けて町を建て直し、散り散りになった仲間を呼び戻せ（Jキー：手がかり帳）',
