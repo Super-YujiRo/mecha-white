@@ -12,7 +12,7 @@ const DODGE={req:false};
 addEventListener('keydown',e=>{if((e.code==='ShiftLeft'||e.code==='ShiftRight')&&!e.repeat&&running&&isRPG()&&!DLG.open){DODGE.req=true;if(NET.mode==='guest')NET.dgN=(NET.dgN||0)+1}});
 function dashTick(p,dt){const local=p===(G.players[G.me]||G.players[0])&&!p.remote;p.dgCd=Math.max(0,(p.dgCd||0)-dt);
   if(local&&DODGE.req){DODGE.req=false;if(isRPG()&&p.dgCd<=0&&!(p.down>0)&&!p.riding&&!p.fishing){const iv=inputVec(0);let a=Math.hypot(iv.x,iv.y)>.2?Math.atan2(iv.x,iv.y):p.dir||0;p.dash={t:.26,vx:Math.sin(a)*470,vy:Math.cos(a)*470};p.dirT=a;p.dir=a;p.inv=Math.max(p.inv||0,.42);p.dgCd=.75;burst(p.x,p.y,8,4,{c:DES()?['#e8cf9a']:['#ffffff','#dfe9f2'],s0:30,s1:90,u0:10,u1:50,l0:.2,l1:.4})}}
-  if(p.dash&&p.dash.t>0){p.dash.t-=dt;p.x=clamp(p.x+p.dash.vx*dt,30,WORLD-30);p.y=clamp(p.y+p.dash.vy*dt,30,WORLD-30);if(p.dash.t<=0)p.dash=null}}
+  if(p.dash&&p.dash.t>0){p.dash.t-=dt;p.x=clX(p.x+p.dash.vx*dt,30);p.y=clY(p.y+p.dash.vy*dt,30,p.x);if(p.dash.t<=0)p.dash=null}}
 // ---- combo: every third hit in a row is a finisher (1.8x, bigger effect, hitstop)
 function comboHit(p,tgt,dmg,melee){if(!isRPG())return dmg;p.cmb=(p.cmbT>0?(p.cmb||0)+1:1);p.cmbT=1.1;
   if(p.cmb%3===0){dmg*=1.8;hitstop(.085);G.shake=Math.max(G.shake,6);float(tgt.x,tgt.y,110,'フィニッシュ！','gold',true);burst(tgt.x,tgt.y,24,30,{c:['#ffe07a','#ffffff','#ff9a5a'],s0:80,s1:240,u0:80,u1:220,l0:.3,l1:.6,add:true,r0:4,r1:8})}

@@ -9,7 +9,7 @@ const TRK={
 const BGM={cur:null,step:0,next:0,g:null,base:.085};
 function bgmArea(){if(!running)return 'town';const me=G.players[G.me]||G.players[0];if(!me)return 'town';
   if((G.raid&&G.raid.on&&G.raid.final)||G.bears.some(b=>!b.dead&&(b.king||b.nm||(b.kind==='boss'&&b.bt))&&dist(b.x,b.y,me.x,me.y)<650))return 'boss';
-  if(isRPG()&&dgAt(me.x,me.y))return 'dungeon';if(DES())return 'desert';return isNight()?'night':'town'}
+  if(isRPG()&&(dgAt(me.x,me.y)||inAby(me.x)))return 'dungeon';if(DES())return 'desert';return isNight()?'night':'town'}
 function bgmNote(midi,t,d,type,v){const o=actx.createOscillator(),g=actx.createGain();o.type=type;o.frequency.value=440*Math.pow(2,(midi-69)/12);
   if(type==='sawtooth'||type==='square'){const f=actx.createBiquadFilter();f.type='lowpass';f.frequency.value=type==='square'?1600:1100;o.connect(f);f.connect(g)}else o.connect(g);
   g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+d);g.connect(BGM.g);o.start(t);o.stop(t+d+.05)}

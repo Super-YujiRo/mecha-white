@@ -214,7 +214,7 @@ function newGame(np,opts){opts=opts||{};CUR_BIO=opts.biome||0;zoneNames();let RS
     G.zones[z.id]=false;z.fog=m;z.sign=sign;z.fogT=-1}
   // trees
   let guard=0;const trees=[];
-  while(trees.length<Math.round(360*G.mod.trees)&&guard++<30000){const x=sr(60,WORLD-60),y=sr(60,WORLD-60);const d=dist(x,y,CX,CY);if(d<FR+70)continue;if(x>900&&x<1700&&y>1580&&y<1840)continue;
+  while(trees.length<Math.round(360*G.mod.trees)&&guard++<30000){const x=sr(60,WORLD-60),y=sr(60,WORLD-60);const d=dist(x,y,CX,CY);if(d<FR+70)continue;if(dist(x,y,ABY_GATE.x,ABY_GATE.y)<110)continue;if(x>900&&x<1700&&y>1580&&y<1840)continue;
     if(!DES()&&dist(x,y,2020,1210)<470&&x>1720)continue;if(DES()&&DHOLES.some(h=>dist(h[0],h[1],x,y)<110))continue;if(dist(x,y,ROAD.x,ROAD.y)<230)continue;if(dist(x,y,SPA.x,SPA.y)<260)continue;if(Math.abs(x-CX)<60&&y<CY)continue;if(!DES()&&TSPOTS.some(q=>dist(x,y,q[0],q[1])<150))continue;if(dgBlock(x,y)||desertClear(x,y,40))continue;if(dist(x,y,MON.x,MON.y)<170)continue;if(Math.abs(y-CY)<60&&(x<CX||x>CX))continue;
     if(trees.some(t=>dist(t.x,t.y,x,y)<54))continue;trees.push({x,y,s:sr(.85,1.25),ry:sr(0,TAU),hp:4,alive:true,regrow:0,shake:0,fall:0,fallDir:0,grow:1,zone:(inZone(x,y)||{}).id||null})}
   G.trees=trees;forest=new Forest(trees);makeSecrets(trees,sr);makeRoad();applyBiome();

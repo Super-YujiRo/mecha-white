@@ -13,7 +13,7 @@ function setBtLook(b,bt){b.bt=bt;if(bt==='charge'&&!DES()&&b.m&&b.m.mx&&b.m.key!
   m.g.add(x)}
 function setBt(b,bt){setBtLook(b,bt);b.sk=2;b.sk2=3;b.sk3=4;if(bt==='alpha')b.hw=5}
 function warn(k,x,y,a,r,t){G.warns=G.warns||[];G.warns.push({id:++G.nid,k,x,y,a,r,t,max:t})}
-function bossHit(b,p,dmg,kb){if(p.dash&&p.inv>0){float(p.x,p.y,90,'回避！','gold',true);return}if(p.jz>22&&!(b.bt==='king'&&Math.random()<.5)){float(p.x,p.y,90,'かわした！','gold',true);return}const v=Math.round(dmg*armorOf(p)*DM().atk*(1+(YR()-1)*.15));p.hp-=v;hitLoss(p);p.hurt=.4;p.inv=.7;const k=dist(p.x,p.y,b.x,b.y)||1;p.x+=(p.x-b.x)/k*kb;p.y+=(p.y-b.y)/k*kb;G.shake=Math.max(G.shake,12);float(p.x,p.y,60,`-${v}`,'red');burst(p.x,p.y,24,14,{c:['#ff9a9a','#ffffff'],s0:40,s1:160,l0:.3,l1:.6})}
+function bossHit(b,p,dmg,kb){if(p.dash&&p.inv>0){float(p.x,p.y,90,'回避！','gold',true);return}if(p.jz>22&&!(b.bt==='king'&&Math.random()<.5)){float(p.x,p.y,90,'かわした！','gold',true);return}const v=Math.round(dmg*armorOf(p)*DM().atk*(1+(YR()-1)*.15)*(b.am||1));p.hp-=v;hitLoss(p);p.hurt=.4;p.inv=.7;const k=dist(p.x,p.y,b.x,b.y)||1;p.x+=(p.x-b.x)/k*kb;p.y+=(p.y-b.y)/k*kb;G.shake=Math.max(G.shake,12);float(p.x,p.y,60,`-${v}`,'red');burst(p.x,p.y,24,14,{c:['#ff9a9a','#ffffff'],s0:40,s1:160,l0:.3,l1:.6})}
 function bossAct(b,dt,t){if(b.ph)return true;const d=dist(b.x,b.y,t.x,t.y),bt=b.bt,ang=Math.atan2(t.x-b.x,t.y-b.y);b.sk=(b.sk||0)-dt;b.sk2=(b.sk2||0)-dt;b.sk3=(b.sk3||0)-dt;
   if((bt==='charge'||bt==='king')&&b.sk<=0&&d>130&&d<500){b.ph='wc';b.pt=bt==='king'?.85:1.1;b.ca=ang;b.sk=bt==='king'?7:5.5;b.roar=.9;warn('line',b.x,b.y,ang,560,b.pt);return true}
   if((bt==='frost'||bt==='king')&&b.sk2<=0&&d<260){b.ph='wf';b.pt=1.2;b.ca=ang;b.sk2=bt==='king'?9:5;b.roar=.6;warn('cone',b.x,b.y,ang,300,b.pt);return true}
@@ -25,7 +25,7 @@ function bossPhase(b,dt){b.pt-=dt;b.moving=false;const ph=b.ph;
   else if(ph==='ac'){const v=440;b.x+=Math.sin(b.ca)*v*dt;b.y+=Math.cos(b.ca)*v*dt;b.dirT=b.ca;b.moving=true;b.step+=dt*16;
     for(const p of G.players)if(!(p.down>0)&&p.inv<=0&&dist(p.x,p.y,b.x,b.y)<55)bossHit(b,p,44,110);
     if(Math.random()<dt*25)puff(b.x,b.y,4,{c:DES()?'#e2b877':'#e8f2fa',r:14,life:.7,a:.8,vy:14,grow:1.6});
-    let stop=b.pt<=0||b.x<60||b.x>WORLD-60||b.y<60||b.y>WORLD-60;if(!b.raid&&dist(b.x,b.y,CX,CY)<FR+45)stop=true;
+    let stop=b.pt<=0||outW(b.x,b.y,60);if(!b.raid&&dist(b.x,b.y,CX,CY)<FR+45)stop=true;
     if(stop){b.ph='st';b.pt=1.9;G.shake=Math.max(G.shake,8);float(b.x,b.y,120,'目を回した！ 今がチャンス','gold')}}
   else if(ph==='wf'){b.dirT=b.ca;if(b.pt<=0){for(const p of G.players){if(p.down>0)continue;const d=dist(p.x,p.y,b.x,b.y),aa=Math.atan2(p.x-b.x,p.y-b.y),df=Math.abs(Math.atan2(Math.sin(aa-b.ca),Math.cos(aa-b.ca)));if(d<300&&df<.62){p.warm=Math.max(0,p.warm-38);if(p.inv<=0)bossHit(b,p,14,40);float(p.x,p.y,84,'体温をうばわれた！','cold')}}
       for(let i=0;i<34;i++){const a=b.ca+rnd(-.6,.6),r=rnd(30,300);burst(b.x+Math.sin(a)*r,b.y+Math.cos(a)*r,20,1,{c:['#dff3ff','#9fd8ff','#ffffff'],s0:10,s1:50,u0:20,u1:90,l0:.4,l1:.9,r0:5,r1:10,add:true})}b.ph='rs';b.pt=.7;SFX.wave()}}
@@ -37,7 +37,7 @@ function bossPhase(b,dt){b.pt-=dt;b.moving=false;const ph=b.ph;
   else if(ph==='st'){if(b.pt<=0)b.ph=null}
   else if(ph==='rs'){if(b.pt<=0)b.ph=null}
   else b.ph=null;
-  b.x=clamp(b.x,40,WORLD-40);b.y=clamp(b.y,40,WORLD-40)}
+  b.x=clX(b.x,40);b.y=clY(b.y,40,b.x)}
 function bossPassive(b,dt){if(b.bt!=='alpha'||!(b.state==='chase'||b.raid))return;b.hw=(b.hw||5)-dt;if(b.hw>0)return;b.hw=12;if(G.bears.filter(q=>!q.dead&&q.pack===b.id).length>=5)return;
   b.roar=1.2;float(b.x,b.y,130,'ウオォーン！ 仲間を呼んだ','red');SFX.wave();
   for(let i=0;i<3;i++){let nb;if(b.raid){spawnRaider(false);nb=G.bears[G.bears.length-1];if(G.raid.on)G.raid.total++}else nb=spawnBear(b.zone||'A',true);nb.pack=b.id;nb.x=b.x+rnd(-90,90);nb.y=b.y+rnd(-90,90);nb.m.g.position.set(nb.x,0,nb.y);if(!b.raid&&b.target){nb.state='chase';nb.target=b.target}burst(nb.x,nb.y,10,14,{c:['#ffffff','#e3f0f7'],s0:40,s1:140,u0:60,u1:180,l0:.5,l1:.9,r0:5,r1:9})}}

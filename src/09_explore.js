@@ -62,8 +62,8 @@ const dgMap=()=>isRPG()?DUNGEONS.filter(D=>D.des===(DES()?1:0)):[];
 const inBox=(x,y,b,m=0)=>x>b[0]-m&&x<b[2]+m&&y>b[1]-m&&y<b[3]+m;
 const dgAt=(x,y)=>dgMap().find(D=>inBox(x,y,D.box));
 function dgBlock(x,y){return DUNGEONS.some(D=>D.des===(DES()?1:0)&&inBox(x,y,D.box,60))}
-function caveWarm(x,y){return dgMap().some(D=>D.heats.some(h=>dist(x,y,h.x,h.y)<h.r))}
-function caveWalls(e,r){for(const D of dgMap()){if(!inBox(e.x,e.y,D.box,40))continue;for(const w of D.walls)pushRect(e,w[0],w[1],w[2],w[3],r||12);if(D.id==='cave'&&!caveDoorOpen())pushRect(e,VAULT_DOOR[0],VAULT_DOOR[1],VAULT_DOOR[2],VAULT_DOOR[3],r||12)}}
+function caveWarm(x,y){if(x>ABX)return true;return dgMap().some(D=>D.heats.some(h=>dist(x,y,h.x,h.y)<h.r))}
+function caveWalls(e,r){if(e.x>ABX){for(const w of abyWalls())pushRect(e,w[0],w[1],w[2],w[3],r||12);return}for(const D of dgMap()){if(!inBox(e.x,e.y,D.box,40))continue;for(const w of D.walls)pushRect(e,w[0],w[1],w[2],w[3],r||12);if(D.id==='cave'&&!caveDoorOpen())pushRect(e,VAULT_DOOR[0],VAULT_DOOR[1],VAULT_DOOR[2],VAULT_DOOR[3],r||12)}}
 function dgState(D){G.dg=G.dg||{};return G.dg[D.id]=G.dg[D.id]||{sp:D.spawns.map(()=>3),ch:D.chests.map(()=>({open:0,rt:0}))}}
 function dgLook(b,S,D){world.remove(b.m.g);b.m=makeBear(b.kind,S.key||D.key||undefined);if(b.bt)setBtLook(b,b.bt);b.m.g.scale.setScalar(S.sc||(S.k==='boss'?2.4:S.k==='big'?1.4:1));b.m.g.position.set(b.x,0,b.y);world.add(b.m.g);b.dgs=S.code;b.nm=S.nm||null;b.bk=S.bk||(D.id==='cave'?(S.k==='boss'?'spq':'sp'):D.id==='glacier'?'gl':D.id==='ruin'?'ru':null)}
 function updateCave(dt){for(const D of dgMap()){if(!D.gate())continue;const C=dgState(D);
@@ -73,7 +73,7 @@ function updateCave(dt){for(const D of dgMap()){if(!D.gate())continue;const C=dg
   D.chests.forEach((c,i)=>{const st=C.ch[i];if(st.open){st.rt-=dt;if(st.rt<=0)st.open=0;return}const p=G.players.find(p=>!(p.down>0)&&dist(p.x,p.y,c.x,c.y)<55);if(!p){st.t=0;return}st.t=(st.t||0)+dt;if(st.t<1)return;st.open=1;st.rt=G.DAY*1.5;
     const pool=D.loot[c.tier].filter(id=>!(p.items||[]).includes(id));if(pool.length)giveItem(p,pool[Math.floor(Math.random()*pool.length)]);addMat(p,D.cmat[c.tier-1],c.tier===3?2:3);const v=Math.round(60*c.tier*(1+D.i*.5)*(1+G.day*.05));G.cash+=v;G.earned+=v;cnt(p,'chest');
     banner('宝箱を開けた！',`+$${v}`,c.tier===3?`${D.n}の奥の宝だ！`:'','r-SSR');SFX.chest&&SFX.chest();burst(c.x,c.y,30,30,{c:['#ffd23f','#ffffff'],s0:60,s1:200,u0:150,u1:300,l0:.6,l1:1,add:true})})}}
-function dgKill(b,p){const D=b.dg;if(!D||!p)return;addMat(p,D.drop,b.kind==='boss'?4:1);if(b.kind!=='boss')return;cnt(p,'dgboss');const v=Math.round(250*(1+D.i*.6)*(1+G.day*.05));G.cash+=v;G.earned+=v;gainRX(p,20+D.i*10);
+function dgKill(b,p){const D=b.dg;if(!D||!p)return;if(D.id==='abyss'){abyKill(b,p);return}addMat(p,D.drop,b.kind==='boss'?4:1);if(b.kind!=='boss')return;cnt(p,'dgboss');const v=Math.round(250*(1+D.i*.6)*(1+G.day*.05));G.cash+=v;G.earned+=v;gainRX(p,20+D.i*10);
   const pool=D.loot[3].filter(id=>!(p.items||[]).includes(id));if(pool.length&&Math.random()<.35)giveItem(p,pool[Math.floor(Math.random()*pool.length)]);banner(`${b.nm||'主'}をたおした！`,`+$${v}`,`${MATS[D.drop]}を手に入れた`,'r-SSR')}
 function dgSnap(){return dgMap().map(D=>{const C=G.dg&&G.dg[D.id];return D.chests.map((_,i)=>C&&C.ch[i]&&C.ch[i].open?1:0).join('')}).join('.')}
 function dgApply(s){if(typeof s!=='string')return;const L=dgMap(),P=s.split('.');L.forEach((D,j)=>{const C=dgState(D),v=P[j]||'';D.chests.forEach((_,i)=>C.ch[i].open=v[i]==='1'?1:0)})}
@@ -106,7 +106,7 @@ function statusTab(me){const tab=G._stab||'eq',rows=$('lifeRows'),lct=document.q
   if(tab==='life'){$('rpgBox').innerHTML=tabs;lct.style.display='';return false}
   lct.style.display='none';rows.innerHTML='';const c=me.cnt||{},chd=me.chd||[];
   if(tab==='chal'){$('rpgBox').innerHTML=tabs+LIVES.map(k=>`<div style="margin:4px 0"><b style="color:${LIFE[k].c}">${LIFE[k].n}</b>${(CHAL[k]||[]).map((ch,i)=>{const done=chd.includes(k+i);return `<div style="font-size:11.5px;${done?'color:#2f8a3a':''}">${done?'✓':'・'} ${ch[0]} <small>${done?'':`${Math.min(c[ch[1]]||0,ch[2])}/${ch[2]}`}</small></div>`}).join('')}</div>`).join('')+'<small>お題を達成すると、くらしの経験とお金がもらえる</small>';return true}
-  const own=me.items||[],all=Object.keys(ITEMS);$('rpgBox').innerHTML=tabs+`<b>装備 ${own.length}/${all.length}</b><div style="font-size:11px;line-height:1.6">${all.map(id=>own.includes(id)?ITEMS[id].n:'？？？').join('・')}</div>
+  const own=(me.items||[]).filter(id=>ITEMS[id]&&!ITEMS[id].syn),all=Object.keys(ITEMS).filter(id=>!ITEMS[id].syn);$('rpgBox').innerHTML=tabs+`<b>装備 ${own.length}/${all.length}</b><div style="font-size:11px;line-height:1.6">${all.map(id=>own.includes(id)?ITEMS[id].n:'？？？').join('・')}</div>
     <b style="display:block;margin-top:6px">魔物 ${BOOK.filter(([id])=>c['bk_'+id]).length}/${BOOK.length}</b><div style="font-size:11px;line-height:1.6">${BOOK.map(([id,n])=>c['bk_'+id]?`${n}（${c['bk_'+id]}）`:'？？？').join('・')}</div>`;return true}
 $('lifeCard').addEventListener('click',e=>{if(e.target.closest('button[data-deduce]')){$('lifeCard').hidden=true;openDeduce();return}const b=e.target.closest('button[data-tab]');if(!b)return;G._stab=b.dataset.tab;lifeHud(true)});
 
@@ -127,7 +127,7 @@ function craftWhy(p,R){const lf=R.life||'craft';if(lifeRank(p,lf)<R.rk)return `$
 function openCraft(){const me=G.players[G.me]||G.players[0];const mt=Object.entries(me.mats||{}).filter(([k,n])=>n>0&&MATS[k]).map(([k,n])=>`${MATS[k]}×${n}`).join('・')||'なし';
   const SO={w:0,a:1,c:2};const ch=Object.keys(RECIPES).filter(k=>classOK(me,RECIPES[k].id)).sort((a,b)=>SO[ITEMS[RECIPES[a].id].s]-SO[ITEMS[RECIPES[b].id].s]||(RECIPES[a].rk-RECIPES[b].rk)).map(k=>{const R=RECIPES[k],it=ITEMS[R.id],why=craftWhy(me,R);const need=Object.entries(R.m).map(([m,n])=>`${MATS[m]}${n}`).join('+')+(R.log?`+薪${R.log}`:'')+(R.cash?`+$${R.cash}`:'');
     return [`${why?'🔒':R.life==='smith'?'🔨':'🪚'}【${it.s==='w'?'武器':it.s==='a'?'防具':'お守り'}】${it.n}（${itemDesc(it)}）… ${need}`,()=>{const w=craftWhy(G.players[G.me]||G.players[0],R);if(w){toast(w,'cold',true);return}sendAct('craft',k)}]});
-  ch.push(['やめる',null]);Object.assign(DLG,{open:true,npc:{n:{n:'工房'},x:WB.x,y:WB.y},pages:[`何を作る？ 武器は今の職業「${CLS[clsKey(me)].n}」で使えるものだけ表示。防具・お守りは誰でも使える（素材：${mt}）`],i:0,ch});if(NET.mode==='solo')G.paused=true;for(const j of joys)j.on=false;drawDlg()}
+  ch.unshift(['✦ 武器を合成する（熟練MAXの2本 → 新しい武器）',()=>setTimeout(()=>openSynth(),60)],['⚒ 武器を鍛える（+1〜+10）',()=>setTimeout(()=>openForge(),60)]);ch.push(['やめる',null]);Object.assign(DLG,{open:true,npc:{n:{n:'工房'},x:WB.x,y:WB.y},pages:[`何を作る？ 武器は今の職業「${CLS[clsKey(me)].n}」で使えるものだけ表示。防具・お守りは誰でも使える（素材：${mt}）`],i:0,ch});if(NET.mode==='solo')G.paused=true;for(const j of joys)j.on=false;drawDlg()}
 // ---- chapter openings (letterboxed text over the town) and the objective tracker
 let OPN=null;
 function playOpening(C,done){const el=$('opening'),tx=$('opTxt');const slides=C.open.map(t=>({t})).concat([{card:1}]);let i=0,tm=null;OPN={done};

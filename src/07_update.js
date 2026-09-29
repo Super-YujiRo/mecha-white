@@ -7,7 +7,7 @@ function update(dt){
   G.wind=Math.sin(G.t*.3)*.5+Math.sin(G.t*.11)*.5+(G.wave?1.2:0);
   const adv=ADV(),R=adv?420:heatR();G.onPads=new Set();tickCombo(dt);tickChests(dt);
   for(const p of G.players){const px=p.x,py=p.y;if(p.remote){followNet(p,dt);continue}const iv=p.down>0?{x:0,y:0}:inputVec(p.id),sp0=195*G.pm.speed*(p.riding?1.8:1)*(1+eqv(p,'spd'));p.vx=lerp(p.vx,iv.x*sp0,Math.min(1,dt*12));p.vy=lerp(p.vy,iv.y*sp0,Math.min(1,dt*12));
-    p.x=clamp(p.x+p.vx*dt,30,WORLD-30);p.y=clamp(p.y+p.vy*dt,30,WORLD-30);const sp=Math.hypot(p.vx,p.vy);p.moving=sp>20;if(p.moving){p.step+=dt*sp*.06;p.dirT=Math.atan2(p.vx,p.vy);if(Math.random()<dt*6)puff(p.x-p.vx*.05,p.y-p.vy*.05,2,{r:7,life:.6,a:.7,vy:10,grow:1})}
+    p.x=clX(p.x+p.vx*dt,30);p.y=clY(p.y+p.vy*dt,30,p.x);const sp=Math.hypot(p.vx,p.vy);p.moving=sp>20;if(p.moving){p.step+=dt*sp*.06;p.dirT=Math.atan2(p.vx,p.vy);if(Math.random()<dt*6)puff(p.x-p.vx*.05,p.y-p.vy*.05,2,{r:7,life:.6,a:.7,vy:10,grow:1})}
     dashTick(p,dt);fenceCollide(p,px,py);solids(p,12);for(const t of G.trees)if(t.alive&&t.fall<=0&&Math.abs(t.x-p.x)<30&&Math.abs(t.y-p.y)<30)pushCircle(p,t.x,t.y,18*t.s);jumpTick(p,dt);
     p.bb=lerp(p.bb,0,dt*8);p.flash=Math.max(0,p.flash-dt);p.hurt=Math.max(0,p.hurt-dt);p.inv=Math.max(0,p.inv-dt)}
   if(G.players.length>1&&NET.mode==='solo'){const [a,b]=G.players;for(const [p,o] of [[a,b],[b,a]]){p.x=clamp(p.x,o.x-640,o.x+640);p.y=clamp(p.y,o.y-640,o.y+640)}}
@@ -89,7 +89,7 @@ function playerActions(p,dt,R){updateSled(p,dt);buffTick(p,dt);comboTick(p,dt);i
     else continue;
     if(pad.paid>=c&&mixDone(pad)){if(finishPad(pad)===false)continue}}
   // bear hit → knocked down
-  if(p.hp<=0&&!(p.down>0)){p.hp=60;p.inv=6;const drop=p.bag.splice(0);const keep=drop.filter((_,i)=>i%2===0);for(let r=keep.length,i=0;r>0;r-=4,i+=4)dropItem(p.x,p.y,keep[i],20,Math.min(4,r));p.down=6;p.ko=true;p.shooting=p.chopping=p.fishing=null;float(p.x,p.y,70,'ダウン…','red',true);toast(`オオカミにやられた！ 荷物の半分を失った${G.players.length>1?'（仲間がそばに来ると早く起きる）':''}`,'cold');SFX.bad();G.shake=12}
+  if(p.hp<=0&&!(p.down>0)&&!abyKO(p)){p.hp=60;p.inv=6;const drop=p.bag.splice(0);const keep=drop.filter((_,i)=>i%2===0);for(let r=keep.length,i=0;r>0;r-=4,i+=4)dropItem(p.x,p.y,keep[i],20,Math.min(4,r));p.down=6;p.ko=true;p.shooting=p.chopping=p.fishing=null;float(p.x,p.y,70,'ダウン…','red',true);toast(`オオカミにやられた！ 荷物の半分を失った${G.players.length>1?'（仲間がそばに来ると早く起きる）':''}`,'cold');SFX.bad();G.shake=12}
   if(inHeat)p.hp=Math.min(100,p.hp+(p.inHeat?7:0)*dt);
 }
 const mixDone=pad=>{if(!pad.mix)return true;const n=pad.mix();return pad.mp.fish>=n.fish&&pad.mp.fur>=n.fur};
@@ -125,7 +125,7 @@ function doSkill(p){const key=clsKey(p),S=SKILLS[key],cl=CLS[key];const base=(1+
   const kb=(b,x,y,f)=>{const a=Math.atan2(b.x-x,b.y-y);b.x+=Math.sin(a)*f;b.y+=Math.cos(a)*f};let hit=0;
   if(key==='Rogue_Hooded'){for(const b of near(cl.rng*1.5)){shoot(p,b,base*1.6,true,'bolt');hit++}}
   else if(key==='Rogue'){const t=nearest(cl.rng*1.7);if(t){p.aimDir=Math.atan2(t.x-p.x,t.y-p.y);shoot(p,t,base*5,true,'bolt');if(!t.dead){kb(t,p.x,p.y,70);t.atkCd=Math.max(t.atkCd||0,1.2)}hit=1}}
-  else if(key==='Knight'){const a=p.dir;for(let i=0;i<6;i++){const ox=p.x,oy=p.y;p.x=clamp(p.x+Math.sin(a)*20,30,WORLD-30);p.y=clamp(p.y+Math.cos(a)*20,30,WORLD-30);fenceCollide(p,ox,oy);solids(p,12);burst(p.x,p.y,4,6,{c:['#ffffff','#cfe3f0'],s0:20,s1:60,u0:20,u1:60,l0:.2,l1:.4,r0:3,r1:6})}
+  else if(key==='Knight'){const a=p.dir;for(let i=0;i<6;i++){const ox=p.x,oy=p.y;p.x=clX(p.x+Math.sin(a)*20,30);p.y=clY(p.y+Math.cos(a)*20,30,p.x);fenceCollide(p,ox,oy);solids(p,12);burst(p.x,p.y,4,6,{c:['#ffffff','#cfe3f0'],s0:20,s1:60,u0:20,u1:60,l0:.2,l1:.4,r0:3,r1:6})}
     for(const b of near(100)){shoot(p,b,base*3,true,'slash');if(!b.dead){b.atkCd=Math.max(b.atkCd||0,2);kb(b,p.x,p.y,60)}hit++}}
   else if(key==='Barbarian'){for(const b of near(170)){shoot(p,b,base*3,true,'spin');if(!b.dead)kb(b,p.x,p.y,45);hit++}burst(p.x,p.y,30,12,{c:['#ffffff','#ffd6a0'],s0:120,s1:260,u0:20,u1:80,l0:.3,l1:.5,r0:4,r1:8})}
   else if(key==='Mage'){const t=nearest(cl.rng*1.4);const cx=t?t.x:p.x+Math.sin(p.dir)*150,cy=t?t.y:p.y+Math.cos(p.dir)*150;if(t)p.aimDir=Math.atan2(t.x-p.x,t.y-p.y);
@@ -135,8 +135,8 @@ function shoot(sh,b,dmg,isPlayer,fx){const a=Math.atan2(b.x-sh.x,b.y-sh.y);const
   if(fx==='bolt'){for(let i=0;i<7;i++){const k=i/7;psA.emit({x:lerp(mx,b.x,k),y:lerp(24,22,k),z:lerp(my,b.y,k),vx:0,vy:0,vz:0,g:0,life:.07+k*.05,max:.12,r:5,c:C('#fff2b0'),air:true,fade:.1})}}
   else if(fx==='magic'){for(let i=0;i<10;i++){const k=i/10;psA.emit({x:lerp(mx,b.x,k),y:lerp(30,22,k)+Math.sin(k*9)*4,z:lerp(my,b.y,k),vx:0,vy:0,vz:0,g:0,life:.12+k*.08,max:.2,r:7,c:C(i%2?'#c9a2ff':'#7fe8ff'),air:true,fade:.1})}burst(b.x,b.y,22,14,{c:['#c9a2ff','#7fe8ff','#ffffff'],s0:60,s1:180,u0:60,u1:180,l0:.3,l1:.6,r0:4,r1:8,add:true})}
   else if(fx==='slash'||fx==='spin'){const n=fx==='spin'?12:7;for(let i=0;i<n;i++){const aa=a+(fx==='spin'?i/n*TAU:(i/n-.5)*1.6),rr=fx==='spin'?60:34;psA.emit({x:sh.x+Math.sin(aa)*rr,y:22,z:sh.y+Math.cos(aa)*rr,vx:Math.sin(aa)*40,vy:0,vz:Math.cos(aa)*40,g:0,life:.16,max:.16,r:6,c:C('#ffffff'),air:true,fade:.1})}const k2=dist(sh.x,sh.y,b.x,b.y)||1;b.x+=(b.x-sh.x)/k2*10;b.y+=(b.y-sh.y)/k2*10;if(isPlayer)SFX.chop()}
-  if(b.hide)return;if(b.rq&&isPlayer&&G.players.includes(sh)&&isRPG()&&lifeRank(sh,'hunt')<b.rq){b.hit=.05;if(!b._lk||G.t-b._lk>1.4){b._lk=G.t;float(b.x,b.y,120,`かたい！ 狩人「${LR[b.rq].n}」が必要`,'red')}return}b.hp-=dmg*(b.ph==='st'?2:1);b.hit=.14;if(isPlayer&&G.players.includes(sh)){b.state='chase';b.target=sh;b.roar=.7;if(fx==='bolt'||fx==='magic')SFX.shot()}
-  burst(b.x,b.y,24,4,{c:['#ffffff','#ffd6d6'],s0:20,s1:70,u0:40,u1:120,l0:.2,l1:.4,r0:3,r1:5});if(b.hp<=0){if(b.gold)goldKilled(b,sh);if(isPlayer&&G.players.includes(sh)){lifeXp(sh,'hunt',b.kind==='boss'?10:b.kind==='big'?4:2);cnt(sh,'kill');if(b.kind==='boss')cnt(sh,'boss');if(b.raid)cnt(sh,'raidk');cnt(sh,'bk_'+bkId(b));if(b.dg&&isRPG())dgKill(b,sh)}if(b.rbi!=null)rbKilled(b,sh);gainRX(sh,b.kind==='boss'?25:b.kind==='big'?6:3);if(isRPG()&&b.kind==='boss'&&!b.qid&&Math.random()<.45)giveItem(sh,Math.random()<.5?'w_bear':'a_bear');killBear(b,isPlayer)}}
+  if(b.hide)return;if(b.rq&&isPlayer&&G.players.includes(sh)&&isRPG()&&lifeRank(sh,'hunt')<b.rq){b.hit=.05;if(!b._lk||G.t-b._lk>1.4){b._lk=G.t;float(b.x,b.y,120,`かたい！ 狩人「${LR[b.rq].n}」が必要`,'red')}return}if(isPlayer)dmg=wpHit(sh,b,dmg);b.hp-=dmg*(b.ph==='st'?2:1);b.hit=.14;if(isPlayer&&G.players.includes(sh)){b.state='chase';b.target=sh;b.roar=.7;if(fx==='bolt'||fx==='magic')SFX.shot()}
+  burst(b.x,b.y,24,4,{c:['#ffffff','#ffd6d6'],s0:20,s1:70,u0:40,u1:120,l0:.2,l1:.4,r0:3,r1:5});if(b.hp<=0){if(b.gold)goldKilled(b,sh);if(isPlayer&&G.players.includes(sh)){wpKill(sh,b);lifeXp(sh,'hunt',b.kind==='boss'?10:b.kind==='big'?4:2);cnt(sh,'kill');if(b.kind==='boss')cnt(sh,'boss');if(b.raid)cnt(sh,'raidk');cnt(sh,'bk_'+bkId(b));if(b.dg&&isRPG())dgKill(b,sh)}if(b.rbi!=null)rbKilled(b,sh);gainRX(sh,b.kind==='boss'?25:b.kind==='big'?6:3);if(isRPG()&&b.kind==='boss'&&!b.qid&&Math.random()<.45)giveItem(sh,Math.random()<.5?'w_bear':'a_bear');killBear(b,isPlayer)}}
 function killBear(b,byPlayer){if(b.qid&&G.story&&G.story.q&&G.story.q[b.qid]&&G.story.q[b.qid].st===1){G.story.q[b.qid].st=2;const Q=QUESTS[b.qid];setTimeout(()=>{if(running)banner('依頼達成！',Q.t,`${npcName(Q.npc)}に報告しよう`,'area')},900)}b.dead=true;b.deadT=0;G.stats.bears++;SFX.kill();if(b.nushi){G.secretS+=12;const q=G.secrets&&G.secrets.find(o=>o.t==='nushi');if(q)q.found=true;setTimeout(()=>{if(running)banner('ヌシを倒した！','森の主をしずめた','★+12','r-SSR')},600)}
   if(b.raid){G.raid.kills++;G.stats.raidKills++}
   const haul=G.players.length>1&&NET.mode==='host'&&(b.kind==='boss'||b.nushi||(b.kind==='big'&&Math.random()<.08));if(haul)spawnHaul(b.x,b.y,b.kind==='boss'?2:1);
@@ -160,19 +160,19 @@ function updateBears(dt){
       if(d>600||dist(t.x,t.y,CX,CY)<FR+20||(b.home&&dist(b.x,b.y,b.home.x,b.home.y)>340)){b.state='wander';b.target=null}
       else if(b.bt&&bossAct(b,dt,t)){}
       else{const sp=b.kind==='boss'?70:b.kind==='big'?66:80;const r=b.kind==='boss'?48:30;if(d>r){b.x+=(t.x-b.x)/d*sp*dt;b.y+=(t.y-b.y)/d*sp*dt;b.dirT=Math.atan2(t.x-b.x,t.y-b.y);b.step+=dt*9;b.moving=true}
-        if(d<r+6&&b.atkCd<=0&&t.inv<=0&&!(t.jz>22)){b.atkCd=1.2;const dmg=Math.round((b.kind==='boss'?35:b.kind==='big'?25:16)*armorOf(t)*DM().atk*(1+(YR()-1)*.15));t.hp-=dmg;hitLoss(t);t.hurt=.35;t.inv=.5;const k=d||1;t.x+=(t.x-b.x)/k*44;t.y+=(t.y-b.y)/k*44;G.shake=11;float(t.x,t.y,60,`-${dmg}`,'red');b.swipe=.3;burst(t.x,t.y,24,10,{c:['#ff9a9a','#ffffff'],s0:40,s1:130,l0:.3,l1:.6})}}}
+        if(d<r+6&&b.atkCd<=0&&t.inv<=0&&!(t.jz>22)){b.atkCd=1.2;const dmg=Math.round((b.kind==='boss'?35:b.kind==='big'?25:16)*armorOf(t)*DM().atk*(1+(YR()-1)*.15)*(b.am||1));t.hp-=dmg;hitLoss(t);t.hurt=.35;t.inv=.5;const k=d||1;t.x+=(t.x-b.x)/k*44;t.y+=(t.y-b.y)/k*44;G.shake=11;float(t.x,t.y,60,`-${dmg}`,'red');b.swipe=.3;burst(t.x,t.y,24,10,{c:['#ff9a9a','#ffffff'],s0:40,s1:130,l0:.3,l1:.6})}}}
     else{const ag=G.players.find(p=>!(p.down>0)&&!p.inHeat&&dist(p.x,p.y,b.x,b.y)<(b.kind==='normal'?110:160));if(ag){b.state='chase';b.target=ag;b.roar=.6}b.wT-=dt;if(b.wT<=0){b.wT=rnd(1.5,4);b.wdir=rnd(0,TAU);b.idle=Math.random()<.35}if(!b.idle){b.x+=Math.sin(b.wdir)*28*dt;b.y+=Math.cos(b.wdir)*28*dt;b.dirT=b.wdir;b.step+=dt*4.5;b.moving=true}}
     if(b.home&&b.state!=='chase'&&dist(b.x,b.y,b.home.x,b.home.y)>120){b.wdir=Math.atan2(b.home.x-b.x,b.home.y-b.y);b.idle=false}
     if(b.guardOf&&b.state!=='chase'){const R=G.rescue;if(R&&R.id===b.guardOf&&dist(b.x,b.y,R.x,R.y)>150){b.wdir=Math.atan2(R.x-b.x,R.y-b.y);b.idle=false}}
     const rect=b.zone==='K'?(b.dg?b.dg.box:CAVE_BOX):b.zone==='C'?ZONES[1].rect:HUNT_A;if(b.state!=='chase'&&!b.guardOf){if(b.x<rect[0]||b.x>rect[2]||b.y<rect[1]||b.y>rect[3]){b.wdir=Math.atan2((rect[0]+rect[2])/2-b.x,(rect[1]+rect[3])/2-b.y);b.idle=false}}
-    b.x=clamp(b.x,40,WORLD-40);b.y=clamp(b.y,40,WORLD-40);
+    b.x=clX(b.x,40);b.y=clY(b.y,40,b.x);
     const dc=dist(b.x,b.y,CX,CY);if(dc<FR+45){b.x=CX+(b.x-CX)/dc*(FR+45);b.y=CY+(b.y-CY)/dc*(FR+45)}
     for(const z of ZONES)if(!G.zones[z.id]&&z.id!=='C'||(z.id==='C'&&!G.zones.C)){const [x0,y0,x1,y1]=z.rect;pushRect(b,x0,y0,x1,y1,10)}
     if(b.y>1580&&b.zone!=='K')b.y=1580;if(b.zone==='K')caveWalls(b,16);else if(isRPG()&&dgAt(b.x,b.y))caveWalls(b,16);
     if(b.moving&&Math.random()<dt*5)puff(b.x,b.y,2,{r:10,life:.6,a:.7,vy:8,grow:1})}
   for(const b of G.bears)if(b.dead&&b.deadT>=2.4)world.remove(b.m.g);G.bears=G.bears.filter(b=>!b.dead||b.deadT<2.4)}
 function hitLoss(t){if(!G.players.includes(t))return;const mel=clsOf(t).rng<130;t.warm=Math.max(0,t.warm-(mel?4:10));if(mel&&Math.random()<.65)return;const n=Math.min(t.bag.length,1+Math.floor(Math.random()*2));if(n){const lost=t.bag.splice(t.bag.length-n,n);for(const k of lost)dropItem(t.x,t.y,k,24);float(t.x,t.y,90,`荷物を${n}個落とした`,'red')}}
-function bearSwipe(b,t,d){b.atkCd=1.2;const dmg=Math.round((b.kind==='boss'?35:b.kind==='big'?25:16)*armorOf(t)*DM().atk*(1+(YR()-1)*.15));t.hp-=dmg;hitLoss(t);t.hurt=.35;t.inv=.5;const k=d||1;t.x+=(t.x-b.x)/k*44;t.y+=(t.y-b.y)/k*44;G.shake=11;float(t.x,t.y,60,`-${dmg}`,'red');b.swipe=.3;burst(t.x,t.y,24,10,{c:['#ff9a9a','#ffffff'],s0:40,s1:130,l0:.3,l1:.6})}
+function bearSwipe(b,t,d){b.atkCd=1.2;const dmg=Math.round((b.kind==='boss'?35:b.kind==='big'?25:16)*armorOf(t)*DM().atk*(1+(YR()-1)*.15)*(b.am||1));t.hp-=dmg;hitLoss(t);t.hurt=.35;t.inv=.5;const k=d||1;t.x+=(t.x-b.x)/k*44;t.y+=(t.y-b.y)/k*44;G.shake=11;float(t.x,t.y,60,`-${dmg}`,'red');b.swipe=.3;burst(t.x,t.y,24,10,{c:['#ff9a9a','#ffffff'],s0:40,s1:130,l0:.3,l1:.6})}
 // ---- night raid: bears come through the gates and go for the furnace
 function houseHp(i){const h=G.houses[i],lv=houseLv(i);if(h._hpLv!==lv){h._hpLv=lv;h.hpMax=h.hp=4+lv*4}return h}
 function raidGoal(b,dt,sp){const big=b.kind!=='normal',boss=b.kind==='boss',R=G.raid;
@@ -207,7 +207,7 @@ function raidStep(b,dt){const px=b.x,py=b.y,big=b.kind!=='normal',boss=b.kind===
   else if(raidGoal(b,dt,sp)){}
   else{const dc=dist(b.x,b.y,CX,CY);if(dc>104){const n=nav(b,CX,CY);moveTo(b,n.x,n.y,sp,dt)}
     else{b.dirT=Math.atan2(CX-b.x,CY-b.y);if(b.atkCd<=0){b.atkCd=1.8;b.swipe=.3;const dmg=boss?12:big?6:4;G.fuel=Math.max(0,G.fuel-dmg);G.shake=Math.max(G.shake,5);if(Math.random()<.35)float(CX+rnd(-30,30),CY+rnd(-30,30),110,DES()?'井戸の水を荒らされた！':'燃料を荒らされた！','red');burst(CX,CY,50,10,{c:['#ffd166','#ff8a3d','#ffffff'],s0:40,s1:160,u0:100,u1:260,l0:.3,l1:.6,add:true});SFX.bad();if(!(G.raid.hitT>G.t-6)){G.raid.hitT=G.t;toast('かまどが襲われてる！ 撃退しろ','cold')}}}}
-  fenceCollide(b,px,py);pushCircle(b,CX,CY,72);b.x=clamp(b.x,40,WORLD-40);b.y=clamp(b.y,40,WORLD-40);
+  fenceCollide(b,px,py);pushCircle(b,CX,CY,72);b.x=clX(b.x,40);b.y=clY(b.y,40,b.x);
   for(const z of ZONES)if(!G.zones[z.id]){const [x0,y0,x1,y1]=z.rect;pushRect(b,x0,y0,x1,y1,10)}
   if(b.moving&&Math.random()<dt*6)puff(b.x,b.y,2,{r:10,life:.6,a:.7,vy:8,grow:1})}
 function spawnRaider(boss){const a=rnd(-2.5,-.65),r=rnd(600,660);const x=CX+Math.cos(a)*r,y=CY+Math.sin(a)*r;const big=!boss&&Math.random()<Math.min(.55,.06+G.day*.035+G.level*.03);const kind=boss?'boss':big?'big':'normal';const hp=Math.round((boss?55:big?10:5)*(1+G.day*.18+(G.level-1)*.12)*DM().hp*(1+(YR()-1)*.3));if(boss){banner('','襲撃ボス出現！','巨大オオカミが門に向かっている','cold');SFX.wave();G.shake=12}

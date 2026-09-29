@@ -6,9 +6,9 @@ function occCandidates(){const L=[];const add=o=>{if(o&&o.visible!==false)L.push
   if(G.townS)for(const g of G.townS.list)if(g.visible)for(const c of g.children)add(c);
   if(G.advV&&G.advV.visible)for(const c of G.advV.children)add(c);
   for(const k in G.dgV||{}){const V=G.dgV[k];if(V.visible)for(const c of V.children)if(c.isMesh&&c.geometry&&c.geometry.type==='BoxGeometry')add(c)}
-  if(G.monV&&G.monV.visible)add(G.monV);if(G.pzV&&G.pzV.userData&&G.pzV.userData.door)add(G.pzV.userData.door);return L}
+  if(G.abyV&&G.abyV.visible)for(const c of G.abyV.children)if(c.isMesh&&c.geometry&&c.geometry.type==='BoxGeometry')add(c);if(G.monV&&G.monV.visible)add(G.monV);if(G.pzV&&G.pzV.userData&&G.pzV.userData.door)add(G.pzV.userData.door);return L}
 function occBox(o){if(!o.userData._ob||o.userData._obT!==o.visible){o.updateMatrixWorld(true);o.userData._ob=new T.Box3().setFromObject(o);o.userData._obT=o.visible}return o.userData._ob}
-function occSet(o,on){o.traverse(m=>{if(!m.isMesh||!m.material)return;const U=m.userData;if(on){if(!U._fm){U._fm=m.material;m.material=m.material.clone();m.material.transparent=true;m.material.depthWrite=false}m.material.opacity=.28}else if(U._fm){m.material.dispose&&m.material.dispose();m.material=U._fm;U._fm=null}})}
+function occSet(o,on){o.traverse(m=>{if(!m.isMesh||!m.material)return;const U=m.userData;if(on){if(!U._fm){U._fm=m.material;m.material=m.material.clone();m.material.skinning=!!U._fm.skinning;m.material.morphTargets=!!U._fm.morphTargets;m.material.transparent=true;m.material.depthWrite=false}m.material.opacity=.28}else if(U._fm){m.material.dispose&&m.material.dispose();m.material=U._fm;U._fm=null}})}
 function occFx(){if(!G||!running)return;const on=isRPG(),me=G.players[G.me]||G.players[0];const now=performance.now();
   if(!on||!me){if(OCC.faded.size){for(const o of OCC.faded)occSet(o,false);OCC.faded.clear()}return}
   if(now-OCC.lt>2000){OCC.lt=now;OCC.list=occCandidates();for(const o of OCC.list)o.userData._ob=null}if(now-OCC.t<120)return;OCC.t=now;
