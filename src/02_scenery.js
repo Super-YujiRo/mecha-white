@@ -135,10 +135,10 @@ function inputVec(i){let x=0,y=0;const two=false;
 
 // ================================================================ toasts, banners, sound
 const tq=[];let toastTimer=0;
-function toast(msg,kind,local){if(tq.length<4)tq.push({msg,kind});if(!local&&NET.mode==='host'&&NET.outT.length<3)NET.outT.push([msg,kind||''])}
+function toast(msg,kind,local){plog('toast '+String(msg).slice(0,60));if(tq.length<4)tq.push({msg,kind});if(!local&&NET.mode==='host'&&NET.outT.length<3)NET.outT.push([msg,kind||''])}
 function tickToast(dt){tickTalk(dt);if(toastTimer>0){toastTimer-=dt;if(toastTimer<=0)$('toast').classList.remove('on')}else toastTimer-=dt;
   if(toastTimer<=-.15&&tq.length){const {msg,kind}=tq.shift();const t=$('toast');t.textContent=msg;t.className='toast '+(kind||'');void t.offsetWidth;t.classList.add('on');toastTimer=1.9}}
-let bnT=null;function banner(sub,main,note,cls,local){if(!local&&NET.mode==='host'&&NET.outB.length<2)NET.outB.push([sub,main,note||'',cls||'']);const b=$('banner');$('bnSub').textContent=sub;$('bnMain').textContent=main;$('bnNote').textContent=note||'';b.className='banner '+(cls||'');b.hidden=true;void b.offsetWidth;b.hidden=false;clearTimeout(bnT);bnT=setTimeout(()=>b.hidden=true,cls==='combo'?1400:2800)}
+let bnT=null;function banner(sub,main,note,cls,local){plog('banner '+sub+'｜'+main);if(!local&&NET.mode==='host'&&NET.outB.length<2)NET.outB.push([sub,main,note||'',cls||'']);const b=$('banner');$('bnSub').textContent=sub;$('bnMain').textContent=main;$('bnNote').textContent=note||'';b.className='banner '+(cls||'');b.hidden=true;void b.offsetWidth;b.hidden=false;clearTimeout(bnT);bnT=setTimeout(()=>b.hidden=true,cls==='combo'?1400:2800)}
 const AC=window.AudioContext||window.webkitAudioContext;let actx=null,muted=false,lastCoin=0,lastShot=0,lastChop=0;
 function audioOn(){if(!actx&&AC){try{actx=new AC()}catch(_){}}if(actx&&actx.state==='suspended')actx.resume()}
 addEventListener('pointerdown',audioOn);addEventListener('keydown',audioOn);

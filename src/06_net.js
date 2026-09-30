@@ -18,9 +18,9 @@ function pjRoomRaw(){return{peers:()=>[...PJ.conns.keys()].filter(k=>{const c=PJ
   onPeers:fn=>{PJ.peerSubs.push(fn)},on:(tp,fn)=>{(PJ.subs[tp]=PJ.subs[tp]||[]).push(fn)},
   emit:(tp,d)=>{for(const c of PJ.conns.values())if(c.open)try{c.send({t:tp,d})}catch(e){}return Promise.resolve()}}}
 const pjPeers=()=>{for(const f of PJ.peerSubs)try{f()}catch(e){}netLine()};
-function pjWire(c){c._seen=performance.now();c.on('open',()=>{c._seen=performance.now();PJ.conns.set(c.peer,c);c.send({p:PJ.me});PJ.state='ok';pjPeers()});
+function pjWire(c){c._seen=performance.now();c.on('open',()=>{plog('net open '+String(c.peer).slice(-6));c._seen=performance.now();PJ.conns.set(c.peer,c);c.send({p:PJ.me});PJ.state='ok';pjPeers()});
   c.on('data',m=>{c._seen=performance.now();if(!m||m.k)return;if(m.p){PJ.pres[c.peer]=m.p;pjPeers()}if(m.t)for(const f of PJ.subs[m.t]||[])f({peer:c.peer,data:m.d,sameTab:false})});
-  const bye=()=>{PJ.conns.delete(c.peer);delete PJ.pres[c.peer];pjPeers()};c.on('close',bye);c.on('error',bye)}
+  const bye=()=>{plog('net close '+String(c.peer).slice(-6));PJ.conns.delete(c.peer);delete PJ.pres[c.peer];pjPeers()};c.on('close',bye);c.on('error',bye)}
 setInterval(()=>{for(const [k,c] of PJ.conns){if(c.open)try{c.send({k:1})}catch(e){}if(performance.now()-(c._seen||0)>9000){try{c.close()}catch(e){}PJ.conns.delete(k);delete PJ.pres[k];pjPeers()}}},2000);
 window.addEventListener('beforeunload',()=>{try{PJ.peer&&PJ.peer.destroy()}catch(e){}});
 function verCheck(pr){if(!pr||!pr.v||pr.v===BUILD||NET._vw===pr.v)return;NET._vw=pr.v;const mine=pr.v<BUILD;const msg=mine?'友達のゲームが古い版です。友達にページを再読み込み（Ctrl+Shift+R）してもらってください':'あなたのゲームが古い版です。ページを再読み込み（Ctrl+Shift+R）してください';toast(msg,'cold',true);setTimeout(()=>{if(running)banner('バージョンが違います',mine?'友達が古い版':'自分が古い版',msg,'area')},1500)}

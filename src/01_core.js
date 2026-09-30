@@ -113,4 +113,4 @@ function blob(r){const m=M_(geo('blob',()=>new T.PlaneGeometry(1,1)),BLOB,false)
 
 
 // ---- crash guard: one broken subsystem must never stop the whole game (it logs once and the rest keeps running)
-const SFE={},ERRLOG=[];function SAFE(n,f){try{return f()}catch(e){const k=n+':'+(e&&e.message);if(!SFE[k]){SFE[k]=1;console.error('['+n+']',e);const t=n+': '+String(e&&e.stack||e).split('\n').slice(0,3).join(' / ');ERRLOG.push(t);window.__lastErr=t;try{if(typeof toast==='function')toast('不具合が起きた部分を飛ばして続けます（'+n+'）','cold',true)}catch(_){}}}}
+const SFE={},ERRLOG=[];function SAFE(n,f){try{return f()}catch(e){const k=n+':'+(e&&e.message);if(!SFE[k]){SFE[k]=1;plogErr(n,e);console.error('['+n+']',e);const t=n+': '+String(e&&e.stack||e).split('\n').slice(0,3).join(' / ');ERRLOG.push(t);window.__lastErr=t;try{if(typeof toast==='function')toast('不具合を飛ばして続けます（'+n+'）。メニュー→プレイログをコピーで送ってね','cold',true)}catch(_){}}}}

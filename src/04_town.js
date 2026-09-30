@@ -149,7 +149,7 @@ const coolMul=()=>DM().cold*(1+(YR()-1)*.18)*(DES()?(isNight()?.4:1.9):(isNight(
 function mult(){return (1+Math.min(2,Math.floor(G.combo/5)*.25))*(G.feverT>0?2:1)}
 
 let CUR_BIO=0;
-function newGame(np,opts){opts=opts||{};CUR_BIO=opts.biome||0;zoneNames();let RS=(opts.seed||((Math.random()*1e9)|0))|0;const SEED0=RS;const srng=()=>{RS=RS+0x6D2B79F5|0;let t=Math.imul(RS^RS>>>15,1|RS);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};const sr=(a,b)=>a+srng()*(b-a);
+function newGame(np,opts){opts=opts||{};plog('newGame players='+np+' '+JSON.stringify(opts).slice(0,120));CUR_BIO=opts.biome||0;zoneNames();let RS=(opts.seed||((Math.random()*1e9)|0))|0;const SEED0=RS;const srng=()=>{RS=RS+0x6D2B79F5|0;let t=Math.imul(RS^RS>>>15,1|RS);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};const sr=(a,b)=>a+srng()*(b-a);
   if(world){scene.remove(world)}if(forest)forest.dispose();psN.clear();psA.clear();
   world=new T.Group();scene.add(world);world.add(makeGround(),makeMountains());
   G={rank:0,year:1,biome:opts.biome||0,diff:opts.diff||0,charOf:opts.chars||[meta.pick||'Rogue_Hooded','Knight'],t:0,DAY:75,day:1,wave:false,waveWarned:0,players:[],floats:[],flying:[],shake:0,paused:false,mission:0,missionCd:0,endless:false,newAch:[],achT:0,wind:0,

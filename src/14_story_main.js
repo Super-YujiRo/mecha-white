@@ -137,7 +137,7 @@ function startGame(){audioOn();
   banner(DES()?'砂漠の町':'今回の町',`${G.mods[0].t}／${G.mods[1].t}`,`◎${G.mods[0].d}　✕${G.mods[1].d}`,'',true);setTimeout(()=>{if(running&&!G.story)toast('目標：町のシンボル像を建てろ','gold',true)},3200);
   if(NET.mode==='host')toast('部屋を作った！ 友達がこのページを開くと参加できる','gold',true);if(NET.mode==='guest')toast('友達の部屋に参加した！','gold',true);if(G.story&&NET.mode!=='guest')storyIntro()}
 function settleShards(cleared){const earnedS=Math.round(Math.max(1,Math.floor(Math.sqrt(Math.max(0,G.earned))/7)+G.day+G.raidWins*2+(G.stats.haul||0)+(cleared?15*YR():0)+(G.yearBonus||0)+(G.secretS||0))*DM().sh),gainS=Math.max(0,earnedS-G.metaGiven);G.metaGiven=earnedS;meta.shards+=gainS;store.set('mw2-meta',meta);return gainS}
-function endGame(cleared,why){if(NET.mode==='host'&&NET.guestPeer){NET.endInfo={c:cleared?1:0,w:why||''};sendSnap()}running=false;for(const j of joys)j.on=false;show('perk',false);
+function endGame(cleared,why){plog('endGame cleared='+cleared+' '+(why||''));if(NET.mode==='host'&&NET.guestPeer){NET.endInfo={c:cleared?1:0,w:why||''};sendSnap()}running=false;for(const j of joys)j.on=false;show('perk',false);
   best={day:Math.max(best.day,G.day),earned:Math.max(best.earned,Math.round(G.earned)),cleared:best.cleared||cleared,area:Math.max(best.area,1+Object.values(G.zones).filter(Boolean).length)};store.set('mw2-best',best);
   if(cleared&&NET.mode!=='guest')meta.diffOpen=Math.max(meta.diffOpen||0,Math.min(2,(G.diff||0)+1));if(cleared&&NET.mode==='guest')NET.yearWait=true;
   $('endTitle').innerHTML=cleared?`${YR()}年目<em>クリア！</em>`:why==='rep'?'お店が<em>閉店…</em>':'町が<em>凍りついた…</em>';
@@ -198,7 +198,7 @@ setTimeout(()=>dbgLine(),0);
 function boot(){gpuWarn();setPlayers(new URLSearchParams(location.search).get('room')?2:1);toTitle();applyGfx(GQ.mode==='auto'?2:GQ.mode);$('loading').hidden=true;if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(G&&G.pads)for(const q of G.pads)q._key=null});requestAnimationFrame(loop)}
 $('loading').textContent='町を組み立てています…';loadKK().catch(e=>{console.warn('assets',e);KK=null;window.__kkErr=String(e&&e.message||e)}).then(()=>{boot();if(!KK){$('credit').textContent='3D素材を読み込めませんでした（'+(window.__kkErr||'ローダーなし')+'）';setTimeout(()=>toast('3D素材を読み込めなかったので簡易表示です','cold',true),800)}});
 let last=performance.now();
-let _errT=0;function loopErr(e){console.error(e);window.__lastErr=String(e&&e.stack||e);const n=performance.now();if(n-_errT>8000){_errT=n;try{toast('エラーが起きたけど続行します：'+String(e&&e.message||e).slice(0,60),'cold',true)}catch(_){}}}
+let _errT=0;function loopErr(e){plogErr('loop',e);console.error(e);window.__lastErr=String(e&&e.stack||e);const n=performance.now();if(n-_errT>8000){_errT=n;try{toast('エラーが起きたけど続行します：'+String(e&&e.message||e).slice(0,60),'cold',true)}catch(_){}}}
 function loop(now){requestAnimationFrame(loop);try{loopBody(now)}catch(e){loopErr(e);try{frame(0)}catch(_){}}}
 function loopBody(now){const dt=Math.min(.05,(now-last)/1000);last=now;
   if(!running&&NET.mode==='guest'&&NET.yearWait)applyInbox();

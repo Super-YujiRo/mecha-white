@@ -1,8 +1,22 @@
 /* めちゃホワイト — built from src/*.js by tools/build.py. Edit the sources, not this file. */
-(()=>{const BUILD='20260930204749';
+(()=>{const BUILD='20261001013016';
 const $=id=>document.getElementById(id);
 if(!window.THREE){$('loading').textContent='3Dの読み込みに失敗しました。再読み込みしてください';return}
 const T=THREE;
+// ================================================================ play log: a rolling record of what happened (actions, places, errors) so a bug report can be traced back
+const PLOG={a:[],t0:performance.now(),n:0,errs:0};try{const o=localStorage.getItem('mw-log');if(o)localStorage.setItem('mw-log-prev',o)}catch(_){}
+function plog(ev){try{const t=((performance.now()-PLOG.t0)/1000).toFixed(1);PLOG.a.push(t+'s '+ev);if(PLOG.a.length>500)PLOG.a.splice(0,PLOG.a.length-500);PLOG.n++}catch(_){}}
+function plogErr(where,e){try{PLOG.errs++;const s=String(e&&e.stack||e).split('\n').slice(0,6).map(x=>x.trim()).join(' <- ');plog('!!ERROR ['+where+'] '+s);plogSave()}catch(_){}}
+function plogText(){let head='めちゃホワイト プレイログ\nbuild '+BUILD+'\n'+(navigator.userAgent||'')+'\n';try{head+=plogState()+'\n'}catch(e){head+='state? '+e+'\n'}
+  return head+'---\n'+PLOG.a.join('\n')}
+function plogSave(){try{localStorage.setItem('mw-log',plogText().slice(-60000))}catch(_){}}
+addEventListener('error',ev=>plogErr('window',ev.error||ev.message));
+addEventListener('unhandledrejection',ev=>plogErr('promise',ev.reason));
+setInterval(plogSave,5000);
+// copy / download helpers shared by the title screen and the in-game menu
+function plogCopy(prev){const t=prev?(localStorage.getItem('mw-log-prev')||'（前回のログはありません）'):plogText();
+  const fallback=()=>{try{const b=new Blob([t],{type:'text/plain'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='mecha-white-log.txt';document.body.appendChild(a);a.click();a.remove()}catch(_){prompt('これをコピーして送ってください',t.slice(-8000))}};
+  try{navigator.clipboard.writeText(t).then(()=>{try{toast('プレイログをコピーしました。チャットに貼り付けて送ってください','gold',true)}catch(_){alert('プレイログをコピーしました')}},fallback)}catch(_){fallback()}}
 // ================================================================ basics
 const WORLD=2400,CX=1200,CY=1200,FR=460,TAU=Math.PI*2,SQ=Math.SQRT1_2;
 const rnd=(a,b)=>a+Math.random()*(b-a);
@@ -118,7 +132,7 @@ function blob(r){const m=M_(geo('blob',()=>new T.PlaneGeometry(1,1)),BLOB,false)
 
 
 // ---- crash guard: one broken subsystem must never stop the whole game (it logs once and the rest keeps running)
-const SFE={},ERRLOG=[];function SAFE(n,f){try{return f()}catch(e){const k=n+':'+(e&&e.message);if(!SFE[k]){SFE[k]=1;console.error('['+n+']',e);const t=n+': '+String(e&&e.stack||e).split('\n').slice(0,3).join(' / ');ERRLOG.push(t);window.__lastErr=t;try{if(typeof toast==='function')toast('不具合が起きた部分を飛ばして続けます（'+n+'）','cold',true)}catch(_){}}}}
+const SFE={},ERRLOG=[];function SAFE(n,f){try{return f()}catch(e){const k=n+':'+(e&&e.message);if(!SFE[k]){SFE[k]=1;plogErr(n,e);console.error('['+n+']',e);const t=n+': '+String(e&&e.stack||e).split('\n').slice(0,3).join(' / ');ERRLOG.push(t);window.__lastErr=t;try{if(typeof toast==='function')toast('不具合を飛ばして続けます（'+n+'）。メニュー→プレイログをコピーで送ってね','cold',true)}catch(_){}}}}
 // ================================================================ ground, scenery
 function paintGround(g,S){
   const k=S/WORLD;g.save();g.scale(k,k);
@@ -256,10 +270,10 @@ function inputVec(i){let x=0,y=0;const two=false;
 
 // ================================================================ toasts, banners, sound
 const tq=[];let toastTimer=0;
-function toast(msg,kind,local){if(tq.length<4)tq.push({msg,kind});if(!local&&NET.mode==='host'&&NET.outT.length<3)NET.outT.push([msg,kind||''])}
+function toast(msg,kind,local){plog('toast '+String(msg).slice(0,60));if(tq.length<4)tq.push({msg,kind});if(!local&&NET.mode==='host'&&NET.outT.length<3)NET.outT.push([msg,kind||''])}
 function tickToast(dt){tickTalk(dt);if(toastTimer>0){toastTimer-=dt;if(toastTimer<=0)$('toast').classList.remove('on')}else toastTimer-=dt;
   if(toastTimer<=-.15&&tq.length){const {msg,kind}=tq.shift();const t=$('toast');t.textContent=msg;t.className='toast '+(kind||'');void t.offsetWidth;t.classList.add('on');toastTimer=1.9}}
-let bnT=null;function banner(sub,main,note,cls,local){if(!local&&NET.mode==='host'&&NET.outB.length<2)NET.outB.push([sub,main,note||'',cls||'']);const b=$('banner');$('bnSub').textContent=sub;$('bnMain').textContent=main;$('bnNote').textContent=note||'';b.className='banner '+(cls||'');b.hidden=true;void b.offsetWidth;b.hidden=false;clearTimeout(bnT);bnT=setTimeout(()=>b.hidden=true,cls==='combo'?1400:2800)}
+let bnT=null;function banner(sub,main,note,cls,local){plog('banner '+sub+'｜'+main);if(!local&&NET.mode==='host'&&NET.outB.length<2)NET.outB.push([sub,main,note||'',cls||'']);const b=$('banner');$('bnSub').textContent=sub;$('bnMain').textContent=main;$('bnNote').textContent=note||'';b.className='banner '+(cls||'');b.hidden=true;void b.offsetWidth;b.hidden=false;clearTimeout(bnT);bnT=setTimeout(()=>b.hidden=true,cls==='combo'?1400:2800)}
 const AC=window.AudioContext||window.webkitAudioContext;let actx=null,muted=false,lastCoin=0,lastShot=0,lastChop=0;
 function audioOn(){if(!actx&&AC){try{actx=new AC()}catch(_){}}if(actx&&actx.state==='suspended')actx.resume()}
 addEventListener('pointerdown',audioOn);addEventListener('keydown',audioOn);
@@ -831,7 +845,7 @@ const coolMul=()=>DM().cold*(1+(YR()-1)*.18)*(DES()?(isNight()?.4:1.9):(isNight(
 function mult(){return (1+Math.min(2,Math.floor(G.combo/5)*.25))*(G.feverT>0?2:1)}
 
 let CUR_BIO=0;
-function newGame(np,opts){opts=opts||{};CUR_BIO=opts.biome||0;zoneNames();let RS=(opts.seed||((Math.random()*1e9)|0))|0;const SEED0=RS;const srng=()=>{RS=RS+0x6D2B79F5|0;let t=Math.imul(RS^RS>>>15,1|RS);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};const sr=(a,b)=>a+srng()*(b-a);
+function newGame(np,opts){opts=opts||{};plog('newGame players='+np+' '+JSON.stringify(opts).slice(0,120));CUR_BIO=opts.biome||0;zoneNames();let RS=(opts.seed||((Math.random()*1e9)|0))|0;const SEED0=RS;const srng=()=>{RS=RS+0x6D2B79F5|0;let t=Math.imul(RS^RS>>>15,1|RS);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};const sr=(a,b)=>a+srng()*(b-a);
   if(world){scene.remove(world)}if(forest)forest.dispose();psN.clear();psA.clear();
   world=new T.Group();scene.add(world);world.add(makeGround(),makeMountains());
   G={rank:0,year:1,biome:opts.biome||0,diff:opts.diff||0,charOf:opts.chars||[meta.pick||'Rogue_Hooded','Knight'],t:0,DAY:75,day:1,wave:false,waveWarned:0,players:[],floats:[],flying:[],shake:0,paused:false,mission:0,missionCd:0,endless:false,newAch:[],achT:0,wind:0,
@@ -1170,9 +1184,9 @@ function pjRoomRaw(){return{peers:()=>[...PJ.conns.keys()].filter(k=>{const c=PJ
   onPeers:fn=>{PJ.peerSubs.push(fn)},on:(tp,fn)=>{(PJ.subs[tp]=PJ.subs[tp]||[]).push(fn)},
   emit:(tp,d)=>{for(const c of PJ.conns.values())if(c.open)try{c.send({t:tp,d})}catch(e){}return Promise.resolve()}}}
 const pjPeers=()=>{for(const f of PJ.peerSubs)try{f()}catch(e){}netLine()};
-function pjWire(c){c._seen=performance.now();c.on('open',()=>{c._seen=performance.now();PJ.conns.set(c.peer,c);c.send({p:PJ.me});PJ.state='ok';pjPeers()});
+function pjWire(c){c._seen=performance.now();c.on('open',()=>{plog('net open '+String(c.peer).slice(-6));c._seen=performance.now();PJ.conns.set(c.peer,c);c.send({p:PJ.me});PJ.state='ok';pjPeers()});
   c.on('data',m=>{c._seen=performance.now();if(!m||m.k)return;if(m.p){PJ.pres[c.peer]=m.p;pjPeers()}if(m.t)for(const f of PJ.subs[m.t]||[])f({peer:c.peer,data:m.d,sameTab:false})});
-  const bye=()=>{PJ.conns.delete(c.peer);delete PJ.pres[c.peer];pjPeers()};c.on('close',bye);c.on('error',bye)}
+  const bye=()=>{plog('net close '+String(c.peer).slice(-6));PJ.conns.delete(c.peer);delete PJ.pres[c.peer];pjPeers()};c.on('close',bye);c.on('error',bye)}
 setInterval(()=>{for(const [k,c] of PJ.conns){if(c.open)try{c.send({k:1})}catch(e){}if(performance.now()-(c._seen||0)>9000){try{c.close()}catch(e){}PJ.conns.delete(k);delete PJ.pres[k];pjPeers()}}},2000);
 window.addEventListener('beforeunload',()=>{try{PJ.peer&&PJ.peer.destroy()}catch(e){}});
 function verCheck(pr){if(!pr||!pr.v||pr.v===BUILD||NET._vw===pr.v)return;NET._vw=pr.v;const mine=pr.v<BUILD;const msg=mine?'友達のゲームが古い版です。友達にページを再読み込み（Ctrl+Shift+R）してもらってください':'あなたのゲームが古い版です。ページを再読み込み（Ctrl+Shift+R）してください';toast(msg,'cold',true);setTimeout(()=>{if(running)banner('バージョンが違います',mine?'友達が古い版':'自分が古い版',msg,'area')},1500)}
@@ -2232,7 +2246,7 @@ function updateQuests(dt){if(!isRPG())return;const S=G.story;S.q=S.q||{};
       else{const p=G.players[q.f];if(!p||p.down>0){q.f=null}else{const d=dist(p.x,p.y,q.x,q.y);if(d>45){const k2=Math.min(d-40,230*dt);q.x+=(p.x-q.x)/d*k2;q.y+=(p.y-q.y)/d*k2}if(dist(q.x,q.y,CX,CY)<FR-30){q.st=2;const n=NPCS.snow.find(n=>n.id===Q.npc);const np=npcPos(n);q.x=np.x+30;q.y=np.y+20;banner('町に着いた！',Q.nm,`${npcName(Q.npc)}に知らせよう`,'area');SFX.rare()}}}}
     else if(Q.type==='count'){if(Q.chk(q)>=Q.n){q.st=2;banner('依頼達成！',Q.t,`${npcName(Q.npc)}に報告しよう`,'area');SFX.rare()}}
     else if(Q.type==='build'){if(Q.chk()>=Q.n){q.st=2;banner('依頼達成！',Q.t,`${npcName(Q.npc)}に報告しよう`,'area');SFX.rare()}}}}
-function doAct(p,type,id){if(!isRPG()||!p)return;const S=G.story;S.q=S.q||{};if(wpAct(p,type,id)||abyAct(p,type,id)||mysteryAct(p,type,id)||advAct(p,type,id)||cookAct(p,type,id)||affAct(p,type,id))return;
+function doAct(p,type,id){plog('act p'+G.players.indexOf(p)+' '+type+' '+String(id).slice(0,40));if(!isRPG()||!p)return;const S=G.story;S.q=S.q||{};if(wpAct(p,type,id)||abyAct(p,type,id)||mysteryAct(p,type,id)||advAct(p,type,id)||cookAct(p,type,id)||affAct(p,type,id))return;
   if(type==='craft'){const R=RECIPES[id];if(!R)return;const why=craftWhy(p,R);if(why){float(p.x,p.y,90,why,'red',true);return}for(const k in R.m)p.mats[k]-=R.m[k];for(let i=0;i<(R.log||0);i++)take(p,'log');G.cash-=R.cash||0;giveItem(p,R.id);lifeXp(p,R.life||'craft',15);cnt(p,R.life==='smith'?'sm':'cr_eq');cnt(p,'mk_'+R.id);gainRX(p,20);banner('装備を作った！',ITEMS[R.id].n,itemDesc(ITEMS[R.id]),'r-SSR');SFX.ssr();burst(WB.x,WB.y,40,30,{c:['#ffd23f','#ffffff'],s0:60,s1:220,u0:150,u1:320,l0:.6,l1:1.1,add:true});return}
   if(type==='eq'){const it=ITEMS[id];if(!it||!(p.items||[]).includes(id))return;if(!classOK(p,id)){toast(`${ITEMS[id].n}は${WTN[wType(id)]}。今の職業（${CLS[clsKey(p)].n}）では使えない`,'cold',true);return}p.eq=p.eq||{};p.eq[it.s]=p.eq[it.s]===id?null:id;return}
   const Q=QUESTS[id];if(!Q)return;let q=S.q[id];
@@ -2249,7 +2263,7 @@ function openTalk(v){{const mt=advTalk(v)||mysteryTalk(v);if(mt){Object.assign(D
   else if(q.st===2){pages=Q.done.slice();ch=[['受け取る',()=>sendAct('claim',k)]]}
   else{pages=[Q.act+(Q.type==='bring'?`（${q.p||0}/${Q.n}）`:Q.type==='build'?`（${Math.min(Q.chk(),Q.n)}/${Q.n}）`:Q.type==='count'?`（${Math.min(Q.chk(q),Q.n)}/${Q.n}）`:'')];if(Q.type==='bring'&&has(me,Q.k))ch=[[`渡す（持っている${me.bag.filter(x=>x===Q.k).length}個）`,()=>sendAct('give',k)],['あとで',null]]}
   Object.assign(DLG,{open:true,npc:v,pages,i:0,ch});if(NET.mode==='solo')G.paused=true;for(const j of joys)j.on=false;drawDlg();SFX.pop&&SFX.pop()}
-function drawDlg(){$('dlg').hidden=!DLG.open;if(!DLG.open)return;$('dlgWho').textContent=DLG.npc.n.n;$('dlgTxt').textContent=DLG.pages[DLG.i];const last=DLG.i>=DLG.pages.length-1,box=$('dlgCh');box.innerHTML='';
+function drawDlg(){if(DLG.open&&DLG._pl!==DLG.pages)(DLG._pl=DLG.pages,plog('dialog '+((DLG.npc&&DLG.npc.n&&DLG.npc.n.n)||'')));$('dlg').hidden=!DLG.open;if(!DLG.open)return;$('dlgWho').textContent=DLG.npc.n.n;$('dlgTxt').textContent=DLG.pages[DLG.i];const last=DLG.i>=DLG.pages.length-1,box=$('dlgCh');box.innerHTML='';
   {let x=$('dlgX');if(!x){x=document.createElement('button');x.id='dlgX';x.textContent='✕';x.title='閉じる（Esc）';x.addEventListener('click',e=>{e.stopPropagation();closeTalk()});$('dlg').appendChild(x)}}box.classList.toggle('many',!!(DLG.ch&&DLG.ch.length>5));
   if(last&&DLG.ch){DLG.ch.forEach(([t,fn],i)=>{const b=document.createElement('button');const nm=!fn&&i===DLG.ch.length-1?'Esc':i<9?String(i+1):'';b.textContent=nm?`${nm}. ${t}`:t;if(!fn)b.className='no';b.addEventListener('click',e=>{e.stopPropagation();closeTalk();if(fn)fn()});box.appendChild(b)});$('dlgHint').textContent='数字キーかクリックで選ぶ・Escで閉じる'}else $('dlgHint').textContent=last?'Eキー / クリックで閉じる':'Eキー / クリックで次へ'}
 function dlgKey(code){const last=DLG.i>=DLG.pages.length-1;if(last&&DLG.ch){const i=/^Digit/.test(code)?(+code.slice(5)-1):(code==='KeyE'||code==='Enter'||code==='Space')&&DLG.ch.length<3?0:-1;if(i<0||!DLG.ch[i])return;const fn=DLG.ch[i][1];closeTalk();if(fn)fn();return}if(last){closeTalk();return}DLG.i++;drawDlg()}
@@ -3162,9 +3176,15 @@ function makeFlame(r,h,col){const g=new T.Group();const outer=M_(geo('flo',()=>n
   g.add(outer,inner,core,halo);g.userData.fl={outer,inner,r,h,ph:Math.random()*9};FLAMES.push(g);return g}
 function flameTick(){const t=performance.now()/1000;for(let i=FLAMES.length-1;i>=0;i--){const g=FLAMES[i];if(!g.parent){FLAMES.splice(i,1);continue}if(!g.visible)continue;const F=g.userData.fl,k=1+Math.sin(t*13+F.ph)*.09+Math.sin(t*23+F.ph*2)*.06;F.outer.scale.set(F.r*(1.05-.05*k),F.h*k,F.r*(1.05-.05*k));F.inner.scale.set(F.r*.6,F.h*.72*(2-k),F.r*.6);F.outer.rotation.y=t*2+F.ph;
   if(Math.random()<.12){const p=new T.Vector3();g.getWorldPosition(p);psA.emit({x:p.x+rnd(-F.r*.4,F.r*.4),y:p.y+F.h*.7,z:p.z+rnd(-F.r*.4,F.r*.4),vx:rnd(-6,6),vy:rnd(30,60),vz:rnd(-6,6),g:-10,life:.6,max:.6,r:rnd(2,3.5),c:C(Math.random()<.5?'#ffb347':'#ffe08a'),air:true,fade:.3})}}}
-// error log: a menu button copies what went wrong, so it can be sent to fix it
-setInterval(()=>{const b=$('errBtn');if(b)b.hidden=!ERRLOG.length},1500);
-$('errBtn').addEventListener('click',e=>{e.stopPropagation();const t=`めちゃホワイト ${BUILD}\n`+ERRLOG.join('\n');try{navigator.clipboard.writeText(t).then(()=>toast('不具合の記録をコピーしました。チャットに貼り付けて送ってください','gold',true),()=>prompt('これをコピーして送ってください',t))}catch(_){prompt('これをコピーして送ってください',t)}});
+// ---- play log: state summary, periodic snapshots, key presses, buttons
+function plogState(){if(!G)return 'no game';const me=G.players[G.me]||G.players[0],S=G.story;const D=me&&typeof dgAt==='function'?dgAt(me.x,me.y):null;
+  return `running=${running} net=${NET.mode} pl=${G.players.length} ${S?`story ch${S.ch} step${S.step}`:'survival'} biome=${DES()?'desert':'snow'} day=${G.day} lv=${G.level} fuel=${Math.round(G.fuel)} gfx=${GQ.tier}/${GQ.fps||'?'}fps`+
+    (me?` me=(${me.x|0},${me.y|0}) hp=${Math.round(me.hp)} warm=${Math.round(me.warm)} down=${me.down>0?1:0} bag=${me.bag.length} eq=${me.eq?me.eq.w:''} cls=${clsKey(me)}`:'')+(D?` dungeon=${D.id}`:'')+(me&&inAby(me.x)?` abyss=B${G.aby&&G.aby.fl}`:'')+` bears=${G.bears.filter(b=>!b.dead).length} paused=${!!G.paused} dlg=${DLG.open?1:0}`}
+setInterval(()=>{if(running&&G)plog('state '+plogState())},5000);
+addEventListener('keydown',e=>{if(e.repeat||!running)return;if(/^(KeyW|KeyA|KeyS|KeyD|Arrow)/.test(e.code))return;plog('key '+e.code)},true);
+addEventListener('mousedown',e=>{if(running&&e.button===2)plog('rclick')},true);
+$('logBtn').addEventListener('click',e=>{e.stopPropagation();plogCopy(false)});
+$('logPrev').addEventListener('click',e=>{e.preventDefault();plogCopy(true)});
 // ================================================================ campfire spots in dungeons: light them with 3 logs, warm up there, and come back there instead of losing your bag
 const CF_LOGS=3;
 const CAMPFIRES=[
@@ -3343,7 +3363,7 @@ function startGame(){audioOn();
   banner(DES()?'砂漠の町':'今回の町',`${G.mods[0].t}／${G.mods[1].t}`,`◎${G.mods[0].d}　✕${G.mods[1].d}`,'',true);setTimeout(()=>{if(running&&!G.story)toast('目標：町のシンボル像を建てろ','gold',true)},3200);
   if(NET.mode==='host')toast('部屋を作った！ 友達がこのページを開くと参加できる','gold',true);if(NET.mode==='guest')toast('友達の部屋に参加した！','gold',true);if(G.story&&NET.mode!=='guest')storyIntro()}
 function settleShards(cleared){const earnedS=Math.round(Math.max(1,Math.floor(Math.sqrt(Math.max(0,G.earned))/7)+G.day+G.raidWins*2+(G.stats.haul||0)+(cleared?15*YR():0)+(G.yearBonus||0)+(G.secretS||0))*DM().sh),gainS=Math.max(0,earnedS-G.metaGiven);G.metaGiven=earnedS;meta.shards+=gainS;store.set('mw2-meta',meta);return gainS}
-function endGame(cleared,why){if(NET.mode==='host'&&NET.guestPeer){NET.endInfo={c:cleared?1:0,w:why||''};sendSnap()}running=false;for(const j of joys)j.on=false;show('perk',false);
+function endGame(cleared,why){plog('endGame cleared='+cleared+' '+(why||''));if(NET.mode==='host'&&NET.guestPeer){NET.endInfo={c:cleared?1:0,w:why||''};sendSnap()}running=false;for(const j of joys)j.on=false;show('perk',false);
   best={day:Math.max(best.day,G.day),earned:Math.max(best.earned,Math.round(G.earned)),cleared:best.cleared||cleared,area:Math.max(best.area,1+Object.values(G.zones).filter(Boolean).length)};store.set('mw2-best',best);
   if(cleared&&NET.mode!=='guest')meta.diffOpen=Math.max(meta.diffOpen||0,Math.min(2,(G.diff||0)+1));if(cleared&&NET.mode==='guest')NET.yearWait=true;
   $('endTitle').innerHTML=cleared?`${YR()}年目<em>クリア！</em>`:why==='rep'?'お店が<em>閉店…</em>':'町が<em>凍りついた…</em>';
@@ -3404,7 +3424,7 @@ setTimeout(()=>dbgLine(),0);
 function boot(){gpuWarn();setPlayers(new URLSearchParams(location.search).get('room')?2:1);toTitle();applyGfx(GQ.mode==='auto'?2:GQ.mode);$('loading').hidden=true;if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(G&&G.pads)for(const q of G.pads)q._key=null});requestAnimationFrame(loop)}
 $('loading').textContent='町を組み立てています…';loadKK().catch(e=>{console.warn('assets',e);KK=null;window.__kkErr=String(e&&e.message||e)}).then(()=>{boot();if(!KK){$('credit').textContent='3D素材を読み込めませんでした（'+(window.__kkErr||'ローダーなし')+'）';setTimeout(()=>toast('3D素材を読み込めなかったので簡易表示です','cold',true),800)}});
 let last=performance.now();
-let _errT=0;function loopErr(e){console.error(e);window.__lastErr=String(e&&e.stack||e);const n=performance.now();if(n-_errT>8000){_errT=n;try{toast('エラーが起きたけど続行します：'+String(e&&e.message||e).slice(0,60),'cold',true)}catch(_){}}}
+let _errT=0;function loopErr(e){plogErr('loop',e);console.error(e);window.__lastErr=String(e&&e.stack||e);const n=performance.now();if(n-_errT>8000){_errT=n;try{toast('エラーが起きたけど続行します：'+String(e&&e.message||e).slice(0,60),'cold',true)}catch(_){}}}
 function loop(now){requestAnimationFrame(loop);try{loopBody(now)}catch(e){loopErr(e);try{frame(0)}catch(_){}}}
 function loopBody(now){const dt=Math.min(.05,(now-last)/1000);last=now;
   if(!running&&NET.mode==='guest'&&NET.yearWait)applyInbox();

@@ -95,6 +95,12 @@ function makeFlame(r,h,col){const g=new T.Group();const outer=M_(geo('flo',()=>n
   g.add(outer,inner,core,halo);g.userData.fl={outer,inner,r,h,ph:Math.random()*9};FLAMES.push(g);return g}
 function flameTick(){const t=performance.now()/1000;for(let i=FLAMES.length-1;i>=0;i--){const g=FLAMES[i];if(!g.parent){FLAMES.splice(i,1);continue}if(!g.visible)continue;const F=g.userData.fl,k=1+Math.sin(t*13+F.ph)*.09+Math.sin(t*23+F.ph*2)*.06;F.outer.scale.set(F.r*(1.05-.05*k),F.h*k,F.r*(1.05-.05*k));F.inner.scale.set(F.r*.6,F.h*.72*(2-k),F.r*.6);F.outer.rotation.y=t*2+F.ph;
   if(Math.random()<.12){const p=new T.Vector3();g.getWorldPosition(p);psA.emit({x:p.x+rnd(-F.r*.4,F.r*.4),y:p.y+F.h*.7,z:p.z+rnd(-F.r*.4,F.r*.4),vx:rnd(-6,6),vy:rnd(30,60),vz:rnd(-6,6),g:-10,life:.6,max:.6,r:rnd(2,3.5),c:C(Math.random()<.5?'#ffb347':'#ffe08a'),air:true,fade:.3})}}}
-// error log: a menu button copies what went wrong, so it can be sent to fix it
-setInterval(()=>{const b=$('errBtn');if(b)b.hidden=!ERRLOG.length},1500);
-$('errBtn').addEventListener('click',e=>{e.stopPropagation();const t=`めちゃホワイト ${BUILD}\n`+ERRLOG.join('\n');try{navigator.clipboard.writeText(t).then(()=>toast('不具合の記録をコピーしました。チャットに貼り付けて送ってください','gold',true),()=>prompt('これをコピーして送ってください',t))}catch(_){prompt('これをコピーして送ってください',t)}});
+// ---- play log: state summary, periodic snapshots, key presses, buttons
+function plogState(){if(!G)return 'no game';const me=G.players[G.me]||G.players[0],S=G.story;const D=me&&typeof dgAt==='function'?dgAt(me.x,me.y):null;
+  return `running=${running} net=${NET.mode} pl=${G.players.length} ${S?`story ch${S.ch} step${S.step}`:'survival'} biome=${DES()?'desert':'snow'} day=${G.day} lv=${G.level} fuel=${Math.round(G.fuel)} gfx=${GQ.tier}/${GQ.fps||'?'}fps`+
+    (me?` me=(${me.x|0},${me.y|0}) hp=${Math.round(me.hp)} warm=${Math.round(me.warm)} down=${me.down>0?1:0} bag=${me.bag.length} eq=${me.eq?me.eq.w:''} cls=${clsKey(me)}`:'')+(D?` dungeon=${D.id}`:'')+(me&&inAby(me.x)?` abyss=B${G.aby&&G.aby.fl}`:'')+` bears=${G.bears.filter(b=>!b.dead).length} paused=${!!G.paused} dlg=${DLG.open?1:0}`}
+setInterval(()=>{if(running&&G)plog('state '+plogState())},5000);
+addEventListener('keydown',e=>{if(e.repeat||!running)return;if(/^(KeyW|KeyA|KeyS|KeyD|Arrow)/.test(e.code))return;plog('key '+e.code)},true);
+addEventListener('mousedown',e=>{if(running&&e.button===2)plog('rclick')},true);
+$('logBtn').addEventListener('click',e=>{e.stopPropagation();plogCopy(false)});
+$('logPrev').addEventListener('click',e=>{e.preventDefault();plogCopy(true)});
