@@ -1,5 +1,5 @@
 /* めちゃホワイト — built from src/*.js by tools/build.py. Edit the sources, not this file. */
-(()=>{const BUILD='20260930020154';
+(()=>{const BUILD='20260930132747';
 const $=id=>document.getElementById(id);
 if(!window.THREE){$('loading').textContent='3Dの読み込みに失敗しました。再読み込みしてください';return}
 const T=THREE;
@@ -116,6 +116,9 @@ function inkOutline(root){const list=[];root.traverse(o=>{if(o.isMesh&&o.castSha
 function noShadow(g){g.traverse(o=>{if(o.isMesh)o.castShadow=false});return g}
 function blob(r){const m=M_(geo('blob',()=>new T.PlaneGeometry(1,1)),BLOB,false);m.rotation.x=-Math.PI/2;m.scale.set(r*2,r*2,1);m.position.y=.4;m.renderOrder=1;return m}
 
+
+// ---- crash guard: one broken subsystem must never stop the whole game (it logs once and the rest keeps running)
+const SFE={},ERRLOG=[];function SAFE(n,f){try{return f()}catch(e){const k=n+':'+(e&&e.message);if(!SFE[k]){SFE[k]=1;console.error('['+n+']',e);const t=n+': '+String(e&&e.stack||e).split('\n').slice(0,3).join(' / ');ERRLOG.push(t);window.__lastErr=t;try{if(typeof toast==='function')toast('不具合が起きた部分を飛ばして続けます（'+n+'）','cold',true)}catch(_){}}}}
 // ================================================================ ground, scenery
 function paintGround(g,S){
   const k=S/WORLD;g.save();g.scale(k,k);
@@ -1315,9 +1318,9 @@ function update(dt){
   if(G.fuel<=0&&!G.outWarned){G.outWarned=true;banner(DES()?'井戸が干上がった！':'かまどの火が消えた！',DES()?'町の人が倒れていく':'町の人が凍っていく',DES()?'湧き水をくんで井戸を満たせ。倒れた町人が5人でゲームオーバー':'薪をくべて火を戻せ。凍った町人が5人でゲームオーバー','cold');SFX.wave()}if(G.fuel>5)G.outWarned=false;
   // stations frozen state
   for(const id in G.stations){const st=G.stations[id];const d=dist(st.def.conv.x,st.def.conv.y,CX,CY);const fz=st.open&&d>R;if(fz&&!st.frozen){toast(`${st.def.name}が凍った！ かまどを強化・燃料を`,'cold')}st.frozen=fz}
-  updateTrees(dt);updateBears(dt);updatePickups(dt);updateSecrets(dt);
-  if(!adv){updateWoodpile(dt);updateRaid(dt);tickTowers(dt,true);updateHauls(dt);updateWorkers(dt);updateStations(dt);updateSurvivors(dt,R);updateMilitia(dt);updateSpa(dt);updateHoles(dt);updateRescue(dt);updateTax(dt);updateRoad(dt);updateCaravan(dt);checkMission(dt);updateDrifts(dt);updateFireside(dt)}
-  updateStory(dt);updateCraft(dt);updateQuests(dt);updateRankObj(dt);updateCave(dt);updateChallenges();G.achT-=dt;if(G.achT<=0){G.achT=.5;checkAch()}
+  SAFE('updateTrees',()=>updateTrees(dt));SAFE('updateBears',()=>updateBears(dt));SAFE('updatePickups',()=>updatePickups(dt));SAFE('updateSecrets',()=>updateSecrets(dt));
+  if(!adv){SAFE('updateWoodpile',()=>updateWoodpile(dt));SAFE('updateRaid',()=>updateRaid(dt));SAFE('tickTowers',()=>tickTowers(dt,true));SAFE('updateHauls',()=>updateHauls(dt));SAFE('updateWorkers',()=>updateWorkers(dt));SAFE('updateStations',()=>updateStations(dt));SAFE('updateSurvivors',()=>updateSurvivors(dt,R));SAFE('updateMilitia',()=>updateMilitia(dt));SAFE('updateSpa',()=>updateSpa(dt));SAFE('updateHoles',()=>updateHoles(dt));SAFE('updateRescue',()=>updateRescue(dt));SAFE('updateTax',()=>updateTax(dt));SAFE('updateRoad',()=>updateRoad(dt));SAFE('updateCaravan',()=>updateCaravan(dt));SAFE('checkMission',()=>checkMission(dt));SAFE('updateDrifts',()=>updateDrifts(dt));updateFireside(dt)}
+  SAFE('updateStory',()=>updateStory(dt));SAFE('updateCraft',()=>updateCraft(dt));SAFE('updateQuests',()=>updateQuests(dt));SAFE('updateRankObj',()=>updateRankObj(dt));SAFE('updateCave',()=>updateCave(dt));SAFE('updateChallenges',()=>updateChallenges());G.achT-=dt;if(G.achT<=0){G.achT=.5;checkAch()}
   if(G.pendingLv>0&&!G.paused&&!adv)openPerk();
   if(G.frozen>=5&&!G.endless&&!adv)endGame(false,'freeze');
 }
@@ -1944,7 +1947,7 @@ function frame(dt){hideIdle();monBar();frozenFx();vigFx();hideIdleFx(dt);
     const top=150,m=44,mx=86,on=!behind&&sx>m&&sx<W-m&&sy>top&&sy<H-90;if(on)el.hidden=true;else{el.hidden=false;const cx=W/2,cy=(top+H-90)/2;let dx=sx-cx,dy=sy-cy;const k=Math.min((W/2-mx)/Math.abs(dx||1e-3),((H-90-top)/2)/Math.abs(dy||1e-3));const ex=cx+dx*Math.min(1,k),ey=cy+dy*Math.min(1,k);
       const d=Math.round(dist(gp.x,gp.y,R.x,R.y)/10);el.style.transform=`translate(${ex|0}px,${ey|0}px) translate(-50%,-50%)`;el.firstChild.style.transform=`rotate(${Math.atan2(dy,dx)+Math.PI/2}rad)`;$('sosTxt').textContent=`SOS ${Math.ceil(R.t)}秒・${d}m`}}else el.hidden=true}
   {const _gt=running?(coldT||(G.fuel<25&&!G.raid.on?(has(gp,DES()?'water':'log')?{x:CX,y:CY,h:110}:(DES()?freeHole(gp):nearestTree(gp))):null)||rescueT(gp)||storyT(gp)||(MISSIONS[G.mission]?MISSIONS[G.mission].tg(gp):flow(gp))):null;const _g2=(gp&&inAby(gp.x))?null:_gt;G._gt=_g2;guide.set(_g2,gp,G.t)}
-  storyVis();warnFx();driftFx();fireFx();npcFx();rankFx();caveFx();pzFx();heart4Fx();advFx();occFx();survDesertFx();extrasFx();rebuildFx();wpFx();abyFx();storyPolish();cullWorld();if(composer)composer.render();else renderer.render(scene,camera);endLabels();
+  SAFE('storyVis',storyVis);SAFE('warnFx',warnFx);SAFE('driftFx',driftFx);SAFE('fireFx',fireFx);SAFE('npcFx',npcFx);SAFE('rankFx',rankFx);SAFE('caveFx',caveFx);SAFE('pzFx',pzFx);SAFE('heart4Fx',heart4Fx);SAFE('advFx',advFx);SAFE('occFx',occFx);SAFE('survDesertFx',survDesertFx);SAFE('extrasFx',extrasFx);SAFE('rebuildFx',rebuildFx);SAFE('wpFx',wpFx);SAFE('abyFx',abyFx);SAFE('storyPolish',storyPolish);SAFE('cullWorld',cullWorld);if(composer)composer.render();else renderer.render(scene,camera);endLabels();
   joys.forEach((j,i)=>{const el=$('joy'+i);if(!j.on){el.hidden=true;return}el.hidden=false;el.style.left=j.ox+'px';el.style.top=j.oy+'px';const dx=j.x-j.ox,dy=j.y-j.oy,m=Math.hypot(dx,dy),k=m>50?50/m:1;el.firstChild.style.transform=`translate(${dx*k}px,${dy*k}px)`;el.firstChild.style.background=nPlayers===2?HERO[i].tag:'#fff'});
 }
 // ================================================================ HUD
@@ -3158,6 +3161,9 @@ function makeFlame(r,h,col){const g=new T.Group();const outer=M_(geo('flo',()=>n
   g.add(outer,inner,core,halo);g.userData.fl={outer,inner,r,h,ph:Math.random()*9};FLAMES.push(g);return g}
 function flameTick(){const t=performance.now()/1000;for(let i=FLAMES.length-1;i>=0;i--){const g=FLAMES[i];if(!g.parent){FLAMES.splice(i,1);continue}if(!g.visible)continue;const F=g.userData.fl,k=1+Math.sin(t*13+F.ph)*.09+Math.sin(t*23+F.ph*2)*.06;F.outer.scale.set(F.r*(1.05-.05*k),F.h*k,F.r*(1.05-.05*k));F.inner.scale.set(F.r*.6,F.h*.72*(2-k),F.r*.6);F.outer.rotation.y=t*2+F.ph;
   if(Math.random()<.12){const p=new T.Vector3();g.getWorldPosition(p);psA.emit({x:p.x+rnd(-F.r*.4,F.r*.4),y:p.y+F.h*.7,z:p.z+rnd(-F.r*.4,F.r*.4),vx:rnd(-6,6),vy:rnd(30,60),vz:rnd(-6,6),g:-10,life:.6,max:.6,r:rnd(2,3.5),c:C(Math.random()<.5?'#ffb347':'#ffe08a'),air:true,fade:.3})}}}
+// error log: a menu button copies what went wrong, so it can be sent to fix it
+setInterval(()=>{const b=$('errBtn');if(b)b.hidden=!ERRLOG.length},1500);
+$('errBtn').addEventListener('click',e=>{e.stopPropagation();const t=`めちゃホワイト ${BUILD}\n`+ERRLOG.join('\n');try{navigator.clipboard.writeText(t).then(()=>toast('不具合の記録をコピーしました。チャットに貼り付けて送ってください','gold',true),()=>prompt('これをコピーして送ってください',t))}catch(_){prompt('これをコピーして送ってください',t)}});
 // ================================================================ story mode (chapters + morning autosave)
 var gameMode=store.get('mw-mode','story');var SAVE_K='mw-story1';
 var CH={1:{n:'第1章',t:'ホワイトアウト',play:true,open:['暦の上では、もう夏至を過ぎた。','それなのに、この町の雪は\n一日もやんだことがない。','吹雪は家々を押しつぶし、\n人々は散り散りになった。','残っていたのは、村長オルガと、\n消えかけたひとつのかまどだけ――','瓦礫を片付け、町を建て直し、\nもう一度みんなを呼び戻そう。'],sub:'瓦礫を片付けて町を建て直し、散り散りになった仲間を呼び戻せ（Jキー：手がかり帳）',
@@ -3263,7 +3269,7 @@ function updateStory(dt){const S=G.story;if(!S)return;S.t=(S.t||0)+dt;const ph=(
     if(G.zones.C)beat('zC',()=>say('斥候カイ','奥地の森で妙な足跡を見た。家ほどもある…ただの狼じゃない'));
     if(G.zones.D)beat('zD',()=>say('村長オルガ','温泉が戻った！ これでみんな凍えずにすむ'));
     if(G.monument)beat('mon',()=>{say('村長オルガ','像ができた…町の灯りがよみがえったね');say('斥候カイ','待て、森が騒がしい。今夜は総出で来るぞ！')})}
-  updateRebuild(dt);updateAbyss(dt);wpTick(dt);updatePuzzles(dt);updateCh4(dt);updateAdv(dt);updateTwins(dt);updateHidden(dt);updateGold(dt);
+  SAFE('updateRebuild',()=>updateRebuild(dt));SAFE('updateAbyss',()=>updateAbyss(dt));SAFE('wpTick',()=>wpTick(dt));SAFE('updatePuzzles',()=>updatePuzzles(dt));SAFE('updateCh4',()=>updateCh4(dt));SAFE('updateAdv',()=>updateAdv(dt));SAFE('updateTwins',()=>updateTwins(dt));SAFE('updateHidden',()=>updateHidden(dt));SAFE('updateGold',()=>updateGold(dt));
   const L=SOBJ[S.ch];if(!L)return;
   if(S.step===0&&!S.seen.s0&&S.t>9){S.seen.s0=1;L[0].on&&L[0].on()}
   if(S.ch===2){if(S.step===3&&S.minion){const mb=G.bears.find(b=>b.id===S.minion);if(mb&&!mb.bt)setBt(mb,'alpha')}const kb=G.bears.find(b=>b.king&&!b.dead);if(kb&&kb.bt!=='king')setBt(kb,'king')}
@@ -3362,7 +3368,7 @@ let _errT=0;function loopErr(e){console.error(e);window.__lastErr=String(e&&e.st
 function loop(now){requestAnimationFrame(loop);try{loopBody(now)}catch(e){loopErr(e);try{frame(0)}catch(_){}}}
 function loopBody(now){const dt=Math.min(.05,(now-last)/1000);last=now;
   if(!running&&NET.mode==='guest'&&NET.yearWait)applyInbox();
-  if(running){if(NET.mode==='guest'){guestTick(dt);if(running)hud()}else if(!G.paused){update(hsDt(dt));if(running)hud()}if(running&&NET.mode==='host')netHost(dt)}
+  if(running){if(NET.mode==='guest'){SAFE('guestTick',()=>guestTick(dt));if(running)SAFE('hud',hud)}else if(!G.paused){SAFE('update',()=>update(hsDt(dt)));if(running)SAFE('hud',hud)}if(running&&NET.mode==='host')SAFE('netHost',()=>netHost(dt))}
   else if(!running){G.t+=dt*.3;const p=G.players[0];p.x=CX+Math.cos(G.t*.8)*150;p.y=CY+Math.sin(G.t*.8)*120;p.moving=true;p.step+=dt*8;p.dirT=Math.atan2(-Math.sin(G.t*.8),Math.cos(G.t*.8));updateTrees(dt)}
   for(const f of G.floats)f.life-=dt;G.floats=G.floats.filter(f=>f.life>0);
   for(const f of G.flying){f.t+=dt*f.sp;const t=Math.min(1,f.t),e=t*t*(3-2*t);f.m.position.set(lerp(f.sx,f.tx,e),lerp(f.sh,f.th,e)+Math.sin(t*Math.PI)*50,lerp(f.sy,f.ty,e));f.m.rotation.set(t*6,f.rot+t*4,0);if(f.t>=1){world.remove(f.m);f.done=true;f.land&&f.land()}}

@@ -95,3 +95,6 @@ function makeFlame(r,h,col){const g=new T.Group();const outer=M_(geo('flo',()=>n
   g.add(outer,inner,core,halo);g.userData.fl={outer,inner,r,h,ph:Math.random()*9};FLAMES.push(g);return g}
 function flameTick(){const t=performance.now()/1000;for(let i=FLAMES.length-1;i>=0;i--){const g=FLAMES[i];if(!g.parent){FLAMES.splice(i,1);continue}if(!g.visible)continue;const F=g.userData.fl,k=1+Math.sin(t*13+F.ph)*.09+Math.sin(t*23+F.ph*2)*.06;F.outer.scale.set(F.r*(1.05-.05*k),F.h*k,F.r*(1.05-.05*k));F.inner.scale.set(F.r*.6,F.h*.72*(2-k),F.r*.6);F.outer.rotation.y=t*2+F.ph;
   if(Math.random()<.12){const p=new T.Vector3();g.getWorldPosition(p);psA.emit({x:p.x+rnd(-F.r*.4,F.r*.4),y:p.y+F.h*.7,z:p.z+rnd(-F.r*.4,F.r*.4),vx:rnd(-6,6),vy:rnd(30,60),vz:rnd(-6,6),g:-10,life:.6,max:.6,r:rnd(2,3.5),c:C(Math.random()<.5?'#ffb347':'#ffe08a'),air:true,fade:.3})}}}
+// error log: a menu button copies what went wrong, so it can be sent to fix it
+setInterval(()=>{const b=$('errBtn');if(b)b.hidden=!ERRLOG.length},1500);
+$('errBtn').addEventListener('click',e=>{e.stopPropagation();const t=`めちゃホワイト ${BUILD}\n`+ERRLOG.join('\n');try{navigator.clipboard.writeText(t).then(()=>toast('不具合の記録をコピーしました。チャットに貼り付けて送ってください','gold',true),()=>prompt('これをコピーして送ってください',t))}catch(_){prompt('これをコピーして送ってください',t)}});

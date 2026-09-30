@@ -111,3 +111,6 @@ function inkOutline(root){const list=[];root.traverse(o=>{if(o.isMesh&&o.castSha
 function noShadow(g){g.traverse(o=>{if(o.isMesh)o.castShadow=false});return g}
 function blob(r){const m=M_(geo('blob',()=>new T.PlaneGeometry(1,1)),BLOB,false);m.rotation.x=-Math.PI/2;m.scale.set(r*2,r*2,1);m.position.y=.4;m.renderOrder=1;return m}
 
+
+// ---- crash guard: one broken subsystem must never stop the whole game (it logs once and the rest keeps running)
+const SFE={},ERRLOG=[];function SAFE(n,f){try{return f()}catch(e){const k=n+':'+(e&&e.message);if(!SFE[k]){SFE[k]=1;console.error('['+n+']',e);const t=n+': '+String(e&&e.stack||e).split('\n').slice(0,3).join(' / ');ERRLOG.push(t);window.__lastErr=t;try{if(typeof toast==='function')toast('不具合が起きた部分を飛ばして続けます（'+n+'）','cold',true)}catch(_){}}}}

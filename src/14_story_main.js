@@ -103,7 +103,7 @@ function updateStory(dt){const S=G.story;if(!S)return;S.t=(S.t||0)+dt;const ph=(
     if(G.zones.C)beat('zC',()=>say('斥候カイ','奥地の森で妙な足跡を見た。家ほどもある…ただの狼じゃない'));
     if(G.zones.D)beat('zD',()=>say('村長オルガ','温泉が戻った！ これでみんな凍えずにすむ'));
     if(G.monument)beat('mon',()=>{say('村長オルガ','像ができた…町の灯りがよみがえったね');say('斥候カイ','待て、森が騒がしい。今夜は総出で来るぞ！')})}
-  updateRebuild(dt);updateAbyss(dt);wpTick(dt);updatePuzzles(dt);updateCh4(dt);updateAdv(dt);updateTwins(dt);updateHidden(dt);updateGold(dt);
+  SAFE('updateRebuild',()=>updateRebuild(dt));SAFE('updateAbyss',()=>updateAbyss(dt));SAFE('wpTick',()=>wpTick(dt));SAFE('updatePuzzles',()=>updatePuzzles(dt));SAFE('updateCh4',()=>updateCh4(dt));SAFE('updateAdv',()=>updateAdv(dt));SAFE('updateTwins',()=>updateTwins(dt));SAFE('updateHidden',()=>updateHidden(dt));SAFE('updateGold',()=>updateGold(dt));
   const L=SOBJ[S.ch];if(!L)return;
   if(S.step===0&&!S.seen.s0&&S.t>9){S.seen.s0=1;L[0].on&&L[0].on()}
   if(S.ch===2){if(S.step===3&&S.minion){const mb=G.bears.find(b=>b.id===S.minion);if(mb&&!mb.bt)setBt(mb,'alpha')}const kb=G.bears.find(b=>b.king&&!b.dead);if(kb&&kb.bt!=='king')setBt(kb,'king')}
@@ -202,7 +202,7 @@ let _errT=0;function loopErr(e){console.error(e);window.__lastErr=String(e&&e.st
 function loop(now){requestAnimationFrame(loop);try{loopBody(now)}catch(e){loopErr(e);try{frame(0)}catch(_){}}}
 function loopBody(now){const dt=Math.min(.05,(now-last)/1000);last=now;
   if(!running&&NET.mode==='guest'&&NET.yearWait)applyInbox();
-  if(running){if(NET.mode==='guest'){guestTick(dt);if(running)hud()}else if(!G.paused){update(hsDt(dt));if(running)hud()}if(running&&NET.mode==='host')netHost(dt)}
+  if(running){if(NET.mode==='guest'){SAFE('guestTick',()=>guestTick(dt));if(running)SAFE('hud',hud)}else if(!G.paused){SAFE('update',()=>update(hsDt(dt)));if(running)SAFE('hud',hud)}if(running&&NET.mode==='host')SAFE('netHost',()=>netHost(dt))}
   else if(!running){G.t+=dt*.3;const p=G.players[0];p.x=CX+Math.cos(G.t*.8)*150;p.y=CY+Math.sin(G.t*.8)*120;p.moving=true;p.step+=dt*8;p.dirT=Math.atan2(-Math.sin(G.t*.8),Math.cos(G.t*.8));updateTrees(dt)}
   for(const f of G.floats)f.life-=dt;G.floats=G.floats.filter(f=>f.life>0);
   for(const f of G.flying){f.t+=dt*f.sp;const t=Math.min(1,f.t),e=t*t*(3-2*t);f.m.position.set(lerp(f.sx,f.tx,e),lerp(f.sh,f.th,e)+Math.sin(t*Math.PI)*50,lerp(f.sy,f.ty,e));f.m.rotation.set(t*6,f.rot+t*4,0);if(f.t>=1){world.remove(f.m);f.done=true;f.land&&f.land()}}

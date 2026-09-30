@@ -19,9 +19,9 @@ function update(dt){
   if(G.fuel<=0&&!G.outWarned){G.outWarned=true;banner(DES()?'井戸が干上がった！':'かまどの火が消えた！',DES()?'町の人が倒れていく':'町の人が凍っていく',DES()?'湧き水をくんで井戸を満たせ。倒れた町人が5人でゲームオーバー':'薪をくべて火を戻せ。凍った町人が5人でゲームオーバー','cold');SFX.wave()}if(G.fuel>5)G.outWarned=false;
   // stations frozen state
   for(const id in G.stations){const st=G.stations[id];const d=dist(st.def.conv.x,st.def.conv.y,CX,CY);const fz=st.open&&d>R;if(fz&&!st.frozen){toast(`${st.def.name}が凍った！ かまどを強化・燃料を`,'cold')}st.frozen=fz}
-  updateTrees(dt);updateBears(dt);updatePickups(dt);updateSecrets(dt);
-  if(!adv){updateWoodpile(dt);updateRaid(dt);tickTowers(dt,true);updateHauls(dt);updateWorkers(dt);updateStations(dt);updateSurvivors(dt,R);updateMilitia(dt);updateSpa(dt);updateHoles(dt);updateRescue(dt);updateTax(dt);updateRoad(dt);updateCaravan(dt);checkMission(dt);updateDrifts(dt);updateFireside(dt)}
-  updateStory(dt);updateCraft(dt);updateQuests(dt);updateRankObj(dt);updateCave(dt);updateChallenges();G.achT-=dt;if(G.achT<=0){G.achT=.5;checkAch()}
+  SAFE('updateTrees',()=>updateTrees(dt));SAFE('updateBears',()=>updateBears(dt));SAFE('updatePickups',()=>updatePickups(dt));SAFE('updateSecrets',()=>updateSecrets(dt));
+  if(!adv){SAFE('updateWoodpile',()=>updateWoodpile(dt));SAFE('updateRaid',()=>updateRaid(dt));SAFE('tickTowers',()=>tickTowers(dt,true));SAFE('updateHauls',()=>updateHauls(dt));SAFE('updateWorkers',()=>updateWorkers(dt));SAFE('updateStations',()=>updateStations(dt));SAFE('updateSurvivors',()=>updateSurvivors(dt,R));SAFE('updateMilitia',()=>updateMilitia(dt));SAFE('updateSpa',()=>updateSpa(dt));SAFE('updateHoles',()=>updateHoles(dt));SAFE('updateRescue',()=>updateRescue(dt));SAFE('updateTax',()=>updateTax(dt));SAFE('updateRoad',()=>updateRoad(dt));SAFE('updateCaravan',()=>updateCaravan(dt));SAFE('checkMission',()=>checkMission(dt));SAFE('updateDrifts',()=>updateDrifts(dt));updateFireside(dt)}
+  SAFE('updateStory',()=>updateStory(dt));SAFE('updateCraft',()=>updateCraft(dt));SAFE('updateQuests',()=>updateQuests(dt));SAFE('updateRankObj',()=>updateRankObj(dt));SAFE('updateCave',()=>updateCave(dt));SAFE('updateChallenges',()=>updateChallenges());G.achT-=dt;if(G.achT<=0){G.achT=.5;checkAch()}
   if(G.pendingLv>0&&!G.paused&&!adv)openPerk();
   if(G.frozen>=5&&!G.endless&&!adv)endGame(false,'freeze');
 }
