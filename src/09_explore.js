@@ -62,7 +62,7 @@ const dgMap=()=>isRPG()?DUNGEONS.filter(D=>D.des===(DES()?1:0)):[];
 const inBox=(x,y,b,m=0)=>x>b[0]-m&&x<b[2]+m&&y>b[1]-m&&y<b[3]+m;
 const dgAt=(x,y)=>dgMap().find(D=>inBox(x,y,D.box));
 function dgBlock(x,y){return DUNGEONS.some(D=>D.des===(DES()?1:0)&&inBox(x,y,D.box,60))}
-function caveWarm(x,y){if(x>ABX)return true;return dgMap().some(D=>D.heats.some(h=>dist(x,y,h.x,h.y)<h.r))}
+function caveWarm(x,y){if(x>ABX)return true;if(cfWarm(x,y))return true;return dgMap().some(D=>D.heats.some(h=>dist(x,y,h.x,h.y)<h.r))}
 function caveWalls(e,r){if(e.x>ABX){for(const w of abyWalls())pushRect(e,w[0],w[1],w[2],w[3],r||12);return}for(const D of dgMap()){if(!inBox(e.x,e.y,D.box,40))continue;for(const w of D.walls)pushRect(e,w[0],w[1],w[2],w[3],r||12);if(D.id==='cave'&&!caveDoorOpen())pushRect(e,VAULT_DOOR[0],VAULT_DOOR[1],VAULT_DOOR[2],VAULT_DOOR[3],r||12)}}
 function dgState(D){G.dg=G.dg||{};return G.dg[D.id]=G.dg[D.id]||{sp:D.spawns.map(()=>3),ch:D.chests.map(()=>({open:0,rt:0}))}}
 function dgLook(b,S,D){world.remove(b.m.g);b.m=makeBear(b.kind,S.key||D.key||undefined);if(b.bt)setBtLook(b,b.bt);b.m.g.scale.setScalar(S.sc||(S.k==='boss'?2.4:S.k==='big'?1.4:1));b.m.g.position.set(b.x,0,b.y);world.add(b.m.g);b.dgs=S.code;b.nm=S.nm||null;b.bk=S.bk||(D.id==='cave'?(S.k==='boss'?'spq':'sp'):D.id==='glacier'?'gl':D.id==='ruin'?'ru':null)}

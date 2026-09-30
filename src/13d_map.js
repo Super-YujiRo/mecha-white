@@ -4,9 +4,9 @@ function mapMarks(){const L=[];const S=G.story,des=DES(),adv=ADV();
   L.push({x:CX,y:CY,k:'town',n:des?(adv?'砂の町ラズール':'砂漠の町'):'町'});
   if(!des){L.push({x:SPA.x,y:SPA.y,k:'water',n:'温泉'});L.push({x:(HOLES[0][0]+HOLES[5][0])/2,y:(HOLES[0][1]+HOLES[5][1])/2,k:'water',n:'氷の湖'})}
   else{L.push({x:SPA.x,y:SPA.y,k:'water',n:'オアシス'});if(adv){for(const o of OASES)L.push({x:o.x,y:o.y,k:'water',n:o.n});L.push({x:CAMP.x,y:CAMP.y,k:'camp',n:'遊牧民キャンプ'});L.push({x:VALLEY.x,y:VALLEY.y,k:'danger',n:VALLEY.n})}}
-  if(isRPG()){for(const D of dgMap()){const open=D.gate();L.push({x:D.ring.x,y:D.ring.y,k:open?'cave':'lock',n:D.n})}if(abyGateOK())L.push({x:ABY_GATE.x,y:ABY_GATE.y,k:'cave',n:'深淵の迷宮'});if(des)L.push({x:RUIN.x,y:RUIN.y,k:'ruin',n:'古代遺跡'})}
+  if(isRPG()){for(const D of dgMap()){const open=D.gate();L.push({x:D.ring.x,y:D.ring.y,k:open?'cave':'lock',n:D.n})}if(abyGateOK())L.push({x:ABY_GATE.x,y:ABY_GATE.y,k:'cave',n:'深淵の迷宮'});for(const c of cfList()){const D=DUNGEONS.find(D=>D.id===c.d);if(D&&D.gate())L.push({x:c.x,y:c.y,k:cfLit(c.id)?'fire':'fire0',n:cfLit(c.id)?'焚き火':'焚き火跡',sm:1})}if(des)L.push({x:RUIN.x,y:RUIN.y,k:'ruin',n:'古代遺跡'})}
   return L}
-const MCOL={town:'#e8703a',water:'#3fa9d8',camp:'#b8762e',danger:'#c0392b',cave:'#6b5bd6',lock:'#9aa3ad',ruin:'#a8784a',abyss:'#7a4fd6'};
+const MCOL={town:'#e8703a',water:'#3fa9d8',camp:'#b8762e',danger:'#c0392b',cave:'#6b5bd6',lock:'#9aa3ad',ruin:'#a8784a',abyss:'#7a4fd6',fire:'#ff7a2a',fire0:'#9a8a78'};
 // painted terrain layer, cached until the zones/biome change
 let MLAY=null;
 function mapLayer(){const des=DES(),key=[des?1:0,ADV()?1:0,ZONES.map(z=>G.zones[z.id]?1:0).join(''),(G.houses||[]).length,G.trees?G.trees.length:0,isRPG()?1:0].join('|');if(MLAY&&MLAY.key===key&&MLAY.g===G)return MLAY.cv;
@@ -47,6 +47,7 @@ function mapIcon(c,k,a,b,s){c.save();c.translate(a,b);c.scale(s,s);c.lineJoin='r
   else if(k==='abyss'){c.lineWidth=2;c.beginPath();for(let t=0;t<14;t++){const an=t*.55,r=1+t*.4;t?c.lineTo(Math.cos(an)*r,Math.sin(an)*r):c.moveTo(1,0)}c.stroke()}
   else if(k==='lock'){c.fillRect(-4.5,-1,9,7);c.lineWidth=1.8;c.beginPath();c.arc(0,-1.5,3.2,Math.PI,0);c.stroke()}
   else if(k==='camp'){c.beginPath();c.moveTo(-6,5);c.lineTo(0,-6);c.lineTo(6,5);c.closePath();c.fill()}
+  else if(k==='fire'||k==='fire0'){c.beginPath();c.moveTo(0,-7);c.quadraticCurveTo(6,-1,4,4);c.quadraticCurveTo(0,7,-4,4);c.quadraticCurveTo(-6,-1,0,-7);c.fill();if(k==='fire'){c.fillStyle='#ffd76a';c.beginPath();c.arc(0,2,2.4,0,TAU);c.fill()}}
   else if(k==='danger'){c.font='900 12px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText('!',0,1)}
   else{c.beginPath();c.arc(0,0,4,0,TAU);c.fill()}
   c.restore()}
@@ -59,7 +60,7 @@ function drawMap(cv,big){const c=cv.getContext('2d'),W=cv.width,H=cv.height,me=G
   if(inA&&!big){c.fillStyle='#16121f';c.fillRect(0,0,W,H)}
   else{const L=mapLayer();c.save();if(big){c.translate(ox,oy);c.scale(sc,sc)}else{c.translate(W/2,H/2);c.rotate(rot);c.scale(sc,sc);c.translate(-me.x,-me.y)}c.imageSmoothingEnabled=true;c.drawImage(L,0,0,WORLD,WORLD);c.restore()}
   const fs=big?13:10;c.font=`800 ${fs}px "Zen Maru Gothic",sans-serif`;c.textAlign='center';c.textBaseline='alphabetic';
-  if(!inA||big)for(const m of mapMarks()){const [a,b]=P(m.x,m.y);const k=m.n==='深淵の迷宮'?'abyss':m.k;mapIcon(c,k,a,b,big?1.15:.8);if(big||m.k==='town'){const tw=c.measureText(m.n).width+12,ty=b-(big?15:12);c.fillStyle='rgba(255,250,240,.9)';c.strokeStyle='rgba(120,90,50,.55)';c.lineWidth=1;c.beginPath();c.roundRect?c.roundRect(a-tw/2,ty-fs+1,tw,fs+5,5):c.rect(a-tw/2,ty-fs+1,tw,fs+5);c.fill();c.stroke();c.fillStyle='#3b2a1a';c.fillText(m.n,a,ty+2)}}
+  if(!inA||big)for(const m of mapMarks()){const [a,b]=P(m.x,m.y);const k=m.n==='深淵の迷宮'?'abyss':m.k;mapIcon(c,k,a,b,(big?1.15:.8)*(m.sm?.75:1));if((big&&!m.sm)||m.k==='town'){const tw=c.measureText(m.n).width+12,ty=b-(big?15:12);c.fillStyle='rgba(255,250,240,.9)';c.strokeStyle='rgba(120,90,50,.55)';c.lineWidth=1;c.beginPath();c.roundRect?c.roundRect(a-tw/2,ty-fs+1,tw,fs+5,5):c.rect(a-tw/2,ty-fs+1,tw,fs+5);c.fill();c.stroke();c.fillStyle='#3b2a1a';c.fillText(m.n,a,ty+2)}}
   const dot=(x,y,r,col,stroke)=>{const [a,b]=P(x,y);c.fillStyle=col;c.beginPath();c.arc(a,b,r,0,TAU);c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=1.5;c.stroke()}return[a,b]};
   // desert treasure
   if(ADV()&&G.adv)G.adv.tr.forEach((on,i)=>{if(on)dot(TREAS[i][0],TREAS[i][1],big?4:3,'#f5c542','#8a6a1a')});

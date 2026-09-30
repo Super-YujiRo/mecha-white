@@ -1,5 +1,5 @@
 /* めちゃホワイト — built from src/*.js by tools/build.py. Edit the sources, not this file. */
-(()=>{const BUILD='20260930132747';
+(()=>{const BUILD='20260930204749';
 const $=id=>document.getElementById(id);
 if(!window.THREE){$('loading').textContent='3Dの読み込みに失敗しました。再読み込みしてください';return}
 const T=THREE;
@@ -1220,7 +1220,7 @@ function safeEmit(tp,d){if(!NET.room)return;let s=JSON.stringify(d);let guard=0;
   NET.room.emit(tp,d).catch(e=>{if(e&&e.code==='not_permitted'&&!NET.warned){NET.warned=true;toast('この権限では部屋を作れません（編集できる人が部屋を作ってください）','cold',true)}})}
 function sendSnap(){
   safeEmit('s.core',{t:r2(G.t),c:Math.floor(G.cash),e:Math.floor(G.earned),f:r1(G.fuel*10)/10,l:G.level,w:G.woodpile,r:r2(G.rep),fz:G.frozen,pl:G.plv,x:r1(G.xp),mi:G.mission,fv:r1(G.fever),ft:r2(G.feverT),cb:G.combo,ct:r2(G.comboT),
-    z:ZONES.map(z=>G.zones[z.id]?1:0).join(''),dg:isRPG()?dgSnap():null,sx:isRPG()?mysterySnap():null,ab:isRPG()?abySnap():null,ra:[G.raid.on?1:0,G.raid.left,G.raid.total,G.raid.final?1:0,G.monHP||0,G.monMax||0],cv:G.car&&DES()?[G.car.state==='here'?1:0,r1(G.car.t),G.car.max||80,Object.entries(G.car.order||{}).map(([k,n])=>KC[k]+n).join(','),Object.entries(G.car.got||{}).map(([k,n])=>KC[k]+n).join(',')]:0,yr:G.year,sc:G.secrets?G.secrets.map(q=>q.found?1:0).join(''):'',df:G.diff,sl:G.sleds.map(q=>[q.id,r1(q.x),r1(q.y),q.rider==null?-1:q.rider,q.pass?1:0,enc(q.cargo||[])]),kt:G.players.map(p=>r1(p.kettle||0)),wx:G.wx.type?[WXS.findIndex(w=>w.id===G.wx.type),r1(G.wx.t*10)/10,G.wx.max]:0,rk:G.rank||0,rs:G.rescue?[G.rescue.id,r1(G.rescue.x),r1(G.rescue.y),G.rescue.n,r1(G.rescue.t*10)/10,G.rescue.max,['wait','done','fail'].indexOf(G.rescue.state),r2(G.rescue.hold),RKIND.indexOf(G.rescue.kind),G.rescue.hotDone?1:0,G.rescue.left,G.rescue.saved,G.rescue.gb,G.rescue.spec||0]:0,sr:G.stats.rescued||0,rw:G.raidWins,sh:G.stats.haul,lv:G.lv,pm:G.pm,sp:[r1(G.spa.fuel),r1(G.spa.pile)],mo:G.monument?1:0,
+    z:ZONES.map(z=>G.zones[z.id]?1:0).join(''),dg:isRPG()?dgSnap():null,sx:isRPG()?mysterySnap():null,ab:isRPG()?abySnap():null,cf:isRPG()?cfSnap():null,ra:[G.raid.on?1:0,G.raid.left,G.raid.total,G.raid.final?1:0,G.monHP||0,G.monMax||0],cv:G.car&&DES()?[G.car.state==='here'?1:0,r1(G.car.t),G.car.max||80,Object.entries(G.car.order||{}).map(([k,n])=>KC[k]+n).join(','),Object.entries(G.car.got||{}).map(([k,n])=>KC[k]+n).join(',')]:0,yr:G.year,sc:G.secrets?G.secrets.map(q=>q.found?1:0).join(''):'',df:G.diff,sl:G.sleds.map(q=>[q.id,r1(q.x),r1(q.y),q.rider==null?-1:q.rider,q.pass?1:0,enc(q.cargo||[])]),kt:G.players.map(p=>r1(p.kettle||0)),wx:G.wx.type?[WXS.findIndex(w=>w.id===G.wx.type),r1(G.wx.t*10)/10,G.wx.max]:0,rk:G.rank||0,rs:G.rescue?[G.rescue.id,r1(G.rescue.x),r1(G.rescue.y),G.rescue.n,r1(G.rescue.t*10)/10,G.rescue.max,['wait','done','fail'].indexOf(G.rescue.state),r2(G.rescue.hold),RKIND.indexOf(G.rescue.kind),G.rescue.hotDone?1:0,G.rescue.left,G.rescue.saved,G.rescue.gb,G.rescue.spec||0]:0,sr:G.stats.rescued||0,rw:G.raidWins,sh:G.stats.haul,lv:G.lv,pm:G.pm,sp:[r1(G.spa.fuel),r1(G.spa.pile)],mo:G.monument?1:0,
     st:STIDS.map(id=>{const t=G.stations[id];return[t.q.length,t.shelf,r1(t.pile),r2(t.cookT)]}),pd:G.pads.map(q=>q.personal?{p:G.players.map(pl=>q.pp[pl.id]||0)}:q.mp?[q.paid,q.mp.fish,q.mp.fur]:q.paid),
     tr:G.trees.map(t=>t.alive?(t.fall>0?'f':t.grow<1?'g':'a'):'d').join(''),tf:G.trees.filter(t=>t.fall>0).map(t=>[t.i,r2(t.fall),r2(t.fallDir)]),
     ps:G.players.map(p=>[r1(p.x),r1(p.y),r2(p.dir),enc(p.bag),r1(p.warm),r1(p.hp),p.down>0?r2(p.down):0,p.inHeat?1:0,(p.shooting?1:0)|(p.chopping?2:0)|(p.fishing?4:0)|(p.flash>0?8:0)|(p.buddy?16:0)|(p.ko?32:0),r2(p.actT),p.fishing?G.holes.indexOf(p.fishing):-1,[p.lv.gun,p.lv.bag],Math.round(p.jz||0)]),
@@ -1238,7 +1238,7 @@ function applyInbox(){const I=NET.inbox;
   const c=I['s.core'];if(c){I['s.core']=null;
     if(Math.abs(G.t-c.t)>.5)G.t=c.t;G.day=1+Math.floor(G.t/G.DAY);G.cash=c.c;G.earned=c.e;G.fuel=c.f;G.level=c.l;G.woodpile=c.w;G.rep=c.r;G.frozen=c.fz;G.plv=c.pl;G.xp=c.x;G.mission=c.mi;G.fever=c.fv;G.feverT=c.ft;
     if(c.cb>G.combo){const el=$('combo');el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop');SFX.combo(c.cb)}G.combo=c.cb;G.comboT=c.ct;Object.assign(G.lv,c.lv||{});Object.assign(G.pm,c.pm||{});G.spa.fuel=c.sp[0];G.spa.pile=c.sp[1];if(c.ra){G.raid.on=!!c.ra[0];G.raid.left=c.ra[1];G.raid.total=c.ra[2];G.raid.final=!!c.ra[3];G.monHP=c.ra[4];G.monMax=c.ra[5]}G.raidWins=c.rw||0;if(c.cv){const dec2=s=>{const o={};for(const t of (s||'').split(','))if(t)o[KR[t[0]]]=+t.slice(1);return o};G.car={state:c.cv[0]?'here':'away',t:c.cv[1],max:c.cv[2],order:dec2(c.cv[3]),got:dec2(c.cv[4])}}else if(DES())G.car={state:'away',t:0,order:{},got:{}};if(G.diff!==(c.df||0)){G.diff=c.df||0;G._dm=null}if(c.sc&&G.secrets){let st=0;G.secrets.forEach((q,i)=>{const f=c.sc[i]==='1';if(f&&!q.found){q.found=true;if(q.t==='dig'||q.t==='trav')q.g.visible=false}if(q.found&&q.t==='stele')st++});G.stele=st}if(c.yr&&c.yr!==G.year){G.year=c.yr;G.monPop=0;if(NET.yearWait){NET.yearWait=false;running=true;show('end',false);show('hud',true);show('bottom',true);show('side',true);G.mission=MISSIONS.length}}if(c.sl){G.sleds=c.sl.map(v=>({id:v[0],x:v[1],y:v[2],rider:v[3]<0?null:v[3],pass:v[4],cargo:dec(v[5]||'')}));(c.kt||[]).forEach((k,i)=>{if(G.players[i])G.players[i].kettle=k});for(const p of G.players)p.riding=G.sleds.some(q=>q.rider===p.id)}if(c.wx){G.wx={type:WXS[c.wx[0]].id,t:c.wx[1],max:c.wx[2]}}else G.wx={type:null,t:0,max:0};G.rank=c.rk||0;G.stats.rescued=c.sr||0;if(c.rs){const v=c.rs;if(!G.rescue||G.rescue.id!==v[0])G.rescue={id:v[0],x:v[1],y:v[2],n:v[3]};Object.assign(G.rescue,{t:v[4],max:v[5],state:['wait','done','fail'][v[6]],hold:v[7],kind:RKIND[v[8]]||'walk',hotDone:!!v[9],left:v[10],saved:v[11],gb:v[12],spec:v[13]||null})}else G.rescue=null;G.stats.haul=c.sh||0;
-    if(c.dg!=null)dgApply(c.dg);if(c.sx)mysteryApply(c.sx);if(c.ab)abyApply(c.ab);if(c.mo&&!G.monument){G.monument=true;G.monV.visible=true;G.monV.scale.setScalar(.01);G.monPop=0}
+    if(c.dg!=null)dgApply(c.dg);if(c.sx)mysteryApply(c.sx);if(c.ab)abyApply(c.ab);if(c.cf)cfApply(c.cf);if(c.mo&&!G.monument){G.monument=true;G.monV.visible=true;G.monV.scale.setScalar(.01);G.monPop=0}
     ZONES.forEach((z,i)=>{if(c.z[i]==='1'&&!G.zones[z.id]){G.zones[z.id]=true;z.fogT=0;G.camPan={x:(z.rect[0]+z.rect[2])/2,y:(z.rect[1]+z.rect[3])/2,t:0};SFX.area();for(const id in G.stations){const st=G.stations[id];if(st.def.zone===z.id){st.open=true;st.unlockT=0}}if(z.id==='D')G.spa.on=true}});
     STIDS.forEach((id,i)=>{const st=G.stations[id],v=c.st[i];if(st.q.length!==v[0]){st.q.length=0;for(let k=0;k<v[0];k++)st.q.push(st.def.in)}if(v[2]>st.pile)SFX.cash(G.combo);st.shelf=v[1];st.pile=v[2];st.cookT=v[3]});
     c.pd.forEach((v,i)=>{const pad=G.pads[i];if(!pad)return;if(v&&v.p){G.players.forEach((pl,j)=>{const nv=v.p[j]||0;if(nv<(pad.pp[pl.id]||0)&&pl===meP()){pad.pulse=1;SFX.build()}pad.pp[pl.id]=nv});return}if(Array.isArray(v)){pad.mp={fish:v[1],fur:v[2]};v=v[0]}if(v<pad.paid&&pad.paid>0){pad.pulse=1;SFX.build()}pad.paid=v});
@@ -1342,7 +1342,7 @@ function playerActions(p,dt,R){updateSled(p,dt);buffTick(p,dt);comboTick(p,dt);i
   p.warm=clamp(p.warm+(inHeat?28+G.level*3:-drain)*dt,0,100);
   if(!inHeat&&p.warm<25){p.beat=(p.beat||0)-dt;if(p.beat<=0){p.beat=.7;tone(90,.12,'sine',.12);tone(70,.14,'sine',.1,0,.16)}}
   if(!inHeat&&p.warm<30&&!p.warnedCold){p.warnedCold=true;toast(DES()?'のどがカラカラ！ 井戸へ戻れ':'体温があぶない！ かまどへ戻れ','cold')}if(p.warm>60)p.warnedCold=false;
-  if(p.warm<=0){p.down=2.6;p.inv=3.2;p.shooting=p.chopping=p.fishing=null;const drop=p.bag.splice(0);for(const k of drop)dropItem(p.x,p.y,k,20);SFX.bad();G.shake=10;float(p.x,p.y,80,DES()?'干からびた…':'こごえた…','ice',true);banner('',DES()?'干からびた…':'こごえた…',DES()?'持ち物を落とした。井戸のまわりでしか水分は戻らない':'持ち物を落とした。かまどの熱の中でしか体温は戻らない','cold');return}
+  if(p.warm<=0&&!campRescue(p)){p.down=2.6;p.inv=3.2;p.shooting=p.chopping=p.fishing=null;const drop=p.bag.splice(0);for(const k of drop)dropItem(p.x,p.y,k,20);SFX.bad();G.shake=10;float(p.x,p.y,80,DES()?'干からびた…':'こごえた…','ice',true);banner('',DES()?'干からびた…':'こごえた…',DES()?'持ち物を落とした。井戸のまわりでしか水分は戻らない':'持ち物を落とした。かまどの熱の中でしか体温は戻らない','cold');return}
   p.breath-=dt;if(p.breath<=0&&!inHeat&&!DES()){p.breath=rnd(.9,1.4);puff(p.x+Math.sin(p.dir)*10,p.y+Math.cos(p.dir)*10,36,{r:6,life:1,a:.8,vy:10,grow:1.4})}
   // shoot > chop > fish
   p.shooting=null;p.chopping=null;const rpgA=isRPG();
@@ -1388,7 +1388,7 @@ function playerActions(p,dt,R){updateSled(p,dt);buffTick(p,dt);comboTick(p,dt);i
     else continue;
     if(pad.paid>=c&&mixDone(pad)){if(finishPad(pad)===false)continue}}
   // bear hit → knocked down
-  if(p.hp<=0&&!(p.down>0)&&!abyKO(p)){p.hp=60;p.inv=6;const drop=p.bag.splice(0);const keep=drop.filter((_,i)=>i%2===0);for(let r=keep.length,i=0;r>0;r-=4,i+=4)dropItem(p.x,p.y,keep[i],20,Math.min(4,r));p.down=6;p.ko=true;p.shooting=p.chopping=p.fishing=null;float(p.x,p.y,70,'ダウン…','red',true);toast(`オオカミにやられた！ 荷物の半分を失った${G.players.length>1?'（仲間がそばに来ると早く起きる）':''}`,'cold');SFX.bad();G.shake=12}
+  if(p.hp<=0&&!(p.down>0)&&!abyKO(p)&&!campRescue(p)){p.hp=60;p.inv=6;const drop=p.bag.splice(0);const keep=drop.filter((_,i)=>i%2===0);for(let r=keep.length,i=0;r>0;r-=4,i+=4)dropItem(p.x,p.y,keep[i],20,Math.min(4,r));p.down=6;p.ko=true;p.shooting=p.chopping=p.fishing=null;float(p.x,p.y,70,'ダウン…','red',true);toast(`オオカミにやられた！ 荷物の半分を失った${G.players.length>1?'（仲間がそばに来ると早く起きる）':''}`,'cold');SFX.bad();G.shake=12}
   if(inHeat)p.hp=Math.min(100,p.hp+(p.inHeat?7:0)*dt);
 }
 const mixDone=pad=>{if(!pad.mix)return true;const n=pad.mix();return pad.mp.fish>=n.fish&&pad.mp.fur>=n.fur};
@@ -1947,7 +1947,7 @@ function frame(dt){hideIdle();monBar();frozenFx();vigFx();hideIdleFx(dt);
     const top=150,m=44,mx=86,on=!behind&&sx>m&&sx<W-m&&sy>top&&sy<H-90;if(on)el.hidden=true;else{el.hidden=false;const cx=W/2,cy=(top+H-90)/2;let dx=sx-cx,dy=sy-cy;const k=Math.min((W/2-mx)/Math.abs(dx||1e-3),((H-90-top)/2)/Math.abs(dy||1e-3));const ex=cx+dx*Math.min(1,k),ey=cy+dy*Math.min(1,k);
       const d=Math.round(dist(gp.x,gp.y,R.x,R.y)/10);el.style.transform=`translate(${ex|0}px,${ey|0}px) translate(-50%,-50%)`;el.firstChild.style.transform=`rotate(${Math.atan2(dy,dx)+Math.PI/2}rad)`;$('sosTxt').textContent=`SOS ${Math.ceil(R.t)}秒・${d}m`}}else el.hidden=true}
   {const _gt=running?(coldT||(G.fuel<25&&!G.raid.on?(has(gp,DES()?'water':'log')?{x:CX,y:CY,h:110}:(DES()?freeHole(gp):nearestTree(gp))):null)||rescueT(gp)||storyT(gp)||(MISSIONS[G.mission]?MISSIONS[G.mission].tg(gp):flow(gp))):null;const _g2=(gp&&inAby(gp.x))?null:_gt;G._gt=_g2;guide.set(_g2,gp,G.t)}
-  SAFE('storyVis',storyVis);SAFE('warnFx',warnFx);SAFE('driftFx',driftFx);SAFE('fireFx',fireFx);SAFE('npcFx',npcFx);SAFE('rankFx',rankFx);SAFE('caveFx',caveFx);SAFE('pzFx',pzFx);SAFE('heart4Fx',heart4Fx);SAFE('advFx',advFx);SAFE('occFx',occFx);SAFE('survDesertFx',survDesertFx);SAFE('extrasFx',extrasFx);SAFE('rebuildFx',rebuildFx);SAFE('wpFx',wpFx);SAFE('abyFx',abyFx);SAFE('storyPolish',storyPolish);SAFE('cullWorld',cullWorld);if(composer)composer.render();else renderer.render(scene,camera);endLabels();
+  SAFE('storyVis',storyVis);SAFE('warnFx',warnFx);SAFE('driftFx',driftFx);SAFE('fireFx',fireFx);SAFE('npcFx',npcFx);SAFE('rankFx',rankFx);SAFE('caveFx',caveFx);SAFE('pzFx',pzFx);SAFE('heart4Fx',heart4Fx);SAFE('advFx',advFx);SAFE('occFx',occFx);SAFE('survDesertFx',survDesertFx);SAFE('extrasFx',extrasFx);SAFE('rebuildFx',rebuildFx);SAFE('wpFx',wpFx);SAFE('abyFx',abyFx);SAFE('campfireFx',campfireFx);SAFE('storyPolish',storyPolish);SAFE('cullWorld',cullWorld);if(composer)composer.render();else renderer.render(scene,camera);endLabels();
   joys.forEach((j,i)=>{const el=$('joy'+i);if(!j.on){el.hidden=true;return}el.hidden=false;el.style.left=j.ox+'px';el.style.top=j.oy+'px';const dx=j.x-j.ox,dy=j.y-j.oy,m=Math.hypot(dx,dy),k=m>50?50/m:1;el.firstChild.style.transform=`translate(${dx*k}px,${dy*k}px)`;el.firstChild.style.background=nPlayers===2?HERO[i].tag:'#fff'});
 }
 // ================================================================ HUD
@@ -2032,7 +2032,7 @@ const dgMap=()=>isRPG()?DUNGEONS.filter(D=>D.des===(DES()?1:0)):[];
 const inBox=(x,y,b,m=0)=>x>b[0]-m&&x<b[2]+m&&y>b[1]-m&&y<b[3]+m;
 const dgAt=(x,y)=>dgMap().find(D=>inBox(x,y,D.box));
 function dgBlock(x,y){return DUNGEONS.some(D=>D.des===(DES()?1:0)&&inBox(x,y,D.box,60))}
-function caveWarm(x,y){if(x>ABX)return true;return dgMap().some(D=>D.heats.some(h=>dist(x,y,h.x,h.y)<h.r))}
+function caveWarm(x,y){if(x>ABX)return true;if(cfWarm(x,y))return true;return dgMap().some(D=>D.heats.some(h=>dist(x,y,h.x,h.y)<h.r))}
 function caveWalls(e,r){if(e.x>ABX){for(const w of abyWalls())pushRect(e,w[0],w[1],w[2],w[3],r||12);return}for(const D of dgMap()){if(!inBox(e.x,e.y,D.box,40))continue;for(const w of D.walls)pushRect(e,w[0],w[1],w[2],w[3],r||12);if(D.id==='cave'&&!caveDoorOpen())pushRect(e,VAULT_DOOR[0],VAULT_DOOR[1],VAULT_DOOR[2],VAULT_DOOR[3],r||12)}}
 function dgState(D){G.dg=G.dg||{};return G.dg[D.id]=G.dg[D.id]||{sp:D.spawns.map(()=>3),ch:D.chests.map(()=>({open:0,rt:0}))}}
 function dgLook(b,S,D){world.remove(b.m.g);b.m=makeBear(b.kind,S.key||D.key||undefined);if(b.bt)setBtLook(b,b.bt);b.m.g.scale.setScalar(S.sc||(S.k==='boss'?2.4:S.k==='big'?1.4:1));b.m.g.position.set(b.x,0,b.y);world.add(b.m.g);b.dgs=S.code;b.nm=S.nm||null;b.bk=S.bk||(D.id==='cave'?(S.k==='boss'?'spq':'sp'):D.id==='glacier'?'gl':D.id==='ruin'?'ru':null)}
@@ -2626,9 +2626,9 @@ function mapMarks(){const L=[];const S=G.story,des=DES(),adv=ADV();
   L.push({x:CX,y:CY,k:'town',n:des?(adv?'砂の町ラズール':'砂漠の町'):'町'});
   if(!des){L.push({x:SPA.x,y:SPA.y,k:'water',n:'温泉'});L.push({x:(HOLES[0][0]+HOLES[5][0])/2,y:(HOLES[0][1]+HOLES[5][1])/2,k:'water',n:'氷の湖'})}
   else{L.push({x:SPA.x,y:SPA.y,k:'water',n:'オアシス'});if(adv){for(const o of OASES)L.push({x:o.x,y:o.y,k:'water',n:o.n});L.push({x:CAMP.x,y:CAMP.y,k:'camp',n:'遊牧民キャンプ'});L.push({x:VALLEY.x,y:VALLEY.y,k:'danger',n:VALLEY.n})}}
-  if(isRPG()){for(const D of dgMap()){const open=D.gate();L.push({x:D.ring.x,y:D.ring.y,k:open?'cave':'lock',n:D.n})}if(abyGateOK())L.push({x:ABY_GATE.x,y:ABY_GATE.y,k:'cave',n:'深淵の迷宮'});if(des)L.push({x:RUIN.x,y:RUIN.y,k:'ruin',n:'古代遺跡'})}
+  if(isRPG()){for(const D of dgMap()){const open=D.gate();L.push({x:D.ring.x,y:D.ring.y,k:open?'cave':'lock',n:D.n})}if(abyGateOK())L.push({x:ABY_GATE.x,y:ABY_GATE.y,k:'cave',n:'深淵の迷宮'});for(const c of cfList()){const D=DUNGEONS.find(D=>D.id===c.d);if(D&&D.gate())L.push({x:c.x,y:c.y,k:cfLit(c.id)?'fire':'fire0',n:cfLit(c.id)?'焚き火':'焚き火跡',sm:1})}if(des)L.push({x:RUIN.x,y:RUIN.y,k:'ruin',n:'古代遺跡'})}
   return L}
-const MCOL={town:'#e8703a',water:'#3fa9d8',camp:'#b8762e',danger:'#c0392b',cave:'#6b5bd6',lock:'#9aa3ad',ruin:'#a8784a',abyss:'#7a4fd6'};
+const MCOL={town:'#e8703a',water:'#3fa9d8',camp:'#b8762e',danger:'#c0392b',cave:'#6b5bd6',lock:'#9aa3ad',ruin:'#a8784a',abyss:'#7a4fd6',fire:'#ff7a2a',fire0:'#9a8a78'};
 // painted terrain layer, cached until the zones/biome change
 let MLAY=null;
 function mapLayer(){const des=DES(),key=[des?1:0,ADV()?1:0,ZONES.map(z=>G.zones[z.id]?1:0).join(''),(G.houses||[]).length,G.trees?G.trees.length:0,isRPG()?1:0].join('|');if(MLAY&&MLAY.key===key&&MLAY.g===G)return MLAY.cv;
@@ -2669,6 +2669,7 @@ function mapIcon(c,k,a,b,s){c.save();c.translate(a,b);c.scale(s,s);c.lineJoin='r
   else if(k==='abyss'){c.lineWidth=2;c.beginPath();for(let t=0;t<14;t++){const an=t*.55,r=1+t*.4;t?c.lineTo(Math.cos(an)*r,Math.sin(an)*r):c.moveTo(1,0)}c.stroke()}
   else if(k==='lock'){c.fillRect(-4.5,-1,9,7);c.lineWidth=1.8;c.beginPath();c.arc(0,-1.5,3.2,Math.PI,0);c.stroke()}
   else if(k==='camp'){c.beginPath();c.moveTo(-6,5);c.lineTo(0,-6);c.lineTo(6,5);c.closePath();c.fill()}
+  else if(k==='fire'||k==='fire0'){c.beginPath();c.moveTo(0,-7);c.quadraticCurveTo(6,-1,4,4);c.quadraticCurveTo(0,7,-4,4);c.quadraticCurveTo(-6,-1,0,-7);c.fill();if(k==='fire'){c.fillStyle='#ffd76a';c.beginPath();c.arc(0,2,2.4,0,TAU);c.fill()}}
   else if(k==='danger'){c.font='900 12px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText('!',0,1)}
   else{c.beginPath();c.arc(0,0,4,0,TAU);c.fill()}
   c.restore()}
@@ -2681,7 +2682,7 @@ function drawMap(cv,big){const c=cv.getContext('2d'),W=cv.width,H=cv.height,me=G
   if(inA&&!big){c.fillStyle='#16121f';c.fillRect(0,0,W,H)}
   else{const L=mapLayer();c.save();if(big){c.translate(ox,oy);c.scale(sc,sc)}else{c.translate(W/2,H/2);c.rotate(rot);c.scale(sc,sc);c.translate(-me.x,-me.y)}c.imageSmoothingEnabled=true;c.drawImage(L,0,0,WORLD,WORLD);c.restore()}
   const fs=big?13:10;c.font=`800 ${fs}px "Zen Maru Gothic",sans-serif`;c.textAlign='center';c.textBaseline='alphabetic';
-  if(!inA||big)for(const m of mapMarks()){const [a,b]=P(m.x,m.y);const k=m.n==='深淵の迷宮'?'abyss':m.k;mapIcon(c,k,a,b,big?1.15:.8);if(big||m.k==='town'){const tw=c.measureText(m.n).width+12,ty=b-(big?15:12);c.fillStyle='rgba(255,250,240,.9)';c.strokeStyle='rgba(120,90,50,.55)';c.lineWidth=1;c.beginPath();c.roundRect?c.roundRect(a-tw/2,ty-fs+1,tw,fs+5,5):c.rect(a-tw/2,ty-fs+1,tw,fs+5);c.fill();c.stroke();c.fillStyle='#3b2a1a';c.fillText(m.n,a,ty+2)}}
+  if(!inA||big)for(const m of mapMarks()){const [a,b]=P(m.x,m.y);const k=m.n==='深淵の迷宮'?'abyss':m.k;mapIcon(c,k,a,b,(big?1.15:.8)*(m.sm?.75:1));if((big&&!m.sm)||m.k==='town'){const tw=c.measureText(m.n).width+12,ty=b-(big?15:12);c.fillStyle='rgba(255,250,240,.9)';c.strokeStyle='rgba(120,90,50,.55)';c.lineWidth=1;c.beginPath();c.roundRect?c.roundRect(a-tw/2,ty-fs+1,tw,fs+5,5):c.rect(a-tw/2,ty-fs+1,tw,fs+5);c.fill();c.stroke();c.fillStyle='#3b2a1a';c.fillText(m.n,a,ty+2)}}
   const dot=(x,y,r,col,stroke)=>{const [a,b]=P(x,y);c.fillStyle=col;c.beginPath();c.arc(a,b,r,0,TAU);c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=1.5;c.stroke()}return[a,b]};
   // desert treasure
   if(ADV()&&G.adv)G.adv.tr.forEach((on,i)=>{if(on)dot(TREAS[i][0],TREAS[i][1],big?4:3,'#f5c542','#8a6a1a')});
@@ -3164,6 +3165,45 @@ function flameTick(){const t=performance.now()/1000;for(let i=FLAMES.length-1;i>
 // error log: a menu button copies what went wrong, so it can be sent to fix it
 setInterval(()=>{const b=$('errBtn');if(b)b.hidden=!ERRLOG.length},1500);
 $('errBtn').addEventListener('click',e=>{e.stopPropagation();const t=`めちゃホワイト ${BUILD}\n`+ERRLOG.join('\n');try{navigator.clipboard.writeText(t).then(()=>toast('不具合の記録をコピーしました。チャットに貼り付けて送ってください','gold',true),()=>prompt('これをコピーして送ってください',t))}catch(_){prompt('これをコピーして送ってください',t)}});
+// ================================================================ campfire spots in dungeons: light them with 3 logs, warm up there, and come back there instead of losing your bag
+const CF_LOGS=3;
+const CAMPFIRES=[
+  {id:'cv1',d:'cave',x:2240,y:2240},{id:'cv2',d:'cave',x:2300,y:2040},
+  {id:'gl1',d:'glacier',x:380,y:2230},{id:'gl2',d:'glacier',x:540,y:2030},
+  {id:'ru1',d:'ruin',x:2090,y:2150},{id:'ru2',d:'ruin',x:2080,y:1990}];
+const cfLit=id=>!!(G&&G.story&&(G.story.fires||[]).includes(id));
+const cfList=()=>{const L=dgMap().map(D=>D.id);return CAMPFIRES.filter(c=>L.includes(c.d))};
+function cfWarm(x,y){if(!G||!G.story||!isRPG())return false;for(const c of cfList())if(cfLit(c.id)&&dist(x,y,c.x,c.y)<115)return true;return false}
+// host: lighting by standing next to an unlit spot with logs
+function updateCampfires(dt){if(!isRPG()||!G.story)return;const S=G.story;S.fires=S.fires||[];G.cfT=G.cfT||{};
+  for(const c of cfList()){if(cfLit(c.id))continue;const D=DUNGEONS.find(D=>D.id===c.d);if(!D||!D.gate())continue;
+    const p=G.players.find(p=>!(p.down>0)&&dist(p.x,p.y,c.x,c.y)<46&&p.bag.filter(k=>k==='log').length>=CF_LOGS);
+    if(!p){G.cfT[c.id]=0;continue}G.cfT[c.id]=(G.cfT[c.id]||0)+dt;if(G.cfT[c.id]<1.2)continue;
+    for(let i=0;i<CF_LOGS;i++)take(p,'log');S.fires.push(c.id);G.cfT[c.id]=0;SFX.area&&SFX.area();
+    burst(c.x,c.y,30,30,{c:['#ffb347','#ffe08a','#ffffff'],s0:60,s1:200,u0:120,u1:280,l0:.5,l1:1,add:true});
+    banner('焚き火をつけた！',D.n,'ここで暖まれる。凍えたり倒れたりしても、持ち物を失わずにここへ戻る','r-SSR')}}
+// host: freezing / falling inside a dungeon with a lit fire sends you back to it with your bag
+function campRescue(p){if(!isRPG()||!G.story)return false;const D=dgAt(p.x,p.y);if(!D)return false;let best=null,bd=1e9;
+  for(const c of CAMPFIRES)if(c.d===D.id&&cfLit(c.id)){const d=dist(p.x,p.y,c.x,c.y);if(d<bd){bd=d;best=c}}if(!best)return false;
+  const i=G.players.indexOf(p);G.cfko=G.cfko||[0,0];G.cfko[i]=(G.cfko[i]||0)+1;G.cfkoT=G.cfkoT||['',''];G.cfkoT[i]=best.id;
+  p.warm=100;p.hp=Math.max(p.hp,70);p.inv=3;p.down=0;float(p.x,p.y,80,'焚き火まで戻った','ice',true);return true}
+function cfSnap(){return G.story?[(G.story.fires||[]).join('.'),(G.cfko||[0,0]).join('.'),(G.cfkoT||['','']).join('.')]:null}
+function cfApply(v){if(!Array.isArray(v)||!G.story)return;G.story.fires=v[0]?v[0].split('.'):[];G.cfko=String(v[1]).split('.').map(Number);G.cfkoT=String(v[2]).split('.')}
+// visuals + local player (each client moves its own player back to the fire)
+function cfBuild(c){const g=new T.Group();g.position.set(c.x,0,c.y);const st=std('#6f747c',{map:TEX.stone,r:.95,flat:true}),ch=std('#2a211c',{r:1}),wd=std('#5a3e2a',{map:TEX.bark,r:.9});
+  for(let i=0;i<9;i++){const a=i/9*TAU,m=M_(rockG(6),st,true,true);m.position.set(Math.cos(a)*20,3,Math.sin(a)*20);m.rotation.set(i,i*2,0);g.add(m)}
+  g.add(at(cyl(15,16,1.5,ch,14,false),0,.9,0));const logs=new T.Group();for(const r of [.2,1.25,2.3])logs.add(at(rot(cyl(2.6,2.6,26,wd,7,true),Math.PI/2,r,0),0,4,0));g.add(logs);
+  const fl=makeFlame(11,30);fl.position.y=4;g.add(fl);const glowD=M_(new T.CircleGeometry(60,24),new T.MeshBasicMaterial({color:lin('#ff9a3a'),transparent:true,opacity:.16,blending:T.AdditiveBlending,depthWrite:false}),false);glowD.rotation.x=-Math.PI/2;glowD.position.y=1.2;g.add(glowD);
+  const mark=M_(new T.RingGeometry(26,30,32),new T.MeshBasicMaterial({color:lin('#ffd76a'),transparent:true,opacity:.6,side:T.DoubleSide,depthWrite:false}),false);mark.rotation.x=-Math.PI/2;mark.position.y=1.3;g.add(mark);
+  g.userData={fl,glowD,mark};world.add(g);return g}
+function campfireFx(){if(!G||!running)return;G.cfV=G.cfV||{};const me=G.players[G.me]||G.players[0];const L=cfList(),now=performance.now();
+  for(const id in G.cfV){const V=G.cfV[id];if(V.parent!==world){delete G.cfV[id];continue}V.visible=L.some(c=>c.id===id)}
+  for(const c of L){const V=G.cfV[c.id]||(G.cfV[c.id]=cfBuild(c));const lit=cfLit(c.id);V.userData.fl.visible=lit;V.userData.glowD.visible=lit;V.userData.mark.visible=!lit;if(!lit)V.userData.mark.material.opacity=.35+.3*Math.sin(now/300);
+    if(!me||dgAt(me.x,me.y)!==DUNGEONS.find(D=>D.id===c.d))continue;const d=dist(me.x,me.y,c.x,c.y);if(d>260)continue;
+    if(lit)label(c.x,c.y,58,'<b>焚き火</b><br><small>暖まれる・凍えたらここに戻る</small>','gold');
+    else{const n=me.bag.filter(k=>k==='log').length,t=(G.cfT&&G.cfT[c.id])||0;label(c.x,c.y,52,`<b>焚き火跡</b><br><small>${t>0?'■'.repeat(Math.min(5,Math.ceil(t/.24))):n>=CF_LOGS?`そばに立つと薪${CF_LOGS}本で火をつける`:`薪が${CF_LOGS}本必要（いま${n}本）`}</small>`,n>=CF_LOGS?'gold':'')}}
+  if(!me)return;const mi=G.players.indexOf(me);const ko=(G.cfko||[])[mi]||0;if(me._cfk==null)me._cfk=ko;
+  if(ko>me._cfk){me._cfk=ko;const c=CAMPFIRES.find(c=>c.id===(G.cfkoT||[])[mi]);if(c){me.x=c.x+30;me.y=c.y+30;me.vx=me.vy=0;updateCam(0,true);toast('焚き火まで戻った（持ち物は無事）','gold',true)}}}
 // ================================================================ story mode (chapters + morning autosave)
 var gameMode=store.get('mw-mode','story');var SAVE_K='mw-story1';
 var CH={1:{n:'第1章',t:'ホワイトアウト',play:true,open:['暦の上では、もう夏至を過ぎた。','それなのに、この町の雪は\n一日もやんだことがない。','吹雪は家々を押しつぶし、\n人々は散り散りになった。','残っていたのは、村長オルガと、\n消えかけたひとつのかまどだけ――','瓦礫を片付け、町を建て直し、\nもう一度みんなを呼び戻そう。'],sub:'瓦礫を片付けて町を建て直し、散り散りになった仲間を呼び戻せ（Jキー：手がかり帳）',
@@ -3269,7 +3309,7 @@ function updateStory(dt){const S=G.story;if(!S)return;S.t=(S.t||0)+dt;const ph=(
     if(G.zones.C)beat('zC',()=>say('斥候カイ','奥地の森で妙な足跡を見た。家ほどもある…ただの狼じゃない'));
     if(G.zones.D)beat('zD',()=>say('村長オルガ','温泉が戻った！ これでみんな凍えずにすむ'));
     if(G.monument)beat('mon',()=>{say('村長オルガ','像ができた…町の灯りがよみがえったね');say('斥候カイ','待て、森が騒がしい。今夜は総出で来るぞ！')})}
-  SAFE('updateRebuild',()=>updateRebuild(dt));SAFE('updateAbyss',()=>updateAbyss(dt));SAFE('wpTick',()=>wpTick(dt));SAFE('updatePuzzles',()=>updatePuzzles(dt));SAFE('updateCh4',()=>updateCh4(dt));SAFE('updateAdv',()=>updateAdv(dt));SAFE('updateTwins',()=>updateTwins(dt));SAFE('updateHidden',()=>updateHidden(dt));SAFE('updateGold',()=>updateGold(dt));
+  SAFE('updateRebuild',()=>updateRebuild(dt));SAFE('updateCampfires',()=>updateCampfires(dt));SAFE('updateAbyss',()=>updateAbyss(dt));SAFE('wpTick',()=>wpTick(dt));SAFE('updatePuzzles',()=>updatePuzzles(dt));SAFE('updateCh4',()=>updateCh4(dt));SAFE('updateAdv',()=>updateAdv(dt));SAFE('updateTwins',()=>updateTwins(dt));SAFE('updateHidden',()=>updateHidden(dt));SAFE('updateGold',()=>updateGold(dt));
   const L=SOBJ[S.ch];if(!L)return;
   if(S.step===0&&!S.seen.s0&&S.t>9){S.seen.s0=1;L[0].on&&L[0].on()}
   if(S.ch===2){if(S.step===3&&S.minion){const mb=G.bears.find(b=>b.id===S.minion);if(mb&&!mb.bt)setBt(mb,'alpha')}const kb=G.bears.find(b=>b.king&&!b.dead);if(kb&&kb.bt!=='king')setBt(kb,'king')}
@@ -3338,7 +3378,7 @@ $('p1').addEventListener('click',()=>setPlayers(1));$('p2').addEventListener('cl
 $('start').addEventListener('click',startGame);$('again').addEventListener('click',startGame);$('toTitle').addEventListener('click',toTitle);$('quit').addEventListener('click',toTitle);
 function nextYear(){G.yearBonus=(G.yearBonus||0)+15*G.year;G.year++;G.monument=false;G.monPop=0;G.finalPending=false;G.raid.on=false;G.mission=MISSIONS.length;G.endless=false;NET.endInfo=null;
   const g=goalOf(G.year);banner(`${G.year}年目`,'もっと厳しい冬が来る',`寒さ・燃料・襲撃・食費が強くなった。目標：${g.n}（$${g.c.toLocaleString()}・町人${g.pop}人・かまどLv${g.lv}）`,'cold');SFX.wave()}
-$('cont').addEventListener('click',()=>{nextYear();if(G.story){G.story={ch:G.story.ch+1,step:0,seen:{},raids:0,clues:(G.story.clues||[]).slice()};if(G.story.ch===4&&DES())goHome(G.story);else if(CH[G.story.ch]&&CH[G.story.ch].desert&&!DES()){const st=G.story,pl0=saveData().pl;startTrip();G.story=st;keepGear(pl0);G.year=2;const d=saveData();d.fresh=0;store.set(SAVE_K,d)}storyIntro()}running=true;show('end',false);show('hud',true);show('bottom',true);show('side',true)});
+$('cont').addEventListener('click',()=>{nextYear();if(G.story){G.story={ch:G.story.ch+1,step:0,seen:{},raids:0,clues:(G.story.clues||[]).slice(),fires:(G.story.fires||[]).slice()};if(G.story.ch===4&&DES())goHome(G.story);else if(CH[G.story.ch]&&CH[G.story.ch].desert&&!DES()){const st=G.story,pl0=saveData().pl;startTrip();G.story=st;keepGear(pl0);G.year=2;const d=saveData();d.fresh=0;store.set(SAVE_K,d)}storyIntro()}running=true;show('end',false);show('hud',true);show('bottom',true);show('side',true)});
 // adaptive quality: drop bloom and shadow resolution on slow devices
 const QL=[{n:'低',pr:.7,sh:0,fx:0,decor:0,snow:.3},{n:'中',pr:1,sh:2048,fx:0,decor:.45,snow:.55},{n:'高',pr:Math.min(devicePixelRatio||1,2),sh:4096,fx:1,decor:1,snow:1}];
 window.GQ=null;const GQ=window.GQ={mode:store.get('mw2-gfx','auto'),tier:2,snow:1};const FX0=composer;

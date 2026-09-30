@@ -103,7 +103,7 @@ function updateStory(dt){const S=G.story;if(!S)return;S.t=(S.t||0)+dt;const ph=(
     if(G.zones.C)beat('zC',()=>say('斥候カイ','奥地の森で妙な足跡を見た。家ほどもある…ただの狼じゃない'));
     if(G.zones.D)beat('zD',()=>say('村長オルガ','温泉が戻った！ これでみんな凍えずにすむ'));
     if(G.monument)beat('mon',()=>{say('村長オルガ','像ができた…町の灯りがよみがえったね');say('斥候カイ','待て、森が騒がしい。今夜は総出で来るぞ！')})}
-  SAFE('updateRebuild',()=>updateRebuild(dt));SAFE('updateAbyss',()=>updateAbyss(dt));SAFE('wpTick',()=>wpTick(dt));SAFE('updatePuzzles',()=>updatePuzzles(dt));SAFE('updateCh4',()=>updateCh4(dt));SAFE('updateAdv',()=>updateAdv(dt));SAFE('updateTwins',()=>updateTwins(dt));SAFE('updateHidden',()=>updateHidden(dt));SAFE('updateGold',()=>updateGold(dt));
+  SAFE('updateRebuild',()=>updateRebuild(dt));SAFE('updateCampfires',()=>updateCampfires(dt));SAFE('updateAbyss',()=>updateAbyss(dt));SAFE('wpTick',()=>wpTick(dt));SAFE('updatePuzzles',()=>updatePuzzles(dt));SAFE('updateCh4',()=>updateCh4(dt));SAFE('updateAdv',()=>updateAdv(dt));SAFE('updateTwins',()=>updateTwins(dt));SAFE('updateHidden',()=>updateHidden(dt));SAFE('updateGold',()=>updateGold(dt));
   const L=SOBJ[S.ch];if(!L)return;
   if(S.step===0&&!S.seen.s0&&S.t>9){S.seen.s0=1;L[0].on&&L[0].on()}
   if(S.ch===2){if(S.step===3&&S.minion){const mb=G.bears.find(b=>b.id===S.minion);if(mb&&!mb.bt)setBt(mb,'alpha')}const kb=G.bears.find(b=>b.king&&!b.dead);if(kb&&kb.bt!=='king')setBt(kb,'king')}
@@ -172,7 +172,7 @@ $('p1').addEventListener('click',()=>setPlayers(1));$('p2').addEventListener('cl
 $('start').addEventListener('click',startGame);$('again').addEventListener('click',startGame);$('toTitle').addEventListener('click',toTitle);$('quit').addEventListener('click',toTitle);
 function nextYear(){G.yearBonus=(G.yearBonus||0)+15*G.year;G.year++;G.monument=false;G.monPop=0;G.finalPending=false;G.raid.on=false;G.mission=MISSIONS.length;G.endless=false;NET.endInfo=null;
   const g=goalOf(G.year);banner(`${G.year}年目`,'もっと厳しい冬が来る',`寒さ・燃料・襲撃・食費が強くなった。目標：${g.n}（$${g.c.toLocaleString()}・町人${g.pop}人・かまどLv${g.lv}）`,'cold');SFX.wave()}
-$('cont').addEventListener('click',()=>{nextYear();if(G.story){G.story={ch:G.story.ch+1,step:0,seen:{},raids:0,clues:(G.story.clues||[]).slice()};if(G.story.ch===4&&DES())goHome(G.story);else if(CH[G.story.ch]&&CH[G.story.ch].desert&&!DES()){const st=G.story,pl0=saveData().pl;startTrip();G.story=st;keepGear(pl0);G.year=2;const d=saveData();d.fresh=0;store.set(SAVE_K,d)}storyIntro()}running=true;show('end',false);show('hud',true);show('bottom',true);show('side',true)});
+$('cont').addEventListener('click',()=>{nextYear();if(G.story){G.story={ch:G.story.ch+1,step:0,seen:{},raids:0,clues:(G.story.clues||[]).slice(),fires:(G.story.fires||[]).slice()};if(G.story.ch===4&&DES())goHome(G.story);else if(CH[G.story.ch]&&CH[G.story.ch].desert&&!DES()){const st=G.story,pl0=saveData().pl;startTrip();G.story=st;keepGear(pl0);G.year=2;const d=saveData();d.fresh=0;store.set(SAVE_K,d)}storyIntro()}running=true;show('end',false);show('hud',true);show('bottom',true);show('side',true)});
 // adaptive quality: drop bloom and shadow resolution on slow devices
 const QL=[{n:'低',pr:.7,sh:0,fx:0,decor:0,snow:.3},{n:'中',pr:1,sh:2048,fx:0,decor:.45,snow:.55},{n:'高',pr:Math.min(devicePixelRatio||1,2),sh:4096,fx:1,decor:1,snow:1}];
 window.GQ=null;const GQ=window.GQ={mode:store.get('mw2-gfx','auto'),tier:2,snow:1};const FX0=composer;

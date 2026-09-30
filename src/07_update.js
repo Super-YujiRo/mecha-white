@@ -43,7 +43,7 @@ function playerActions(p,dt,R){updateSled(p,dt);buffTick(p,dt);comboTick(p,dt);i
   p.warm=clamp(p.warm+(inHeat?28+G.level*3:-drain)*dt,0,100);
   if(!inHeat&&p.warm<25){p.beat=(p.beat||0)-dt;if(p.beat<=0){p.beat=.7;tone(90,.12,'sine',.12);tone(70,.14,'sine',.1,0,.16)}}
   if(!inHeat&&p.warm<30&&!p.warnedCold){p.warnedCold=true;toast(DES()?'のどがカラカラ！ 井戸へ戻れ':'体温があぶない！ かまどへ戻れ','cold')}if(p.warm>60)p.warnedCold=false;
-  if(p.warm<=0){p.down=2.6;p.inv=3.2;p.shooting=p.chopping=p.fishing=null;const drop=p.bag.splice(0);for(const k of drop)dropItem(p.x,p.y,k,20);SFX.bad();G.shake=10;float(p.x,p.y,80,DES()?'干からびた…':'こごえた…','ice',true);banner('',DES()?'干からびた…':'こごえた…',DES()?'持ち物を落とした。井戸のまわりでしか水分は戻らない':'持ち物を落とした。かまどの熱の中でしか体温は戻らない','cold');return}
+  if(p.warm<=0&&!campRescue(p)){p.down=2.6;p.inv=3.2;p.shooting=p.chopping=p.fishing=null;const drop=p.bag.splice(0);for(const k of drop)dropItem(p.x,p.y,k,20);SFX.bad();G.shake=10;float(p.x,p.y,80,DES()?'干からびた…':'こごえた…','ice',true);banner('',DES()?'干からびた…':'こごえた…',DES()?'持ち物を落とした。井戸のまわりでしか水分は戻らない':'持ち物を落とした。かまどの熱の中でしか体温は戻らない','cold');return}
   p.breath-=dt;if(p.breath<=0&&!inHeat&&!DES()){p.breath=rnd(.9,1.4);puff(p.x+Math.sin(p.dir)*10,p.y+Math.cos(p.dir)*10,36,{r:6,life:1,a:.8,vy:10,grow:1.4})}
   // shoot > chop > fish
   p.shooting=null;p.chopping=null;const rpgA=isRPG();
@@ -89,7 +89,7 @@ function playerActions(p,dt,R){updateSled(p,dt);buffTick(p,dt);comboTick(p,dt);i
     else continue;
     if(pad.paid>=c&&mixDone(pad)){if(finishPad(pad)===false)continue}}
   // bear hit → knocked down
-  if(p.hp<=0&&!(p.down>0)&&!abyKO(p)){p.hp=60;p.inv=6;const drop=p.bag.splice(0);const keep=drop.filter((_,i)=>i%2===0);for(let r=keep.length,i=0;r>0;r-=4,i+=4)dropItem(p.x,p.y,keep[i],20,Math.min(4,r));p.down=6;p.ko=true;p.shooting=p.chopping=p.fishing=null;float(p.x,p.y,70,'ダウン…','red',true);toast(`オオカミにやられた！ 荷物の半分を失った${G.players.length>1?'（仲間がそばに来ると早く起きる）':''}`,'cold');SFX.bad();G.shake=12}
+  if(p.hp<=0&&!(p.down>0)&&!abyKO(p)&&!campRescue(p)){p.hp=60;p.inv=6;const drop=p.bag.splice(0);const keep=drop.filter((_,i)=>i%2===0);for(let r=keep.length,i=0;r>0;r-=4,i+=4)dropItem(p.x,p.y,keep[i],20,Math.min(4,r));p.down=6;p.ko=true;p.shooting=p.chopping=p.fishing=null;float(p.x,p.y,70,'ダウン…','red',true);toast(`オオカミにやられた！ 荷物の半分を失った${G.players.length>1?'（仲間がそばに来ると早く起きる）':''}`,'cold');SFX.bad();G.shake=12}
   if(inHeat)p.hp=Math.min(100,p.hp+(p.inHeat?7:0)*dt);
 }
 const mixDone=pad=>{if(!pad.mix)return true;const n=pad.mix();return pad.mp.fish>=n.fish&&pad.mp.fur>=n.fur};
