@@ -1,5 +1,5 @@
 /* めちゃホワイト — built from src/*.js by tools/build.py. Edit the sources, not this file. */
-(()=>{const BUILD='20261001013016';
+(()=>{const BUILD='20261001094249';
 const $=id=>document.getElementById(id);
 if(!window.THREE){$('loading').textContent='3Dの読み込みに失敗しました。再読み込みしてください';return}
 const T=THREE;
@@ -3179,12 +3179,17 @@ function flameTick(){const t=performance.now()/1000;for(let i=FLAMES.length-1;i>
 // ---- play log: state summary, periodic snapshots, key presses, buttons
 function plogState(){if(!G)return 'no game';const me=G.players[G.me]||G.players[0],S=G.story;const D=me&&typeof dgAt==='function'?dgAt(me.x,me.y):null;
   return `running=${running} net=${NET.mode} pl=${G.players.length} ${S?`story ch${S.ch} step${S.step}`:'survival'} biome=${DES()?'desert':'snow'} day=${G.day} lv=${G.level} fuel=${Math.round(G.fuel)} gfx=${GQ.tier}/${GQ.fps||'?'}fps`+
-    (me?` me=(${me.x|0},${me.y|0}) hp=${Math.round(me.hp)} warm=${Math.round(me.warm)} down=${me.down>0?1:0} bag=${me.bag.length} eq=${me.eq?me.eq.w:''} cls=${clsKey(me)}`:'')+(D?` dungeon=${D.id}`:'')+(me&&inAby(me.x)?` abyss=B${G.aby&&G.aby.fl}`:'')+` bears=${G.bears.filter(b=>!b.dead).length} paused=${!!G.paused} dlg=${DLG.open?1:0}`}
+    (me?` me=(${me.x|0},${me.y|0}) hp=${Math.round(me.hp)} warm=${Math.round(me.warm)} down=${me.down>0?1:0} bag=${me.bag.length} eq=${me.eq?me.eq.w:''} cls=${clsKey(me)}`:'')+(D?` dungeon=${D.id}`:'')+(me&&inAby(me.x)?` abyss=B${G.aby&&G.aby.fl}`:'')+` bears=${G.bears.filter(b=>!b.dead).length} paused=${!!G.paused} dlg=${DLG.open?1:0} frame=${ENV.frame} storage=${ENV.storage} plock=${!!document.pointerLockElement}`}
 setInterval(()=>{if(running&&G)plog('state '+plogState())},5000);
 addEventListener('keydown',e=>{if(e.repeat||!running)return;if(/^(KeyW|KeyA|KeyS|KeyD|Arrow)/.test(e.code))return;plog('key '+e.code)},true);
 addEventListener('mousedown',e=>{if(running&&e.button===2)plog('rclick')},true);
 $('logBtn').addEventListener('click',e=>{e.stopPropagation();plogCopy(false)});
 $('logPrev').addEventListener('click',e=>{e.preventDefault();plogCopy(true)});
+// ---- environment check: inside Claude's viewer (a sandboxed frame) saving and mouse-look can be blocked
+const ENV=(()=>{const o={frame:false,storage:true,plock:!!(document.body&&document.body.requestPointerLock)};try{o.frame=window.top!==window}catch(_){o.frame=true}
+  try{localStorage.setItem('mw-t','1');localStorage.removeItem('mw-t')}catch(_){o.storage=false}return o})();
+document.addEventListener('pointerlockerror',()=>{if(!ENV.plErr){ENV.plErr=1;plog('pointer lock blocked');toast('この画面ではマウスで視点を回せません（右ドラッグで回せます）。Chromeで開くのがおすすめ','cold',true)}});
+function envWarn(){plog(`env frame=${ENV.frame} storage=${ENV.storage} gpu=${GPU||'?'} soft=${SOFTGL}`);if(ENV.frame||!ENV.storage){const el=$('gpuWarn');if(el){el.hidden=false;el.innerHTML=(el.innerHTML?el.innerHTML+'<br><br>':'')+`⚠ いまは<b>Claudeの中の画面</b>で動いています。${ENV.storage?'':'<b>ここでは保存ができません。</b>'}マウス視点や通信が制限されることがあります。<br>ふつうのChromeで <b>super-yujiro.github.io/mecha-white/</b> を開くのがおすすめ`}}}
 // ================================================================ campfire spots in dungeons: light them with 3 logs, warm up there, and come back there instead of losing your bag
 const CF_LOGS=3;
 const CAMPFIRES=[
@@ -3421,7 +3426,7 @@ addEventListener('keydown',e=>{if(e.code==='KeyJ'&&!e.repeat&&running&&isRPG()&&
 addEventListener('keydown',e=>{if(e.code==='KeyR'&&!e.repeat&&running&&isRPG()&&!(e.target&&e.target.tagName==='INPUT'))skillPress()});
 addEventListener('keydown',e=>{if(e.code!=='KeyF'||e.repeat||!running)return;if(e.target&&e.target.tagName==='INPUT')return;if(NET.mode==='guest'){NET.fCount=(NET.fCount||0)+1}else{const me=G.players[G.me]||G.players[0];if(me)me.fPress=true}});
 setTimeout(()=>dbgLine(),0);
-function boot(){gpuWarn();setPlayers(new URLSearchParams(location.search).get('room')?2:1);toTitle();applyGfx(GQ.mode==='auto'?2:GQ.mode);$('loading').hidden=true;if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(G&&G.pads)for(const q of G.pads)q._key=null});requestAnimationFrame(loop)}
+function boot(){gpuWarn();try{envWarn()}catch(_){}setPlayers(new URLSearchParams(location.search).get('room')?2:1);toTitle();applyGfx(GQ.mode==='auto'?2:GQ.mode);$('loading').hidden=true;if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(G&&G.pads)for(const q of G.pads)q._key=null});requestAnimationFrame(loop)}
 $('loading').textContent='町を組み立てています…';loadKK().catch(e=>{console.warn('assets',e);KK=null;window.__kkErr=String(e&&e.message||e)}).then(()=>{boot();if(!KK){$('credit').textContent='3D素材を読み込めませんでした（'+(window.__kkErr||'ローダーなし')+'）';setTimeout(()=>toast('3D素材を読み込めなかったので簡易表示です','cold',true),800)}});
 let last=performance.now();
 let _errT=0;function loopErr(e){plogErr('loop',e);console.error(e);window.__lastErr=String(e&&e.stack||e);const n=performance.now();if(n-_errT>8000){_errT=n;try{toast('エラーが起きたけど続行します：'+String(e&&e.message||e).slice(0,60),'cold',true)}catch(_){}}}

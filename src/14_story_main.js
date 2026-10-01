@@ -195,7 +195,7 @@ addEventListener('keydown',e=>{if(e.code==='KeyJ'&&!e.repeat&&running&&isRPG()&&
 addEventListener('keydown',e=>{if(e.code==='KeyR'&&!e.repeat&&running&&isRPG()&&!(e.target&&e.target.tagName==='INPUT'))skillPress()});
 addEventListener('keydown',e=>{if(e.code!=='KeyF'||e.repeat||!running)return;if(e.target&&e.target.tagName==='INPUT')return;if(NET.mode==='guest'){NET.fCount=(NET.fCount||0)+1}else{const me=G.players[G.me]||G.players[0];if(me)me.fPress=true}});
 setTimeout(()=>dbgLine(),0);
-function boot(){gpuWarn();setPlayers(new URLSearchParams(location.search).get('room')?2:1);toTitle();applyGfx(GQ.mode==='auto'?2:GQ.mode);$('loading').hidden=true;if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(G&&G.pads)for(const q of G.pads)q._key=null});requestAnimationFrame(loop)}
+function boot(){gpuWarn();try{envWarn()}catch(_){}setPlayers(new URLSearchParams(location.search).get('room')?2:1);toTitle();applyGfx(GQ.mode==='auto'?2:GQ.mode);$('loading').hidden=true;if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(G&&G.pads)for(const q of G.pads)q._key=null});requestAnimationFrame(loop)}
 $('loading').textContent='町を組み立てています…';loadKK().catch(e=>{console.warn('assets',e);KK=null;window.__kkErr=String(e&&e.message||e)}).then(()=>{boot();if(!KK){$('credit').textContent='3D素材を読み込めませんでした（'+(window.__kkErr||'ローダーなし')+'）';setTimeout(()=>toast('3D素材を読み込めなかったので簡易表示です','cold',true),800)}});
 let last=performance.now();
 let _errT=0;function loopErr(e){plogErr('loop',e);console.error(e);window.__lastErr=String(e&&e.stack||e);const n=performance.now();if(n-_errT>8000){_errT=n;try{toast('エラーが起きたけど続行します：'+String(e&&e.message||e).slice(0,60),'cold',true)}catch(_){}}}

@@ -98,9 +98,14 @@ function flameTick(){const t=performance.now()/1000;for(let i=FLAMES.length-1;i>
 // ---- play log: state summary, periodic snapshots, key presses, buttons
 function plogState(){if(!G)return 'no game';const me=G.players[G.me]||G.players[0],S=G.story;const D=me&&typeof dgAt==='function'?dgAt(me.x,me.y):null;
   return `running=${running} net=${NET.mode} pl=${G.players.length} ${S?`story ch${S.ch} step${S.step}`:'survival'} biome=${DES()?'desert':'snow'} day=${G.day} lv=${G.level} fuel=${Math.round(G.fuel)} gfx=${GQ.tier}/${GQ.fps||'?'}fps`+
-    (me?` me=(${me.x|0},${me.y|0}) hp=${Math.round(me.hp)} warm=${Math.round(me.warm)} down=${me.down>0?1:0} bag=${me.bag.length} eq=${me.eq?me.eq.w:''} cls=${clsKey(me)}`:'')+(D?` dungeon=${D.id}`:'')+(me&&inAby(me.x)?` abyss=B${G.aby&&G.aby.fl}`:'')+` bears=${G.bears.filter(b=>!b.dead).length} paused=${!!G.paused} dlg=${DLG.open?1:0}`}
+    (me?` me=(${me.x|0},${me.y|0}) hp=${Math.round(me.hp)} warm=${Math.round(me.warm)} down=${me.down>0?1:0} bag=${me.bag.length} eq=${me.eq?me.eq.w:''} cls=${clsKey(me)}`:'')+(D?` dungeon=${D.id}`:'')+(me&&inAby(me.x)?` abyss=B${G.aby&&G.aby.fl}`:'')+` bears=${G.bears.filter(b=>!b.dead).length} paused=${!!G.paused} dlg=${DLG.open?1:0} frame=${ENV.frame} storage=${ENV.storage} plock=${!!document.pointerLockElement}`}
 setInterval(()=>{if(running&&G)plog('state '+plogState())},5000);
 addEventListener('keydown',e=>{if(e.repeat||!running)return;if(/^(KeyW|KeyA|KeyS|KeyD|Arrow)/.test(e.code))return;plog('key '+e.code)},true);
 addEventListener('mousedown',e=>{if(running&&e.button===2)plog('rclick')},true);
 $('logBtn').addEventListener('click',e=>{e.stopPropagation();plogCopy(false)});
 $('logPrev').addEventListener('click',e=>{e.preventDefault();plogCopy(true)});
+// ---- environment check: inside Claude's viewer (a sandboxed frame) saving and mouse-look can be blocked
+const ENV=(()=>{const o={frame:false,storage:true,plock:!!(document.body&&document.body.requestPointerLock)};try{o.frame=window.top!==window}catch(_){o.frame=true}
+  try{localStorage.setItem('mw-t','1');localStorage.removeItem('mw-t')}catch(_){o.storage=false}return o})();
+document.addEventListener('pointerlockerror',()=>{if(!ENV.plErr){ENV.plErr=1;plog('pointer lock blocked');toast('この画面ではマウスで視点を回せません（右ドラッグで回せます）。Chromeで開くのがおすすめ','cold',true)}});
+function envWarn(){plog(`env frame=${ENV.frame} storage=${ENV.storage} gpu=${GPU||'?'} soft=${SOFTGL}`);if(ENV.frame||!ENV.storage){const el=$('gpuWarn');if(el){el.hidden=false;el.innerHTML=(el.innerHTML?el.innerHTML+'<br><br>':'')+`⚠ いまは<b>Claudeの中の画面</b>で動いています。${ENV.storage?'':'<b>ここでは保存ができません。</b>'}マウス視点や通信が制限されることがあります。<br>ふつうのChromeで <b>super-yujiro.github.io/mecha-white/</b> を開くのがおすすめ`}}}
