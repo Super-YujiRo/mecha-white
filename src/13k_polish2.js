@@ -109,3 +109,9 @@ const ENV=(()=>{const o={frame:false,storage:true,plock:!!(document.body&&docume
   try{localStorage.setItem('mw-t','1');localStorage.removeItem('mw-t')}catch(_){o.storage=false}return o})();
 document.addEventListener('pointerlockerror',()=>{if(!ENV.plErr){ENV.plErr=1;plog('pointer lock blocked');toast('この画面ではマウスで視点を回せません（右ドラッグで回せます）。Chromeで開くのがおすすめ','cold',true)}});
 function envWarn(){plog(`env frame=${ENV.frame} storage=${ENV.storage} gpu=${GPU||'?'} soft=${SOFTGL}`);if(ENV.frame||!ENV.storage){const el=$('gpuWarn');if(el){el.hidden=false;el.innerHTML=(el.innerHTML?el.innerHTML+'<br><br>':'')+`⚠ いまは<b>Claudeの中の画面</b>で動いています。${ENV.storage?'':'<b>ここでは保存ができません。</b>'}マウス視点や通信が制限されることがあります。<br>ふつうのChromeで <b>super-yujiro.github.io/mecha-white/</b> を開くのがおすすめ`}}}
+// ---- performance log every 5s: fps and the subsystems that took the most time (to find what makes it freeze)
+setInterval(()=>{if(!running){PERF.t={};PERF.fr=0;return}const top=Object.entries(PERF.t).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([k,v])=>k+' '+Math.round(v)+'ms').join(', ');
+  plog(`perf ${(PERF.fr/5).toFixed(0)}fps top: ${top}`+(performance.memory?` heap=${Math.round(performance.memory.usedJSHeapSize/1e6)}MB`:'')+` objs=${(()=>{let n=0;scene.traverse(()=>n++);return n})()}`);PERF.t={};PERF.fr=0},5000);
+// ---- graphics context loss (the GPU driver reset the 3D view): log it and tell the player
+cv.addEventListener('webglcontextlost',e=>{e.preventDefault();plog('!!WEBGL CONTEXT LOST');plogSave();try{toast('画面の描画がリセットされました。直らなければ再読み込みしてね','cold',true)}catch(_){}},false);
+cv.addEventListener('webglcontextrestored',()=>{plog('webgl context restored')},false);

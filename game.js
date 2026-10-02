@@ -1,5 +1,5 @@
 /* めちゃホワイト — built from src/*.js by tools/build.py. Edit the sources, not this file. */
-(()=>{const BUILD='20261001094249';
+(()=>{const BUILD='20261003010811';
 const $=id=>document.getElementById(id);
 if(!window.THREE){$('loading').textContent='3Dの読み込みに失敗しました。再読み込みしてください';return}
 const T=THREE;
@@ -132,7 +132,7 @@ function blob(r){const m=M_(geo('blob',()=>new T.PlaneGeometry(1,1)),BLOB,false)
 
 
 // ---- crash guard: one broken subsystem must never stop the whole game (it logs once and the rest keeps running)
-const SFE={},ERRLOG=[];function SAFE(n,f){try{return f()}catch(e){const k=n+':'+(e&&e.message);if(!SFE[k]){SFE[k]=1;plogErr(n,e);console.error('['+n+']',e);const t=n+': '+String(e&&e.stack||e).split('\n').slice(0,3).join(' / ');ERRLOG.push(t);window.__lastErr=t;try{if(typeof toast==='function')toast('不具合を飛ばして続けます（'+n+'）。メニュー→プレイログをコピーで送ってね','cold',true)}catch(_){}}}}
+const SFE={},ERRLOG=[];const PERF={t:{},fr:0,max:0,maxTop:'',long:0};function SAFE(n,f){const t0=performance.now();try{return f()}catch(e){const k=n+':'+(e&&e.message);if(!SFE[k]){SFE[k]=1;plogErr(n,e);console.error('['+n+']',e);const t=n+': '+String(e&&e.stack||e).split('\n').slice(0,3).join(' / ');ERRLOG.push(t);window.__lastErr=t;try{if(typeof toast==='function')toast('不具合を飛ばして続けます（'+n+'）。メニュー→プレイログをコピーで送ってね','cold',true)}catch(_){}}}finally{const d=performance.now()-t0;PERF.t[n]=(PERF.t[n]||0)+d;if(d>PERF.max){PERF.max=d;PERF.maxTop=n}}}
 // ================================================================ ground, scenery
 function paintGround(g,S){
   const k=S/WORLD;g.save();g.scale(k,k);
@@ -1961,7 +1961,7 @@ function frame(dt){hideIdle();monBar();frozenFx();vigFx();hideIdleFx(dt);
     const top=150,m=44,mx=86,on=!behind&&sx>m&&sx<W-m&&sy>top&&sy<H-90;if(on)el.hidden=true;else{el.hidden=false;const cx=W/2,cy=(top+H-90)/2;let dx=sx-cx,dy=sy-cy;const k=Math.min((W/2-mx)/Math.abs(dx||1e-3),((H-90-top)/2)/Math.abs(dy||1e-3));const ex=cx+dx*Math.min(1,k),ey=cy+dy*Math.min(1,k);
       const d=Math.round(dist(gp.x,gp.y,R.x,R.y)/10);el.style.transform=`translate(${ex|0}px,${ey|0}px) translate(-50%,-50%)`;el.firstChild.style.transform=`rotate(${Math.atan2(dy,dx)+Math.PI/2}rad)`;$('sosTxt').textContent=`SOS ${Math.ceil(R.t)}秒・${d}m`}}else el.hidden=true}
   {const _gt=running?(coldT||(G.fuel<25&&!G.raid.on?(has(gp,DES()?'water':'log')?{x:CX,y:CY,h:110}:(DES()?freeHole(gp):nearestTree(gp))):null)||rescueT(gp)||storyT(gp)||(MISSIONS[G.mission]?MISSIONS[G.mission].tg(gp):flow(gp))):null;const _g2=(gp&&inAby(gp.x))?null:_gt;G._gt=_g2;guide.set(_g2,gp,G.t)}
-  SAFE('storyVis',storyVis);SAFE('warnFx',warnFx);SAFE('driftFx',driftFx);SAFE('fireFx',fireFx);SAFE('npcFx',npcFx);SAFE('rankFx',rankFx);SAFE('caveFx',caveFx);SAFE('pzFx',pzFx);SAFE('heart4Fx',heart4Fx);SAFE('advFx',advFx);SAFE('occFx',occFx);SAFE('survDesertFx',survDesertFx);SAFE('extrasFx',extrasFx);SAFE('rebuildFx',rebuildFx);SAFE('wpFx',wpFx);SAFE('abyFx',abyFx);SAFE('campfireFx',campfireFx);SAFE('storyPolish',storyPolish);SAFE('cullWorld',cullWorld);if(composer)composer.render();else renderer.render(scene,camera);endLabels();
+  SAFE('storyVis',storyVis);SAFE('warnFx',warnFx);SAFE('driftFx',driftFx);SAFE('fireFx',fireFx);SAFE('npcFx',npcFx);SAFE('rankFx',rankFx);SAFE('caveFx',caveFx);SAFE('pzFx',pzFx);SAFE('heart4Fx',heart4Fx);SAFE('advFx',advFx);SAFE('occFx',occFx);SAFE('survDesertFx',survDesertFx);SAFE('extrasFx',extrasFx);SAFE('rebuildFx',rebuildFx);SAFE('wpFx',wpFx);SAFE('abyFx',abyFx);SAFE('campfireFx',campfireFx);SAFE('storyPolish',storyPolish);SAFE('cullWorld',cullWorld);SAFE('render',()=>{if(composer)composer.render();else renderer.render(scene,camera)});SAFE('labels',endLabels);
   joys.forEach((j,i)=>{const el=$('joy'+i);if(!j.on){el.hidden=true;return}el.hidden=false;el.style.left=j.ox+'px';el.style.top=j.oy+'px';const dx=j.x-j.ox,dy=j.y-j.oy,m=Math.hypot(dx,dy),k=m>50?50/m:1;el.firstChild.style.transform=`translate(${dx*k}px,${dy*k}px)`;el.firstChild.style.background=nPlayers===2?HERO[i].tag:'#fff'});
 }
 // ================================================================ HUD
@@ -3190,6 +3190,12 @@ const ENV=(()=>{const o={frame:false,storage:true,plock:!!(document.body&&docume
   try{localStorage.setItem('mw-t','1');localStorage.removeItem('mw-t')}catch(_){o.storage=false}return o})();
 document.addEventListener('pointerlockerror',()=>{if(!ENV.plErr){ENV.plErr=1;plog('pointer lock blocked');toast('この画面ではマウスで視点を回せません（右ドラッグで回せます）。Chromeで開くのがおすすめ','cold',true)}});
 function envWarn(){plog(`env frame=${ENV.frame} storage=${ENV.storage} gpu=${GPU||'?'} soft=${SOFTGL}`);if(ENV.frame||!ENV.storage){const el=$('gpuWarn');if(el){el.hidden=false;el.innerHTML=(el.innerHTML?el.innerHTML+'<br><br>':'')+`⚠ いまは<b>Claudeの中の画面</b>で動いています。${ENV.storage?'':'<b>ここでは保存ができません。</b>'}マウス視点や通信が制限されることがあります。<br>ふつうのChromeで <b>super-yujiro.github.io/mecha-white/</b> を開くのがおすすめ`}}}
+// ---- performance log every 5s: fps and the subsystems that took the most time (to find what makes it freeze)
+setInterval(()=>{if(!running){PERF.t={};PERF.fr=0;return}const top=Object.entries(PERF.t).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([k,v])=>k+' '+Math.round(v)+'ms').join(', ');
+  plog(`perf ${(PERF.fr/5).toFixed(0)}fps top: ${top}`+(performance.memory?` heap=${Math.round(performance.memory.usedJSHeapSize/1e6)}MB`:'')+` objs=${(()=>{let n=0;scene.traverse(()=>n++);return n})()}`);PERF.t={};PERF.fr=0},5000);
+// ---- graphics context loss (the GPU driver reset the 3D view): log it and tell the player
+cv.addEventListener('webglcontextlost',e=>{e.preventDefault();plog('!!WEBGL CONTEXT LOST');plogSave();try{toast('画面の描画がリセットされました。直らなければ再読み込みしてね','cold',true)}catch(_){}},false);
+cv.addEventListener('webglcontextrestored',()=>{plog('webgl context restored')},false);
 // ================================================================ campfire spots in dungeons: light them with 3 logs, warm up there, and come back there instead of losing your bag
 const CF_LOGS=3;
 const CAMPFIRES=[
@@ -3405,11 +3411,12 @@ function nextYear(){G.yearBonus=(G.yearBonus||0)+15*G.year;G.year++;G.monument=f
   const g=goalOf(G.year);banner(`${G.year}年目`,'もっと厳しい冬が来る',`寒さ・燃料・襲撃・食費が強くなった。目標：${g.n}（$${g.c.toLocaleString()}・町人${g.pop}人・かまどLv${g.lv}）`,'cold');SFX.wave()}
 $('cont').addEventListener('click',()=>{nextYear();if(G.story){G.story={ch:G.story.ch+1,step:0,seen:{},raids:0,clues:(G.story.clues||[]).slice(),fires:(G.story.fires||[]).slice()};if(G.story.ch===4&&DES())goHome(G.story);else if(CH[G.story.ch]&&CH[G.story.ch].desert&&!DES()){const st=G.story,pl0=saveData().pl;startTrip();G.story=st;keepGear(pl0);G.year=2;const d=saveData();d.fresh=0;store.set(SAVE_K,d)}storyIntro()}running=true;show('end',false);show('hud',true);show('bottom',true);show('side',true)});
 // adaptive quality: drop bloom and shadow resolution on slow devices
-const QL=[{n:'低',pr:.7,sh:0,fx:0,decor:0,snow:.3},{n:'中',pr:1,sh:2048,fx:0,decor:.45,snow:.55},{n:'高',pr:Math.min(devicePixelRatio||1,2),sh:4096,fx:1,decor:1,snow:1}];
+const QL=[{n:'低',pr:.7,sh:1024,fx:0,decor:0,snow:.3},{n:'中',pr:1,sh:2048,fx:0,decor:.45,snow:.55},{n:'高',pr:Math.min(devicePixelRatio||1,2),sh:4096,fx:1,decor:1,snow:1}];
 window.GQ=null;const GQ=window.GQ={mode:store.get('mw2-gfx','auto'),tier:2,snow:1};const FX0=composer;
 function applyGfx(i){i=clamp(i,0,2);GQ.tier=i;const q=QL[i];GQ.snow=q.snow;PR=q.pr;renderer.setPixelRatio(PR);
-  composer=q.fx&&FX0?FX0:null;renderer.outputEncoding=composer?T.LinearEncoding:T.sRGBEncoding;
-  sun.castShadow=q.sh>0;if(q.sh){sun.shadow.mapSize.set(q.sh,q.sh);if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null}}
+  // keep the shader setup identical across tiers (same output encoding, shadows always on): changing them makes every material recompile, which froze the game for seconds
+  composer=FX0||null;if(bloom)bloom.enabled=!!q.fx;renderer.outputEncoding=composer?T.LinearEncoding:T.sRGBEncoding;
+  sun.castShadow=true;if(q.sh&&sun.shadow.mapSize.x!==q.sh){sun.shadow.mapSize.set(q.sh,q.sh);if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null}}plog('gfx tier '+i);
   if(G&&G.decor)for(const im of G.decor){im.count=Math.floor(im.userData.n*q.decor);im.visible=im.count>0}
   for(const m of OUTS){if(!m.parent){OUTS.delete(m);continue}m.visible=i===2}resize();gfxLabel()}
 function gfxLabel(){const b=$('gfx');if(b)b.textContent='画質：'+(GQ.mode==='auto'?'自動（'+QL[GQ.tier].n+'）':QL[GQ.tier].n)+(GQ.fps?` ・${GQ.fps}fps`:'')}
@@ -3430,7 +3437,7 @@ function boot(){gpuWarn();try{envWarn()}catch(_){}setPlayers(new URLSearchParams
 $('loading').textContent='町を組み立てています…';loadKK().catch(e=>{console.warn('assets',e);KK=null;window.__kkErr=String(e&&e.message||e)}).then(()=>{boot();if(!KK){$('credit').textContent='3D素材を読み込めませんでした（'+(window.__kkErr||'ローダーなし')+'）';setTimeout(()=>toast('3D素材を読み込めなかったので簡易表示です','cold',true),800)}});
 let last=performance.now();
 let _errT=0;function loopErr(e){plogErr('loop',e);console.error(e);window.__lastErr=String(e&&e.stack||e);const n=performance.now();if(n-_errT>8000){_errT=n;try{toast('エラーが起きたけど続行します：'+String(e&&e.message||e).slice(0,60),'cold',true)}catch(_){}}}
-function loop(now){requestAnimationFrame(loop);try{loopBody(now)}catch(e){loopErr(e);try{frame(0)}catch(_){}}}
+function loop(now){requestAnimationFrame(loop);const t0=performance.now();PERF.max=0;try{loopBody(now)}catch(e){loopErr(e);try{frame(0)}catch(_){}}const d=performance.now()-t0;PERF.fr++;if(d>350&&running){PERF.long++;if(PERF.long<40)plog('LONG FRAME '+Math.round(d)+'ms worst='+PERF.maxTop+' '+Math.round(PERF.max)+'ms')}}
 function loopBody(now){const dt=Math.min(.05,(now-last)/1000);last=now;
   if(!running&&NET.mode==='guest'&&NET.yearWait)applyInbox();
   if(running){if(NET.mode==='guest'){SAFE('guestTick',()=>guestTick(dt));if(running)SAFE('hud',hud)}else if(!G.paused){SAFE('update',()=>update(hsDt(dt)));if(running)SAFE('hud',hud)}if(running&&NET.mode==='host')SAFE('netHost',()=>netHost(dt))}

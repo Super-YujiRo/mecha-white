@@ -174,11 +174,12 @@ function nextYear(){G.yearBonus=(G.yearBonus||0)+15*G.year;G.year++;G.monument=f
   const g=goalOf(G.year);banner(`${G.year}年目`,'もっと厳しい冬が来る',`寒さ・燃料・襲撃・食費が強くなった。目標：${g.n}（$${g.c.toLocaleString()}・町人${g.pop}人・かまどLv${g.lv}）`,'cold');SFX.wave()}
 $('cont').addEventListener('click',()=>{nextYear();if(G.story){G.story={ch:G.story.ch+1,step:0,seen:{},raids:0,clues:(G.story.clues||[]).slice(),fires:(G.story.fires||[]).slice()};if(G.story.ch===4&&DES())goHome(G.story);else if(CH[G.story.ch]&&CH[G.story.ch].desert&&!DES()){const st=G.story,pl0=saveData().pl;startTrip();G.story=st;keepGear(pl0);G.year=2;const d=saveData();d.fresh=0;store.set(SAVE_K,d)}storyIntro()}running=true;show('end',false);show('hud',true);show('bottom',true);show('side',true)});
 // adaptive quality: drop bloom and shadow resolution on slow devices
-const QL=[{n:'低',pr:.7,sh:0,fx:0,decor:0,snow:.3},{n:'中',pr:1,sh:2048,fx:0,decor:.45,snow:.55},{n:'高',pr:Math.min(devicePixelRatio||1,2),sh:4096,fx:1,decor:1,snow:1}];
+const QL=[{n:'低',pr:.7,sh:1024,fx:0,decor:0,snow:.3},{n:'中',pr:1,sh:2048,fx:0,decor:.45,snow:.55},{n:'高',pr:Math.min(devicePixelRatio||1,2),sh:4096,fx:1,decor:1,snow:1}];
 window.GQ=null;const GQ=window.GQ={mode:store.get('mw2-gfx','auto'),tier:2,snow:1};const FX0=composer;
 function applyGfx(i){i=clamp(i,0,2);GQ.tier=i;const q=QL[i];GQ.snow=q.snow;PR=q.pr;renderer.setPixelRatio(PR);
-  composer=q.fx&&FX0?FX0:null;renderer.outputEncoding=composer?T.LinearEncoding:T.sRGBEncoding;
-  sun.castShadow=q.sh>0;if(q.sh){sun.shadow.mapSize.set(q.sh,q.sh);if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null}}
+  // keep the shader setup identical across tiers (same output encoding, shadows always on): changing them makes every material recompile, which froze the game for seconds
+  composer=FX0||null;if(bloom)bloom.enabled=!!q.fx;renderer.outputEncoding=composer?T.LinearEncoding:T.sRGBEncoding;
+  sun.castShadow=true;if(q.sh&&sun.shadow.mapSize.x!==q.sh){sun.shadow.mapSize.set(q.sh,q.sh);if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null}}plog('gfx tier '+i);
   if(G&&G.decor)for(const im of G.decor){im.count=Math.floor(im.userData.n*q.decor);im.visible=im.count>0}
   for(const m of OUTS){if(!m.parent){OUTS.delete(m);continue}m.visible=i===2}resize();gfxLabel()}
 function gfxLabel(){const b=$('gfx');if(b)b.textContent='画質：'+(GQ.mode==='auto'?'自動（'+QL[GQ.tier].n+'）':QL[GQ.tier].n)+(GQ.fps?` ・${GQ.fps}fps`:'')}
@@ -199,7 +200,7 @@ function boot(){gpuWarn();try{envWarn()}catch(_){}setPlayers(new URLSearchParams
 $('loading').textContent='町を組み立てています…';loadKK().catch(e=>{console.warn('assets',e);KK=null;window.__kkErr=String(e&&e.message||e)}).then(()=>{boot();if(!KK){$('credit').textContent='3D素材を読み込めませんでした（'+(window.__kkErr||'ローダーなし')+'）';setTimeout(()=>toast('3D素材を読み込めなかったので簡易表示です','cold',true),800)}});
 let last=performance.now();
 let _errT=0;function loopErr(e){plogErr('loop',e);console.error(e);window.__lastErr=String(e&&e.stack||e);const n=performance.now();if(n-_errT>8000){_errT=n;try{toast('エラーが起きたけど続行します：'+String(e&&e.message||e).slice(0,60),'cold',true)}catch(_){}}}
-function loop(now){requestAnimationFrame(loop);try{loopBody(now)}catch(e){loopErr(e);try{frame(0)}catch(_){}}}
+function loop(now){requestAnimationFrame(loop);const t0=performance.now();PERF.max=0;try{loopBody(now)}catch(e){loopErr(e);try{frame(0)}catch(_){}}const d=performance.now()-t0;PERF.fr++;if(d>350&&running){PERF.long++;if(PERF.long<40)plog('LONG FRAME '+Math.round(d)+'ms worst='+PERF.maxTop+' '+Math.round(PERF.max)+'ms')}}
 function loopBody(now){const dt=Math.min(.05,(now-last)/1000);last=now;
   if(!running&&NET.mode==='guest'&&NET.yearWait)applyInbox();
   if(running){if(NET.mode==='guest'){SAFE('guestTick',()=>guestTick(dt));if(running)SAFE('hud',hud)}else if(!G.paused){SAFE('update',()=>update(hsDt(dt)));if(running)SAFE('hud',hud)}if(running&&NET.mode==='host')SAFE('netHost',()=>netHost(dt))}
