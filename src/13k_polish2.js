@@ -103,6 +103,8 @@ setInterval(()=>{if(running&&G)plog('state '+plogState())},5000);
 addEventListener('keydown',e=>{if(e.repeat||!running)return;if(/^(KeyW|KeyA|KeyS|KeyD|Arrow)/.test(e.code))return;plog('key '+e.code)},true);
 addEventListener('mousedown',e=>{if(running&&e.button===2)plog('rclick')},true);
 $('logBtn').addEventListener('click',e=>{e.stopPropagation();plogCopy(false)});
+$('logSend').addEventListener('click',e=>{e.stopPropagation();plogSend(false)});
+$('logSendPrev').addEventListener('click',e=>{e.preventDefault();plogSend(true)});
 $('logPrev').addEventListener('click',e=>{e.preventDefault();plogCopy(true)});
 // ---- environment check: inside Claude's viewer (a sandboxed frame) saving and mouse-look can be blocked
 const ENV=(()=>{const o={frame:false,storage:true,plock:!!(document.body&&document.body.requestPointerLock)};try{o.frame=window.top!==window}catch(_){o.frame=true}

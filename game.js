@@ -1,5 +1,5 @@
 /* めちゃホワイト — built from src/*.js by tools/build.py. Edit the sources, not this file. */
-(()=>{const BUILD='20261003042640';
+(()=>{const BUILD='20261003044315';
 const $=id=>document.getElementById(id);
 if(!window.THREE){$('loading').textContent='3Dの読み込みに失敗しました。再読み込みしてください';return}
 const T=THREE;
@@ -17,6 +17,17 @@ setInterval(plogSave,5000);
 function plogCopy(prev){const t=prev?(localStorage.getItem('mw-log-prev')||'（前回のログはありません）'):plogText();
   const fallback=()=>{try{const b=new Blob([t],{type:'text/plain'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='mecha-white-log.txt';document.body.appendChild(a);a.click();a.remove()}catch(_){prompt('これをコピーして送ってください',t.slice(-8000))}};
   try{navigator.clipboard.writeText(t).then(()=>{try{toast('プレイログをコピーしました。チャットに貼り付けて送ってください','gold',true)}catch(_){alert('プレイログをコピーしました')}},fallback)}catch(_){fallback()}}
+// one-click report: opens a prefilled GitHub issue (Claude reads the repo's issues), compacted to fit a URL
+const LOG_REPO='https://github.com/Super-YujiRo/mecha-white/issues/new';
+function plogSend(prev){let t=prev?localStorage.getItem('mw-log-prev'):plogText();if(!t){try{toast('前回のログはありません','cold',true)}catch(_){alert('前回のログはありません')}return}
+  const [head,body='']=t.split('\n---\n');const L=body.split('\n');const imp=[],seen={};
+  for(const l of L)if(/ERROR|breaker|LONG|contextlost|renderRecover|probe/.test(l)){const k=l.replace(/^[\d.]+s /,'').slice(0,90);if(seen[k])continue;seen[k]=1;imp.push(l.slice(0,400))}
+  const enc=s=>encodeURIComponent(s).length,MAX=7200;let keyL=imp.slice(-30);const mk=tail=>head.slice(0,600)+'\n--- important ---\n'+keyL.join('\n')+'\n--- last ---\n'+tail.join('\n');
+  while(keyL.length>4&&enc(mk([]))>MAX*.6)keyL.shift();let n=Math.min(L.length,120);while(n>5&&enc(mk(L.slice(-n)))>MAX)n=Math.floor(n*.85);
+  const text='```\n'+mk(L.slice(-n)).slice(0,6000)+'\n```';const title='プレイログ '+(prev?'(前回) ':'')+new Date().toLocaleString('ja-JP');
+  const url=LOG_REPO+'?title='+encodeURIComponent(title)+'&body='+encodeURIComponent(text);
+  let w=null;try{w=window.open(url,'_blank');if(w)w.opener=null}catch(_){}
+  try{toast(!w?'新しいタブで開けなかった時は「ログをコピー」で送ってね':'開いたページで「Create」を押せばClaudeに届きます','gold',true)}catch(_){}}
 // ================================================================ basics
 const WORLD=2400,CX=1200,CY=1200,FR=460,TAU=Math.PI*2,SQ=Math.SQRT1_2;
 const rnd=(a,b)=>a+Math.random()*(b-a);
@@ -3200,6 +3211,8 @@ setInterval(()=>{if(running&&G)plog('state '+plogState())},5000);
 addEventListener('keydown',e=>{if(e.repeat||!running)return;if(/^(KeyW|KeyA|KeyS|KeyD|Arrow)/.test(e.code))return;plog('key '+e.code)},true);
 addEventListener('mousedown',e=>{if(running&&e.button===2)plog('rclick')},true);
 $('logBtn').addEventListener('click',e=>{e.stopPropagation();plogCopy(false)});
+$('logSend').addEventListener('click',e=>{e.stopPropagation();plogSend(false)});
+$('logSendPrev').addEventListener('click',e=>{e.preventDefault();plogSend(true)});
 $('logPrev').addEventListener('click',e=>{e.preventDefault();plogCopy(true)});
 // ---- environment check: inside Claude's viewer (a sandboxed frame) saving and mouse-look can be blocked
 const ENV=(()=>{const o={frame:false,storage:true,plock:!!(document.body&&document.body.requestPointerLock)};try{o.frame=window.top!==window}catch(_){o.frame=true}
