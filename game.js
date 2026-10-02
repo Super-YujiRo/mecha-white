@@ -1,5 +1,5 @@
 /* めちゃホワイト — built from src/*.js by tools/build.py. Edit the sources, not this file. */
-(()=>{const BUILD='20261003010811';
+(()=>{const BUILD='20261003012915';
 const $=id=>document.getElementById(id);
 if(!window.THREE){$('loading').textContent='3Dの読み込みに失敗しました。再読み込みしてください';return}
 const T=THREE;
@@ -3196,6 +3196,8 @@ setInterval(()=>{if(!running){PERF.t={};PERF.fr=0;return}const top=Object.entrie
 // ---- graphics context loss (the GPU driver reset the 3D view): log it and tell the player
 cv.addEventListener('webglcontextlost',e=>{e.preventDefault();plog('!!WEBGL CONTEXT LOST');plogSave();try{toast('画面の描画がリセットされました。直らなければ再読み込みしてね','cold',true)}catch(_){}},false);
 cv.addEventListener('webglcontextrestored',()=>{plog('webgl context restored')},false);
+// show the build on the title so it is easy to tell whether the newest version is loaded
+try{const v=document.createElement('div');v.id='verLine';v.style.cssText='text-align:center;font-size:10px;color:#a08a6a;margin-top:2px';v.textContent='ver '+BUILD;$('logPrev').after(v)}catch(_){}
 // ================================================================ campfire spots in dungeons: light them with 3 logs, warm up there, and come back there instead of losing your bag
 const CF_LOGS=3;
 const CAMPFIRES=[
