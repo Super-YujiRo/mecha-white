@@ -65,7 +65,7 @@ function drawMap(cv,big){const c=cv.getContext('2d'),W=cv.width,H=cv.height,me=G
   // desert treasure
   if(ADV()&&G.adv)G.adv.tr.forEach((on,i)=>{if(on)dot(TREAS[i][0],TREAS[i][1],big?4:3,'#f5c542','#8a6a1a')});
   // people with something to say
-  if(!inA)for(const v of G.npcV||[]){if(!v.m.g.visible)continue;const mk=npcMark(v.n.id);if(mk&&mk!=='…')dot(v.x,v.y,big?5:4,mk==='？'?'#3fc157':'#ffb020','#16283a')}
+  if(!inA)for(const v of G.npcV||[]){if(!v.m.g.visible)continue;const mk=npcMark(v.n.id);if(mk&&mk!=='…'){const [a,b]=P(v.x,v.y),col=mk==='？'?'#3fc157':'#ffb020',pu=(performance.now()/900)%1,R=big?7:5.5;c.strokeStyle=col;c.globalAlpha=1-pu;c.lineWidth=2;c.beginPath();c.arc(a,b,R+pu*(big?12:9),0,TAU);c.stroke();c.globalAlpha=1;c.fillStyle=col;c.strokeStyle='#16283a';c.lineWidth=1.8;c.beginPath();c.arc(a,b,R,0,TAU);c.fill();c.stroke();c.fillStyle='#fff';c.font=`900 ${big?11:9}px sans-serif`;c.textAlign='center';c.textBaseline='middle';c.fillText(mk==='？'?'?':'!',a,b+.5);c.textBaseline='alphabetic'}}
   // enemies nearby (and every boss)
   for(const b of G.bears){if(b.dead||b.hide)continue;if(inAby(b.x)!==inA)continue;const boss=b.kind==='boss';if(!big&&!boss&&dist(b.x,b.y,me.x,me.y)>700)continue;if(big&&!boss)continue;dot(b.x,b.y,boss?(big?7:5):2.6,boss?'#c0392b':'#e0605a',boss?'#fff':null)}
   // objective

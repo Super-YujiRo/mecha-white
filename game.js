@@ -1,5 +1,5 @@
 /* めちゃホワイト — built from src/*.js by tools/build.py. Edit the sources, not this file. */
-(()=>{const BUILD='20261003012915';
+(()=>{const BUILD='20261003042640';
 const $=id=>document.getElementById(id);
 if(!window.THREE){$('loading').textContent='3Dの読み込みに失敗しました。再読み込みしてください';return}
 const T=THREE;
@@ -132,7 +132,7 @@ function blob(r){const m=M_(geo('blob',()=>new T.PlaneGeometry(1,1)),BLOB,false)
 
 
 // ---- crash guard: one broken subsystem must never stop the whole game (it logs once and the rest keeps running)
-const SFE={},ERRLOG=[];const PERF={t:{},fr:0,max:0,maxTop:'',long:0};function SAFE(n,f){const t0=performance.now();try{return f()}catch(e){const k=n+':'+(e&&e.message);if(!SFE[k]){SFE[k]=1;plogErr(n,e);console.error('['+n+']',e);const t=n+': '+String(e&&e.stack||e).split('\n').slice(0,3).join(' / ');ERRLOG.push(t);window.__lastErr=t;try{if(typeof toast==='function')toast('不具合を飛ばして続けます（'+n+'）。メニュー→プレイログをコピーで送ってね','cold',true)}catch(_){}}}finally{const d=performance.now()-t0;PERF.t[n]=(PERF.t[n]||0)+d;if(d>PERF.max){PERF.max=d;PERF.maxTop=n}}}
+const SFE={},ERRLOG=[];const PERF={t:{},fr:0,max:0,maxTop:'',long:0};const SFB={};function SAFE(n,f){const B=SFB[n];if(B&&B.off>performance.now())return;const t0=performance.now();try{const r=f();if(B)B.c=0;return r}catch(e){const b=SFB[n]||(SFB[n]={c:0,tot:0,off:0});b.c++;b.tot++;if(n==='render'&&(b.c===2||b.c%60===0)&&typeof renderRecover==='function')try{renderRecover(e)}catch(_){}if(b.c>=20&&!/^(update|render|hud|guestTick|netHost|labels)$/.test(n)){b.c=0;b.off=performance.now()+8000;plog('breaker '+n+' paused 8s (failing every frame) total='+b.tot)}const k=n+':'+(e&&e.message);if(!SFE[k]){SFE[k]=1;plogErr(n,e);console.error('['+n+']',e);const t=n+': '+String(e&&e.stack||e).split('\n').slice(0,3).join(' / ');ERRLOG.push(t);window.__lastErr=t;try{if(typeof toast==='function')toast('不具合を飛ばしています【'+n+'：'+String(e&&e.message||e).slice(0,40)+'】メニュー→プレイログをコピーで送ってね','cold',true)}catch(_){}}}finally{const d=performance.now()-t0;PERF.t[n]=(PERF.t[n]||0)+d;if(d>PERF.max){PERF.max=d;PERF.maxTop=n}}}
 // ================================================================ ground, scenery
 function paintGround(g,S){
   const k=S/WORLD;g.save();g.scale(k,k);
@@ -1931,7 +1931,7 @@ function hideIdleFx(dt){secretFx(dt||.016);roadFx();caravanFx();const me=G.playe
 function wpnModel(id){const it=ITEMS[id];if(!it)return null;const n=it.n;const key=/弓/.test(n)?'Bow_Wooden':/斧/.test(n)?'Axe':/ハンマー|槌/.test(n)?'Hammer_Small':/ナックル/.test(n)?null:/杖|槍/.test(n)?'staff':'Sword';if(!key)return null;
   let src=key==='staff'?(KK&&KK.kit&&KK.kit.staff):(KK&&KK.prop&&KK.prop[key]&&KK.prop[key].scene);if(!src)return null;const o=src.clone(true);
   const em=/氷|霜|青/.test(n)?'#4fb8ff':/星|太陽|覇者|王|黄金/.test(n)?'#ffb020':/精霊/.test(n)?'#5fe07a':/毒/.test(n)?'#b04fff':null;
-  o.traverse(q=>{if(q.isMesh){q.material=q.material.clone();q.castShadow=true;if(em){q.material.emissive=lin(em);q.material.emissiveIntensity=.35}}});
+  o.traverse(q=>{if(q.isMesh){q.material=q.material.clone();q.castShadow=true;if(em){(q.material.emissive&&q.material.emissive.set(lin(em)));q.material.emissiveIntensity=.35}}});
   const b=new T.Box3().setFromObject(o),sz=new T.Vector3();b.getSize(sz);const L=Math.max(sz.x,sz.y,sz.z)||1;o.scale.multiplyScalar((/大/.test(n)?50:40)/L);
   const w=new T.Group();w.add(o);b.setFromObject(w);const c=new T.Vector3();b.getCenter(c);o.position.sub(c);const r=new T.Group();r.add(w);w.rotation.set(0,0,key==='Bow_Wooden'?.35:2.5);return r}
 function backWeapon(p,m,busy){if(!m.back)return;const id=isRPG()&&p.eq?p.eq.w:null;if(m._wid!==id){m._wid=id;if(m.backW){m.back.remove(m.backW);m.backW=null}if(id){m.backW=wpnModel(id);if(m.backW){m.backW.position.set(0,10,-4);m.back.add(m.backW)}}}if(m.backW)m.backW.visible=!busy}
@@ -1998,7 +1998,7 @@ const BOOK=[['normal','雪オオカミ'],['big','黒オオカミ'],['boss','森�
 const RTK_MINE={iron:{life:'mine',mat:'iron',n:'鉄鉱石の岩',rq:0,hp:5,prop:'Mineral',tint:'#8a8f99',h:44,cash:20},icec:{life:'mine',mat:'icec',n:'氷晶の結晶',rq:2,hp:6,prop:'Crystal1',tint:'#bfe9ff',em:'#4fb8ff',h:64,cash:70},star:{life:'mine',mat:'star',n:'星の結晶',rq:4,hp:8,prop:'Crystal3',tint:'#ffe38a',em:'#ffc629',h:74,cash:220}};
 const NODES_SNOW=[['iron',1500,640],['iron',900,650],['iron',2120,300],['iron',1845,2130],['iron',2040,2325],['iron',2050,2140],['icec',2160,2300],['icec',2310,2190],['icec',160,900],['icec',230,2230],['icec',540,2020],['star',95,2150],['star',2310,1890]];
 function mkNode(k){const K=RTK[k],g=new T.Group();let tr;const P=KK&&KK.prop&&KK.prop[K.prop];
-  if(P){tr=P.scene.clone(true);tr.scale.setScalar(K.h/Math.max(.01,P.h));tr.traverse(o=>{if(o.isMesh){o.material=o.material.clone();if(o.isSkinnedMesh)o.material.skinning=true;o.material.color.lerp(lin(K.tint),.6);if(K.em){o.material.emissive=lin(K.em);o.material.emissiveIntensity=.5}o.castShadow=true}})}
+  if(P){tr=P.scene.clone(true);tr.scale.setScalar(K.h/Math.max(.01,P.h));tr.traverse(o=>{if(o.isMesh){o.material=o.material.clone();if(o.isSkinnedMesh)o.material.skinning=true;o.material.color.lerp(lin(K.tint),.6);if(K.em){(o.material.emissive&&o.material.emissive.set(lin(K.em)));o.material.emissiveIntensity=.5}o.castShadow=true}})}
   else{tr=at(M_(new T.OctahedronGeometry(K.h*.4,0),std(K.tint,{e:K.em||'#000000',ei:K.em?.5:0}),true),0,K.h*.4,0)}
   const grp2=new T.Group();grp2.add(tr);for(const [dx,dz,s2] of [[26,10,.55],[-22,14,.45]]){const c=tr.clone(true);c.scale.multiplyScalar(s2);c.position.set(dx,0,dz);c.rotation.y=dx;grp2.add(c)}
   g.add(grp2);g.userData.tr=grp2;const ring=M_(new T.RingGeometry(40,46,32),new T.MeshBasicMaterial({color:lin(K.em||'#9aa3ad'),transparent:true,opacity:.6,side:T.DoubleSide,depthWrite:false}),false);ring.rotation.x=-Math.PI/2;ring.position.y=1.4;g.add(ring);
@@ -2070,7 +2070,7 @@ function dgBuild(D){const L=D.look,g=new T.Group();const stone=std(L.wall,{map:T
   const ms=makeTextPlate(D.n,90,24,'rgba(255,250,240,.92)','#3a4a5a',.5);ms.position.set(0,110,0);ms.userData.bb=true;mouth.add(ms);g.userData.ms=ms;g.add(mouth);
   const ring=(c,x,y,r0,r1)=>{const m=M_(new T.RingGeometry(r0,r1,32),new T.MeshBasicMaterial({color:lin(c),transparent:true,opacity:.85,side:T.DoubleSide,depthWrite:false}),false);m.rotation.x=-Math.PI/2;m.position.set(x,1.5,y);g.add(m)};
   ring(L.ring,D.ring.x,D.ring.y,34,42);ring('#ffd166',D.out.x,D.out.y,30,38);
-  g.userData.chests=D.chests.map(c=>{const cg=new T.Group();cg.position.set(c.x,0,c.y);const mk=nm=>{const P=KK&&KK.prop&&KK.prop[nm];if(!P)return at(box(30,22,20,std(c.tier===3?'#ffcf4a':'#8a5a30')),0,11,0);const o=P.scene.clone(true);o.scale.setScalar(34/Math.max(.01,P.w));if(c.tier===3)o.traverse(q=>{if(q.isMesh){q.material=q.material.clone();if(q.isSkinnedMesh)q.material.skinning=true;q.material.emissive=lin('#a86a00');q.material.emissiveIntensity=.4}});return o};const cl=mk('Chest_Closed'),op=mk('Chest_Open');op.visible=false;cg.add(cl,op);g.add(cg);return{cg,cl,op}});
+  g.userData.chests=D.chests.map(c=>{const cg=new T.Group();cg.position.set(c.x,0,c.y);const mk=nm=>{const P=KK&&KK.prop&&KK.prop[nm];if(!P)return at(box(30,22,20,std(c.tier===3?'#ffcf4a':'#8a5a30')),0,11,0);const o=P.scene.clone(true);o.scale.setScalar(34/Math.max(.01,P.w));if(c.tier===3)o.traverse(q=>{if(q.isMesh){q.material=q.material.clone();if(q.isSkinnedMesh)q.material.skinning=true;(q.material.emissive&&q.material.emissive.set(lin('#a86a00')));q.material.emissiveIntensity=.4}});return o};const cl=mk('Chest_Closed'),op=mk('Chest_Open');op.visible=false;cg.add(cl,op);g.add(cg);return{cg,cl,op}});
   world.add(g);return g}
 let _cvT=0;
 function caveFx(){if(!G||!running)return;const me=G.players[G.me]||G.players[0];G.dgV=G.dgV||{};const L=dgMap();
@@ -2166,7 +2166,7 @@ function updateRankObj(dt){rtInit();if(!isRPG())return;
 function rbKilled(b,p){const R=rbList()[b.rbi];if(!R)return;if(R.mat)addMat(p,R.mat,R.rq>=4?1:2);const v=Math.round(R.rw.cash*(1+G.day*.05));G.cash+=v;G.earned+=v;gainRX(p,R.rw.xp);lifeXp(p,'hunt',12);if(R.rw.item&&Math.random()<R.rw.ic)giveItem(p,R.rw.item);
   setTimeout(()=>{if(running)banner(`${R.n}をたおした！`,`+$${v}・EXP+${R.rw.xp}`,'しばらくすると、また現れる','r-SSR')},700)}
 function mkRankTree(k){const K=RTK[k],g=new T.Group();let tr;if(K.life==='mine')return mkNode(k);
-  if(KK&&KK.nat&&KK.nat.pine5){tr=KK.nat.pine5.clone(true);tr.scale.setScalar(K.h/(KK.natH.pine5||1));tr.traverse(o=>{if(o.isMesh){o.material=o.material.clone();if(o.isSkinnedMesh)o.material.skinning=true;if(K.col)o.material.color.lerp(lin(K.col),.55);if(K.em){o.material.emissive=lin(K.em);o.material.emissiveIntensity=.35}o.castShadow=true}})}
+  if(KK&&KK.nat&&KK.nat.pine5){tr=KK.nat.pine5.clone(true);tr.scale.setScalar(K.h/(KK.natH.pine5||1));tr.traverse(o=>{if(o.isMesh){o.material=o.material.clone();if(o.isSkinnedMesh)o.material.skinning=true;if(K.col)o.material.color.lerp(lin(K.col),.55);if(K.em){(o.material.emissive&&o.material.emissive.set(lin(K.em)));o.material.emissiveIntensity=.35}o.castShadow=true}})}
   else{tr=new T.Group();tr.add(at(cyl(10,14,K.h*.3,std('#6e4524'),8),0,K.h*.15,0),at(cone(K.h*.3,K.h*.8,std(K.col),8),0,K.h*.6,0))}
   g.add(tr);g.userData.tr=tr;const ring=M_(new T.RingGeometry(58,66,40),new T.MeshBasicMaterial({color:lin(K.em||'#8a5a30'),transparent:true,opacity:.7,side:T.DoubleSide,depthWrite:false}),false);ring.rotation.x=-Math.PI/2;ring.position.y=1.4;g.add(ring);
   if(k==='spirit')for(let i=0;i<6;i++){const o=M_(new T.SphereGeometry(5,8,6),glow('#ffe38a',2.4),false);o.userData.a=i/6*TAU;g.add(o);(g.userData.orbs=g.userData.orbs||[]).push(o)}
@@ -2221,11 +2221,11 @@ function npcQuest(nid){if(!joined(nid))return null;let avail=null;const ch=(G.st
 function npcMark(nid){const mm=advMark(nid)||mysteryMark(nid);if(mm)return mm;const k=npcQuest(nid);if(!k)return '';const q=qS(k);return !q?'！':q.st===2?'？':'…'}
 // ---- NPC meshes and markers (both host and guest)
 function npcFx(){if(!G||!running)return;const on=isRPG();const L=NPCS[bioKey()];
-  if(!on){if(G.npcV)for(const v of G.npcV)v.m.g.visible=false;if(G.escV)G.escV.m.g.visible=false;if(G.findV)G.findV.visible=false;$('dlg').hidden=true;return}
-  if(!G.npcV||G.npcBio!==bioKey()||(G.npcV[0]&&!G.npcV[0].m.g.parent)){if(G.npcV)for(const v of G.npcV)world.remove(v.m.g);G.npcBio=bioKey();G.npcV=L.map(n=>{const m=makeVillager(PALS[n.pal%PALS.length],Object.assign({noShadow:false},n.o));const q=npcPos(n);m.g.position.set(q.x,0,q.y);m.g.rotation.y=Math.atan2(CX-q.x,CY-q.y)+Math.PI;world.add(m.g);return{n,m,x:q.x,y:q.y}})}
+  if(!on){if(G.npcV)for(const v of G.npcV){v.m.g.visible=false;if(v.qm)v.qm.visible=false}if(G.escV)G.escV.m.g.visible=false;if(G.findV)G.findV.visible=false;$('dlg').hidden=true;return}
+  if(!G.npcV||G.npcBio!==bioKey()||(G.npcV[0]&&!G.npcV[0].m.g.parent)){if(G.npcV)for(const v of G.npcV){world.remove(v.m.g);if(v.qm)world.remove(v.qm)}G.npcBio=bioKey();G.npcV=L.map(n=>{const m=makeVillager(PALS[n.pal%PALS.length],Object.assign({noShadow:false},n.o));const q=npcPos(n);m.g.position.set(q.x,0,q.y);m.g.rotation.y=Math.atan2(CX-q.x,CY-q.y)+Math.PI;world.add(m.g);return{n,m,x:q.x,y:q.y}})}
   const me=G.players[G.me]||G.players[0];
-  for(const v of G.npcV){v.m.g.visible=(!v.n.adv||ADV())&&joined(v.n.id);if(!v.m.g.visible)continue;animWalk(v.m,0,false);const mk=npcMark(v.n.id),d=me?dist(me.x,me.y,v.x,v.y):1e9;v.m.g.rotation.y=d<200&&me?Math.atan2(me.x-v.x,me.y-v.y):Math.atan2(CX-v.x,CY-v.y)+Math.PI;
-    if(mk)label(v.x,v.y,74,`<b style="font-size:${mk==='…'?16:26}px;color:${mk==='？'?'#3fc157':mk==='！'?'#ffb020':'#9aa3ad'};-webkit-text-stroke:3px #16283a;paint-order:stroke fill">${mk}</b>`,'');
+  for(const v of G.npcV){v.m.g.visible=(!v.n.adv||ADV())&&joined(v.n.id);if(!v.m.g.visible){if(v.qm)v.qm.visible=false;continue}animWalk(v.m,0,false);const mk=npcMark(v.n.id),d=me?dist(me.x,me.y,v.x,v.y):1e9;v.m.g.rotation.y=d<200&&me?Math.atan2(me.x-v.x,me.y-v.y):Math.atan2(CX-v.x,CY-v.y)+Math.PI;
+    qMark3D(v,mk,d);if(mk==='…')label(v.x,v.y,74,`<b style="font-size:16px;color:#9aa3ad;-webkit-text-stroke:3px #16283a;paint-order:stroke fill">…</b>`,'');
     if(d<220)label(v.x,v.y,d<75?108:96,`<small>${v.n.n}<span style="color:#e0506a">${hearts(v.n.id)}</span></small>${d<75&&!DLG.open?'<br><b>Eキーで話す</b>':''}`,'')}
   // escort follower, find spot
   let esc=null,fnd=null;for(const k in QUESTS){const Q=QUESTS[k],q=qS(k);if(!q||q.st!==1||Q.bio!==bioKey())continue;if(Q.type==='escort')esc=[k,Q,q];if(Q.type==='find')fnd=[k,Q,q]}
@@ -2282,6 +2282,22 @@ function rpgBoxHtml(me){if(!isRPG())return '';const l=rlv(me),x=me.rx||0,need=rx
   ${inv.length?`<div class="inv">${inv.map(id=>ITEMS[id]?`<button data-eq="${id}" class="${eq[ITEMS[id].s]===id?'on':''}" style="${classOK(me,id)?'':'opacity:.45'}" title="${classOK(me,id)?'':WTN[wType(id)]+'（今の職業では使えない）'}">${eq[ITEMS[id].s]===id?'✓ ':''}${isW(id)?wpName(me,id):ITEMS[id].n} <b style="color:#d19a1c">${starTxt(starOf(me,id))}</b>　<small>${isW(id)?`攻撃+${Math.round(wpAtk(me,id)*100)}%`:itemDesc(ITEMS[id])}</small>${wpTag(me,id)}</button>`:'').join('')}</div>`:'<small>依頼を解決すると装備がもらえる</small>'}`}
 $('lifeCard').addEventListener('click',e=>{const b=e.target.closest('button[data-eq]');if(!b)return;sendAct('eq',b.dataset.eq);setTimeout(()=>lifeHud(true),120)});
 
+
+// big floating badge over people who have a quest (！ new / ？ report) — visible from far away, bobbing, with a pulse ring on the ground
+const QMT={};function qMarkTex(mk){if(QMT[mk])return QMT[mk];const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');
+  const col=mk==='？'?['#5fe07a','#1f8a3a']:['#ffd25a','#e07a10'];const g=x.createLinearGradient(0,10,0,118);g.addColorStop(0,col[0]);g.addColorStop(1,col[1]);
+  x.beginPath();x.arc(64,58,46,0,TAU);x.moveTo(44,96);x.lineTo(64,124);x.lineTo(84,96);x.closePath();x.fillStyle=g;x.fill();x.lineWidth=7;x.strokeStyle='#16283a';x.stroke();
+  x.beginPath();x.arc(64,58,38,0,TAU);x.lineWidth=3;x.strokeStyle='rgba(255,255,255,.55)';x.stroke();
+  x.font='900 66px "Zen Maru Gothic",sans-serif';x.textAlign='center';x.textBaseline='middle';x.lineWidth=8;x.strokeStyle='#16283a';x.strokeText(mk==='？'?'?':'!',64,62);x.fillStyle='#fff';x.fillText(mk==='？'?'?':'!',64,62);
+  const t=new T.CanvasTexture(c);t.encoding=T.sRGBEncoding;return QMT[mk]=t}
+function qMark3D(v,mk,d){const want=mk==='！'||mk==='？';if(!want){if(v.qm)v.qm.visible=false;return}
+  if(!v.qm){const g=new T.Group();const sp=new T.Sprite(new T.SpriteMaterial({map:qMarkTex(mk),transparent:true,depthWrite:false,fog:false}));sp.renderOrder=5;g.add(sp);
+    const ring=M_(new T.RingGeometry(16,20,32),new T.MeshBasicMaterial({color:lin('#ffc23a'),transparent:true,opacity:.6,side:T.DoubleSide,depthWrite:false,blending:T.AdditiveBlending}),false);ring.rotation.x=-Math.PI/2;ring.position.y=1.5;g.add(ring);
+    g.userData={sp,ring,mk:''};world.add(g);v.qm=g}
+  const g=v.qm,U=g.userData;if(g.parent!==world)world.add(g);g.visible=true;if(U.mk!==mk){U.mk=mk;U.sp.material.map=qMarkTex(mk);U.sp.material.needsUpdate=true;U.ring.material.color.set(lin(mk==='？'?'#5fe07a':'#ffc23a'))}
+  const t=performance.now()/1000,far=Math.min(1,Math.max(0,(d-150)/600));const s=28+far*18;
+  U.sp.scale.set(s,s,1);U.sp.position.y=96+far*26+Math.sin(t*3+v.x)*4;U.sp.material.opacity=d<60?.55:1;
+  const r=1+((t*1.1+v.y*.01)%1)*.8;U.ring.scale.set(r,r,1);U.ring.material.opacity=.65*(1-(r-1)/.8);g.position.set(v.x,0,v.y);if(mk==='！'&&d<240&&!v._told){v._told=1;try{toast(`！ ${v.n.n}が何か頼みたそうだ（近づいてEキーで話す）`,'gold')}catch(_){}}}
 // ================================================================ くらし (life ranks), workshop crafting, blizzard chores
 const LIVES=['wood','hunt','fish','mine','craft','smith','cook'];
 const LIFE={wood:{n:'木こり',k:'斧',c:'#3f7a45',b:r=>`伐採の速さ +${r*7}%`},hunt:{n:'狩人',k:'弓',c:'#c0392b',b:r=>`攻撃力 +${r*6}%`},fish:{n:'釣り人',k:'釣',c:'#2f7de0',b:r=>DES()?`水くみの速さ +${r*8}%`:`釣りの速さ +${r*8}%`},craft:{n:'木工職人',k:'工',c:'#a8743f',b:r=>`作品の値段 +${r*15}%`},mine:{n:'採掘師',k:'掘',c:'#7a6a9a',b:r=>`採掘の速さ +${r*8}%`},smith:{n:'鍛冶屋',k:'鍛',c:'#5a6470',b:r=>`作れる武器が増える`},cook:{n:'料理人',k:'料',c:'#e8703a',b:r=>`料理の効き目 +${r*10}%`}};
@@ -2701,7 +2717,7 @@ function drawMap(cv,big){const c=cv.getContext('2d'),W=cv.width,H=cv.height,me=G
   // desert treasure
   if(ADV()&&G.adv)G.adv.tr.forEach((on,i)=>{if(on)dot(TREAS[i][0],TREAS[i][1],big?4:3,'#f5c542','#8a6a1a')});
   // people with something to say
-  if(!inA)for(const v of G.npcV||[]){if(!v.m.g.visible)continue;const mk=npcMark(v.n.id);if(mk&&mk!=='…')dot(v.x,v.y,big?5:4,mk==='？'?'#3fc157':'#ffb020','#16283a')}
+  if(!inA)for(const v of G.npcV||[]){if(!v.m.g.visible)continue;const mk=npcMark(v.n.id);if(mk&&mk!=='…'){const [a,b]=P(v.x,v.y),col=mk==='？'?'#3fc157':'#ffb020',pu=(performance.now()/900)%1,R=big?7:5.5;c.strokeStyle=col;c.globalAlpha=1-pu;c.lineWidth=2;c.beginPath();c.arc(a,b,R+pu*(big?12:9),0,TAU);c.stroke();c.globalAlpha=1;c.fillStyle=col;c.strokeStyle='#16283a';c.lineWidth=1.8;c.beginPath();c.arc(a,b,R,0,TAU);c.fill();c.stroke();c.fillStyle='#fff';c.font=`900 ${big?11:9}px sans-serif`;c.textAlign='center';c.textBaseline='middle';c.fillText(mk==='？'?'?':'!',a,b+.5);c.textBaseline='alphabetic'}}
   // enemies nearby (and every boss)
   for(const b of G.bears){if(b.dead||b.hide)continue;if(inAby(b.x)!==inA)continue;const boss=b.kind==='boss';if(!big&&!boss&&dist(b.x,b.y,me.x,me.y)>700)continue;if(big&&!boss)continue;dot(b.x,b.y,boss?(big?7:5):2.6,boss?'#c0392b':'#e0605a',boss?'#fff':null)}
   // objective
@@ -2813,7 +2829,7 @@ function updateHidden(dt){if(!isRPG())return;const L=HIDDEN[DES()?'desert':'snow
     banner('隠された宝箱！',`+$${v}`,`${MATS[m]}を見つけた`,'r-SSR');SFX.chest&&SFX.chest();burst(x,y,26,24,{c:['#ffd23f','#ffffff'],s0:60,s1:200,u0:150,u1:300,l0:.6,l1:1,add:true})})}
 // ---- golden beasts: a rare shiny enemy wanders the wild some days
 function updateGold(dt){if(!isRPG()||ADV()&&false)return;G.goldT=(G.goldT==null?60:G.goldT)-dt;if(G.goldT>0)return;G.goldT=G.DAY*.8;if(G.bears.some(b=>b.gold&&!b.dead)||Math.random()<.4)return;
-  const b=spawnBear(DES()||!G.zones.C?'A':'C',true);b.kind='big';b.gold=1;b.nm=DES()?'金色のサソリ':'金色の狼';b.hp=b.max=Math.round(60*DM().hp);b.m.g.traverse(o=>{if(o.isMesh&&o!==b.m.ring&&o.material){o.material=o.material.clone();if(o.isSkinnedMesh)o.material.skinning=true;o.material.color&&o.material.color.set('#ffd23f');o.material.emissive=lin('#a86a00');o.material.emissiveIntensity=.45;o.material.metalness=.6}});b.m.g.scale.multiplyScalar(1.25);
+  const b=spawnBear(DES()||!G.zones.C?'A':'C',true);b.kind='big';b.gold=1;b.nm=DES()?'金色のサソリ':'金色の狼';b.hp=b.max=Math.round(60*DM().hp);b.m.g.traverse(o=>{if(o.isMesh&&o!==b.m.ring&&o.material){o.material=o.material.clone();if(o.isSkinnedMesh)o.material.skinning=true;o.material.color&&o.material.color.set('#ffd23f');(o.material.emissive&&o.material.emissive.set(lin('#a86a00')));o.material.emissiveIntensity=.45;o.material.metalness=.6}});b.m.g.scale.multiplyScalar(1.25);
   toast(`${b.nm}が現れた！ 地図の赤い点をさがせ`,'gold')}
 function goldKilled(b,p){if(!b.gold||!p||!G.players.includes(p))return;const v=Math.round(400*(1+G.day*.05));G.cash+=v;G.earned+=v;addMat(p,DES()?'relic':'star',DES()?4:1);const pool=['w_icesword','w_iceaxe','w_icestaff','a_icearmor','w_frostbow','c_star','w_sunbow','a_pharaoh'].filter(k=>ITEMS[k]&&classOK(p,k));const id=pool[Math.floor(Math.random()*pool.length)];giveItem(p,id);grantStar(p,id,.3);banner(`${b.nm}をたおした！`,`+$${v}`,'レアな装備を落とした','r-SSR')}
 // ---- friendship: chat once a day, give a dish; hearts unlock small thank-you gifts
@@ -3192,12 +3208,22 @@ document.addEventListener('pointerlockerror',()=>{if(!ENV.plErr){ENV.plErr=1;plo
 function envWarn(){plog(`env frame=${ENV.frame} storage=${ENV.storage} gpu=${GPU||'?'} soft=${SOFTGL}`);if(ENV.frame||!ENV.storage){const el=$('gpuWarn');if(el){el.hidden=false;el.innerHTML=(el.innerHTML?el.innerHTML+'<br><br>':'')+`⚠ いまは<b>Claudeの中の画面</b>で動いています。${ENV.storage?'':'<b>ここでは保存ができません。</b>'}マウス視点や通信が制限されることがあります。<br>ふつうのChromeで <b>super-yujiro.github.io/mecha-white/</b> を開くのがおすすめ`}}}
 // ---- performance log every 5s: fps and the subsystems that took the most time (to find what makes it freeze)
 setInterval(()=>{if(!running){PERF.t={};PERF.fr=0;return}const top=Object.entries(PERF.t).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([k,v])=>k+' '+Math.round(v)+'ms').join(', ');
-  plog(`perf ${(PERF.fr/5).toFixed(0)}fps top: ${top}`+(performance.memory?` heap=${Math.round(performance.memory.usedJSHeapSize/1e6)}MB`:'')+` objs=${(()=>{let n=0;scene.traverse(()=>n++);return n})()}`);PERF.t={};PERF.fr=0},5000);
+  plog(`perf ${(PERF.fr/5).toFixed(0)}fps top: ${top}`+(performance.memory?` heap=${Math.round(performance.memory.usedJSHeapSize/1e6)}MB`:'')+` objs=${(()=>{let n=0;scene.traverse(()=>n++);return n})()}`);PERF.t={};PERF.fr=0;if((PERF.pk=(PERF.pk||0)+1)%6===0)try{plog('probe '+JSON.stringify(window.__mwProbe()))}catch(_){}},5000);
 // ---- graphics context loss (the GPU driver reset the 3D view): log it and tell the player
 cv.addEventListener('webglcontextlost',e=>{e.preventDefault();plog('!!WEBGL CONTEXT LOST');plogSave();try{toast('画面の描画がリセットされました。直らなければ再読み込みしてね','cold',true)}catch(_){}},false);
 cv.addEventListener('webglcontextrestored',()=>{plog('webgl context restored')},false);
 // show the build on the title so it is easy to tell whether the newest version is loaded
 try{const v=document.createElement('div');v.id='verLine';v.style.cssText='text-align:center;font-size:10px;color:#a08a6a;margin-top:2px';v.textContent='ver '+BUILD;$('logPrev').after(v)}catch(_){}
+// debug probe (used to hunt memory growth): sizes of the long-lived lists and caches
+window.__mwProbe=()=>{const o={plog:PLOG.a.length,lq:LQ.length,flames:FLAMES.length,outs:OUTS.size,mat:Object.keys(matCache).length,geo:Object.keys(geoCache).length,outF:NET.outF.length,outB:NET.outB.length,outT:NET.outT.length,inbox:Object.keys(NET.inbox).length,lpool:lpool.length,errs:ERRLOG.length,heap:performance.memory?Math.round(performance.memory.usedJSHeapSize/1e6):0};
+  if(G)for(const k in G){const v=G[k];if(Array.isArray(v)&&v.length>20)o['G.'+k]=v.length;else if(v&&typeof v==='object'&&!v.isObject3D&&!Array.isArray(v)){const n=Object.keys(v).length;if(n>40)o['G.'+k+'{}']=n}}
+  try{o.programs=renderer.info.programs.length;o.geoms=renderer.info.memory.geometries;o.tex=renderer.info.memory.textures}catch(_){}return o};
+
+// a render that throws mid-way leaves three.js's internal render-state stacks un-popped, so memory grows every failing frame.
+// Fix the usual culprit (material props that the material type does not support) as soon as render starts failing.
+function renderRecover(e){let n=0;const bad=m=>{if(!m)return;if(!(m.isMeshStandardMaterial||m.isMeshPhongMaterial||m.isMeshLambertMaterial||m.isMeshToonMaterial||m.isShaderMaterial)){for(const k of ['emissive','emissiveIntensity','emissiveMap'])if(Object.prototype.hasOwnProperty.call(m,k)){delete m[k];n++}}
+    else if(m.emissive&&!m.emissive.isColor&&!m.isShaderMaterial){m.emissive=new T.Color(0);n++}};
+  scene.traverse(o=>{const M=o.material;if(Array.isArray(M))M.forEach(bad);else bad(M)});plog('renderRecover fixed '+n+' material props after: '+String(e&&e.message).slice(0,80))}
 // ================================================================ campfire spots in dungeons: light them with 3 logs, warm up there, and come back there instead of losing your bag
 const CF_LOGS=3;
 const CAMPFIRES=[

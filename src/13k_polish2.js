@@ -111,9 +111,19 @@ document.addEventListener('pointerlockerror',()=>{if(!ENV.plErr){ENV.plErr=1;plo
 function envWarn(){plog(`env frame=${ENV.frame} storage=${ENV.storage} gpu=${GPU||'?'} soft=${SOFTGL}`);if(ENV.frame||!ENV.storage){const el=$('gpuWarn');if(el){el.hidden=false;el.innerHTML=(el.innerHTML?el.innerHTML+'<br><br>':'')+`⚠ いまは<b>Claudeの中の画面</b>で動いています。${ENV.storage?'':'<b>ここでは保存ができません。</b>'}マウス視点や通信が制限されることがあります。<br>ふつうのChromeで <b>super-yujiro.github.io/mecha-white/</b> を開くのがおすすめ`}}}
 // ---- performance log every 5s: fps and the subsystems that took the most time (to find what makes it freeze)
 setInterval(()=>{if(!running){PERF.t={};PERF.fr=0;return}const top=Object.entries(PERF.t).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([k,v])=>k+' '+Math.round(v)+'ms').join(', ');
-  plog(`perf ${(PERF.fr/5).toFixed(0)}fps top: ${top}`+(performance.memory?` heap=${Math.round(performance.memory.usedJSHeapSize/1e6)}MB`:'')+` objs=${(()=>{let n=0;scene.traverse(()=>n++);return n})()}`);PERF.t={};PERF.fr=0},5000);
+  plog(`perf ${(PERF.fr/5).toFixed(0)}fps top: ${top}`+(performance.memory?` heap=${Math.round(performance.memory.usedJSHeapSize/1e6)}MB`:'')+` objs=${(()=>{let n=0;scene.traverse(()=>n++);return n})()}`);PERF.t={};PERF.fr=0;if((PERF.pk=(PERF.pk||0)+1)%6===0)try{plog('probe '+JSON.stringify(window.__mwProbe()))}catch(_){}},5000);
 // ---- graphics context loss (the GPU driver reset the 3D view): log it and tell the player
 cv.addEventListener('webglcontextlost',e=>{e.preventDefault();plog('!!WEBGL CONTEXT LOST');plogSave();try{toast('画面の描画がリセットされました。直らなければ再読み込みしてね','cold',true)}catch(_){}},false);
 cv.addEventListener('webglcontextrestored',()=>{plog('webgl context restored')},false);
 // show the build on the title so it is easy to tell whether the newest version is loaded
 try{const v=document.createElement('div');v.id='verLine';v.style.cssText='text-align:center;font-size:10px;color:#a08a6a;margin-top:2px';v.textContent='ver '+BUILD;$('logPrev').after(v)}catch(_){}
+// debug probe (used to hunt memory growth): sizes of the long-lived lists and caches
+window.__mwProbe=()=>{const o={plog:PLOG.a.length,lq:LQ.length,flames:FLAMES.length,outs:OUTS.size,mat:Object.keys(matCache).length,geo:Object.keys(geoCache).length,outF:NET.outF.length,outB:NET.outB.length,outT:NET.outT.length,inbox:Object.keys(NET.inbox).length,lpool:lpool.length,errs:ERRLOG.length,heap:performance.memory?Math.round(performance.memory.usedJSHeapSize/1e6):0};
+  if(G)for(const k in G){const v=G[k];if(Array.isArray(v)&&v.length>20)o['G.'+k]=v.length;else if(v&&typeof v==='object'&&!v.isObject3D&&!Array.isArray(v)){const n=Object.keys(v).length;if(n>40)o['G.'+k+'{}']=n}}
+  try{o.programs=renderer.info.programs.length;o.geoms=renderer.info.memory.geometries;o.tex=renderer.info.memory.textures}catch(_){}return o};
+
+// a render that throws mid-way leaves three.js's internal render-state stacks un-popped, so memory grows every failing frame.
+// Fix the usual culprit (material props that the material type does not support) as soon as render starts failing.
+function renderRecover(e){let n=0;const bad=m=>{if(!m)return;if(!(m.isMeshStandardMaterial||m.isMeshPhongMaterial||m.isMeshLambertMaterial||m.isMeshToonMaterial||m.isShaderMaterial)){for(const k of ['emissive','emissiveIntensity','emissiveMap'])if(Object.prototype.hasOwnProperty.call(m,k)){delete m[k];n++}}
+    else if(m.emissive&&!m.emissive.isColor&&!m.isShaderMaterial){m.emissive=new T.Color(0);n++}};
+  scene.traverse(o=>{const M=o.material;if(Array.isArray(M))M.forEach(bad);else bad(M)});plog('renderRecover fixed '+n+' material props after: '+String(e&&e.message).slice(0,80))}

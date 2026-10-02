@@ -153,7 +153,7 @@ function hideIdleFx(dt){secretFx(dt||.016);roadFx();caravanFx();const me=G.playe
 function wpnModel(id){const it=ITEMS[id];if(!it)return null;const n=it.n;const key=/弓/.test(n)?'Bow_Wooden':/斧/.test(n)?'Axe':/ハンマー|槌/.test(n)?'Hammer_Small':/ナックル/.test(n)?null:/杖|槍/.test(n)?'staff':'Sword';if(!key)return null;
   let src=key==='staff'?(KK&&KK.kit&&KK.kit.staff):(KK&&KK.prop&&KK.prop[key]&&KK.prop[key].scene);if(!src)return null;const o=src.clone(true);
   const em=/氷|霜|青/.test(n)?'#4fb8ff':/星|太陽|覇者|王|黄金/.test(n)?'#ffb020':/精霊/.test(n)?'#5fe07a':/毒/.test(n)?'#b04fff':null;
-  o.traverse(q=>{if(q.isMesh){q.material=q.material.clone();q.castShadow=true;if(em){q.material.emissive=lin(em);q.material.emissiveIntensity=.35}}});
+  o.traverse(q=>{if(q.isMesh){q.material=q.material.clone();q.castShadow=true;if(em){(q.material.emissive&&q.material.emissive.set(lin(em)));q.material.emissiveIntensity=.35}}});
   const b=new T.Box3().setFromObject(o),sz=new T.Vector3();b.getSize(sz);const L=Math.max(sz.x,sz.y,sz.z)||1;o.scale.multiplyScalar((/大/.test(n)?50:40)/L);
   const w=new T.Group();w.add(o);b.setFromObject(w);const c=new T.Vector3();b.getCenter(c);o.position.sub(c);const r=new T.Group();r.add(w);w.rotation.set(0,0,key==='Bow_Wooden'?.35:2.5);return r}
 function backWeapon(p,m,busy){if(!m.back)return;const id=isRPG()&&p.eq?p.eq.w:null;if(m._wid!==id){m._wid=id;if(m.backW){m.back.remove(m.backW);m.backW=null}if(id){m.backW=wpnModel(id);if(m.backW){m.backW.position.set(0,10,-4);m.back.add(m.backW)}}}if(m.backW)m.backW.visible=!busy}

@@ -38,11 +38,11 @@ function npcQuest(nid){if(!joined(nid))return null;let avail=null;const ch=(G.st
 function npcMark(nid){const mm=advMark(nid)||mysteryMark(nid);if(mm)return mm;const k=npcQuest(nid);if(!k)return '';const q=qS(k);return !q?'！':q.st===2?'？':'…'}
 // ---- NPC meshes and markers (both host and guest)
 function npcFx(){if(!G||!running)return;const on=isRPG();const L=NPCS[bioKey()];
-  if(!on){if(G.npcV)for(const v of G.npcV)v.m.g.visible=false;if(G.escV)G.escV.m.g.visible=false;if(G.findV)G.findV.visible=false;$('dlg').hidden=true;return}
-  if(!G.npcV||G.npcBio!==bioKey()||(G.npcV[0]&&!G.npcV[0].m.g.parent)){if(G.npcV)for(const v of G.npcV)world.remove(v.m.g);G.npcBio=bioKey();G.npcV=L.map(n=>{const m=makeVillager(PALS[n.pal%PALS.length],Object.assign({noShadow:false},n.o));const q=npcPos(n);m.g.position.set(q.x,0,q.y);m.g.rotation.y=Math.atan2(CX-q.x,CY-q.y)+Math.PI;world.add(m.g);return{n,m,x:q.x,y:q.y}})}
+  if(!on){if(G.npcV)for(const v of G.npcV){v.m.g.visible=false;if(v.qm)v.qm.visible=false}if(G.escV)G.escV.m.g.visible=false;if(G.findV)G.findV.visible=false;$('dlg').hidden=true;return}
+  if(!G.npcV||G.npcBio!==bioKey()||(G.npcV[0]&&!G.npcV[0].m.g.parent)){if(G.npcV)for(const v of G.npcV){world.remove(v.m.g);if(v.qm)world.remove(v.qm)}G.npcBio=bioKey();G.npcV=L.map(n=>{const m=makeVillager(PALS[n.pal%PALS.length],Object.assign({noShadow:false},n.o));const q=npcPos(n);m.g.position.set(q.x,0,q.y);m.g.rotation.y=Math.atan2(CX-q.x,CY-q.y)+Math.PI;world.add(m.g);return{n,m,x:q.x,y:q.y}})}
   const me=G.players[G.me]||G.players[0];
-  for(const v of G.npcV){v.m.g.visible=(!v.n.adv||ADV())&&joined(v.n.id);if(!v.m.g.visible)continue;animWalk(v.m,0,false);const mk=npcMark(v.n.id),d=me?dist(me.x,me.y,v.x,v.y):1e9;v.m.g.rotation.y=d<200&&me?Math.atan2(me.x-v.x,me.y-v.y):Math.atan2(CX-v.x,CY-v.y)+Math.PI;
-    if(mk)label(v.x,v.y,74,`<b style="font-size:${mk==='…'?16:26}px;color:${mk==='？'?'#3fc157':mk==='！'?'#ffb020':'#9aa3ad'};-webkit-text-stroke:3px #16283a;paint-order:stroke fill">${mk}</b>`,'');
+  for(const v of G.npcV){v.m.g.visible=(!v.n.adv||ADV())&&joined(v.n.id);if(!v.m.g.visible){if(v.qm)v.qm.visible=false;continue}animWalk(v.m,0,false);const mk=npcMark(v.n.id),d=me?dist(me.x,me.y,v.x,v.y):1e9;v.m.g.rotation.y=d<200&&me?Math.atan2(me.x-v.x,me.y-v.y):Math.atan2(CX-v.x,CY-v.y)+Math.PI;
+    qMark3D(v,mk,d);if(mk==='…')label(v.x,v.y,74,`<b style="font-size:16px;color:#9aa3ad;-webkit-text-stroke:3px #16283a;paint-order:stroke fill">…</b>`,'');
     if(d<220)label(v.x,v.y,d<75?108:96,`<small>${v.n.n}<span style="color:#e0506a">${hearts(v.n.id)}</span></small>${d<75&&!DLG.open?'<br><b>Eキーで話す</b>':''}`,'')}
   // escort follower, find spot
   let esc=null,fnd=null;for(const k in QUESTS){const Q=QUESTS[k],q=qS(k);if(!q||q.st!==1||Q.bio!==bioKey())continue;if(Q.type==='escort')esc=[k,Q,q];if(Q.type==='find')fnd=[k,Q,q]}
@@ -99,3 +99,19 @@ function rpgBoxHtml(me){if(!isRPG())return '';const l=rlv(me),x=me.rx||0,need=rx
   ${inv.length?`<div class="inv">${inv.map(id=>ITEMS[id]?`<button data-eq="${id}" class="${eq[ITEMS[id].s]===id?'on':''}" style="${classOK(me,id)?'':'opacity:.45'}" title="${classOK(me,id)?'':WTN[wType(id)]+'（今の職業では使えない）'}">${eq[ITEMS[id].s]===id?'✓ ':''}${isW(id)?wpName(me,id):ITEMS[id].n} <b style="color:#d19a1c">${starTxt(starOf(me,id))}</b>　<small>${isW(id)?`攻撃+${Math.round(wpAtk(me,id)*100)}%`:itemDesc(ITEMS[id])}</small>${wpTag(me,id)}</button>`:'').join('')}</div>`:'<small>依頼を解決すると装備がもらえる</small>'}`}
 $('lifeCard').addEventListener('click',e=>{const b=e.target.closest('button[data-eq]');if(!b)return;sendAct('eq',b.dataset.eq);setTimeout(()=>lifeHud(true),120)});
 
+
+// big floating badge over people who have a quest (！ new / ？ report) — visible from far away, bobbing, with a pulse ring on the ground
+const QMT={};function qMarkTex(mk){if(QMT[mk])return QMT[mk];const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');
+  const col=mk==='？'?['#5fe07a','#1f8a3a']:['#ffd25a','#e07a10'];const g=x.createLinearGradient(0,10,0,118);g.addColorStop(0,col[0]);g.addColorStop(1,col[1]);
+  x.beginPath();x.arc(64,58,46,0,TAU);x.moveTo(44,96);x.lineTo(64,124);x.lineTo(84,96);x.closePath();x.fillStyle=g;x.fill();x.lineWidth=7;x.strokeStyle='#16283a';x.stroke();
+  x.beginPath();x.arc(64,58,38,0,TAU);x.lineWidth=3;x.strokeStyle='rgba(255,255,255,.55)';x.stroke();
+  x.font='900 66px "Zen Maru Gothic",sans-serif';x.textAlign='center';x.textBaseline='middle';x.lineWidth=8;x.strokeStyle='#16283a';x.strokeText(mk==='？'?'?':'!',64,62);x.fillStyle='#fff';x.fillText(mk==='？'?'?':'!',64,62);
+  const t=new T.CanvasTexture(c);t.encoding=T.sRGBEncoding;return QMT[mk]=t}
+function qMark3D(v,mk,d){const want=mk==='！'||mk==='？';if(!want){if(v.qm)v.qm.visible=false;return}
+  if(!v.qm){const g=new T.Group();const sp=new T.Sprite(new T.SpriteMaterial({map:qMarkTex(mk),transparent:true,depthWrite:false,fog:false}));sp.renderOrder=5;g.add(sp);
+    const ring=M_(new T.RingGeometry(16,20,32),new T.MeshBasicMaterial({color:lin('#ffc23a'),transparent:true,opacity:.6,side:T.DoubleSide,depthWrite:false,blending:T.AdditiveBlending}),false);ring.rotation.x=-Math.PI/2;ring.position.y=1.5;g.add(ring);
+    g.userData={sp,ring,mk:''};world.add(g);v.qm=g}
+  const g=v.qm,U=g.userData;if(g.parent!==world)world.add(g);g.visible=true;if(U.mk!==mk){U.mk=mk;U.sp.material.map=qMarkTex(mk);U.sp.material.needsUpdate=true;U.ring.material.color.set(lin(mk==='？'?'#5fe07a':'#ffc23a'))}
+  const t=performance.now()/1000,far=Math.min(1,Math.max(0,(d-150)/600));const s=28+far*18;
+  U.sp.scale.set(s,s,1);U.sp.position.y=96+far*26+Math.sin(t*3+v.x)*4;U.sp.material.opacity=d<60?.55:1;
+  const r=1+((t*1.1+v.y*.01)%1)*.8;U.ring.scale.set(r,r,1);U.ring.material.opacity=.65*(1-(r-1)/.8);g.position.set(v.x,0,v.y);if(mk==='！'&&d<240&&!v._told){v._told=1;try{toast(`！ ${v.n.n}が何か頼みたそうだ（近づいてEキーで話す）`,'gold')}catch(_){}}}
