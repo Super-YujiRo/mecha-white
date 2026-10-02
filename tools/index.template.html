@@ -225,6 +225,10 @@
 #tracker{position:fixed;right:12px;top:196px;width:262px;z-index:19;background:rgba(255,250,240,.94);border:3px solid #16283a;border-radius:14px;padding:8px 10px;color:#16283a;font-size:12px;box-shadow:0 4px 14px rgba(0,0,0,.2);pointer-events:none}
 #tracker .tk-h{font-weight:900;font-size:13px;border-bottom:2px dashed #d6c7ab;padding-bottom:4px;margin-bottom:6px}#tracker .tk-h em{font-style:normal;color:#e8703a}
 #tracker .sec{margin-bottom:7px}#tracker .sec i{display:block;font-style:normal;font-size:10px;font-weight:900;letter-spacing:.1em;color:#8a5a30}#tracker .sec b{display:block;font-size:13.5px;line-height:1.4}
+#tracker .qsec .qc{background:#fff;border:2px solid #f0a040;border-radius:10px;padding:5px 7px;margin-top:4px}#tracker .qsec .qc.ok{border-color:#3fc157;background:#effbef}
+#tracker .qsec .qc b{display:inline;font-size:13px}#tracker .qsec .qn{float:right;font-size:10px;color:#8a5a30;font-weight:800;margin-top:2px}
+#tracker .qsec .qa{font-size:11.5px;line-height:1.45;margin-top:2px;clear:both}#tracker .qsec .qa small{display:block;font-size:10.5px;color:#6a5030}#tracker .qsec .qpr{color:#c06010!important;font-weight:800}
+#tracker .qsec .qrep{font-style:normal;color:#1f8a3a;font-weight:900}#tracker .qsec span{font-weight:900;color:#e07a10}#tracker .qsec .qrep span{color:#1f8a3a}#tracker .qav{color:#e8703a;font-weight:800;margin-top:4px}
 #tracker .sec.now{background:#fff3c4;border-radius:10px;padding:5px 7px;border:2px solid #ffd23f}#tracker .sec.now i{color:#c0392b}
 #tracker .pg{display:flex;align-items:center;gap:6px;margin-top:2px}#tracker .pg span{flex:1;height:7px;background:#e3d8c6;border-radius:4px;overflow:hidden}#tracker .pg span u{display:block;height:100%;background:#3fc157}
 #tracker .ck{font-size:12px;margin-top:1px;padding-left:2px}#tracker .ck.ok{color:#2f8a3a}#tracker .ck.ok:before{content:'✓ '}#tracker .ck.ng:before{content:'・'}
@@ -352,7 +356,7 @@ body.rpg #lifeCard .inv button:hover{border-left-color:var(--fl-navy)!important}
 <div id="qlog" hidden></div>
 <div id="tracker" hidden></div>
 <canvas id="mini" width="170" height="170" hidden></canvas>
-<div id="bigmap" hidden><div class="bmIn"><b>地図</b><canvas id="bigmapC" width="640" height="640"></canvas><small>Mキーで閉じる　★＝次の目的地　●オレンジ＝話したい人　●青＝仲間</small></div></div>
+<div id="bigmap" hidden><div class="bmIn"><b>地図</b><canvas id="bigmapC" width="640" height="640"></canvas><small>Mキーで閉じる　★＝次の目的地　<span style="color:#ff8a1a">⚑＝受けた依頼の場所</span>　●オレンジ＝話したい人　●青＝仲間</small></div></div>
 <div id="keyBar"><span><kbd class="w">左クリック</kbd>攻撃</span><span><kbd class="w">Space</kbd>ジャンプ</span><span><kbd class="w">Shift</kbd>回避</span><span id="kbSk"><kbd class="w">右クリック</kbd>スキル</span><span class="kbUn"><kbd class="w">クリック</kbd>マウスで視点操作</span><span class="kbLk"><kbd class="w">Esc/Alt</kbd>カーソルを出す</span><span><kbd>E</kbd>話す</span><span><kbd>M</kbd>地図</span><span><kbd>C</kbd>料理</span></div>
 <div id="opening" hidden><div class="opbar t"></div><div class="opbar b"></div><div id="opTxt"></div><button id="opSkip">スキップ ▶▶</button></div>
 <div id="talk" hidden><b id="talkWho"></b><span id="talkTxt"></span></div>

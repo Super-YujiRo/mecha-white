@@ -66,6 +66,12 @@ function drawMap(cv,big){const c=cv.getContext('2d'),W=cv.width,H=cv.height,me=G
   if(ADV()&&G.adv)G.adv.tr.forEach((on,i)=>{if(on)dot(TREAS[i][0],TREAS[i][1],big?4:3,'#f5c542','#8a6a1a')});
   // people with something to say
   if(!inA)for(const v of G.npcV||[]){if(!v.m.g.visible)continue;const mk=npcMark(v.n.id);if(mk&&mk!=='…'){const [a,b]=P(v.x,v.y),col=mk==='？'?'#3fc157':'#ffb020',pu=(performance.now()/900)%1,R=big?7:5.5;c.strokeStyle=col;c.globalAlpha=1-pu;c.lineWidth=2;c.beginPath();c.arc(a,b,R+pu*(big?12:9),0,TAU);c.stroke();c.globalAlpha=1;c.fillStyle=col;c.strokeStyle='#16283a';c.lineWidth=1.8;c.beginPath();c.arc(a,b,R,0,TAU);c.fill();c.stroke();c.fillStyle='#fff';c.font=`900 ${big?11:9}px sans-serif`;c.textAlign='center';c.textBaseline='middle';c.fillText(mk==='？'?'?':'!',a,b+.5);c.textBaseline='alphabetic'}}
+  // where accepted quests take you (orange flag)
+  if(!inA&&G.story&&G.story.q)for(const k in G.story.q){const Q=QUESTS[k],q=G.story.q[k];if(!Q||q.st!==1||Q.bio!==bioKey()||Q.x==null)continue;const qx=Q.type==='escort'&&q.x!=null?q.x:Q.x,qy=Q.type==='escort'&&q.y!=null?q.y:Q.y;
+    let [a,b]=P(qx,qy);if(!big){const dx=a-W/2,dy=b-H/2,r=Math.hypot(dx,dy),lim=W/2-12;if(r>lim){a=W/2+dx/r*lim;b=H/2+dy/r*lim}}
+    const s2=big?1.2:.9,pu=(performance.now()/700)%1;c.strokeStyle='#ff8a1a';c.globalAlpha=1-pu;c.lineWidth=2;c.beginPath();c.arc(a,b,6+pu*12,0,TAU);c.stroke();c.globalAlpha=1;
+    c.strokeStyle='#16283a';c.lineWidth=2;c.beginPath();c.moveTo(a,b+2);c.lineTo(a,b-14*s2);c.stroke();c.fillStyle='#ff8a1a';c.beginPath();c.moveTo(a,b-14*s2);c.lineTo(a+11*s2,b-10*s2);c.lineTo(a,b-6*s2);c.closePath();c.fill();c.stroke();
+    if(big){c.font='800 11px "Zen Maru Gothic",sans-serif';c.textAlign='center';c.lineWidth=3;c.strokeStyle='#fff';c.strokeText(Q.t,a,b+14);c.fillStyle='#c05a10';c.fillText(Q.t,a,b+14)}}
   // enemies nearby (and every boss)
   for(const b of G.bears){if(b.dead||b.hide)continue;if(inAby(b.x)!==inA)continue;const boss=b.kind==='boss';if(!big&&!boss&&dist(b.x,b.y,me.x,me.y)>700)continue;if(big&&!boss)continue;dot(b.x,b.y,boss?(big?7:5):2.6,boss?'#c0392b':'#e0605a',boss?'#fff':null)}
   // objective

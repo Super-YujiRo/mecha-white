@@ -148,14 +148,18 @@ function trackerFlash(){const el=$('tracker');el.classList.remove('flash');void 
 let _tkT=0;function trackerHud(){const el=$('tracker');{const on=!!(isRPG()&&running);if(document.body.classList.contains('rpg')!==on)document.body.classList.toggle('rpg',on)}if(!isRPG()||!running){el.hidden=true;return}const now=performance.now();if(now-_tkT<250)return;_tkT=now;{const me=G.players[G.me]||G.players[0],sk=SKILLS[clsKey(me)],el=$('kbSk');const cd=NET.mode==='guest'?(NET.skAt>0?Math.max(0,sk.cd-(performance.now()-NET.skAt)/1000):0):(me.skCd||0);const h=`<kbd class="w">右クリック</kbd>${sk.n}${cd>0?` ${Math.ceil(cd)}s`:''}`;if(el.innerHTML!==h)el.innerHTML=h;el.className=cd>0?'cd':'ready'}const S=G.story,C=CH[S.ch]||CH[4],L=SOBJ[S.ch];
   const pg=(c,g)=>`<div class="pg"><span><u style="width:${Math.round(100*Math.min(1,c/Math.max(1,g)))}%"></u></span><small>${Math.min(c,g)}/${g}</small></div>`;
   let h=`<div class="tk-h">${C.n}<em>「${C.t}」</em></div>`;
-  if(L){const i=Math.min(S.step||0,L.length-1),o=L[i],[c,g]=o.f();h+=`<div class="sec now"><i>▶ いまやること（${i+1}/${L.length}）</i><b>${stx(o)}</b>${o.p?`<small>${o.p()}</small>`:pg(c,g)}</div>`}
+  if(L){const i=Math.min(S.step||0,L.length-1),o=L[i],[c,g]=o.f();h+=`<div class="sec now"><i>▶ いまやること（${i+1}/${L.length}）</i><b>${stx(o)}</b>${o.p?`<small>${o.p()}</small>`:pg(c,g)}</div><!--Q-->`}
   else{const g=goalOf(YR());const rows=[[`かまど Lv${G.level} / ${g.lv}`,G.level>=g.lv],[`町人 ${popNow()} / ${g.pop}人`,popNow()>=g.pop],[`お金 $${Math.floor(G.cash).toLocaleString()} / $${g.c.toLocaleString()}`,G.cash>=g.c]];
-    if(G.mission<MISSIONS.length){const m=MISSIONS[G.mission],[c,gg]=m.f();h+=`<div class="sec now"><i>▶ いまやること</i><b>${m.t}</b>${pg(c,gg)}</div>`}
+    if(G.mission<MISSIONS.length){const m=MISSIONS[G.mission],[c,gg]=m.f();h+=`<div class="sec now"><i>▶ いまやること</i><b>${m.t}</b>${pg(c,gg)}</div><!--Q-->`}
     const fm=Math.round(custFame()*5);h+=`<div class="sec"><i>★ 町の知名度（お客さんの多さ）</i><b style="color:#e8a020">${G.story.shopOpen?'★'.repeat(fm)+'☆'.repeat(5-fm):'<small>まだ誰にも知られていない</small>'}</b></div>`;h+=`<div class="sec"><i>◆ 章の目標</i><b>${G.monument?'今夜、像を守りぬけ！':g.n+'を建てて、最後の夜を守れ'}</b>${G.monument?'':rows.map(([t,ok])=>`<div class="ck ${ok?'ok':'ng'}">${t}</div>`).join('')}</div>`}
   h+=rebuildHtml();
-  const qs=[];for(const k in (S.q||{})){const Q=QUESTS[k],q=S.q[k];if(!Q||Q.bio!==bioKey()||q.st===3)continue;const pr=q.st===2?`→ ${npcName(Q.npc)}に報告`:Q.type==='bring'?`${{log:'薪',fish:'魚',meat:'肉'}[Q.k]||Q.k} ${q.p||0}/${Q.n}`:Q.type==='build'?`${Math.min(Q.chk(),Q.n)}/${Q.n}`:Q.type==='count'?`${Math.min(Q.chk(q),Q.n)}/${Q.n}`:Q.where?`（${Q.where}）`:'';qs.push(`<div class="q ${q.st===2?'ok':''}">・${Q.t} ${pr}</div>`)}
-  const avail=G.npcV?G.npcV.filter(v=>npcMark(v.n.id)==='！').length:0;
-  h+=`<div class="sec"><i>✉ 住人の依頼</i>${qs.join('')||'<div class="q">受けている依頼はない</div>'}${avail?`<div class="q" style="color:#e8703a">“！”の住人が${avail}人いる（Eキーで話す）</div>`:''}</div>`;
+  const qs=[];for(const k in (S.q||{})){const Q=QUESTS[k],q=S.q[k];if(!Q||Q.bio!==bioKey()||q.st===3||q.st==null)continue;
+    const pr=q.st===2?'':Q.type==='bring'?`${{log:'薪',fish:'魚',meat:'肉'}[Q.k]||Q.k} ${q.p||0}/${Q.n}`:Q.type==='build'?`${Math.min(Q.chk(),Q.n)}/${Q.n}`:Q.type==='count'?`${Math.min(Q.chk(q),Q.n)}/${Q.n}`:'';
+    const what=q.st===2?`<em class="qrep">✔ できた！ ${npcName(Q.npc)}に報告しよう（頭の上に<span>？</span>）</em>`:`${Q.act||''}${Q.where?`<small class="qwh">📍 ${Q.where}（地図にオレンジの旗）</small>`:''}${pr?`<small class="qpr">進み具合 ${pr}</small>`:''}`;
+    qs.push(`<div class="qc ${q.st===2?'ok':''}"><b>${Q.t}</b><span class="qn">依頼：${npcName(Q.npc)}</span><div class="qa">${what}</div></div>`)}
+  const avail=G.npcV?G.npcV.filter(v=>v.m.g.visible&&npcMark(v.n.id)==='！').length:0;
+  const qh=`<div class="sec qsec"><i>✉ 受けている依頼（${qs.length}）</i>${qs.join('')||'<div class="q">受けている依頼はない</div>'}${avail?`<div class="q qav">頭に<span>！</span>が出ている住人が${avail}人いる → 近づいてEキー</div>`:''}</div>`;
+  h=h.includes('<!--Q-->')?h.replace('<!--Q-->',qh):h+qh;
   {const me=G.players[G.me]||G.players[0],b=me&&me.buff;if(b&&b.t>0)h+=`<div class="sec"><i>🍳 料理の効果</i><b style="font-size:12.5px">${b.n}</b><small>${dishD(DISH[b.k])}・残り${Math.ceil(b.t)}秒</small></div>`;else if(me&&(me.food||[]).length)h+=`<div class="sec"><i>🍳 料理</i><small>${me.food.length}品持っている（Vキーで食べる）</small></div>`}
   if(el._h!==h){el.innerHTML=h;el._h=h}el.hidden=false}
 

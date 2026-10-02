@@ -1,5 +1,5 @@
 /* めちゃホワイト — built from src/*.js by tools/build.py. Edit the sources, not this file. */
-(()=>{const BUILD='20261003044315';
+(()=>{const BUILD='20261003045757';
 const $=id=>document.getElementById(id);
 if(!window.THREE){$('loading').textContent='3Dの読み込みに失敗しました。再読み込みしてください';return}
 const T=THREE;
@@ -1238,7 +1238,7 @@ function followNet(p,dt){const px=p.x,py=p.y;if(p.nx!=null){const k=Math.min(1,d
 function netHost(dt){const gp=guestPeerNow();
   if(gp&&NET.guestPeer!==gp.peer){if(G.players[1])dropRemote();NET.guestPeer=gp.peer;G.charOf[1]=altCh(G.charOf[0],gp.presence&&gp.presence.ch);const p=addPlayer(1);p.remote=true;if(G.savePl&&G.savePl[1]){p.lv=Object.assign({gun:0,bag:0},G.savePl[1].lv);p.life=Object.assign({},G.savePl[1].life||{});rpgRestore(p,G.savePl[1])}p.x=CX+30;p.y=CY+110;hudInit();toast('友達が参加した！','gold');SFX.rare();setTimeout(()=>{if(running)banner('2人専用','協力ワザ','挟み撃ちでダメージ2倍・寄り添うと体温が下がりにくい・巨大肉は2人で運ぶ','area')},2500)}
   if(!gp&&NET.guestPeer){NET.gMiss=(NET.gMiss||0)+dt;const lim=PJ.on?45:3;if(PJ.on)netWarn(`友達の接続が切れた…戻ってくるのを待っています（あと${Math.ceil(lim-NET.gMiss)}秒）`);if(NET.gMiss>lim){netWarn('');dropRemote();NET.guestPeer=null;NET.gMiss=0;toast('友達が抜けた','cold')}}else if(gp&&NET.gMiss){if(NET.gMiss>1)toast('友達が戻ってきた！','gold');NET.gMiss=0;netWarn('')}
-  const p=G.players[1];if(p&&gp){const pr=gp.presence;verCheck(pr);p.atkHold=!!pr.ak;if(typeof pr.dg==='number'){if(p._dg!=null&&pr.dg!==p._dg)p.inv=Math.max(p.inv||0,.42);p._dg=pr.dg}p.jz=pr.jz||0;if(typeof pr.sk==='number'){if(p._sk!=null&&pr.sk!==p._sk)p.skillReq=true;p._sk=pr.sk}if(typeof pr.fk==='number'){if(p._fk!=null&&pr.fk!==p._fk)p.fPress=true;p._fk=pr.fk}if(pr.act&&pr.act[0]!==p._act){const first=p._act===undefined&&pr.act[0]>1;p._act=pr.act[0];if(!first)doAct(p,pr.act[1],pr.act[2])}if(typeof pr.ek==='number'){if(p._ek!=null&&pr.ek!==p._ek){p.ePress=true;p.eGrade=pr.eg||0}p._ek=pr.ek}if(typeof pr.x==='number'&&typeof pr.y==='number'){p.nx=clX(pr.x,30);p.ny=clY(pr.y,30,pr.x);p.dirN=typeof pr.d==='number'?pr.d:null}}
+  const p=G.players[1];if(p&&gp){const pr=gp.presence;verCheck(pr);p.atkHold=!!pr.ak;p.aimA=typeof pr.am==='number'?pr.am:null;if(typeof pr.dg==='number'){if(p._dg!=null&&pr.dg!==p._dg)p.inv=Math.max(p.inv||0,.42);p._dg=pr.dg}p.jz=pr.jz||0;if(typeof pr.sk==='number'){if(p._sk!=null&&pr.sk!==p._sk)p.skillReq=true;p._sk=pr.sk}if(typeof pr.fk==='number'){if(p._fk!=null&&pr.fk!==p._fk)p.fPress=true;p._fk=pr.fk}if(pr.act&&pr.act[0]!==p._act){const first=p._act===undefined&&pr.act[0]>1;p._act=pr.act[0];if(!first)doAct(p,pr.act[1],pr.act[2])}if(typeof pr.ek==='number'){if(p._ek!=null&&pr.ek!==p._ek){p.ePress=true;p.eGrade=pr.eg||0}p._ek=pr.ek}if(typeof pr.x==='number'&&typeof pr.y==='number'){p.nx=clX(pr.x,30);p.ny=clY(pr.y,30,pr.x);p.dirN=typeof pr.d==='number'?pr.d:null}}
   NET.sendT+=dt;if(NET.guestPeer&&NET.sendT>=.12){NET.sendT=0;sendSnap()}}
 function dropRemote(){const p=G.players[1];if(!p)return;for(const k of p.bag)dropItem(p.x,p.y,k,20);world.remove(p.m.g);G.players.length=1;for(const h of G.holes)if(h.user===p)h.user=null;hudInit()}
 function safeEmit(tp,d){if(!NET.room)return;let s=JSON.stringify(d);let guard=0;const LIM=PJ.on?200000:3800;while(s.length>LIM&&guard++<8){let big=null,bl=0;for(const k in d)if(Array.isArray(d[k])){const l=JSON.stringify(d[k]).length;if(l>bl){bl=l;big=k}}if(!big)break;d[big]=d[big].slice(0,Math.floor(d[big].length*.7));s=JSON.stringify(d)}
@@ -1307,8 +1307,8 @@ function guestTick(dt){
   me.x=clX(me.x+me.vx*dt,30);me.y=clY(me.y+me.vy*dt,30,me.x);const sp=Math.hypot(me.vx,me.vy);me.moving=sp>20;if(me.moving){me.step+=dt*sp*.06;me.dirT=Math.atan2(me.vx,me.vy);if(Math.random()<dt*6)puff(me.x-me.vx*.05,me.y-me.vy*.05,2,{r:7,life:.6,a:.7,vy:10,grow:1})}
   dashTick(me,dt);fenceCollide(me,px,py);solids(me,12);for(const t of G.trees)if(t.alive&&t.fall<=0&&Math.abs(t.x-me.x)<30&&Math.abs(t.y-me.y)<30)pushCircle(me,t.x,t.y,18*t.s);jumpTick(me,dt);
   me.bb=lerp(me.bb,0,dt*8);me.flash=Math.max(0,me.flash-dt);me.inv=Math.max(0,me.inv-dt);
-  if(me.shooting){const b=nearestBear(me);if(b)me.aimDir=Math.atan2(b.x-me.x,b.y-me.y)}else if(me.chopping){const t=nearestTree(me);if(t)me.aimDir=Math.atan2(t.x-me.x,t.y-me.y)}else me.aimDir=null;
-  NET.room.presence({role:'guest',x:me.x|0,y:me.y|0,d:r2(me.dir),ch:meta.pick||'Knight',fk:NET.fCount||0,ek:NET.eCount||0,eg:NET.eGrade||0,act:NET.act||null,ak:INP.atk?1:0,dg:NET.dgN||0,jz:Math.round(me.jz||0),sk:NET.skN||0}).catch(()=>{});
+  if(me.shooting){if(isRPG()&&INP.atk)me.aimDir=CAMS.cur+Math.PI;else{const b=nearestBear(me);if(b)me.aimDir=Math.atan2(b.x-me.x,b.y-me.y)}}else if(me.chopping){const t=nearestTree(me);if(t)me.aimDir=Math.atan2(t.x-me.x,t.y-me.y)}else me.aimDir=null;
+  NET.room.presence({role:'guest',x:me.x|0,y:me.y|0,d:r2(me.dir),ch:meta.pick||'Knight',fk:NET.fCount||0,ek:NET.eCount||0,eg:NET.eGrade||0,act:NET.act||null,ak:INP.atk?1:0,am:isRPG()?r2(CAMS.cur+Math.PI):null,dg:NET.dgN||0,jz:Math.round(me.jz||0),sk:NET.skN||0}).catch(()=>{});
   const host=G.players[0];followNet(host,dt);if(host.shooting){const b=nearestBear(host);if(b)host.aimDir=Math.atan2(b.x-host.x,b.y-host.y)}else if(host.chopping){const t=nearestTree(host);if(t)host.aimDir=Math.atan2(t.x-host.x,t.y-host.y)}else host.aimDir=null;
   for(const b of G.bears){if(b.dead){b.deadT+=dt;continue}glide(b,dt,8);b.hit=Math.max(0,b.hit-dt);b.roar=Math.max(0,b.roar-dt);b.step+=b.moving?dt*6:0}
   for(const m of G.pickups){if(m.nx!=null){m.x=lerp(m.x,m.nx,Math.min(1,dt*12));m.y=lerp(m.y,m.ny,Math.min(1,dt*12))}}
@@ -1373,15 +1373,17 @@ function playerActions(p,dt,R){updateSled(p,dt);buffTick(p,dt);comboTick(p,dt);i
   p.shooting=null;p.chopping=null;const rpgA=isRPG();
   if(rpgA){if(!p.remote&&p===(G.players[G.me]||G.players[0]))p.atkHold=INP.atk;p.skCd=Math.max(0,(p.skCd||0)-dt);p.skillT=Math.max(0,(p.skillT||0)-dt);if(p.skillReq){p.skillReq=false;if(p.skCd<=0&&!(p.down>0)&&!p.riding)doSkill(p)}}
   const cl=clsOf(p),melee=cl.rng<130;let tgt=null,td=cl.rng+p.lv.gun*(melee?4:15);for(const b of G.bears){if(b.dead)continue;const d=dist(p.x,p.y,b.x,b.y);if(d<td){td=d;tgt=b}}
+  if(rpgA&&!cl.cleave){const A=aimOf(p);if(A!=null)tgt=aimPick(p,A,cl.rng+p.lv.gun*(melee?4:15),melee)}
   const gunInt=.5*cl.rate*Math.pow(.86,p.lv.gun)*G.pm.rate*(G.feverT>0?.5:1);
   if(rpgA){if(!p.atkHold)tgt=null;else if(!p._ah)p.actT=99;p._ah=!!p.atkHold}
-  if(tgt){p.shooting=tgt;p.aimDir=Math.atan2(tgt.x-p.x,tgt.y-p.y);p.actT+=dt;if(p.actT>=gunInt){p.actT=0;p.flash=.07;let dmg=(1+p.lv.gun*.5+G.pm.dmg)*cl.dmg*(G.feverT>0?2:1)*lifeB(p,'hunt',.06)*(1+eqv(p,'atk')+(isRPG()?(rlv(p)-1)*.05:0));
+  if(tgt){p.shooting=tgt;p.aimDir=Math.atan2(tgt.x-p.x,tgt.y-p.y);p.actT+=dt;if(p.actT>=gunInt){p.actT=0;p.flash=.07;let dmg=(1+p.lv.gun*.5+G.pm.dmg)*cl.dmg*(G.feverT>0?2:1)*lifeB(p,'hunt',.06)*(1+eqv(p,'atk')+(isRPG()?(rlv(p)-1)*.05:0))*earlyK(p);
     const o=G.players.length>1&&G.players.find(q=>q!==p&&q.shooting===tgt);if(o){const a1=Math.atan2(p.x-tgt.x,p.y-tgt.y),a2=Math.atan2(o.x-tgt.x,o.y-tgt.y);if(Math.abs(Math.atan2(Math.sin(a1-a2),Math.cos(a1-a2)))>1.6){dmg*=2;if(!(tgt.pinT>0)){tgt.pinT=1.5;float(tgt.x,tgt.y,120,'挟み撃ち！ ダメージ2倍','gold',true);SFX.combo(8)}}}
     dmg=comboHit(p,tgt,dmg,melee);
     if(cl.cleave){for(const b of G.bears){if(b.dead||b===tgt)continue;if(dist(p.x,p.y,b.x,b.y)<cl.rng+12){shoot(p,b,dmg,true,cl.fx);if(cl.stun)b.atkCd=Math.max(b.atkCd,cl.stun)}}}
     if(cl.stun)tgt.atkCd=Math.max(tgt.atkCd||0,cl.stun);if(cl.heal)p.hp=Math.min(100,p.hp+cl.heal);
     if(cl.splash){for(const b of G.bears){if(b.dead||b===tgt)continue;if(dist(tgt.x,tgt.y,b.x,b.y)<cl.splash)shoot(tgt,b,dmg*.6,true,'none')}}
     shoot(p,tgt,dmg,true,cl.fx)}}
+  else if(rpgA&&p.atkHold&&!p.riding&&!(p.down>0)&&aimOf(p)!=null)aimMiss(p,cl,melee,gunInt,dt);
   else{let tree=null,tdd=48;if(p.bag.length<cap(p)&&!p.riding&&!ADV())for(const t of G.trees){if(!t.alive||t.fall>0||(t.zone&&!G.zones[t.zone]))continue;const d=dist(p.x,p.y,t.x,t.y);if(d<tdd){tdd=d;tree=t}}
     if(tree){p.chopping=tree;p.aimDir=Math.atan2(tree.x-p.x,tree.y-p.y);p.actT+=dt;if(p.actT>.24*G.pm.chop*G.mod.chop/lifeB(p,'wood',.07)){p.actT=0;hitTree(tree,p.x,p.y,true);const got=give(p,tree.item||'log',G.feverT>0?2:1);if(isRPG()&&Math.random()<.1)addMat(p,'herb',1);G.stats.chopped+=got;lifeXp(p,'wood',1);cnt(p,'chop',got);SFX.chop();addCombo(2);gainXP(1);float(tree.x,tree.y,60,`+${got}`,'gold');G.shake=Math.max(G.shake,2);if(G.stats.chopped%30<got)spawnChest(tree.x+rnd(-25,25),tree.y+rnd(-25,25))}}
     else{p.aimDir=null;p.actT=Math.min(p.actT,.3)}}
@@ -1444,7 +1446,7 @@ function jumpTick(p,dt){if(p===(G.players[G.me]||G.players[0])&&JMP.req){JMP.req
 const SKILLS={Rogue_Hooded:{n:'拡散射撃',cd:7},Rogue:{n:'貫通の一矢',cd:8},Knight:{n:'シールドバッシュ',cd:7},Barbarian:{n:'大回転斬り',cd:8},Mage:{n:'氷の大爆発',cd:9}};
 const clsKey=p=>{const k=G&&G.charOf&&G.charOf[G.players.indexOf(p)];return SKILLS[k]?k:'Rogue_Hooded'};
 function skillPress(){if(!running||!isRPG()||G.paused)return;if(NET.mode==='guest'){NET.skN=(NET.skN||0)+1;const sk=SKILLS[clsKey(G.players[G.me])];if(!(NET.skAt>0)||performance.now()-NET.skAt>sk.cd*1000)NET.skAt=performance.now();return}const me=G.players[G.me]||G.players[0];if(me)me.skillReq=true}
-function doSkill(p){const key=clsKey(p),S=SKILLS[key],cl=CLS[key];const base=(1+p.lv.gun*.5+G.pm.dmg)*cl.dmg*lifeB(p,'hunt',.06)*(1+eqv(p,'atk')+(rlv(p)-1)*.05);
+function doSkill(p){const key=clsKey(p),S=SKILLS[key],cl=CLS[key];const base=(1+p.lv.gun*.5+G.pm.dmg)*cl.dmg*lifeB(p,'hunt',.06)*(1+eqv(p,'atk')+(rlv(p)-1)*.05)*earlyK(p);
   const near=r=>G.bears.filter(b=>!b.dead&&!b.hide&&dist(p.x,p.y,b.x,b.y)<r);const nearest=r=>{let t=null,d0=r;for(const b of G.bears){if(b.dead||b.hide)continue;const d=dist(p.x,p.y,b.x,b.y);if(d<d0){d0=d;t=b}}return t};
   const kb=(b,x,y,f)=>{const a=Math.atan2(b.x-x,b.y-y);b.x+=Math.sin(a)*f;b.y+=Math.cos(a)*f};let hit=0;
   if(key==='Rogue_Hooded'){for(const b of near(cl.rng*1.5)){shoot(p,b,base*1.6,true,'bolt');hit++}}
@@ -1972,7 +1974,7 @@ function frame(dt){hideIdle();monBar();frozenFx();vigFx();hideIdleFx(dt);
     const top=150,m=44,mx=86,on=!behind&&sx>m&&sx<W-m&&sy>top&&sy<H-90;if(on)el.hidden=true;else{el.hidden=false;const cx=W/2,cy=(top+H-90)/2;let dx=sx-cx,dy=sy-cy;const k=Math.min((W/2-mx)/Math.abs(dx||1e-3),((H-90-top)/2)/Math.abs(dy||1e-3));const ex=cx+dx*Math.min(1,k),ey=cy+dy*Math.min(1,k);
       const d=Math.round(dist(gp.x,gp.y,R.x,R.y)/10);el.style.transform=`translate(${ex|0}px,${ey|0}px) translate(-50%,-50%)`;el.firstChild.style.transform=`rotate(${Math.atan2(dy,dx)+Math.PI/2}rad)`;$('sosTxt').textContent=`SOS ${Math.ceil(R.t)}秒・${d}m`}}else el.hidden=true}
   {const _gt=running?(coldT||(G.fuel<25&&!G.raid.on?(has(gp,DES()?'water':'log')?{x:CX,y:CY,h:110}:(DES()?freeHole(gp):nearestTree(gp))):null)||rescueT(gp)||storyT(gp)||(MISSIONS[G.mission]?MISSIONS[G.mission].tg(gp):flow(gp))):null;const _g2=(gp&&inAby(gp.x))?null:_gt;G._gt=_g2;guide.set(_g2,gp,G.t)}
-  SAFE('storyVis',storyVis);SAFE('warnFx',warnFx);SAFE('driftFx',driftFx);SAFE('fireFx',fireFx);SAFE('npcFx',npcFx);SAFE('rankFx',rankFx);SAFE('caveFx',caveFx);SAFE('pzFx',pzFx);SAFE('heart4Fx',heart4Fx);SAFE('advFx',advFx);SAFE('occFx',occFx);SAFE('survDesertFx',survDesertFx);SAFE('extrasFx',extrasFx);SAFE('rebuildFx',rebuildFx);SAFE('wpFx',wpFx);SAFE('abyFx',abyFx);SAFE('campfireFx',campfireFx);SAFE('storyPolish',storyPolish);SAFE('cullWorld',cullWorld);SAFE('render',()=>{if(composer)composer.render();else renderer.render(scene,camera)});SAFE('labels',endLabels);
+  SAFE('storyVis',storyVis);SAFE('warnFx',warnFx);SAFE('driftFx',driftFx);SAFE('fireFx',fireFx);SAFE('npcFx',npcFx);SAFE('rankFx',rankFx);SAFE('caveFx',caveFx);SAFE('pzFx',pzFx);SAFE('heart4Fx',heart4Fx);SAFE('advFx',advFx);SAFE('occFx',occFx);SAFE('survDesertFx',survDesertFx);SAFE('extrasFx',extrasFx);SAFE('rebuildFx',rebuildFx);SAFE('wpFx',wpFx);SAFE('abyFx',abyFx);SAFE('campfireFx',campfireFx);SAFE('aimFx',aimFx);SAFE('storyPolish',storyPolish);SAFE('cullWorld',cullWorld);SAFE('render',()=>{if(composer)composer.render();else renderer.render(scene,camera)});SAFE('labels',endLabels);
   joys.forEach((j,i)=>{const el=$('joy'+i);if(!j.on){el.hidden=true;return}el.hidden=false;el.style.left=j.ox+'px';el.style.top=j.oy+'px';const dx=j.x-j.ox,dy=j.y-j.oy,m=Math.hypot(dx,dy),k=m>50?50/m:1;el.firstChild.style.transform=`translate(${dx*k}px,${dy*k}px)`;el.firstChild.style.background=nPlayers===2?HERO[i].tag:'#fff'});
 }
 // ================================================================ HUD
@@ -2143,14 +2145,18 @@ function trackerFlash(){const el=$('tracker');el.classList.remove('flash');void 
 let _tkT=0;function trackerHud(){const el=$('tracker');{const on=!!(isRPG()&&running);if(document.body.classList.contains('rpg')!==on)document.body.classList.toggle('rpg',on)}if(!isRPG()||!running){el.hidden=true;return}const now=performance.now();if(now-_tkT<250)return;_tkT=now;{const me=G.players[G.me]||G.players[0],sk=SKILLS[clsKey(me)],el=$('kbSk');const cd=NET.mode==='guest'?(NET.skAt>0?Math.max(0,sk.cd-(performance.now()-NET.skAt)/1000):0):(me.skCd||0);const h=`<kbd class="w">右クリック</kbd>${sk.n}${cd>0?` ${Math.ceil(cd)}s`:''}`;if(el.innerHTML!==h)el.innerHTML=h;el.className=cd>0?'cd':'ready'}const S=G.story,C=CH[S.ch]||CH[4],L=SOBJ[S.ch];
   const pg=(c,g)=>`<div class="pg"><span><u style="width:${Math.round(100*Math.min(1,c/Math.max(1,g)))}%"></u></span><small>${Math.min(c,g)}/${g}</small></div>`;
   let h=`<div class="tk-h">${C.n}<em>「${C.t}」</em></div>`;
-  if(L){const i=Math.min(S.step||0,L.length-1),o=L[i],[c,g]=o.f();h+=`<div class="sec now"><i>▶ いまやること（${i+1}/${L.length}）</i><b>${stx(o)}</b>${o.p?`<small>${o.p()}</small>`:pg(c,g)}</div>`}
+  if(L){const i=Math.min(S.step||0,L.length-1),o=L[i],[c,g]=o.f();h+=`<div class="sec now"><i>▶ いまやること（${i+1}/${L.length}）</i><b>${stx(o)}</b>${o.p?`<small>${o.p()}</small>`:pg(c,g)}</div><!--Q-->`}
   else{const g=goalOf(YR());const rows=[[`かまど Lv${G.level} / ${g.lv}`,G.level>=g.lv],[`町人 ${popNow()} / ${g.pop}人`,popNow()>=g.pop],[`お金 $${Math.floor(G.cash).toLocaleString()} / $${g.c.toLocaleString()}`,G.cash>=g.c]];
-    if(G.mission<MISSIONS.length){const m=MISSIONS[G.mission],[c,gg]=m.f();h+=`<div class="sec now"><i>▶ いまやること</i><b>${m.t}</b>${pg(c,gg)}</div>`}
+    if(G.mission<MISSIONS.length){const m=MISSIONS[G.mission],[c,gg]=m.f();h+=`<div class="sec now"><i>▶ いまやること</i><b>${m.t}</b>${pg(c,gg)}</div><!--Q-->`}
     const fm=Math.round(custFame()*5);h+=`<div class="sec"><i>★ 町の知名度（お客さんの多さ）</i><b style="color:#e8a020">${G.story.shopOpen?'★'.repeat(fm)+'☆'.repeat(5-fm):'<small>まだ誰にも知られていない</small>'}</b></div>`;h+=`<div class="sec"><i>◆ 章の目標</i><b>${G.monument?'今夜、像を守りぬけ！':g.n+'を建てて、最後の夜を守れ'}</b>${G.monument?'':rows.map(([t,ok])=>`<div class="ck ${ok?'ok':'ng'}">${t}</div>`).join('')}</div>`}
   h+=rebuildHtml();
-  const qs=[];for(const k in (S.q||{})){const Q=QUESTS[k],q=S.q[k];if(!Q||Q.bio!==bioKey()||q.st===3)continue;const pr=q.st===2?`→ ${npcName(Q.npc)}に報告`:Q.type==='bring'?`${{log:'薪',fish:'魚',meat:'肉'}[Q.k]||Q.k} ${q.p||0}/${Q.n}`:Q.type==='build'?`${Math.min(Q.chk(),Q.n)}/${Q.n}`:Q.type==='count'?`${Math.min(Q.chk(q),Q.n)}/${Q.n}`:Q.where?`（${Q.where}）`:'';qs.push(`<div class="q ${q.st===2?'ok':''}">・${Q.t} ${pr}</div>`)}
-  const avail=G.npcV?G.npcV.filter(v=>npcMark(v.n.id)==='！').length:0;
-  h+=`<div class="sec"><i>✉ 住人の依頼</i>${qs.join('')||'<div class="q">受けている依頼はない</div>'}${avail?`<div class="q" style="color:#e8703a">“！”の住人が${avail}人いる（Eキーで話す）</div>`:''}</div>`;
+  const qs=[];for(const k in (S.q||{})){const Q=QUESTS[k],q=S.q[k];if(!Q||Q.bio!==bioKey()||q.st===3||q.st==null)continue;
+    const pr=q.st===2?'':Q.type==='bring'?`${{log:'薪',fish:'魚',meat:'肉'}[Q.k]||Q.k} ${q.p||0}/${Q.n}`:Q.type==='build'?`${Math.min(Q.chk(),Q.n)}/${Q.n}`:Q.type==='count'?`${Math.min(Q.chk(q),Q.n)}/${Q.n}`:'';
+    const what=q.st===2?`<em class="qrep">✔ できた！ ${npcName(Q.npc)}に報告しよう（頭の上に<span>？</span>）</em>`:`${Q.act||''}${Q.where?`<small class="qwh">📍 ${Q.where}（地図にオレンジの旗）</small>`:''}${pr?`<small class="qpr">進み具合 ${pr}</small>`:''}`;
+    qs.push(`<div class="qc ${q.st===2?'ok':''}"><b>${Q.t}</b><span class="qn">依頼：${npcName(Q.npc)}</span><div class="qa">${what}</div></div>`)}
+  const avail=G.npcV?G.npcV.filter(v=>v.m.g.visible&&npcMark(v.n.id)==='！').length:0;
+  const qh=`<div class="sec qsec"><i>✉ 受けている依頼（${qs.length}）</i>${qs.join('')||'<div class="q">受けている依頼はない</div>'}${avail?`<div class="q qav">頭に<span>！</span>が出ている住人が${avail}人いる → 近づいてEキー</div>`:''}</div>`;
+  h=h.includes('<!--Q-->')?h.replace('<!--Q-->',qh):h+qh;
   {const me=G.players[G.me]||G.players[0],b=me&&me.buff;if(b&&b.t>0)h+=`<div class="sec"><i>🍳 料理の効果</i><b style="font-size:12.5px">${b.n}</b><small>${dishD(DISH[b.k])}・残り${Math.ceil(b.t)}秒</small></div>`;else if(me&&(me.food||[]).length)h+=`<div class="sec"><i>🍳 料理</i><small>${me.food.length}品持っている（Vキーで食べる）</small></div>`}
   if(el._h!==h){el.innerHTML=h;el._h=h}el.hidden=false}
 
@@ -2729,6 +2735,12 @@ function drawMap(cv,big){const c=cv.getContext('2d'),W=cv.width,H=cv.height,me=G
   if(ADV()&&G.adv)G.adv.tr.forEach((on,i)=>{if(on)dot(TREAS[i][0],TREAS[i][1],big?4:3,'#f5c542','#8a6a1a')});
   // people with something to say
   if(!inA)for(const v of G.npcV||[]){if(!v.m.g.visible)continue;const mk=npcMark(v.n.id);if(mk&&mk!=='…'){const [a,b]=P(v.x,v.y),col=mk==='？'?'#3fc157':'#ffb020',pu=(performance.now()/900)%1,R=big?7:5.5;c.strokeStyle=col;c.globalAlpha=1-pu;c.lineWidth=2;c.beginPath();c.arc(a,b,R+pu*(big?12:9),0,TAU);c.stroke();c.globalAlpha=1;c.fillStyle=col;c.strokeStyle='#16283a';c.lineWidth=1.8;c.beginPath();c.arc(a,b,R,0,TAU);c.fill();c.stroke();c.fillStyle='#fff';c.font=`900 ${big?11:9}px sans-serif`;c.textAlign='center';c.textBaseline='middle';c.fillText(mk==='？'?'?':'!',a,b+.5);c.textBaseline='alphabetic'}}
+  // where accepted quests take you (orange flag)
+  if(!inA&&G.story&&G.story.q)for(const k in G.story.q){const Q=QUESTS[k],q=G.story.q[k];if(!Q||q.st!==1||Q.bio!==bioKey()||Q.x==null)continue;const qx=Q.type==='escort'&&q.x!=null?q.x:Q.x,qy=Q.type==='escort'&&q.y!=null?q.y:Q.y;
+    let [a,b]=P(qx,qy);if(!big){const dx=a-W/2,dy=b-H/2,r=Math.hypot(dx,dy),lim=W/2-12;if(r>lim){a=W/2+dx/r*lim;b=H/2+dy/r*lim}}
+    const s2=big?1.2:.9,pu=(performance.now()/700)%1;c.strokeStyle='#ff8a1a';c.globalAlpha=1-pu;c.lineWidth=2;c.beginPath();c.arc(a,b,6+pu*12,0,TAU);c.stroke();c.globalAlpha=1;
+    c.strokeStyle='#16283a';c.lineWidth=2;c.beginPath();c.moveTo(a,b+2);c.lineTo(a,b-14*s2);c.stroke();c.fillStyle='#ff8a1a';c.beginPath();c.moveTo(a,b-14*s2);c.lineTo(a+11*s2,b-10*s2);c.lineTo(a,b-6*s2);c.closePath();c.fill();c.stroke();
+    if(big){c.font='800 11px "Zen Maru Gothic",sans-serif';c.textAlign='center';c.lineWidth=3;c.strokeStyle='#fff';c.strokeText(Q.t,a,b+14);c.fillStyle='#c05a10';c.fillText(Q.t,a,b+14)}}
   // enemies nearby (and every boss)
   for(const b of G.bears){if(b.dead||b.hide)continue;if(inAby(b.x)!==inA)continue;const boss=b.kind==='boss';if(!big&&!boss&&dist(b.x,b.y,me.x,me.y)>700)continue;if(big&&!boss)continue;dot(b.x,b.y,boss?(big?7:5):2.6,boss?'#c0392b':'#e0605a',boss?'#fff':null)}
   // objective
@@ -3276,6 +3288,51 @@ function campfireFx(){if(!G||!running)return;G.cfV=G.cfV||{};const me=G.players[
     else{const n=me.bag.filter(k=>k==='log').length,t=(G.cfT&&G.cfT[c.id])||0;label(c.x,c.y,52,`<b>焚き火跡</b><br><small>${t>0?'■'.repeat(Math.min(5,Math.ceil(t/.24))):n>=CF_LOGS?`そばに立つと薪${CF_LOGS}本で火をつける`:`薪が${CF_LOGS}本必要（いま${n}本）`}</small>`,n>=CF_LOGS?'gold':'')}}
   if(!me)return;const mi=G.players.indexOf(me);const ko=(G.cfko||[])[mi]||0;if(me._cfk==null)me._cfk=ko;
   if(ko>me._cfk){me._cfk=ko;const c=CAMPFIRES.find(c=>c.id===(G.cfkoT||[])[mi]);if(c){me.x=c.x+30;me.y=c.y+30;me.vx=me.vy=0;updateCam(0,true);toast('焚き火まで戻った（持ち物は無事）','gold',true)}}}
+// ================================================================ aiming (story mode): attacks go where the camera faces; early-game damage curve; keep running in a background tab while online
+// damage grows with your level: Lv1 deals 55%, full strength from Lv10
+function earlyK(p){return isRPG()?Math.min(1,.55+(rlv(p)-1)*.05):1}
+// aim direction in world (atan2(dx,dy) convention): the local player aims where the camera looks; a guest sends theirs
+function aimOf(p){if(!isRPG()||!p)return null;const me=G.players[G.me]||G.players[0];if(p===me&&!p.remote)return CAMS.cur+Math.PI;return typeof p.aimA==='number'?p.aimA:null}
+const angD=(a,b)=>Math.abs(Math.atan2(Math.sin(a-b),Math.cos(a-b)));
+function aimPick(p,A,range,melee){const cone=melee?1.0:.42,R=melee?range:range*1.15;let best=null,bs=1e9;
+  for(const b of G.bears){if(b.dead||b.hide)continue;const d=dist(p.x,p.y,b.x,b.y);if(d>R)continue;const da=angD(Math.atan2(b.x-p.x,b.y-p.y),A);
+    // very close enemies count even a bit off-center; otherwise must be inside the cone
+    if(da>cone&&!(d<40&&da<cone*2))continue;const sc=da*(melee?60:260)+d*.35;if(sc<bs){bs=sc;best=b}}return best}
+// attack into empty space: show the swing / shot so aiming feels responsive
+function aimMiss(p,cl,melee,gunInt,dt){const A=aimOf(p);p.shooting=true;p.aimDir=A;p.actT+=dt;if(p.actT<gunInt)return;p.actT=0;p.flash=.07;
+  const R=melee?Math.max(40,cl.rng*.55):cl.rng;shoot(p,{x:p.x+Math.sin(A)*R,y:p.y+Math.cos(A)*R,hide:true,hp:1e9},0,true,cl.fx);if(!melee&&SFX.shot)SFX.shot()}
+// visuals: a faint aim fan on the ground in front of you and a lock-on ring on whoever you would hit
+const AIMV={};
+function aimFx(){if(!G||!running)return;const me=G.players[G.me]||G.players[0];const on=isRPG()&&me&&!(me.down>0)&&!me.riding&&!DLG.open;
+  if(!AIMV.g){const g=new T.Group();
+    const fanM=new T.MeshBasicMaterial({color:lin('#fff3c4'),transparent:true,opacity:.13,depthWrite:false,side:T.DoubleSide,blending:T.AdditiveBlending});
+    const fan=new T.Mesh(new T.CircleGeometry(1,24,-.42,.84),fanM);fan.rotation.x=-Math.PI/2;fan.position.y=1.6;fan.renderOrder=3;g.add(fan);
+    const tick=new T.Mesh(new T.RingGeometry(.96,1,40,1,-.42,.84),new T.MeshBasicMaterial({color:lin('#ffe9a0'),transparent:true,opacity:.5,depthWrite:false,side:T.DoubleSide}));tick.rotation.x=-Math.PI/2;tick.position.y=1.7;g.add(tick);
+    const ring=new T.Group();const rm=new T.MeshBasicMaterial({color:lin('#ff5a4a'),transparent:true,opacity:.85,depthWrite:false,side:T.DoubleSide});
+    for(let i=0;i<4;i++){const a=new T.Mesh(new T.RingGeometry(20,24,10,1,i*Math.PI/2+.25,Math.PI/2-.5),rm);ring.add(a)}ring.rotation.x=-Math.PI/2;ring.position.y=2;ring.renderOrder=4;
+    world.add(g);world.add(ring);AIMV.g=g;AIMV.fan=fan;AIMV.tick=tick;AIMV.ring=ring;AIMV.rm=rm}
+  if(AIMV.g.parent!==world){world.add(AIMV.g);world.add(AIMV.ring)}
+  if(!on){AIMV.g.visible=AIMV.ring.visible=false;return}
+  const cl=clsOf(me),melee=cl.rng<130,A=aimOf(me),range=cl.rng+me.lv.gun*(melee?4:15);
+  // only show when there is something to fight nearby (or you are attacking)
+  let near=false;for(const b of G.bears){if(!b.dead&&!b.hide&&dist(me.x,me.y,b.x,b.y)<range*1.8){near=true;break}}
+  const show=near||INP.atk;AIMV.g.visible=show&&!cl.cleave;
+  if(AIMV.g.visible){const R=melee?range:range*1.15,cone=melee?1.0:.42;AIMV.g.position.set(me.x,0,me.y);AIMV.g.rotation.y=A;
+    const sx=R;AIMV.fan.scale.set(sx,sx,1);AIMV.tick.scale.set(sx,sx,1);
+    // CircleGeometry is built for the ranged cone; widen for melee by scaling the angle via a rebuilt geometry once per class change
+    if(AIMV.cone!==cone){AIMV.cone=cone;AIMV.fan.geometry.dispose();AIMV.tick.geometry.dispose();AIMV.fan.geometry=new T.CircleGeometry(1,24,-Math.PI/2-cone,cone*2);AIMV.tick.geometry=new T.RingGeometry(.96,1,40,1,-Math.PI/2-cone,cone*2)}
+    AIMV.fan.material.opacity=INP.atk?.2:.1}
+  const t=show&&!cl.cleave?aimPick(me,A,range,melee):null;AIMV.ring.visible=!!t;
+  if(t){const s=t.kind==='boss'?2.2:t.kind==='big'?1.5:1;AIMV.ring.position.set(t.x,2,t.y);AIMV.ring.scale.set(s,s,s);AIMV.ring.rotation.z=performance.now()/600;AIMV.rm.opacity=INP.atk?.95:.6}}
+// ---- keep the game running while the tab is in the background during online play (browsers stop drawing hidden tabs, which froze your friend's game)
+const BG={w:null,on:false,n:0};
+function bgStart(){if(BG.w)return;try{const src='let h=null;onmessage=e=>{if(e.data==="go"&&!h)h=setInterval(()=>postMessage(0),33);if(e.data==="stop"&&h){clearInterval(h);h=null}}';
+    BG.w=new Worker(URL.createObjectURL(new Blob([src],{type:'text/javascript'})));BG.w.onmessage=bgTick}catch(e){plog('bg worker failed '+e);BG.w={postMessage(m){if(m==='go'&&!BG.iv)BG.iv=setInterval(bgTick,33);if(m==='stop'&&BG.iv){clearInterval(BG.iv);BG.iv=null}}}}}
+function bgTick(){if(!document.hidden||!running||!(NET.mode==='host'||NET.mode==='guest'))return;BG.n++;
+  try{loopBody(performance.now())}catch(e){try{loopErr(e)}catch(_){}}}
+document.addEventListener('visibilitychange',()=>{const online=running&&(NET.mode==='host'||NET.mode==='guest');
+  if(document.hidden&&online){bgStart();BG.w.postMessage('go');BG.on=true;plog('hidden: background tick on ('+NET.mode+')')}
+  else if(BG.on){BG.w.postMessage('stop');BG.on=false;plog('visible: background ticks '+BG.n);BG.n=0}});
 // ================================================================ story mode (chapters + morning autosave)
 var gameMode=store.get('mw-mode','story');var SAVE_K='mw-story1';
 var CH={1:{n:'第1章',t:'ホワイトアウト',play:true,open:['暦の上では、もう夏至を過ぎた。','それなのに、この町の雪は\n一日もやんだことがない。','吹雪は家々を押しつぶし、\n人々は散り散りになった。','残っていたのは、村長オルガと、\n消えかけたひとつのかまどだけ――','瓦礫を片付け、町を建て直し、\nもう一度みんなを呼び戻そう。'],sub:'瓦礫を片付けて町を建て直し、散り散りになった仲間を呼び戻せ（Jキー：手がかり帳）',
