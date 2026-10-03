@@ -81,10 +81,30 @@ function makeMesaRock(w,h,seed){const g=new T.Group(),cols=['#b8683c','#a0552f',
   for(let k=0;k<3;k++){const s=rnd(4,9),b=M_(rockG(s|0),std('#a0552f',{r:.95,flat:true}),true,true);b.position.set(rnd(-r*.5,r*.5),y+5+s*.3,rnd(-r*.5,r*.5));g.add(b)}
   return g}
 // story mode: world labels are gathered each frame and only the nearest few are shown in full (no more walls of floating text)
-const LQ=[];const _labelNow=label,_endLabelsNow=endLabels;
-label=function(x,y,h,html,cls,op,sc){if(running&&G&&isRPG()){LQ.push([x,y,h,html,cls,op,sc]);return}_labelNow(x,y,h,html,cls,op,sc)};
-endLabels=function(){if(LQ.length){const me=G&&(G.players[G.me]||G.players[0]);const L=LQ.splice(0);if(me){for(const q of L)q.d=dist(me.x,me.y,q[0],q[1])+(/bar|cbar|■/.test(q[3])?-1e4:0)+(q[4]==='gold'?-40:0);L.sort((a,b)=>a.d-b.d)}
-    let full=0;for(const q of L){const keep=q.d<0;if(keep||full<3){if(!keep)full++;_labelNow(q[0],q[1],q[2],q[3],q[4],q[5],q[6])}else if(q.d<320){const m=/^<b>[^<]*<\/b>/.exec(q[3]);if(m)_labelNow(q[0],q[1],q[2],m[0],(q[4]||'')+' lbmini',.8,.86)}}}
+const LQ=[];const _labelNow=label,_endLabelsNow=endLabels;let LFLOAT=false;
+// every label is queued during the frame and laid out once at the end: most important first, nearer first,
+// and a label that would sit on top of one already placed is nudged upward (or shrunk to its title / dropped)
+label=function(x,y,h,html,cls,op,sc){if(running&&G){const q=[x,y,h,html,cls,op,sc];q.f=LFLOAT;LQ.push(q);return}_labelNow(x,y,h,html,cls,op,sc)};
+function labelF(x,y,h,html,cls,op,sc){LFLOAT=true;try{label(x,y,h,html,cls,op,sc)}finally{LFLOAT=false}}
+const LSZ=new Map();
+function _lbPlace(x,y,h,html,cls,op,sc){const s=toScreen(x,h,y);if(!s.on||s.x<-90||s.x>W+90||s.y<-50||s.y>H+60)return null;
+  let el=lpool[lused];if(!el){el=document.createElement('div');labelsEl.appendChild(el);lpool.push(el);el._h='';el._c=''}
+  lused++;if(el._h!==html){el.innerHTML=html;el._h=html}const c='lb '+(cls||'');if(el._c!==c){el.className=c;el._c=c}
+  el.style.display='';el.style.opacity=op??1;const k=sc??1;el.style.transform=`translate(${s.x|0}px,${s.y|0}px) translate(-50%,-100%) scale(${k})`;
+  const key=c+'|'+html;let z=LSZ.get(key);if(!z){z=[el.offsetWidth||40,el.offsetHeight||16];if(LSZ.size>700)LSZ.clear();LSZ.set(key,z)}
+  return{el,x:s.x,y:s.y,w:z[0]*k,h:z[1]*k,k}}
+const _lbHit=(a,R)=>R.find(r=>a[0]<r[2]+3&&a[2]>r[0]-3&&a[1]<r[3]+2&&a[3]>r[1]-2);
+endLabels=function(){if(LQ.length){const me=G&&(G.players[G.me]||G.players[0]);const L=LQ.splice(0);const rpg=isRPG();
+    for(const q of L){const imp=/bar|cbar|■/.test(q[3]);q.bar=imp;q.d=(me?dist(me.x,me.y,q[0],q[1]):0)+(imp?-1e4:0)+(q[4]==='gold'?-40:0)}L.sort((a,b)=>(a.f-b.f)||(a.d-b.d));
+    const R=[];let full=0;
+    for(const q of L){if(q.f){_labelNow(q[0],q[1],q[2],q[3],q[4],q[5],q[6]);continue}
+      let html=q[3],cls=q[4],op=q[5],sc=q[6];const keep=q.d<0;
+      if(rpg&&!keep){if(full<3)full++;else{if(q.d>=320)continue;const m=/^<b>[^<]*<\/b>/.exec(q[3]);if(!m)continue;html=m[0];cls=(cls||'')+' lbmini';op=.8;sc=.86}}
+      const P=_lbPlace(q[0],q[1],q[2],html,cls,op,sc);if(!P)continue;
+      let y=P.y,box=[P.x-P.w/2,y-P.h,P.x+P.w/2,y],hit=_lbHit(box,R),n=0;
+      if(!q.bar)while(hit&&n<4){y=hit[1]-3;box=[P.x-P.w/2,y-P.h,P.x+P.w/2,y];hit=_lbHit(box,R);n++}
+      if(hit&&!q.bar&&!keep){P.el.style.display='none';continue}
+      if(y!==P.y)P.el.style.transform=`translate(${P.x|0}px,${y|0}px) translate(-50%,-100%) scale(${P.k})`;R.push(box)}}
   _endLabelsNow()};
 // soft layered flame (additive), flickers every frame; replaces the solid glowing cones
 const FLAMES=[];const _fm={};const flameMat=(c,o)=>_fm[c+o]||(_fm[c+o]=new T.MeshBasicMaterial({color:lin(c),transparent:true,opacity:o,blending:T.AdditiveBlending,depthWrite:false}));

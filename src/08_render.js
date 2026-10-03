@@ -101,7 +101,7 @@ function sync(dt){
   for(const p of G.players)if(p.buddy&&!p.inHeat&&p.id===0){const o=G.players[1];if(o)label((p.x+o.x)/2,(p.y+o.y)/2,70,'♥ 寄り添い中（体温が下がりにくい）','red sm')}
   G.woodStack.fill('log',ADV()?0:Math.min(40,G.woodpile));if(!ADV())label(WOOD.x,WOOD.y,30+G.woodStack.h,G.woodpile>0?`薪置き場 ${G.woodpile}本（自動でかまど強化へ）`:'薪置き場：火が満タンの時の薪がたまる','note');
   syncChests();
-  for(const f of G.floats){const age=f.max-f.life,sc=age<.25?easeOutBack(age/.25):1;label(f.x,f.y,f.h+age*30,f.txt,f.cls,Math.min(1,f.life*2),sc)}
+  for(const f of G.floats){const age=f.max-f.life,sc=age<.25?easeOutBack(age/.25):1;labelF(f.x,f.y,f.h+age*30,f.txt,f.cls,Math.min(1,f.life*2),sc)}
 }
 
 // ---- the town grows: furnace, shops, towers, traps and houses change with progress
@@ -183,7 +183,7 @@ function frame(dt){hideIdle();monBar();frozenFx();vigFx();hideIdleFx(dt);
     const top=150,m=44,mx=86,on=!behind&&sx>m&&sx<W-m&&sy>top&&sy<H-90;if(on)el.hidden=true;else{el.hidden=false;const cx=W/2,cy=(top+H-90)/2;let dx=sx-cx,dy=sy-cy;const k=Math.min((W/2-mx)/Math.abs(dx||1e-3),((H-90-top)/2)/Math.abs(dy||1e-3));const ex=cx+dx*Math.min(1,k),ey=cy+dy*Math.min(1,k);
       const d=Math.round(dist(gp.x,gp.y,R.x,R.y)/10);el.style.transform=`translate(${ex|0}px,${ey|0}px) translate(-50%,-50%)`;el.firstChild.style.transform=`rotate(${Math.atan2(dy,dx)+Math.PI/2}rad)`;$('sosTxt').textContent=`SOS ${Math.ceil(R.t)}秒・${d}m`}}else el.hidden=true}
   {const _gt=running?(coldT||(G.fuel<25&&!G.raid.on?(has(gp,DES()?'water':'log')?{x:CX,y:CY,h:110}:(DES()?freeHole(gp):nearestTree(gp))):null)||rescueT(gp)||storyT(gp)||(MISSIONS[G.mission]?MISSIONS[G.mission].tg(gp):flow(gp))):null;const _g2=(gp&&inAby(gp.x))?null:_gt;G._gt=_g2;guide.set(_g2,gp,G.t)}
-  SAFE('storyVis',storyVis);SAFE('warnFx',warnFx);SAFE('driftFx',driftFx);SAFE('fireFx',fireFx);SAFE('npcFx',npcFx);SAFE('rankFx',rankFx);SAFE('caveFx',caveFx);SAFE('pzFx',pzFx);SAFE('heart4Fx',heart4Fx);SAFE('advFx',advFx);SAFE('occFx',occFx);SAFE('survDesertFx',survDesertFx);SAFE('extrasFx',extrasFx);SAFE('rebuildFx',rebuildFx);SAFE('wpFx',wpFx);SAFE('abyFx',abyFx);SAFE('campfireFx',campfireFx);SAFE('aimFx',aimFx);SAFE('padPrompt',padPromptFx);SAFE('storyPolish',storyPolish);SAFE('cullWorld',cullWorld);SAFE('render',()=>{if(composer)composer.render();else renderer.render(scene,camera)});SAFE('labels',endLabels);
+  SAFE('storyVis',storyVis);SAFE('warnFx',warnFx);SAFE('driftFx',driftFx);SAFE('fireFx',fireFx);SAFE('npcFx',npcFx);SAFE('rankFx',rankFx);SAFE('caveFx',caveFx);SAFE('pzFx',pzFx);SAFE('heart4Fx',heart4Fx);SAFE('advFx',advFx);SAFE('occFx',occFx);SAFE('survDesertFx',survDesertFx);SAFE('extrasFx',extrasFx);SAFE('rebuildFx',rebuildFx);SAFE('wpFx',wpFx);SAFE('abyFx',abyFx);SAFE('campfireFx',campfireFx);SAFE('aimFx',aimFx);SAFE('padPrompt',padPromptFx);SAFE('hitFx',hitFx);SAFE('storyPolish',storyPolish);SAFE('cullWorld',cullWorld);SAFE('render',()=>{if(composer)composer.render();else renderer.render(scene,camera)});SAFE('labels',endLabels);
   joys.forEach((j,i)=>{const el=$('joy'+i);if(!j.on){el.hidden=true;return}el.hidden=false;el.style.left=j.ox+'px';el.style.top=j.oy+'px';const dx=j.x-j.ox,dy=j.y-j.oy,m=Math.hypot(dx,dy),k=m>50?50/m:1;el.firstChild.style.transform=`translate(${dx*k}px,${dy*k}px)`;el.firstChild.style.background=nPlayers===2?HERO[i].tag:'#fff'});
 }
 // ================================================================ HUD

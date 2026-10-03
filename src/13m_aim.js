@@ -61,3 +61,16 @@ function padPromptFx(){let b=document.getElementById('payBtn');if(!b){b=document
   const left=Math.max(0,c-(pad.personal?(pad.pp[me.id]||0):pad.paid));const short=G.cash<=0;
   label(pad.x,pad.y,70,`<b>${pad.name||''}</b><br><small>${short?'お金が足りない':`<b style="color:#ffd23f">Eキー</b>で $${Math.ceil(left).toLocaleString()} を払う`}</small>`,short?'':'gold');
   b.textContent=short?'お金が足りない':`💰 $${Math.ceil(left).toLocaleString()} 払う（E）`;b.disabled=short;b.hidden=false}
+// ---- hit feel (story mode): damage numbers, a meaty hit sound, a small flinch + squash, a bigger punch on the killing blow
+let _hitSnd=0;
+SFX.hit=(melee,heavy)=>{const n=performance.now();if(n-_hitSnd<45)return;_hitSnd=n;noise(melee?.07:.045,melee?.17:.08,melee?520:1500);tone(heavy?90:melee?120:240,heavy?.14:.08,'triangle',melee?.13:.06,.45);if(heavy)tone(60,.2,'sine',.12,.6)};
+function hitFeel(sh,b,dmg,fx){if(!isRPG()||!sh||!G.players.includes(sh)||b.hide||!(dmg>0))return;
+  const melee=fx==='slash'||fx==='spin',fin=(sh.cmb||0)%3===0&&sh.cmbT>1,kill=b.hp<=0;
+  const v=Math.max(1,Math.round(dmg*10));const mine=sh===(G.players[G.me]||G.players[0]);
+  if(mine||NET.outF.length<6)float(b.x+rnd(-10,10),b.y,(b.kind==='boss'?110:b.kind==='big'?80:62)+rnd(0,10),String(v),fin||kill?'dmg crit':'dmg',fin,!mine&&NET.mode!=='host');
+  if(b.kind!=='boss'&&!kill){const k=melee?9:4,dx=b.x-sh.x,dy=b.y-sh.y,d=Math.hypot(dx,dy)||1;b.x+=dx/d*k;b.y+=dy/d*k;if(isRPG()&&(dgAt(b.x,b.y)||b.x>ABX))caveWalls(b,16)}
+  b._sq=melee||fin||kill?.16:.1;if(melee)G.shake=Math.max(G.shake,fin?5:2.5);
+  if(mine||NET.mode==='solo')SFX.hit(melee,fin||kill);
+  if(kill){hitstop(b.kind==='boss'?.14:.06);G.shake=Math.max(G.shake,b.kind==='boss'?12:5);burst(b.x,b.y,28,18,{c:['#ffffff','#ffe07a','#ff9a5a'],s0:80,s1:240,u0:80,u1:220,l0:.3,l1:.6,add:true,r0:3,r1:7})}}
+function hitFx(){if(!G||!running)return;const dt=1/60;for(const b of G.bears){const m=b.m;if(!m||!m.g)continue;
+  if(b._sq>0){if(b._bs==null)b._bs=m.g.scale.x;b._sq=Math.max(0,b._sq-dt);const k=b._sq/.16,s=b._bs;m.g.scale.set(s*(1+.14*k),s*(1-.18*k),s*(1+.14*k));if(b._sq<=0){m.g.scale.setScalar(s);b._bs=null}}}}
