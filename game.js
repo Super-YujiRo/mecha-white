@@ -1,5 +1,5 @@
 /* めちゃホワイト — built from src/*.js by tools/build.py. Edit the sources, not this file. */
-(()=>{const BUILD='20261003045757';
+(()=>{const BUILD='20261003170509';
 const $=id=>document.getElementById(id);
 if(!window.THREE){$('loading').textContent='3Dの読み込みに失敗しました。再読み込みしてください';return}
 const T=THREE;
@@ -1305,7 +1305,7 @@ function guestTick(dt){
   const me=G.players[G.me];const px=me.x,py=me.y;
   const iv=me.down>0?{x:0,y:0}:inputVec(0),sp0=195*G.pm.speed*(me.riding?1.8:1)*(1+eqv(me,'spd'));me.vx=lerp(me.vx,iv.x*sp0,Math.min(1,dt*12));me.vy=lerp(me.vy,iv.y*sp0,Math.min(1,dt*12));
   me.x=clX(me.x+me.vx*dt,30);me.y=clY(me.y+me.vy*dt,30,me.x);const sp=Math.hypot(me.vx,me.vy);me.moving=sp>20;if(me.moving){me.step+=dt*sp*.06;me.dirT=Math.atan2(me.vx,me.vy);if(Math.random()<dt*6)puff(me.x-me.vx*.05,me.y-me.vy*.05,2,{r:7,life:.6,a:.7,vy:10,grow:1})}
-  dashTick(me,dt);fenceCollide(me,px,py);solids(me,12);for(const t of G.trees)if(t.alive&&t.fall<=0&&Math.abs(t.x-me.x)<30&&Math.abs(t.y-me.y)<30)pushCircle(me,t.x,t.y,18*t.s);jumpTick(me,dt);
+  dashTick(me,dt);fenceCollide(me,px,py);solids(me,12);wallGuard(me);for(const t of G.trees)if(t.alive&&t.fall<=0&&Math.abs(t.x-me.x)<30&&Math.abs(t.y-me.y)<30)pushCircle(me,t.x,t.y,18*t.s);jumpTick(me,dt);
   me.bb=lerp(me.bb,0,dt*8);me.flash=Math.max(0,me.flash-dt);me.inv=Math.max(0,me.inv-dt);
   if(me.shooting){if(isRPG()&&INP.atk)me.aimDir=CAMS.cur+Math.PI;else{const b=nearestBear(me);if(b)me.aimDir=Math.atan2(b.x-me.x,b.y-me.y)}}else if(me.chopping){const t=nearestTree(me);if(t)me.aimDir=Math.atan2(t.x-me.x,t.y-me.y)}else me.aimDir=null;
   NET.room.presence({role:'guest',x:me.x|0,y:me.y|0,d:r2(me.dir),ch:meta.pick||'Knight',fk:NET.fCount||0,ek:NET.eCount||0,eg:NET.eGrade||0,act:NET.act||null,ak:INP.atk?1:0,am:isRPG()?r2(CAMS.cur+Math.PI):null,dg:NET.dgN||0,jz:Math.round(me.jz||0),sk:NET.skN||0}).catch(()=>{});
@@ -1332,7 +1332,7 @@ function update(dt){
   const adv=ADV(),R=adv?420:heatR();G.onPads=new Set();tickCombo(dt);tickChests(dt);
   for(const p of G.players){const px=p.x,py=p.y;if(p.remote){followNet(p,dt);continue}const iv=p.down>0?{x:0,y:0}:inputVec(p.id),sp0=195*G.pm.speed*(p.riding?1.8:1)*(1+eqv(p,'spd'));p.vx=lerp(p.vx,iv.x*sp0,Math.min(1,dt*12));p.vy=lerp(p.vy,iv.y*sp0,Math.min(1,dt*12));
     p.x=clX(p.x+p.vx*dt,30);p.y=clY(p.y+p.vy*dt,30,p.x);const sp=Math.hypot(p.vx,p.vy);p.moving=sp>20;if(p.moving){p.step+=dt*sp*.06;p.dirT=Math.atan2(p.vx,p.vy);if(Math.random()<dt*6)puff(p.x-p.vx*.05,p.y-p.vy*.05,2,{r:7,life:.6,a:.7,vy:10,grow:1})}
-    dashTick(p,dt);fenceCollide(p,px,py);solids(p,12);for(const t of G.trees)if(t.alive&&t.fall<=0&&Math.abs(t.x-p.x)<30&&Math.abs(t.y-p.y)<30)pushCircle(p,t.x,t.y,18*t.s);jumpTick(p,dt);
+    dashTick(p,dt);fenceCollide(p,px,py);solids(p,12);wallGuard(p);for(const t of G.trees)if(t.alive&&t.fall<=0&&Math.abs(t.x-p.x)<30&&Math.abs(t.y-p.y)<30)pushCircle(p,t.x,t.y,18*t.s);jumpTick(p,dt);
     p.bb=lerp(p.bb,0,dt*8);p.flash=Math.max(0,p.flash-dt);p.hurt=Math.max(0,p.hurt-dt);p.inv=Math.max(0,p.inv-dt)}
   if(G.players.length>1&&NET.mode==='solo'){const [a,b]=G.players;for(const [p,o] of [[a,b],[b,a]]){p.x=clamp(p.x,o.x-640,o.x+640);p.y=clamp(p.y,o.y-640,o.y+640)}}
   for(const p of G.players)playerActions(p,dt,R);
@@ -2027,7 +2027,7 @@ const CHAL={wood:[['木を30本切る','chop',30],['大きな古木を切りた�
 function updateChallenges(){if(!isRPG())return;for(const p of G.players){p.chd=p.chd||[];const c=p.cnt||{};for(const k of LIVES)(CHAL[k]||[]).forEach((ch,i)=>{const id=k+i;if(p.chd.includes(id))return;if((c[ch[1]]||0)>=ch[2]){p.chd.push(id);lifeXp(p,k,25);const v=100+i*80;G.cash+=v;G.earned+=v;float(p.x,p.y,140,`お題達成！ ${ch[0]}（${LIFE[k].n}）+$${v}`,'gold',true);SFX.rare()}})}}
 // ---- dungeons: walled areas reached through a portal (story mode). Data-driven: add an entry to DUNGEONS to add an area.
 const DUNGEONS=[
-  {id:'cave',n:'氷の洞窟',des:0,key:'Spider',drop:'silk',box:[1790,1830,2370,2370],inp:{x:1800,y:1560},ring:{x:1800,y:1590},back:{x:1800,y:1650},start:{x:1880,y:2300},out:{x:1850,y:2210},
+  {id:'cave',n:'氷の洞窟',des:0,key:'Spider',drop:'silk',box:[1790,1830,2370,2370],inp:{x:1800,y:1560},ring:{x:1800,y:1522},back:{x:1800,y:1462},start:{x:1880,y:2300},out:{x:1850,y:2210},rotY:Math.PI,
     gate:()=>G.zones.B,lock:'氷の湖を解放すると入れる',sub:'宝箱・鉱石・強い魔物',enter:['ひんやりと冷たい…','焚き火のまわりだけは暖かい。奥に宝が眠っている'],
     walls:[[1790,1830,2370,1860],[1790,2340,2370,2370],[1790,1830,1820,2370],[2340,1830,2370,2370],[1790,2090,2240,2110],[2330,2090,2370,2110],[2070,2110,2090,2190],[2070,2270,2090,2370]],
     heats:[{x:1900,y:2250,r:120}],
@@ -2043,7 +2043,7 @@ const DUNGEONS=[
     chests:[{x:170,y:2330,tier:1},{x:520,y:1890,tier:2},{x:90,y:2050,tier:3}],cmat:['icec','icec','star'],
     loot:{1:['c_aurora','w_glaxe'],2:['a_glacier','w_frostbow'],3:['w_glking','c_glheart']},
     look:{nomap:1,floor:'#d6e8f3',wall:'#a9cde6',cap:'#ffffff',crys:['#9fe3ff','#e0f6ff'],ring:'#9fe3ff',mouth:'#8fb8d6',fire:'#ffa23d'}},
-  {id:'ruin',n:'遺跡の地下',des:1,ann:1,key:null,drop:'relic',box:[1790,1830,2370,2370],inp:{x:1800,y:1560},ring:{x:1800,y:1590},back:{x:1800,y:1650},start:{x:1880,y:2300},out:{x:1850,y:2210},
+  {id:'ruin',n:'遺跡の地下',des:1,ann:1,key:null,drop:'relic',box:[1790,1830,2370,2370],inp:{x:1800,y:1560},ring:{x:1800,y:1522},back:{x:1800,y:1462},start:{x:1880,y:2300},out:{x:1850,y:2210},rotY:Math.PI,
     gate:()=>G.zones.B,lock:'東の区画を解放すると入れる',sub:'古代の宝・古代の欠片・砂の王',enter:['ひんやりとした石の回廊…','松明のまわりで一息つける。奥に王の間がある'],
     walls:[[1790,1830,2370,1860],[1790,2340,2370,2370],[1790,1830,1820,2370],[2340,1830,2370,2370],[1790,2060,2150,2080],[2240,2060,2370,2080],[2000,2080,2020,2200],[2170,2200,2190,2340],[2170,1860,2190,1960]],
     heats:[{x:1900,y:2260,r:110},{x:2280,y:2150,r:90}],
@@ -2084,6 +2084,12 @@ function dgBuild(D){const L=D.look,g=new T.Group();const stone=std(L.wall,{map:T
   const ring=(c,x,y,r0,r1)=>{const m=M_(new T.RingGeometry(r0,r1,32),new T.MeshBasicMaterial({color:lin(c),transparent:true,opacity:.85,side:T.DoubleSide,depthWrite:false}),false);m.rotation.x=-Math.PI/2;m.position.set(x,1.5,y);g.add(m)};
   ring(L.ring,D.ring.x,D.ring.y,34,42);ring('#ffd166',D.out.x,D.out.y,30,38);
   g.userData.chests=D.chests.map(c=>{const cg=new T.Group();cg.position.set(c.x,0,c.y);const mk=nm=>{const P=KK&&KK.prop&&KK.prop[nm];if(!P)return at(box(30,22,20,std(c.tier===3?'#ffcf4a':'#8a5a30')),0,11,0);const o=P.scene.clone(true);o.scale.setScalar(34/Math.max(.01,P.w));if(c.tier===3)o.traverse(q=>{if(q.isMesh){q.material=q.material.clone();if(q.isSkinnedMesh)q.material.skinning=true;(q.material.emissive&&q.material.emissive.set(lin('#a86a00')));q.material.emissiveIntensity=.4}});return o};const cl=mk('Chest_Closed'),op=mk('Chest_Open');op.visible=false;cg.add(cl,op);g.add(cg);return{cg,cl,op}});
+  // entrance dressing: braziers either side and a light beam until you've been inside once
+  {const stn=std('#3a3f48',{map:TEX.stone,r:.95});for(const sx of [-62,62]){const bz=new T.Group();bz.position.set(sx,0,34);bz.add(at(cyl(9,13,26,stn,8,true),0,13,0),at(cyl(15,10,8,stn,10,false),0,29,0));const fl=makeFlame(10,26,L.fire);fl.position.y=33;bz.add(fl);mb.add(bz)}
+    for(let i=0;i<5;i++){const a=-1.1+i*.55;mb.add(at(rot(cone(6+i%2*3,30+(i%3)*12,glow(L.crys[i%2],1.6),5,false),0,0,(i-2)*.12),Math.sin(a)*95,10,20+Math.cos(a)*6))}
+    const beam=M_(new T.CylinderGeometry(22,34,700,16,1,true),new T.MeshBasicMaterial({color:lin(DES()?'#ff9a2a':'#2f8cff'),transparent:true,opacity:.3,depthWrite:false,side:T.DoubleSide,fog:false}),false);beam.position.set(D.ring.x-D.inp.x,350,D.ring.y-D.inp.y);mouth.add(beam);g.userData.beam=beam}
+  // the rooms themselves are only drawn while you are in (or right at the door of) the dungeon, so they never show up as a strange area from outside
+  {const gi=new T.Group();for(const o of g.children.slice())if(o!==mouth&&!o.isLight){g.remove(o);gi.add(o)}g.add(gi);g.userData.gi=gi}
   world.add(g);return g}
 let _cvT=0;
 function caveFx(){if(!G||!running)return;const me=G.players[G.me]||G.players[0];G.dgV=G.dgV||{};const L=dgMap();
@@ -2092,10 +2098,12 @@ function caveFx(){if(!G||!running)return;const me=G.players[G.me]||G.players[0];
   for(const D of L){const V=G.dgV[D.id]||(G.dgV[D.id]=dgBuild(D));V.userData.ms.quaternion.copy(camera.quaternion);const C=G.dg&&G.dg[D.id];const open=D.gate();
     if(open&&D.ann&&G.story){G.story.seen=G.story.seen||{};if(!G.story.seen['dg_'+D.id]){G.story.seen['dg_'+D.id]=1;banner('新しい探索地',D.n,`${D.sub}。入口は地図の「${D.n}」の看板`,'area',true)}}
     V.userData.chests.forEach((o,i)=>{const op=!!(C&&C.ch[i]&&C.ch[i].open);o.cl.visible=!op;o.op.visible=op;const c=D.chests[i];if(cur===D&&!op&&dist(me.x,me.y,c.x,c.y)<220)label(c.x,c.y,50,`<b>${c.tier===3?'黄金の宝箱':'宝箱'}</b><br><small>そばに立つと開く</small>`,'')});
+    {const inside=cur===D||inBox(me.x,me.y,D.box,90);V.userData.gi.visible=inside;if(cur===D&&G.story){G.story.seen=G.story.seen||{};G.story.seen['dgin_'+D.id]=1}
+      const bm=V.userData.beam;bm.visible=open&&!cur&&!(G.story&&G.story.seen&&G.story.seen['dgin_'+D.id]);if(bm.visible)bm.material.opacity=.24+.1*Math.sin(now/500)}
     if(cur&&cur!==D)continue;
     if(!open&&!cur){if(dist(me.x,me.y,D.ring.x,D.ring.y)<300)label(D.ring.x,D.ring.y,90,`<b>${D.n}</b><br><small>🔒 ${D.lock}</small>`,'note');continue}
     const P=cur?D.out:D.ring,d=dist(me.x,me.y,P.x,P.y);if(d<320)label(P.x,P.y,cur?60:90,cur?`<b>出口</b><br><small>立つと外へ出る</small>`:`<b>${D.n}</b><br><small>立つと中へ入る（${D.sub}）</small>`,'');
-    if(d<40&&!(me.down>0)&&!me.riding){near=true;me.ptT=(me.ptT||0)+dt;if(me.ptT>1.1){me.ptT=0;const T2=cur?D.back:D.start;me.x=T2.x;me.y=T2.y;me.vx=me.vy=0;updateCam(0,true);SFX.area();if(!cur)banner(D.n,D.enter[0],D.enter[1],'cold',true);return}}}
+    if(d<40&&!(me.down>0)&&!me.riding){near=true;me.ptT=(me.ptT||0)+dt;if(me.ptT>1.1){me.ptT=0;const T2=cur?D.back:D.start;me.x=T2.x;me.y=T2.y;me._sx=null;me.vx=me.vy=0;updateCam(0,true);SFX.area();if(!cur)banner(D.n,D.enter[0],D.enter[1],'cold',true);return}}}
   if(!near)me.ptT=0}
 function statusTab(me){const tab=G._stab||'eq',rows=$('lifeRows'),lct=document.querySelector('#lifeCard .lct');const tabs=`<div style="display:flex;gap:4px;margin-bottom:6px">${[['eq','装備'],['life','くらし'],['chal','お題'],['book','図鑑'],['clue','手がかり']].map(([k,n])=>`<button data-tab="${k}" style="flex:1;font:inherit;font-size:11px;font-weight:800;border:2px solid #16283a;border-radius:8px;padding:3px;background:${tab===k?'#ffd23f':'#fff'};cursor:pointer">${n}</button>`).join('')}</div>`;
   if(tab==='clue'){$('rpgBox').innerHTML=tabs+'<div style="font-weight:900;margin:2px 0 4px">手がかり帳</div>'+clueHtml();rows.innerHTML='';lct.style.display='none';return true}
@@ -2673,7 +2681,7 @@ function mapMarks(){const L=[];const S=G.story,des=DES(),adv=ADV();
   L.push({x:CX,y:CY,k:'town',n:des?(adv?'砂の町ラズール':'砂漠の町'):'町'});
   if(!des){L.push({x:SPA.x,y:SPA.y,k:'water',n:'温泉'});L.push({x:(HOLES[0][0]+HOLES[5][0])/2,y:(HOLES[0][1]+HOLES[5][1])/2,k:'water',n:'氷の湖'})}
   else{L.push({x:SPA.x,y:SPA.y,k:'water',n:'オアシス'});if(adv){for(const o of OASES)L.push({x:o.x,y:o.y,k:'water',n:o.n});L.push({x:CAMP.x,y:CAMP.y,k:'camp',n:'遊牧民キャンプ'});L.push({x:VALLEY.x,y:VALLEY.y,k:'danger',n:VALLEY.n})}}
-  if(isRPG()){for(const D of dgMap()){const open=D.gate();L.push({x:D.ring.x,y:D.ring.y,k:open?'cave':'lock',n:D.n})}if(abyGateOK())L.push({x:ABY_GATE.x,y:ABY_GATE.y,k:'cave',n:'深淵の迷宮'});for(const c of cfList()){const D=DUNGEONS.find(D=>D.id===c.d);if(D&&D.gate())L.push({x:c.x,y:c.y,k:cfLit(c.id)?'fire':'fire0',n:cfLit(c.id)?'焚き火':'焚き火跡',sm:1})}if(des)L.push({x:RUIN.x,y:RUIN.y,k:'ruin',n:'古代遺跡'})}
+  if(isRPG()){for(const D of dgMap()){const open=D.gate();L.push({x:D.ring.x,y:D.ring.y,k:open?'cave':'lock',n:D.n})}if(abyGateOK()&&(G.story&&(G.story.seen||{}).abyF||abyBest(G.players[G.me]||G.players[0])>0))L.push({x:ABY_GATE.x,y:ABY_GATE.y,k:'cave',n:'深淵の迷宮'});for(const c of cfList()){const D=DUNGEONS.find(D=>D.id===c.d);if(D&&D.gate())L.push({x:c.x,y:c.y,k:cfLit(c.id)?'fire':'fire0',n:cfLit(c.id)?'焚き火':'焚き火跡',sm:1})}if(des)L.push({x:RUIN.x,y:RUIN.y,k:'ruin',n:'古代遺跡'})}
   return L}
 const MCOL={town:'#e8703a',water:'#3fa9d8',camp:'#b8762e',danger:'#c0392b',cave:'#6b5bd6',lock:'#9aa3ad',ruin:'#a8784a',abyss:'#7a4fd6',fire:'#ff7a2a',fire0:'#9a8a78'};
 // painted terrain layer, cached until the zones/biome change
@@ -3012,7 +3020,7 @@ function wpFx(){if(!G||!running||!isRPG())return;for(const p of G.players){const
 // ================================================================ 深層ダンジョン「深淵の迷宮」: an endless stack of arenas outside the map. Deeper = tougher beasts, better materials, a boss every 5 floors
 const ABX=4000;// anything east of this line is the abyss
 const ABY_BOX=[4600,800,5400,1600],ABY_ST={x:4690,y:1510},ABY_EX={x:4660,y:1560},ABY_UP={x:5000,y:1200};
-const ABY_GATE={x:760,y:1560};
+const ABY_GATE={x:2180,y:300};// hidden: far north-east corner, away from the town and other sites
 const inAby=(x)=>x>ABX;
 const clX=(x,m)=>x>ABX?clamp(x,ABY_BOX[0]+m,ABY_BOX[2]-m):clamp(x,m,WORLD-m);
 const clY=(y,m,x)=>x>ABX?clamp(y,ABY_BOX[1]+m,ABY_BOX[3]-m):clamp(y,m,WORLD-m);
@@ -3092,11 +3100,11 @@ function abyGateBuild(){const g=new T.Group();g.position.set(ABY_GATE.x,0,ABY_GA
   for(const s of [-1,1]){const c=at(scl(M_(new T.OctahedronGeometry(5,0),glow('#9f7aff',2),false),1,2,1),s*46,74,0);arch.add(c)}
   g.add(arch);g.userData.cry=arch;
   const sign=makeTextPlate('深淵の迷宮',84,20,'rgba(30,20,50,.88)','#e8dcff',.5);sign.position.set(0,122,-40);g.add(sign);g.userData.sign=sign;world.add(g);return g}
-function abyTo(me,P){me.x=P.x;me.y=P.y;me.vx=me.vy=0;updateCam(0,true);SFX.area&&SFX.area();let el=$('fadeOv');if(!el){el=document.createElement('div');el.id='fadeOv';document.body.appendChild(el)}el.style.transition='none';el.style.opacity='1';void el.offsetWidth;setTimeout(()=>{el.style.transition='opacity .9s ease';el.style.opacity='0'},120)}
+function abyTo(me,P){me.x=P.x;me.y=P.y;me._sx=null;me.vx=me.vy=0;updateCam(0,true);SFX.area&&SFX.area();let el=$('fadeOv');if(!el){el=document.createElement('div');el.id='fadeOv';document.body.appendChild(el)}el.style.transition='none';el.style.opacity='1';void el.offsetWidth;setTimeout(()=>{el.style.transition='opacity .9s ease';el.style.opacity='0'},120)}
 let _abT=0;
 function abyFx(){if(!G||!running)return;const me=G.players[G.me]||G.players[0];const A=G.aby||{};const now=performance.now(),dt=Math.min(.3,(now-_abT)/1000);_abT=now;
   // gate on the map
-  const gok=abyGateOK();if(gok&&G.story){G.story.seen=G.story.seen||{};if(!G.story.seen.aby){G.story.seen.aby=1;setTimeout(()=>{if(running)banner('新しい探索地','深淵の迷宮','町の南西。潜るほど強い敵と良い素材。武器を育てて挑め','area',true)},6000)}}if(gok&&(!G.abyG||G.abyG.parent!==world))G.abyG=abyGateBuild();if(G.abyG){G.abyG.visible=gok;G.abyG.userData.sign.quaternion.copy(camera.quaternion);G.abyG.userData.r.material.opacity=.16+.1*Math.sin(now/400);if(Math.random()<.25)psA.emit({x:ABY_GATE.x+rnd(-30,30),y:6,z:ABY_GATE.y+rnd(-30,30),vx:rnd(-4,4),vy:rnd(18,36),vz:rnd(-4,4),g:-6,life:1.6,max:1.6,r:rnd(3,5),c:C(Math.random()<.5?'#b08aff':'#7fe8ff'),air:true,fade:.6})}
+  const gok=abyGateOK();if(gok&&G.story){G.story.seen=G.story.seen||{};if(!G.story.seen.aby){G.story.seen.aby=1;setTimeout(()=>{if(running&&!G.story.seen.abyF)banner('うわさ','地の底へ続く門',DES()?'「北東のはずれ、砂丘の向こうで紫の光を見た」…という話を聞いた':'「北東のはずれ、森の奥で紫の光を見た」…という話を聞いた','area',true)},6000)}}if(gok&&(!G.abyG||G.abyG.parent!==world))G.abyG=abyGateBuild();if(G.abyG){G.abyG.visible=gok;G.abyG.userData.sign.quaternion.copy(camera.quaternion);G.abyG.userData.r.material.opacity=.16+.1*Math.sin(now/400);if(Math.random()<.25)psA.emit({x:ABY_GATE.x+rnd(-30,30),y:6,z:ABY_GATE.y+rnd(-30,30),vx:rnd(-4,4),vy:rnd(18,36),vz:rnd(-4,4),g:-6,life:1.6,max:1.6,r:rnd(3,5),c:C(Math.random()<.5?'#b08aff':'#7fe8ff'),air:true,fade:.6})}
   // arena
   const want=A.on?A.fl+':'+A.lay:null;if(G.abyV&&(G.abyV.userData.k!==want||G.abyV.parent!==world)){world.remove(G.abyV);G.abyV.traverse(o=>{o.geometry&&o.geometry.dispose()});G.abyV=null}
   if(want&&!G.abyV){G.abyV=abyBuild();G.abyV.userData.k=want}if(G.abyV){const u=G.abyV.userData.up;u.visible=!!A.clear;u.rotation.y+=.02;const U=G.abyV.userData;if(U.rune)U.rune.rotation.y+=.002;if(U.torch)for(const t of U.torch){t.f.scale.set(1,1.8+Math.sin(now/90+t.x)*.3,1);if(Math.random()<.08)psA.emit({x:t.x+rnd(-2,2),y:74,z:t.y+rnd(-2,2),vx:rnd(-4,4),vy:rnd(20,40),vz:rnd(-4,4),g:-10,life:.6,max:.6,r:rnd(3,5),c:C(Math.random()<.5?'#ffb347':'#ffd76a'),air:true,fade:.3})}}
@@ -3112,7 +3120,8 @@ function abyFx(){if(!G||!running)return;const me=G.players[G.me]||G.players[0];c
     if(de<30&&!(me.down>0)){me._abX=(me._abX||0)+dt;if(me._abX>1.1){me._abX=0;me._abF=0;abyTo(me,{x:ABY_GATE.x,y:ABY_GATE.y+70});toast('地上に戻った','gold',true)}}else me._abX=0;return}
   me._abK=(A.ko||[])[mi]||0;
   if(!gok)return;const d=dist(me.x,me.y,ABY_GATE.x,ABY_GATE.y);const best=abyBest(me);
-  if(d<380)label(ABY_GATE.x,ABY_GATE.y,100,`<b>深淵の迷宮</b><br><small>${A.on?`${G.players.length>1?'仲間が':''}地下${A.fl}階で挑戦中・乗ると合流`:`乗ると挑戦（最深記録：${best?'地下'+best+'階':'なし'}）`}</small>`,'note');
+  if(G.story&&d<240&&!(G.story.seen||{}).abyF&&!(me.x>ABX)){G.story.seen=G.story.seen||{};G.story.seen.abyF=1;banner('隠された門を見つけた！','深淵の迷宮','潜るほど強い敵と良い素材。武器を育てて挑め','r-SSR');SFX.rare&&SFX.rare()}
+  if(d<240)label(ABY_GATE.x,ABY_GATE.y,100,`<b>深淵の迷宮</b><br><small>${A.on?`${G.players.length>1?'仲間が':''}地下${A.fl}階で挑戦中・乗ると合流`:`乗ると挑戦（最深記録：${best?'地下'+best+'階':'なし'}）`}</small>`,'note');
   if(d<44&&!(me.down>0)&&!me.riding&&!DLG.open){me._abE=(me._abE||0)+dt;if(me._abE>1){me._abE=0;
       if(A.on){me._abF=A.fl;abyTo(me,ABY_ST);banner(`地下${A.fl}階`,abyBand(A.fl).n,'仲間と合流した','cold',true)}
       else{const cps=abyCp(best);if(cps.length===1){abyEnter(1)}else{const ch=cps.map(f=>[`地下${f}階から（${abyBand(f).n}）`,()=>abyEnter(f)]);ch.push(['やめる',null]);Object.assign(DLG,{open:true,npc:{n:{n:'深淵の迷宮'},x:ABY_GATE.x,y:ABY_GATE.y},pages:[`どこから潜る？ 最深記録：地下${best}階。深いほど敵が強く、良い素材が出る`],i:0,ch});if(NET.mode==='solo')G.paused=true;drawDlg()}}}}else me._abE=0}
@@ -3281,13 +3290,24 @@ function cfBuild(c){const g=new T.Group();g.position.set(c.x,0,c.y);const st=std
   const mark=M_(new T.RingGeometry(26,30,32),new T.MeshBasicMaterial({color:lin('#ffd76a'),transparent:true,opacity:.6,side:T.DoubleSide,depthWrite:false}),false);mark.rotation.x=-Math.PI/2;mark.position.y=1.3;g.add(mark);
   g.userData={fl,glowD,mark};world.add(g);return g}
 function campfireFx(){if(!G||!running)return;G.cfV=G.cfV||{};const me=G.players[G.me]||G.players[0];const L=cfList(),now=performance.now();
-  for(const id in G.cfV){const V=G.cfV[id];if(V.parent!==world){delete G.cfV[id];continue}V.visible=L.some(c=>c.id===id)}
+  for(const id in G.cfV){const V=G.cfV[id];if(V.parent!==world){delete G.cfV[id];continue}const c0=CAMPFIRES.find(c=>c.id===id),D0=c0&&DUNGEONS.find(D=>D.id===c0.d);V.visible=L.some(c=>c.id===id)&&!!(me&&D0&&inBox(me.x,me.y,D0.box,90))}
   for(const c of L){const V=G.cfV[c.id]||(G.cfV[c.id]=cfBuild(c));const lit=cfLit(c.id);V.userData.fl.visible=lit;V.userData.glowD.visible=lit;V.userData.mark.visible=!lit;if(!lit)V.userData.mark.material.opacity=.35+.3*Math.sin(now/300);
     if(!me||dgAt(me.x,me.y)!==DUNGEONS.find(D=>D.id===c.d))continue;const d=dist(me.x,me.y,c.x,c.y);if(d>260)continue;
     if(lit)label(c.x,c.y,58,'<b>焚き火</b><br><small>暖まれる・凍えたらここに戻る</small>','gold');
     else{const n=me.bag.filter(k=>k==='log').length,t=(G.cfT&&G.cfT[c.id])||0;label(c.x,c.y,52,`<b>焚き火跡</b><br><small>${t>0?'■'.repeat(Math.min(5,Math.ceil(t/.24))):n>=CF_LOGS?`そばに立つと薪${CF_LOGS}本で火をつける`:`薪が${CF_LOGS}本必要（いま${n}本）`}</small>`,n>=CF_LOGS?'gold':'')}}
   if(!me)return;const mi=G.players.indexOf(me);const ko=(G.cfko||[])[mi]||0;if(me._cfk==null)me._cfk=ko;
-  if(ko>me._cfk){me._cfk=ko;const c=CAMPFIRES.find(c=>c.id===(G.cfkoT||[])[mi]);if(c){me.x=c.x+30;me.y=c.y+30;me.vx=me.vy=0;updateCam(0,true);toast('焚き火まで戻った（持ち物は無事）','gold',true)}}}
+  if(ko>me._cfk){me._cfk=ko;const c=CAMPFIRES.find(c=>c.id===(G.cfkoT||[])[mi]);if(c){me.x=c.x+30;me.y=c.y+30;me._sx=null;me.vx=me.vy=0;updateCam(0,true);toast('焚き火まで戻った（持ち物は無事）','gold',true)}}}
+// ---- never let a knockback / dodge / blast carry a player through dungeon walls (it used to drop you into the void between dungeon rooms)
+function dgWallsAt(x,y){if(x>ABX)return abyWalls();const D=dgAt(x,y);if(!D)return null;const W=D.walls.slice();if(D.id==='cave'&&typeof caveDoorOpen==='function'&&!caveDoorOpen())W.push(VAULT_DOOR);return W}
+function wallGuard(p){if(!isRPG()||!p)return;if(p._sx==null||p.down>0&&p._sx==null){p._sx=p.x;p._sy=p.y;return}
+  const sx=p._sx,sy=p._sy,dx=p.x-sx,dy=p.y-sy,L=Math.hypot(dx,dy);
+  if(L>400||L<.5){p._sx=p.x;p._sy=p.y;return} // real teleports (enter/exit/rescue) are long jumps
+  const W=dgWallsAt(sx,sy);
+  if(W){const n=Math.ceil(L/4);let lx=sx,ly=sy,hit=false;
+    for(let i=1;i<=n;i++){const x=sx+dx*i/n,y=sy+dy*i/n;if(W.some(w=>x>w[0]&&x<w[2]&&y>w[1]&&y<w[3])){hit=true;break}lx=x;ly=y}
+    const inS=(sx>ABX)||dgAt(sx,sy),inE=(p.x>ABX)===(sx>ABX)&&(sx>ABX||dgAt(p.x,p.y)===dgAt(sx,sy));
+    if(hit||!inE){p.x=lx;p.y=ly;if(p.dash)p.dash=null;p.vx*=.2;p.vy*=.2;if(!p._wgT||performance.now()-p._wgT>3000){p._wgT=performance.now();plog('wallGuard kept p'+G.players.indexOf(p)+' inside')}}}
+  p._sx=p.x;p._sy=p.y}
 // ================================================================ aiming (story mode): attacks go where the camera faces; early-game damage curve; keep running in a background tab while online
 // damage grows with your level: Lv1 deals 55%, full strength from Lv10
 function earlyK(p){return isRPG()?Math.min(1,.55+(rlv(p)-1)*.05):1}

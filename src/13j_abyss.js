@@ -1,7 +1,7 @@
 // ================================================================ 深層ダンジョン「深淵の迷宮」: an endless stack of arenas outside the map. Deeper = tougher beasts, better materials, a boss every 5 floors
 const ABX=4000;// anything east of this line is the abyss
 const ABY_BOX=[4600,800,5400,1600],ABY_ST={x:4690,y:1510},ABY_EX={x:4660,y:1560},ABY_UP={x:5000,y:1200};
-const ABY_GATE={x:760,y:1560};
+const ABY_GATE={x:2180,y:300};// hidden: far north-east corner, away from the town and other sites
 const inAby=(x)=>x>ABX;
 const clX=(x,m)=>x>ABX?clamp(x,ABY_BOX[0]+m,ABY_BOX[2]-m):clamp(x,m,WORLD-m);
 const clY=(y,m,x)=>x>ABX?clamp(y,ABY_BOX[1]+m,ABY_BOX[3]-m):clamp(y,m,WORLD-m);
@@ -81,11 +81,11 @@ function abyGateBuild(){const g=new T.Group();g.position.set(ABY_GATE.x,0,ABY_GA
   for(const s of [-1,1]){const c=at(scl(M_(new T.OctahedronGeometry(5,0),glow('#9f7aff',2),false),1,2,1),s*46,74,0);arch.add(c)}
   g.add(arch);g.userData.cry=arch;
   const sign=makeTextPlate('深淵の迷宮',84,20,'rgba(30,20,50,.88)','#e8dcff',.5);sign.position.set(0,122,-40);g.add(sign);g.userData.sign=sign;world.add(g);return g}
-function abyTo(me,P){me.x=P.x;me.y=P.y;me.vx=me.vy=0;updateCam(0,true);SFX.area&&SFX.area();let el=$('fadeOv');if(!el){el=document.createElement('div');el.id='fadeOv';document.body.appendChild(el)}el.style.transition='none';el.style.opacity='1';void el.offsetWidth;setTimeout(()=>{el.style.transition='opacity .9s ease';el.style.opacity='0'},120)}
+function abyTo(me,P){me.x=P.x;me.y=P.y;me._sx=null;me.vx=me.vy=0;updateCam(0,true);SFX.area&&SFX.area();let el=$('fadeOv');if(!el){el=document.createElement('div');el.id='fadeOv';document.body.appendChild(el)}el.style.transition='none';el.style.opacity='1';void el.offsetWidth;setTimeout(()=>{el.style.transition='opacity .9s ease';el.style.opacity='0'},120)}
 let _abT=0;
 function abyFx(){if(!G||!running)return;const me=G.players[G.me]||G.players[0];const A=G.aby||{};const now=performance.now(),dt=Math.min(.3,(now-_abT)/1000);_abT=now;
   // gate on the map
-  const gok=abyGateOK();if(gok&&G.story){G.story.seen=G.story.seen||{};if(!G.story.seen.aby){G.story.seen.aby=1;setTimeout(()=>{if(running)banner('新しい探索地','深淵の迷宮','町の南西。潜るほど強い敵と良い素材。武器を育てて挑め','area',true)},6000)}}if(gok&&(!G.abyG||G.abyG.parent!==world))G.abyG=abyGateBuild();if(G.abyG){G.abyG.visible=gok;G.abyG.userData.sign.quaternion.copy(camera.quaternion);G.abyG.userData.r.material.opacity=.16+.1*Math.sin(now/400);if(Math.random()<.25)psA.emit({x:ABY_GATE.x+rnd(-30,30),y:6,z:ABY_GATE.y+rnd(-30,30),vx:rnd(-4,4),vy:rnd(18,36),vz:rnd(-4,4),g:-6,life:1.6,max:1.6,r:rnd(3,5),c:C(Math.random()<.5?'#b08aff':'#7fe8ff'),air:true,fade:.6})}
+  const gok=abyGateOK();if(gok&&G.story){G.story.seen=G.story.seen||{};if(!G.story.seen.aby){G.story.seen.aby=1;setTimeout(()=>{if(running&&!G.story.seen.abyF)banner('うわさ','地の底へ続く門',DES()?'「北東のはずれ、砂丘の向こうで紫の光を見た」…という話を聞いた':'「北東のはずれ、森の奥で紫の光を見た」…という話を聞いた','area',true)},6000)}}if(gok&&(!G.abyG||G.abyG.parent!==world))G.abyG=abyGateBuild();if(G.abyG){G.abyG.visible=gok;G.abyG.userData.sign.quaternion.copy(camera.quaternion);G.abyG.userData.r.material.opacity=.16+.1*Math.sin(now/400);if(Math.random()<.25)psA.emit({x:ABY_GATE.x+rnd(-30,30),y:6,z:ABY_GATE.y+rnd(-30,30),vx:rnd(-4,4),vy:rnd(18,36),vz:rnd(-4,4),g:-6,life:1.6,max:1.6,r:rnd(3,5),c:C(Math.random()<.5?'#b08aff':'#7fe8ff'),air:true,fade:.6})}
   // arena
   const want=A.on?A.fl+':'+A.lay:null;if(G.abyV&&(G.abyV.userData.k!==want||G.abyV.parent!==world)){world.remove(G.abyV);G.abyV.traverse(o=>{o.geometry&&o.geometry.dispose()});G.abyV=null}
   if(want&&!G.abyV){G.abyV=abyBuild();G.abyV.userData.k=want}if(G.abyV){const u=G.abyV.userData.up;u.visible=!!A.clear;u.rotation.y+=.02;const U=G.abyV.userData;if(U.rune)U.rune.rotation.y+=.002;if(U.torch)for(const t of U.torch){t.f.scale.set(1,1.8+Math.sin(now/90+t.x)*.3,1);if(Math.random()<.08)psA.emit({x:t.x+rnd(-2,2),y:74,z:t.y+rnd(-2,2),vx:rnd(-4,4),vy:rnd(20,40),vz:rnd(-4,4),g:-10,life:.6,max:.6,r:rnd(3,5),c:C(Math.random()<.5?'#ffb347':'#ffd76a'),air:true,fade:.3})}}
@@ -101,7 +101,8 @@ function abyFx(){if(!G||!running)return;const me=G.players[G.me]||G.players[0];c
     if(de<30&&!(me.down>0)){me._abX=(me._abX||0)+dt;if(me._abX>1.1){me._abX=0;me._abF=0;abyTo(me,{x:ABY_GATE.x,y:ABY_GATE.y+70});toast('地上に戻った','gold',true)}}else me._abX=0;return}
   me._abK=(A.ko||[])[mi]||0;
   if(!gok)return;const d=dist(me.x,me.y,ABY_GATE.x,ABY_GATE.y);const best=abyBest(me);
-  if(d<380)label(ABY_GATE.x,ABY_GATE.y,100,`<b>深淵の迷宮</b><br><small>${A.on?`${G.players.length>1?'仲間が':''}地下${A.fl}階で挑戦中・乗ると合流`:`乗ると挑戦（最深記録：${best?'地下'+best+'階':'なし'}）`}</small>`,'note');
+  if(G.story&&d<240&&!(G.story.seen||{}).abyF&&!(me.x>ABX)){G.story.seen=G.story.seen||{};G.story.seen.abyF=1;banner('隠された門を見つけた！','深淵の迷宮','潜るほど強い敵と良い素材。武器を育てて挑め','r-SSR');SFX.rare&&SFX.rare()}
+  if(d<240)label(ABY_GATE.x,ABY_GATE.y,100,`<b>深淵の迷宮</b><br><small>${A.on?`${G.players.length>1?'仲間が':''}地下${A.fl}階で挑戦中・乗ると合流`:`乗ると挑戦（最深記録：${best?'地下'+best+'階':'なし'}）`}</small>`,'note');
   if(d<44&&!(me.down>0)&&!me.riding&&!DLG.open){me._abE=(me._abE||0)+dt;if(me._abE>1){me._abE=0;
       if(A.on){me._abF=A.fl;abyTo(me,ABY_ST);banner(`地下${A.fl}階`,abyBand(A.fl).n,'仲間と合流した','cold',true)}
       else{const cps=abyCp(best);if(cps.length===1){abyEnter(1)}else{const ch=cps.map(f=>[`地下${f}階から（${abyBand(f).n}）`,()=>abyEnter(f)]);ch.push(['やめる',null]);Object.assign(DLG,{open:true,npc:{n:{n:'深淵の迷宮'},x:ABY_GATE.x,y:ABY_GATE.y},pages:[`どこから潜る？ 最深記録：地下${best}階。深いほど敵が強く、良い素材が出る`],i:0,ch});if(NET.mode==='solo')G.paused=true;drawDlg()}}}}else me._abE=0}

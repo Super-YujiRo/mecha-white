@@ -128,7 +128,7 @@ function guestTick(dt){
   const me=G.players[G.me];const px=me.x,py=me.y;
   const iv=me.down>0?{x:0,y:0}:inputVec(0),sp0=195*G.pm.speed*(me.riding?1.8:1)*(1+eqv(me,'spd'));me.vx=lerp(me.vx,iv.x*sp0,Math.min(1,dt*12));me.vy=lerp(me.vy,iv.y*sp0,Math.min(1,dt*12));
   me.x=clX(me.x+me.vx*dt,30);me.y=clY(me.y+me.vy*dt,30,me.x);const sp=Math.hypot(me.vx,me.vy);me.moving=sp>20;if(me.moving){me.step+=dt*sp*.06;me.dirT=Math.atan2(me.vx,me.vy);if(Math.random()<dt*6)puff(me.x-me.vx*.05,me.y-me.vy*.05,2,{r:7,life:.6,a:.7,vy:10,grow:1})}
-  dashTick(me,dt);fenceCollide(me,px,py);solids(me,12);for(const t of G.trees)if(t.alive&&t.fall<=0&&Math.abs(t.x-me.x)<30&&Math.abs(t.y-me.y)<30)pushCircle(me,t.x,t.y,18*t.s);jumpTick(me,dt);
+  dashTick(me,dt);fenceCollide(me,px,py);solids(me,12);wallGuard(me);for(const t of G.trees)if(t.alive&&t.fall<=0&&Math.abs(t.x-me.x)<30&&Math.abs(t.y-me.y)<30)pushCircle(me,t.x,t.y,18*t.s);jumpTick(me,dt);
   me.bb=lerp(me.bb,0,dt*8);me.flash=Math.max(0,me.flash-dt);me.inv=Math.max(0,me.inv-dt);
   if(me.shooting){if(isRPG()&&INP.atk)me.aimDir=CAMS.cur+Math.PI;else{const b=nearestBear(me);if(b)me.aimDir=Math.atan2(b.x-me.x,b.y-me.y)}}else if(me.chopping){const t=nearestTree(me);if(t)me.aimDir=Math.atan2(t.x-me.x,t.y-me.y)}else me.aimDir=null;
   NET.room.presence({role:'guest',x:me.x|0,y:me.y|0,d:r2(me.dir),ch:meta.pick||'Knight',fk:NET.fCount||0,ek:NET.eCount||0,eg:NET.eGrade||0,act:NET.act||null,ak:INP.atk?1:0,am:isRPG()?r2(CAMS.cur+Math.PI):null,dg:NET.dgN||0,jz:Math.round(me.jz||0),sk:NET.skN||0}).catch(()=>{});

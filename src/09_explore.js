@@ -30,7 +30,7 @@ const CHAL={wood:[['木を30本切る','chop',30],['大きな古木を切りた�
 function updateChallenges(){if(!isRPG())return;for(const p of G.players){p.chd=p.chd||[];const c=p.cnt||{};for(const k of LIVES)(CHAL[k]||[]).forEach((ch,i)=>{const id=k+i;if(p.chd.includes(id))return;if((c[ch[1]]||0)>=ch[2]){p.chd.push(id);lifeXp(p,k,25);const v=100+i*80;G.cash+=v;G.earned+=v;float(p.x,p.y,140,`お題達成！ ${ch[0]}（${LIFE[k].n}）+$${v}`,'gold',true);SFX.rare()}})}}
 // ---- dungeons: walled areas reached through a portal (story mode). Data-driven: add an entry to DUNGEONS to add an area.
 const DUNGEONS=[
-  {id:'cave',n:'氷の洞窟',des:0,key:'Spider',drop:'silk',box:[1790,1830,2370,2370],inp:{x:1800,y:1560},ring:{x:1800,y:1590},back:{x:1800,y:1650},start:{x:1880,y:2300},out:{x:1850,y:2210},
+  {id:'cave',n:'氷の洞窟',des:0,key:'Spider',drop:'silk',box:[1790,1830,2370,2370],inp:{x:1800,y:1560},ring:{x:1800,y:1522},back:{x:1800,y:1462},start:{x:1880,y:2300},out:{x:1850,y:2210},rotY:Math.PI,
     gate:()=>G.zones.B,lock:'氷の湖を解放すると入れる',sub:'宝箱・鉱石・強い魔物',enter:['ひんやりと冷たい…','焚き火のまわりだけは暖かい。奥に宝が眠っている'],
     walls:[[1790,1830,2370,1860],[1790,2340,2370,2370],[1790,1830,1820,2370],[2340,1830,2370,2370],[1790,2090,2240,2110],[2330,2090,2370,2110],[2070,2110,2090,2190],[2070,2270,2090,2370]],
     heats:[{x:1900,y:2250,r:120}],
@@ -46,7 +46,7 @@ const DUNGEONS=[
     chests:[{x:170,y:2330,tier:1},{x:520,y:1890,tier:2},{x:90,y:2050,tier:3}],cmat:['icec','icec','star'],
     loot:{1:['c_aurora','w_glaxe'],2:['a_glacier','w_frostbow'],3:['w_glking','c_glheart']},
     look:{nomap:1,floor:'#d6e8f3',wall:'#a9cde6',cap:'#ffffff',crys:['#9fe3ff','#e0f6ff'],ring:'#9fe3ff',mouth:'#8fb8d6',fire:'#ffa23d'}},
-  {id:'ruin',n:'遺跡の地下',des:1,ann:1,key:null,drop:'relic',box:[1790,1830,2370,2370],inp:{x:1800,y:1560},ring:{x:1800,y:1590},back:{x:1800,y:1650},start:{x:1880,y:2300},out:{x:1850,y:2210},
+  {id:'ruin',n:'遺跡の地下',des:1,ann:1,key:null,drop:'relic',box:[1790,1830,2370,2370],inp:{x:1800,y:1560},ring:{x:1800,y:1522},back:{x:1800,y:1462},start:{x:1880,y:2300},out:{x:1850,y:2210},rotY:Math.PI,
     gate:()=>G.zones.B,lock:'東の区画を解放すると入れる',sub:'古代の宝・古代の欠片・砂の王',enter:['ひんやりとした石の回廊…','松明のまわりで一息つける。奥に王の間がある'],
     walls:[[1790,1830,2370,1860],[1790,2340,2370,2370],[1790,1830,1820,2370],[2340,1830,2370,2370],[1790,2060,2150,2080],[2240,2060,2370,2080],[2000,2080,2020,2200],[2170,2200,2190,2340],[2170,1860,2190,1960]],
     heats:[{x:1900,y:2260,r:110},{x:2280,y:2150,r:90}],
@@ -87,6 +87,12 @@ function dgBuild(D){const L=D.look,g=new T.Group();const stone=std(L.wall,{map:T
   const ring=(c,x,y,r0,r1)=>{const m=M_(new T.RingGeometry(r0,r1,32),new T.MeshBasicMaterial({color:lin(c),transparent:true,opacity:.85,side:T.DoubleSide,depthWrite:false}),false);m.rotation.x=-Math.PI/2;m.position.set(x,1.5,y);g.add(m)};
   ring(L.ring,D.ring.x,D.ring.y,34,42);ring('#ffd166',D.out.x,D.out.y,30,38);
   g.userData.chests=D.chests.map(c=>{const cg=new T.Group();cg.position.set(c.x,0,c.y);const mk=nm=>{const P=KK&&KK.prop&&KK.prop[nm];if(!P)return at(box(30,22,20,std(c.tier===3?'#ffcf4a':'#8a5a30')),0,11,0);const o=P.scene.clone(true);o.scale.setScalar(34/Math.max(.01,P.w));if(c.tier===3)o.traverse(q=>{if(q.isMesh){q.material=q.material.clone();if(q.isSkinnedMesh)q.material.skinning=true;(q.material.emissive&&q.material.emissive.set(lin('#a86a00')));q.material.emissiveIntensity=.4}});return o};const cl=mk('Chest_Closed'),op=mk('Chest_Open');op.visible=false;cg.add(cl,op);g.add(cg);return{cg,cl,op}});
+  // entrance dressing: braziers either side and a light beam until you've been inside once
+  {const stn=std('#3a3f48',{map:TEX.stone,r:.95});for(const sx of [-62,62]){const bz=new T.Group();bz.position.set(sx,0,34);bz.add(at(cyl(9,13,26,stn,8,true),0,13,0),at(cyl(15,10,8,stn,10,false),0,29,0));const fl=makeFlame(10,26,L.fire);fl.position.y=33;bz.add(fl);mb.add(bz)}
+    for(let i=0;i<5;i++){const a=-1.1+i*.55;mb.add(at(rot(cone(6+i%2*3,30+(i%3)*12,glow(L.crys[i%2],1.6),5,false),0,0,(i-2)*.12),Math.sin(a)*95,10,20+Math.cos(a)*6))}
+    const beam=M_(new T.CylinderGeometry(22,34,700,16,1,true),new T.MeshBasicMaterial({color:lin(DES()?'#ff9a2a':'#2f8cff'),transparent:true,opacity:.3,depthWrite:false,side:T.DoubleSide,fog:false}),false);beam.position.set(D.ring.x-D.inp.x,350,D.ring.y-D.inp.y);mouth.add(beam);g.userData.beam=beam}
+  // the rooms themselves are only drawn while you are in (or right at the door of) the dungeon, so they never show up as a strange area from outside
+  {const gi=new T.Group();for(const o of g.children.slice())if(o!==mouth&&!o.isLight){g.remove(o);gi.add(o)}g.add(gi);g.userData.gi=gi}
   world.add(g);return g}
 let _cvT=0;
 function caveFx(){if(!G||!running)return;const me=G.players[G.me]||G.players[0];G.dgV=G.dgV||{};const L=dgMap();
@@ -95,10 +101,12 @@ function caveFx(){if(!G||!running)return;const me=G.players[G.me]||G.players[0];
   for(const D of L){const V=G.dgV[D.id]||(G.dgV[D.id]=dgBuild(D));V.userData.ms.quaternion.copy(camera.quaternion);const C=G.dg&&G.dg[D.id];const open=D.gate();
     if(open&&D.ann&&G.story){G.story.seen=G.story.seen||{};if(!G.story.seen['dg_'+D.id]){G.story.seen['dg_'+D.id]=1;banner('新しい探索地',D.n,`${D.sub}。入口は地図の「${D.n}」の看板`,'area',true)}}
     V.userData.chests.forEach((o,i)=>{const op=!!(C&&C.ch[i]&&C.ch[i].open);o.cl.visible=!op;o.op.visible=op;const c=D.chests[i];if(cur===D&&!op&&dist(me.x,me.y,c.x,c.y)<220)label(c.x,c.y,50,`<b>${c.tier===3?'黄金の宝箱':'宝箱'}</b><br><small>そばに立つと開く</small>`,'')});
+    {const inside=cur===D||inBox(me.x,me.y,D.box,90);V.userData.gi.visible=inside;if(cur===D&&G.story){G.story.seen=G.story.seen||{};G.story.seen['dgin_'+D.id]=1}
+      const bm=V.userData.beam;bm.visible=open&&!cur&&!(G.story&&G.story.seen&&G.story.seen['dgin_'+D.id]);if(bm.visible)bm.material.opacity=.24+.1*Math.sin(now/500)}
     if(cur&&cur!==D)continue;
     if(!open&&!cur){if(dist(me.x,me.y,D.ring.x,D.ring.y)<300)label(D.ring.x,D.ring.y,90,`<b>${D.n}</b><br><small>🔒 ${D.lock}</small>`,'note');continue}
     const P=cur?D.out:D.ring,d=dist(me.x,me.y,P.x,P.y);if(d<320)label(P.x,P.y,cur?60:90,cur?`<b>出口</b><br><small>立つと外へ出る</small>`:`<b>${D.n}</b><br><small>立つと中へ入る（${D.sub}）</small>`,'');
-    if(d<40&&!(me.down>0)&&!me.riding){near=true;me.ptT=(me.ptT||0)+dt;if(me.ptT>1.1){me.ptT=0;const T2=cur?D.back:D.start;me.x=T2.x;me.y=T2.y;me.vx=me.vy=0;updateCam(0,true);SFX.area();if(!cur)banner(D.n,D.enter[0],D.enter[1],'cold',true);return}}}
+    if(d<40&&!(me.down>0)&&!me.riding){near=true;me.ptT=(me.ptT||0)+dt;if(me.ptT>1.1){me.ptT=0;const T2=cur?D.back:D.start;me.x=T2.x;me.y=T2.y;me._sx=null;me.vx=me.vy=0;updateCam(0,true);SFX.area();if(!cur)banner(D.n,D.enter[0],D.enter[1],'cold',true);return}}}
   if(!near)me.ptT=0}
 function statusTab(me){const tab=G._stab||'eq',rows=$('lifeRows'),lct=document.querySelector('#lifeCard .lct');const tabs=`<div style="display:flex;gap:4px;margin-bottom:6px">${[['eq','装備'],['life','くらし'],['chal','お題'],['book','図鑑'],['clue','手がかり']].map(([k,n])=>`<button data-tab="${k}" style="flex:1;font:inherit;font-size:11px;font-weight:800;border:2px solid #16283a;border-radius:8px;padding:3px;background:${tab===k?'#ffd23f':'#fff'};cursor:pointer">${n}</button>`).join('')}</div>`;
   if(tab==='clue'){$('rpgBox').innerHTML=tabs+'<div style="font-weight:900;margin:2px 0 4px">手がかり帳</div>'+clueHtml();rows.innerHTML='';lct.style.display='none';return true}

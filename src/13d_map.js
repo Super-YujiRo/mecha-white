@@ -4,7 +4,7 @@ function mapMarks(){const L=[];const S=G.story,des=DES(),adv=ADV();
   L.push({x:CX,y:CY,k:'town',n:des?(adv?'砂の町ラズール':'砂漠の町'):'町'});
   if(!des){L.push({x:SPA.x,y:SPA.y,k:'water',n:'温泉'});L.push({x:(HOLES[0][0]+HOLES[5][0])/2,y:(HOLES[0][1]+HOLES[5][1])/2,k:'water',n:'氷の湖'})}
   else{L.push({x:SPA.x,y:SPA.y,k:'water',n:'オアシス'});if(adv){for(const o of OASES)L.push({x:o.x,y:o.y,k:'water',n:o.n});L.push({x:CAMP.x,y:CAMP.y,k:'camp',n:'遊牧民キャンプ'});L.push({x:VALLEY.x,y:VALLEY.y,k:'danger',n:VALLEY.n})}}
-  if(isRPG()){for(const D of dgMap()){const open=D.gate();L.push({x:D.ring.x,y:D.ring.y,k:open?'cave':'lock',n:D.n})}if(abyGateOK())L.push({x:ABY_GATE.x,y:ABY_GATE.y,k:'cave',n:'深淵の迷宮'});for(const c of cfList()){const D=DUNGEONS.find(D=>D.id===c.d);if(D&&D.gate())L.push({x:c.x,y:c.y,k:cfLit(c.id)?'fire':'fire0',n:cfLit(c.id)?'焚き火':'焚き火跡',sm:1})}if(des)L.push({x:RUIN.x,y:RUIN.y,k:'ruin',n:'古代遺跡'})}
+  if(isRPG()){for(const D of dgMap()){const open=D.gate();L.push({x:D.ring.x,y:D.ring.y,k:open?'cave':'lock',n:D.n})}if(abyGateOK()&&(G.story&&(G.story.seen||{}).abyF||abyBest(G.players[G.me]||G.players[0])>0))L.push({x:ABY_GATE.x,y:ABY_GATE.y,k:'cave',n:'深淵の迷宮'});for(const c of cfList()){const D=DUNGEONS.find(D=>D.id===c.d);if(D&&D.gate())L.push({x:c.x,y:c.y,k:cfLit(c.id)?'fire':'fire0',n:cfLit(c.id)?'焚き火':'焚き火跡',sm:1})}if(des)L.push({x:RUIN.x,y:RUIN.y,k:'ruin',n:'古代遺跡'})}
   return L}
 const MCOL={town:'#e8703a',water:'#3fa9d8',camp:'#b8762e',danger:'#c0392b',cave:'#6b5bd6',lock:'#9aa3ad',ruin:'#a8784a',abyss:'#7a4fd6',fire:'#ff7a2a',fire0:'#9a8a78'};
 // painted terrain layer, cached until the zones/biome change

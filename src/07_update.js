@@ -8,7 +8,7 @@ function update(dt){
   const adv=ADV(),R=adv?420:heatR();G.onPads=new Set();tickCombo(dt);tickChests(dt);
   for(const p of G.players){const px=p.x,py=p.y;if(p.remote){followNet(p,dt);continue}const iv=p.down>0?{x:0,y:0}:inputVec(p.id),sp0=195*G.pm.speed*(p.riding?1.8:1)*(1+eqv(p,'spd'));p.vx=lerp(p.vx,iv.x*sp0,Math.min(1,dt*12));p.vy=lerp(p.vy,iv.y*sp0,Math.min(1,dt*12));
     p.x=clX(p.x+p.vx*dt,30);p.y=clY(p.y+p.vy*dt,30,p.x);const sp=Math.hypot(p.vx,p.vy);p.moving=sp>20;if(p.moving){p.step+=dt*sp*.06;p.dirT=Math.atan2(p.vx,p.vy);if(Math.random()<dt*6)puff(p.x-p.vx*.05,p.y-p.vy*.05,2,{r:7,life:.6,a:.7,vy:10,grow:1})}
-    dashTick(p,dt);fenceCollide(p,px,py);solids(p,12);for(const t of G.trees)if(t.alive&&t.fall<=0&&Math.abs(t.x-p.x)<30&&Math.abs(t.y-p.y)<30)pushCircle(p,t.x,t.y,18*t.s);jumpTick(p,dt);
+    dashTick(p,dt);fenceCollide(p,px,py);solids(p,12);wallGuard(p);for(const t of G.trees)if(t.alive&&t.fall<=0&&Math.abs(t.x-p.x)<30&&Math.abs(t.y-p.y)<30)pushCircle(p,t.x,t.y,18*t.s);jumpTick(p,dt);
     p.bb=lerp(p.bb,0,dt*8);p.flash=Math.max(0,p.flash-dt);p.hurt=Math.max(0,p.hurt-dt);p.inv=Math.max(0,p.inv-dt)}
   if(G.players.length>1&&NET.mode==='solo'){const [a,b]=G.players;for(const [p,o] of [[a,b],[b,a]]){p.x=clamp(p.x,o.x-640,o.x+640);p.y=clamp(p.y,o.y-640,o.y+640)}}
   for(const p of G.players)playerActions(p,dt,R);

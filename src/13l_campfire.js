@@ -30,10 +30,21 @@ function cfBuild(c){const g=new T.Group();g.position.set(c.x,0,c.y);const st=std
   const mark=M_(new T.RingGeometry(26,30,32),new T.MeshBasicMaterial({color:lin('#ffd76a'),transparent:true,opacity:.6,side:T.DoubleSide,depthWrite:false}),false);mark.rotation.x=-Math.PI/2;mark.position.y=1.3;g.add(mark);
   g.userData={fl,glowD,mark};world.add(g);return g}
 function campfireFx(){if(!G||!running)return;G.cfV=G.cfV||{};const me=G.players[G.me]||G.players[0];const L=cfList(),now=performance.now();
-  for(const id in G.cfV){const V=G.cfV[id];if(V.parent!==world){delete G.cfV[id];continue}V.visible=L.some(c=>c.id===id)}
+  for(const id in G.cfV){const V=G.cfV[id];if(V.parent!==world){delete G.cfV[id];continue}const c0=CAMPFIRES.find(c=>c.id===id),D0=c0&&DUNGEONS.find(D=>D.id===c0.d);V.visible=L.some(c=>c.id===id)&&!!(me&&D0&&inBox(me.x,me.y,D0.box,90))}
   for(const c of L){const V=G.cfV[c.id]||(G.cfV[c.id]=cfBuild(c));const lit=cfLit(c.id);V.userData.fl.visible=lit;V.userData.glowD.visible=lit;V.userData.mark.visible=!lit;if(!lit)V.userData.mark.material.opacity=.35+.3*Math.sin(now/300);
     if(!me||dgAt(me.x,me.y)!==DUNGEONS.find(D=>D.id===c.d))continue;const d=dist(me.x,me.y,c.x,c.y);if(d>260)continue;
     if(lit)label(c.x,c.y,58,'<b>焚き火</b><br><small>暖まれる・凍えたらここに戻る</small>','gold');
     else{const n=me.bag.filter(k=>k==='log').length,t=(G.cfT&&G.cfT[c.id])||0;label(c.x,c.y,52,`<b>焚き火跡</b><br><small>${t>0?'■'.repeat(Math.min(5,Math.ceil(t/.24))):n>=CF_LOGS?`そばに立つと薪${CF_LOGS}本で火をつける`:`薪が${CF_LOGS}本必要（いま${n}本）`}</small>`,n>=CF_LOGS?'gold':'')}}
   if(!me)return;const mi=G.players.indexOf(me);const ko=(G.cfko||[])[mi]||0;if(me._cfk==null)me._cfk=ko;
-  if(ko>me._cfk){me._cfk=ko;const c=CAMPFIRES.find(c=>c.id===(G.cfkoT||[])[mi]);if(c){me.x=c.x+30;me.y=c.y+30;me.vx=me.vy=0;updateCam(0,true);toast('焚き火まで戻った（持ち物は無事）','gold',true)}}}
+  if(ko>me._cfk){me._cfk=ko;const c=CAMPFIRES.find(c=>c.id===(G.cfkoT||[])[mi]);if(c){me.x=c.x+30;me.y=c.y+30;me._sx=null;me.vx=me.vy=0;updateCam(0,true);toast('焚き火まで戻った（持ち物は無事）','gold',true)}}}
+// ---- never let a knockback / dodge / blast carry a player through dungeon walls (it used to drop you into the void between dungeon rooms)
+function dgWallsAt(x,y){if(x>ABX)return abyWalls();const D=dgAt(x,y);if(!D)return null;const W=D.walls.slice();if(D.id==='cave'&&typeof caveDoorOpen==='function'&&!caveDoorOpen())W.push(VAULT_DOOR);return W}
+function wallGuard(p){if(!isRPG()||!p)return;if(p._sx==null||p.down>0&&p._sx==null){p._sx=p.x;p._sy=p.y;return}
+  const sx=p._sx,sy=p._sy,dx=p.x-sx,dy=p.y-sy,L=Math.hypot(dx,dy);
+  if(L>400||L<.5){p._sx=p.x;p._sy=p.y;return} // real teleports (enter/exit/rescue) are long jumps
+  const W=dgWallsAt(sx,sy);
+  if(W){const n=Math.ceil(L/4);let lx=sx,ly=sy,hit=false;
+    for(let i=1;i<=n;i++){const x=sx+dx*i/n,y=sy+dy*i/n;if(W.some(w=>x>w[0]&&x<w[2]&&y>w[1]&&y<w[3])){hit=true;break}lx=x;ly=y}
+    const inS=(sx>ABX)||dgAt(sx,sy),inE=(p.x>ABX)===(sx>ABX)&&(sx>ABX||dgAt(p.x,p.y)===dgAt(sx,sy));
+    if(hit||!inE){p.x=lx;p.y=ly;if(p.dash)p.dash=null;p.vx*=.2;p.vy*=.2;if(!p._wgT||performance.now()-p._wgT>3000){p._wgT=performance.now();plog('wallGuard kept p'+G.players.indexOf(p)+' inside')}}}
+  p._sx=p.x;p._sy=p.y}
