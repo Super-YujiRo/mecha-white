@@ -43,3 +43,21 @@ function bgTick(){if(!document.hidden||!running||!(NET.mode==='host'||NET.mode==
 document.addEventListener('visibilitychange',()=>{const online=running&&(NET.mode==='host'||NET.mode==='guest');
   if(document.hidden&&online){bgStart();BG.w.postMessage('go');BG.on=true;plog('hidden: background tick on ('+NET.mode+')')}
   else if(BG.on){BG.w.postMessage('stop');BG.on=false;plog('visible: background ticks '+BG.n);BG.n=0}});
+// ---- pads no longer take money just because you walked over them: stand on one and press E (or the 支払う button) to start paying
+const padIsCash=pad=>pad&&pad.pay==='cash';
+const PADL={arm:null};
+function padLocalCost(pad,me){return pad.personal?pad.costP(me):pad.cost()}
+function padHere(me){if(!me||!G||!G.pads)return null;for(const pad of G.pads){if(!pad.shown||!padIsCash(pad))continue;if(dist(me.x,me.y,pad.x,pad.y)>(pad.big?50:40))continue;if(!pad.personal&&pad.req&&pad.req())continue;const c=padLocalCost(pad,me);if(c==null)continue;return pad}return null}
+function padLocalPress(){if(!running||!G)return false;const me=G.players[G.me]||G.players[0];const pad=padHere(me);if(!pad)return false;
+  PADL.arm=pad.id+':'+padLocalCost(pad,me);if(NET.mode!=='guest')me.padPress=true;SFX.pop&&SFX.pop();return true}
+function padBtnPress(){if(!running||!G)return;const me=G.players[G.me]||G.players[0];if(!padHere(me))return;if(NET.mode==='guest'){NET.eCount=(NET.eCount||0)+1;NET.eGrade=0}padLocalPress()}
+function padPromptFx(){let b=document.getElementById('payBtn');if(!b){b=document.createElement('button');b.id='payBtn';b.hidden=true;b.addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();padBtnPress()});document.body.appendChild(b)}
+  const me=G&&running&&(G.players[G.me]||G.players[0]);const pad=me&&!(me.down>0)&&!DLG.open?padHere(me):null;
+  if(!pad){PADL.arm=null;b.hidden=true;return}
+  const c=padLocalCost(pad,me),key=pad.id+':'+c;
+  // host: the authoritative arm is cleared when a level is bought, so ask again for the next level
+  if(NET.mode!=='guest'&&PADL.arm===key&&me.padArm!==pad.id&&!me.padPress)PADL.arm=null;
+  if(PADL.arm===key){b.hidden=true;return}
+  const left=Math.max(0,c-(pad.personal?(pad.pp[me.id]||0):pad.paid));const short=G.cash<=0;
+  label(pad.x,pad.y,70,`<b>${pad.name||''}</b><br><small>${short?'お金が足りない':`<b style="color:#ffd23f">Eキー</b>で $${Math.ceil(left).toLocaleString()} を払う`}</small>`,short?'':'gold');
+  b.textContent=short?'お金が足りない':`💰 $${Math.ceil(left).toLocaleString()} 払う（E）`;b.disabled=short;b.hidden=false}

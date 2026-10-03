@@ -1,5 +1,5 @@
 /* めちゃホワイト — built from src/*.js by tools/build.py. Edit the sources, not this file. */
-(()=>{const BUILD='20261003170509';
+(()=>{const BUILD='20261003175736';
 const $=id=>document.getElementById(id);
 if(!window.THREE){$('loading').textContent='3Dの読み込みに失敗しました。再読み込みしてください';return}
 const T=THREE;
@@ -1238,7 +1238,7 @@ function followNet(p,dt){const px=p.x,py=p.y;if(p.nx!=null){const k=Math.min(1,d
 function netHost(dt){const gp=guestPeerNow();
   if(gp&&NET.guestPeer!==gp.peer){if(G.players[1])dropRemote();NET.guestPeer=gp.peer;G.charOf[1]=altCh(G.charOf[0],gp.presence&&gp.presence.ch);const p=addPlayer(1);p.remote=true;if(G.savePl&&G.savePl[1]){p.lv=Object.assign({gun:0,bag:0},G.savePl[1].lv);p.life=Object.assign({},G.savePl[1].life||{});rpgRestore(p,G.savePl[1])}p.x=CX+30;p.y=CY+110;hudInit();toast('友達が参加した！','gold');SFX.rare();setTimeout(()=>{if(running)banner('2人専用','協力ワザ','挟み撃ちでダメージ2倍・寄り添うと体温が下がりにくい・巨大肉は2人で運ぶ','area')},2500)}
   if(!gp&&NET.guestPeer){NET.gMiss=(NET.gMiss||0)+dt;const lim=PJ.on?45:3;if(PJ.on)netWarn(`友達の接続が切れた…戻ってくるのを待っています（あと${Math.ceil(lim-NET.gMiss)}秒）`);if(NET.gMiss>lim){netWarn('');dropRemote();NET.guestPeer=null;NET.gMiss=0;toast('友達が抜けた','cold')}}else if(gp&&NET.gMiss){if(NET.gMiss>1)toast('友達が戻ってきた！','gold');NET.gMiss=0;netWarn('')}
-  const p=G.players[1];if(p&&gp){const pr=gp.presence;verCheck(pr);p.atkHold=!!pr.ak;p.aimA=typeof pr.am==='number'?pr.am:null;if(typeof pr.dg==='number'){if(p._dg!=null&&pr.dg!==p._dg)p.inv=Math.max(p.inv||0,.42);p._dg=pr.dg}p.jz=pr.jz||0;if(typeof pr.sk==='number'){if(p._sk!=null&&pr.sk!==p._sk)p.skillReq=true;p._sk=pr.sk}if(typeof pr.fk==='number'){if(p._fk!=null&&pr.fk!==p._fk)p.fPress=true;p._fk=pr.fk}if(pr.act&&pr.act[0]!==p._act){const first=p._act===undefined&&pr.act[0]>1;p._act=pr.act[0];if(!first)doAct(p,pr.act[1],pr.act[2])}if(typeof pr.ek==='number'){if(p._ek!=null&&pr.ek!==p._ek){p.ePress=true;p.eGrade=pr.eg||0}p._ek=pr.ek}if(typeof pr.x==='number'&&typeof pr.y==='number'){p.nx=clX(pr.x,30);p.ny=clY(pr.y,30,pr.x);p.dirN=typeof pr.d==='number'?pr.d:null}}
+  const p=G.players[1];if(p&&gp){const pr=gp.presence;verCheck(pr);p.atkHold=!!pr.ak;p.aimA=typeof pr.am==='number'?pr.am:null;if(typeof pr.dg==='number'){if(p._dg!=null&&pr.dg!==p._dg)p.inv=Math.max(p.inv||0,.42);p._dg=pr.dg}p.jz=pr.jz||0;if(typeof pr.sk==='number'){if(p._sk!=null&&pr.sk!==p._sk)p.skillReq=true;p._sk=pr.sk}if(typeof pr.fk==='number'){if(p._fk!=null&&pr.fk!==p._fk)p.fPress=true;p._fk=pr.fk}if(pr.act&&pr.act[0]!==p._act){const first=p._act===undefined&&pr.act[0]>1;p._act=pr.act[0];if(!first)doAct(p,pr.act[1],pr.act[2])}if(typeof pr.ek==='number'){if(p._ek!=null&&pr.ek!==p._ek){p.ePress=true;p.padPress=true;p.eGrade=pr.eg||0}p._ek=pr.ek}if(typeof pr.x==='number'&&typeof pr.y==='number'){p.nx=clX(pr.x,30);p.ny=clY(pr.y,30,pr.x);p.dirN=typeof pr.d==='number'?pr.d:null}}
   NET.sendT+=dt;if(NET.guestPeer&&NET.sendT>=.12){NET.sendT=0;sendSnap()}}
 function dropRemote(){const p=G.players[1];if(!p)return;for(const k of p.bag)dropItem(p.x,p.y,k,20);world.remove(p.m.g);G.players.length=1;for(const h of G.holes)if(h.user===p)h.user=null;hudInit()}
 function safeEmit(tp,d){if(!NET.room)return;let s=JSON.stringify(d);let guard=0;const LIM=PJ.on?200000:3800;while(s.length>LIM&&guard++<8){let big=null,bl=0;for(const k in d)if(Array.isArray(d[k])){const l=JSON.stringify(d[k]).length;if(l>bl){bl=l;big=k}}if(!big)break;d[big]=d[big].slice(0,Math.floor(d[big].length*.7));s=JSON.stringify(d)}
@@ -1405,15 +1405,18 @@ function playerActions(p,dt,R){updateSled(p,dt);buffTick(p,dt);comboTick(p,dt);i
   for(const id in G.stations){const st=G.stations[id];if(st.pile>0&&dist(p.x,p.y,st.def.pile.x,st.def.pile.y)<56)collectPile(p,st,'pile',st.def.pile,dt)}
   if(G.spa.pile>0&&dist(p.x,p.y,SPA.pile.x,SPA.pile.y)<56)collectPile(p,G.spa,'pile',SPA.pile,dt);
   // pads
+  let onArm=false;
   for(const pad of G.pads){if(!pad.shown||dist(p.x,p.y,pad.x,pad.y)>(pad.big?50:40))continue;G.onPads.add(pad);
+    if(padIsCash(pad)){if(p.padPress)p.padArm=pad.id;if(p.padArm!==pad.id)continue;onArm=true}
     if(pad.personal){const c=pad.costP(p);if(c==null)continue;p.padT+=dt;if(p.padT<.03)continue;p.padT=0;if(G.cash<=0)continue;const cur=pad.pp[p.id]||0;const pay=Math.min(G.cash,c-cur,Math.max(1,Math.ceil(c/35)));G.cash-=pay;pad.pp[p.id]=cur+pay;if(Math.random()<.5)flyItem('cash',p.x,p.y,30,pad.x,pad.y,4,null,4);
-      if(pad.pp[p.id]>=c){pad.pp[p.id]=0;pad.buyP(p);pad.pulse=1;SFX.build()}continue}if(pad.req&&pad.req())continue;const c=pad.cost();if(c==null)continue;
+      if(pad.pp[p.id]>=c){pad.pp[p.id]=0;p.padArm=null;pad.buyP(p);pad.pulse=1;SFX.build()}continue}if(pad.req&&pad.req())continue;const c=pad.cost();if(c==null)continue;
     p.padT+=dt;if(p.padT<.03)continue;p.padT=0;
-    if(pad.pay==='cash'&&G.cash>0){if(pad.pop&&!idleSurvivors().length){if(!pad._w){pad._w=1;toast('生存者が足りない！ 集まるのを待とう','cold')}continue}pad._w=0;const pay=Math.min(G.cash,c-pad.paid,Math.max(1,Math.ceil(c/35)));G.cash-=pay;pad.paid+=pay;if(Math.random()<.5)flyItem('cash',p.x,p.y,30,pad.x,pad.y,4,null,4)}
+    if(pad.pay==='cash'&&G.cash>0){if(pad.pop&&!idleSurvivors().length){if(!pad._w){pad._w=1;toast('生存者が足りない！ 集まるのを待とう','cold')}continue}pad._w=0;const pay=Math.min(G.cash,c-pad.paid,Math.max(1,Math.ceil(c/35)));G.cash-=pay;pad.paid+=pay;if(pad.paid>=c)p.padArm=null;if(Math.random()<.5)flyItem('cash',p.x,p.y,30,pad.x,pad.y,4,null,4)}
     else if(pad.pay==='log'){let did=false;if(pad.paid<c&&take(p,'log')){pad.paid++;did=true;flyItem('log',p.x,p.y,24+p.stack.h,pad.x,pad.y,4,null,3.2)}
       else if(pad.mix){const need=pad.mix();for(const k of ['fish','fur'])if(pad.mp[k]<need[k]&&take(p,k)){pad.mp[k]++;did=true;flyItem(k,p.x,p.y,24+p.stack.h,pad.x,pad.y,4,null,3.2);break}}if(!did)continue}
     else continue;
     if(pad.paid>=c&&mixDone(pad)){if(finishPad(pad)===false)continue}}
+  if(!onArm)p.padArm=null;p.padPress=false;
   // bear hit → knocked down
   if(p.hp<=0&&!(p.down>0)&&!abyKO(p)&&!campRescue(p)){p.hp=60;p.inv=6;const drop=p.bag.splice(0);const keep=drop.filter((_,i)=>i%2===0);for(let r=keep.length,i=0;r>0;r-=4,i+=4)dropItem(p.x,p.y,keep[i],20,Math.min(4,r));p.down=6;p.ko=true;p.shooting=p.chopping=p.fishing=null;float(p.x,p.y,70,'ダウン…','red',true);toast(`オオカミにやられた！ 荷物の半分を失った${G.players.length>1?'（仲間がそばに来ると早く起きる）':''}`,'cold');SFX.bad();G.shake=12}
   if(inHeat)p.hp=Math.min(100,p.hp+(p.inHeat?7:0)*dt);
@@ -1974,7 +1977,7 @@ function frame(dt){hideIdle();monBar();frozenFx();vigFx();hideIdleFx(dt);
     const top=150,m=44,mx=86,on=!behind&&sx>m&&sx<W-m&&sy>top&&sy<H-90;if(on)el.hidden=true;else{el.hidden=false;const cx=W/2,cy=(top+H-90)/2;let dx=sx-cx,dy=sy-cy;const k=Math.min((W/2-mx)/Math.abs(dx||1e-3),((H-90-top)/2)/Math.abs(dy||1e-3));const ex=cx+dx*Math.min(1,k),ey=cy+dy*Math.min(1,k);
       const d=Math.round(dist(gp.x,gp.y,R.x,R.y)/10);el.style.transform=`translate(${ex|0}px,${ey|0}px) translate(-50%,-50%)`;el.firstChild.style.transform=`rotate(${Math.atan2(dy,dx)+Math.PI/2}rad)`;$('sosTxt').textContent=`SOS ${Math.ceil(R.t)}秒・${d}m`}}else el.hidden=true}
   {const _gt=running?(coldT||(G.fuel<25&&!G.raid.on?(has(gp,DES()?'water':'log')?{x:CX,y:CY,h:110}:(DES()?freeHole(gp):nearestTree(gp))):null)||rescueT(gp)||storyT(gp)||(MISSIONS[G.mission]?MISSIONS[G.mission].tg(gp):flow(gp))):null;const _g2=(gp&&inAby(gp.x))?null:_gt;G._gt=_g2;guide.set(_g2,gp,G.t)}
-  SAFE('storyVis',storyVis);SAFE('warnFx',warnFx);SAFE('driftFx',driftFx);SAFE('fireFx',fireFx);SAFE('npcFx',npcFx);SAFE('rankFx',rankFx);SAFE('caveFx',caveFx);SAFE('pzFx',pzFx);SAFE('heart4Fx',heart4Fx);SAFE('advFx',advFx);SAFE('occFx',occFx);SAFE('survDesertFx',survDesertFx);SAFE('extrasFx',extrasFx);SAFE('rebuildFx',rebuildFx);SAFE('wpFx',wpFx);SAFE('abyFx',abyFx);SAFE('campfireFx',campfireFx);SAFE('aimFx',aimFx);SAFE('storyPolish',storyPolish);SAFE('cullWorld',cullWorld);SAFE('render',()=>{if(composer)composer.render();else renderer.render(scene,camera)});SAFE('labels',endLabels);
+  SAFE('storyVis',storyVis);SAFE('warnFx',warnFx);SAFE('driftFx',driftFx);SAFE('fireFx',fireFx);SAFE('npcFx',npcFx);SAFE('rankFx',rankFx);SAFE('caveFx',caveFx);SAFE('pzFx',pzFx);SAFE('heart4Fx',heart4Fx);SAFE('advFx',advFx);SAFE('occFx',occFx);SAFE('survDesertFx',survDesertFx);SAFE('extrasFx',extrasFx);SAFE('rebuildFx',rebuildFx);SAFE('wpFx',wpFx);SAFE('abyFx',abyFx);SAFE('campfireFx',campfireFx);SAFE('aimFx',aimFx);SAFE('padPrompt',padPromptFx);SAFE('storyPolish',storyPolish);SAFE('cullWorld',cullWorld);SAFE('render',()=>{if(composer)composer.render();else renderer.render(scene,camera)});SAFE('labels',endLabels);
   joys.forEach((j,i)=>{const el=$('joy'+i);if(!j.on){el.hidden=true;return}el.hidden=false;el.style.left=j.ox+'px';el.style.top=j.oy+'px';const dx=j.x-j.ox,dy=j.y-j.oy,m=Math.hypot(dx,dy),k=m>50?50/m:1;el.firstChild.style.transform=`translate(${dx*k}px,${dy*k}px)`;el.firstChild.style.background=nPlayers===2?HERO[i].tag:'#fff'});
 }
 // ================================================================ HUD
@@ -3353,6 +3356,24 @@ function bgTick(){if(!document.hidden||!running||!(NET.mode==='host'||NET.mode==
 document.addEventListener('visibilitychange',()=>{const online=running&&(NET.mode==='host'||NET.mode==='guest');
   if(document.hidden&&online){bgStart();BG.w.postMessage('go');BG.on=true;plog('hidden: background tick on ('+NET.mode+')')}
   else if(BG.on){BG.w.postMessage('stop');BG.on=false;plog('visible: background ticks '+BG.n);BG.n=0}});
+// ---- pads no longer take money just because you walked over them: stand on one and press E (or the 支払う button) to start paying
+const padIsCash=pad=>pad&&pad.pay==='cash';
+const PADL={arm:null};
+function padLocalCost(pad,me){return pad.personal?pad.costP(me):pad.cost()}
+function padHere(me){if(!me||!G||!G.pads)return null;for(const pad of G.pads){if(!pad.shown||!padIsCash(pad))continue;if(dist(me.x,me.y,pad.x,pad.y)>(pad.big?50:40))continue;if(!pad.personal&&pad.req&&pad.req())continue;const c=padLocalCost(pad,me);if(c==null)continue;return pad}return null}
+function padLocalPress(){if(!running||!G)return false;const me=G.players[G.me]||G.players[0];const pad=padHere(me);if(!pad)return false;
+  PADL.arm=pad.id+':'+padLocalCost(pad,me);if(NET.mode!=='guest')me.padPress=true;SFX.pop&&SFX.pop();return true}
+function padBtnPress(){if(!running||!G)return;const me=G.players[G.me]||G.players[0];if(!padHere(me))return;if(NET.mode==='guest'){NET.eCount=(NET.eCount||0)+1;NET.eGrade=0}padLocalPress()}
+function padPromptFx(){let b=document.getElementById('payBtn');if(!b){b=document.createElement('button');b.id='payBtn';b.hidden=true;b.addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();padBtnPress()});document.body.appendChild(b)}
+  const me=G&&running&&(G.players[G.me]||G.players[0]);const pad=me&&!(me.down>0)&&!DLG.open?padHere(me):null;
+  if(!pad){PADL.arm=null;b.hidden=true;return}
+  const c=padLocalCost(pad,me),key=pad.id+':'+c;
+  // host: the authoritative arm is cleared when a level is bought, so ask again for the next level
+  if(NET.mode!=='guest'&&PADL.arm===key&&me.padArm!==pad.id&&!me.padPress)PADL.arm=null;
+  if(PADL.arm===key){b.hidden=true;return}
+  const left=Math.max(0,c-(pad.personal?(pad.pp[me.id]||0):pad.paid));const short=G.cash<=0;
+  label(pad.x,pad.y,70,`<b>${pad.name||''}</b><br><small>${short?'お金が足りない':`<b style="color:#ffd23f">Eキー</b>で $${Math.ceil(left).toLocaleString()} を払う`}</small>`,short?'':'gold');
+  b.textContent=short?'お金が足りない':`💰 $${Math.ceil(left).toLocaleString()} 払う（E）`;b.disabled=short;b.hidden=false}
 // ================================================================ story mode (chapters + morning autosave)
 var gameMode=store.get('mw-mode','story');var SAVE_K='mw-story1';
 var CH={1:{n:'第1章',t:'ホワイトアウト',play:true,open:['暦の上では、もう夏至を過ぎた。','それなのに、この町の雪は\n一日もやんだことがない。','吹雪は家々を押しつぶし、\n人々は散り散りになった。','残っていたのは、村長オルガと、\n消えかけたひとつのかまどだけ――','瓦礫を片付け、町を建て直し、\nもう一度みんなを呼び戻そう。'],sub:'瓦礫を片付けて町を建て直し、散り散りになった仲間を呼び戻せ（Jキー：手がかり帳）',
@@ -3547,7 +3568,7 @@ function checkPerf(){tickFps(Math.min(.25,(performance.now()-(checkPerf.l||perfo
 
 $('gfx').addEventListener('click',()=>{const order=['auto',2,1,0];GQ.mode=order[(order.indexOf(GQ.mode)+1)%4];store.set('mw2-gfx',GQ.mode);applyGfx(GQ.mode==='auto'?2:GQ.mode);perf={t0:0,f:0,skip:0};toast(GQ.mode==='auto'?'画質：自動（重いと自動で下げます）':'画質：'+QL[GQ.tier].n,'gold')});
 function gpuWarn(){if(!SOFTGL)return;const el=$('gpuWarn');el.hidden=false;el.innerHTML='⚠ ブラウザの<b>グラフィックアクセラレーションがオフ</b>になっていて、とても重くなります。<br>Chromeの「設定 → システム →<br>グラフィック アクセラレーションが使用可能な場合は使用する」をオンにして再起動してね';setTimeout(()=>toast('グラフィックアクセラレーションがオフなので重いです（タイトル画面に直し方）','cold',true),1500)}
-addEventListener('keydown',e=>{if(e.code==='KeyJ'&&!e.repeat&&running&&isRPG()&&!DLG.open&&!(e.target&&e.target.tagName==='INPUT')){const el=$('lifeCard');if(!el.hidden&&G._stab==='clue'){el.hidden=true}else{G._stab='clue';el.hidden=false;lifeHud(true)}return}if(e.code==='KeyL'&&!e.repeat&&running&&!(e.target&&e.target.tagName==='INPUT')){toggleLife();return}if(e.code==='KeyQ'&&!e.repeat&&running&&!DLG.open&&isRPG()){const me=G.players[G.me]||G.players[0];if(me&&dist(me.x,me.y,WB.x,WB.y)<90){openCraft();return}}if(DLG.open&&!e.repeat&&(e.code==='Escape'||(e.code==='KeyQ'&&DLG.npc&&DLG.npc.n&&DLG.npc.n.n==='工房'))){closeTalk();e.preventDefault();return}if(DLG.open&&!e.repeat&&(e.code==='KeyE'||e.code==='Space'||e.code==='Enter'||/^Digit[1-9]$/.test(e.code))){dlgKey(e.code);e.preventDefault();return}if(e.code!=='KeyE'||e.repeat||!running)return;if(e.target&&e.target.tagName==='INPUT')return;const me=G.players[G.me]||G.players[0];if(!me)return;const nn=npcNear(me);if(nn){openTalk(nn);return}if(isRPG()&&dist(me.x,me.y,WB.x,WB.y)<90&&!(snowy()&&has(me,'log'))){openCraft();return}const gr=craftGrade();if(NET.mode==='guest'){NET.eCount=(NET.eCount||0)+1;NET.eGrade=gr}else{me.ePress=true;me.eGrade=gr}});
+addEventListener('keydown',e=>{if(e.code==='KeyJ'&&!e.repeat&&running&&isRPG()&&!DLG.open&&!(e.target&&e.target.tagName==='INPUT')){const el=$('lifeCard');if(!el.hidden&&G._stab==='clue'){el.hidden=true}else{G._stab='clue';el.hidden=false;lifeHud(true)}return}if(e.code==='KeyL'&&!e.repeat&&running&&!(e.target&&e.target.tagName==='INPUT')){toggleLife();return}if(e.code==='KeyQ'&&!e.repeat&&running&&!DLG.open&&isRPG()){const me=G.players[G.me]||G.players[0];if(me&&dist(me.x,me.y,WB.x,WB.y)<90){openCraft();return}}if(DLG.open&&!e.repeat&&(e.code==='Escape'||(e.code==='KeyQ'&&DLG.npc&&DLG.npc.n&&DLG.npc.n.n==='工房'))){closeTalk();e.preventDefault();return}if(DLG.open&&!e.repeat&&(e.code==='KeyE'||e.code==='Space'||e.code==='Enter'||/^Digit[1-9]$/.test(e.code))){dlgKey(e.code);e.preventDefault();return}if(e.code!=='KeyE'||e.repeat||!running)return;if(e.target&&e.target.tagName==='INPUT')return;const me=G.players[G.me]||G.players[0];if(!me)return;const nn=npcNear(me);if(nn){openTalk(nn);return}if(isRPG()&&dist(me.x,me.y,WB.x,WB.y)<90&&!(snowy()&&has(me,'log'))){openCraft();return}const gr=craftGrade();if(NET.mode==='guest'){NET.eCount=(NET.eCount||0)+1;NET.eGrade=gr}else{me.ePress=true;me.eGrade=gr}padLocalPress()});
 addEventListener('keydown',e=>{if(e.code==='KeyR'&&!e.repeat&&running&&isRPG()&&!(e.target&&e.target.tagName==='INPUT'))skillPress()});
 addEventListener('keydown',e=>{if(e.code!=='KeyF'||e.repeat||!running)return;if(e.target&&e.target.tagName==='INPUT')return;if(NET.mode==='guest'){NET.fCount=(NET.fCount||0)+1}else{const me=G.players[G.me]||G.players[0];if(me)me.fPress=true}});
 setTimeout(()=>dbgLine(),0);

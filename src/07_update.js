@@ -81,15 +81,18 @@ function playerActions(p,dt,R){updateSled(p,dt);buffTick(p,dt);comboTick(p,dt);i
   for(const id in G.stations){const st=G.stations[id];if(st.pile>0&&dist(p.x,p.y,st.def.pile.x,st.def.pile.y)<56)collectPile(p,st,'pile',st.def.pile,dt)}
   if(G.spa.pile>0&&dist(p.x,p.y,SPA.pile.x,SPA.pile.y)<56)collectPile(p,G.spa,'pile',SPA.pile,dt);
   // pads
+  let onArm=false;
   for(const pad of G.pads){if(!pad.shown||dist(p.x,p.y,pad.x,pad.y)>(pad.big?50:40))continue;G.onPads.add(pad);
+    if(padIsCash(pad)){if(p.padPress)p.padArm=pad.id;if(p.padArm!==pad.id)continue;onArm=true}
     if(pad.personal){const c=pad.costP(p);if(c==null)continue;p.padT+=dt;if(p.padT<.03)continue;p.padT=0;if(G.cash<=0)continue;const cur=pad.pp[p.id]||0;const pay=Math.min(G.cash,c-cur,Math.max(1,Math.ceil(c/35)));G.cash-=pay;pad.pp[p.id]=cur+pay;if(Math.random()<.5)flyItem('cash',p.x,p.y,30,pad.x,pad.y,4,null,4);
-      if(pad.pp[p.id]>=c){pad.pp[p.id]=0;pad.buyP(p);pad.pulse=1;SFX.build()}continue}if(pad.req&&pad.req())continue;const c=pad.cost();if(c==null)continue;
+      if(pad.pp[p.id]>=c){pad.pp[p.id]=0;p.padArm=null;pad.buyP(p);pad.pulse=1;SFX.build()}continue}if(pad.req&&pad.req())continue;const c=pad.cost();if(c==null)continue;
     p.padT+=dt;if(p.padT<.03)continue;p.padT=0;
-    if(pad.pay==='cash'&&G.cash>0){if(pad.pop&&!idleSurvivors().length){if(!pad._w){pad._w=1;toast('生存者が足りない！ 集まるのを待とう','cold')}continue}pad._w=0;const pay=Math.min(G.cash,c-pad.paid,Math.max(1,Math.ceil(c/35)));G.cash-=pay;pad.paid+=pay;if(Math.random()<.5)flyItem('cash',p.x,p.y,30,pad.x,pad.y,4,null,4)}
+    if(pad.pay==='cash'&&G.cash>0){if(pad.pop&&!idleSurvivors().length){if(!pad._w){pad._w=1;toast('生存者が足りない！ 集まるのを待とう','cold')}continue}pad._w=0;const pay=Math.min(G.cash,c-pad.paid,Math.max(1,Math.ceil(c/35)));G.cash-=pay;pad.paid+=pay;if(pad.paid>=c)p.padArm=null;if(Math.random()<.5)flyItem('cash',p.x,p.y,30,pad.x,pad.y,4,null,4)}
     else if(pad.pay==='log'){let did=false;if(pad.paid<c&&take(p,'log')){pad.paid++;did=true;flyItem('log',p.x,p.y,24+p.stack.h,pad.x,pad.y,4,null,3.2)}
       else if(pad.mix){const need=pad.mix();for(const k of ['fish','fur'])if(pad.mp[k]<need[k]&&take(p,k)){pad.mp[k]++;did=true;flyItem(k,p.x,p.y,24+p.stack.h,pad.x,pad.y,4,null,3.2);break}}if(!did)continue}
     else continue;
     if(pad.paid>=c&&mixDone(pad)){if(finishPad(pad)===false)continue}}
+  if(!onArm)p.padArm=null;p.padPress=false;
   // bear hit → knocked down
   if(p.hp<=0&&!(p.down>0)&&!abyKO(p)&&!campRescue(p)){p.hp=60;p.inv=6;const drop=p.bag.splice(0);const keep=drop.filter((_,i)=>i%2===0);for(let r=keep.length,i=0;r>0;r-=4,i+=4)dropItem(p.x,p.y,keep[i],20,Math.min(4,r));p.down=6;p.ko=true;p.shooting=p.chopping=p.fishing=null;float(p.x,p.y,70,'ダウン…','red',true);toast(`オオカミにやられた！ 荷物の半分を失った${G.players.length>1?'（仲間がそばに来ると早く起きる）':''}`,'cold');SFX.bad();G.shake=12}
   if(inHeat)p.hp=Math.min(100,p.hp+(p.inHeat?7:0)*dt);
