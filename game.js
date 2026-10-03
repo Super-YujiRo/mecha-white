@@ -1,5 +1,5 @@
 /* めちゃホワイト — built from src/*.js by tools/build.py. Edit the sources, not this file. */
-(()=>{const BUILD='20261003220008';
+(()=>{const BUILD='20261004031628';
 const $=id=>document.getElementById(id);
 if(!window.THREE){$('loading').textContent='3Dの読み込みに失敗しました。再読み込みしてください';return}
 const T=THREE;
@@ -473,7 +473,7 @@ function makeVillager(pal,o={}){if(KK)return villagerKK(pal,o);
 const ICEB=lin('#a8d8f0'),ICES=lin('#d6eefa');
 function tintCold(v,k){if(v.mats){for(const m of v.mats)m.color.copy(v.base.coat).lerp(ICEB,k*.8);return}v.coatM.color.copy(v.base.coat).lerp(ICEB,k);v.hatM.color.copy(v.base.hat).lerp(ICEB,k);v.skinM.color.copy(v.base.skin).lerp(ICES,k)}
 function animWalk(m,step,moving,amp=.7){if(m.kk){kkTick(m,moving,m.kkRun);return}const s=moving?Math.sin(step):0;m.legL.rotation.x=s*amp;m.legR.rotation.x=-s*amp;if(!m._armL)m.armL.rotation.set(-s*amp*.8,0,0);if(!m._armR)m.armR.rotation.set(s*amp*.8,0,0);m.body.position.y=moving?Math.abs(Math.cos(step))*1.4:Math.sin(performance.now()/400)*.3;m.head.position.y=(m._hy??(m._hy=m.head.position.y))+m.body.position.y}
-function makeBear(kind,key){const r_=DES()?makeScorpion(kind):(beastKK(kind,key)||makeBear0(kind));r_.g.traverse(o=>{if(o.isMesh)o.renderOrder=6});return r_}
+function makeBear(kind,key){if(kind==='normal'&&(!key||key==='Wolf')&&KK&&KK.beast&&KK.beast.Bear)key='Bear';const r_=DES()?makeScorpion(kind):(beastKK(kind,key)||makeBear0(kind));r_.g.traverse(o=>{if(o.isMesh)o.renderOrder=6});return r_}
 function makeScorpion(kind){const g=new T.Group();const c=kind==='boss'?'#3b1f18':kind==='big'?'#6e3522':'#9a5a32';const fur=stdU(c,{r:.55,m:.15}),dk=std('#2a1810',{r:.5}),eye=glow('#ff3b3b',2.4);
   g.add(at(scl(sph(12,fur,true,16,10),1.1,.55,1.5),0,11,0),at(scl(sph(8,fur,true,12,8),1,.55,1.1),0,11,-18));
   const head=at(new T.Group(),0,11,15);head.add(scl(sph(8,fur,true,12,8),1.1,.6,1));for(const sx of [-1,1]){const arm=at(new T.Group(),sx*7,0,4);arm.add(at(rot(cyl(2.2,2.2,12,fur,6),Math.PI/2,0,sx*.5),sx*3,0,6));const cl=at(scl(sph(5,fur,true,10,8),1,.6,1.5),sx*6,0,14);arm.add(cl);arm.add(at(rot(cone(1.8,8,dk,5),Math.PI/2,0,0),sx*8,0,20));head.add(arm)}
@@ -487,9 +487,9 @@ function makeScorpion(kind){const g=new T.Group();const c=kind==='boss'?'#3b1f18
 
 // ---- animated beasts (Quaternius, CC0): wolves in the snow, a stag for chargers
 function beastKK(kind,key){const B=KK&&KK.beast;if(!B)return null;key=key||'Wolf';const src=B[key];if(!src)return null;
-  const model=T.SkeletonUtils.clone(src.scene);const L=key==='Stag'?76:key==='Spider'?60:84;model.scale.setScalar(L/Math.max(1,src.l));
+  const model=T.SkeletonUtils.clone(src.scene);const L=key==='Stag'?76:key==='Spider'?60:key==='Bear'?80:84;model.scale.setScalar(L/Math.max(1,key==='Bear'&&B.Wolf?B.Wolf.l*.92:src.l));
   const tint=kind==='boss'?'#f3f6fa':kind==='big'?'#8f98a3':'#e6edf4';const mats=new Map();let fur=null;
-  model.traverse(o=>{if(!o.isMesh)return;const cl=m=>{let c=mats.get(m);if(!c){c=m.clone();c.metalness=0;c.roughness=Math.max(.6,c.roughness||0);mats.set(m,c);if(key==='Wolf'&&/Main/.test(m.name||'')){c.color.copy(lin(/Light/.test(m.name)?'#ffffff':tint));if(!fur&&!/Light/.test(m.name))fur=c}}return c};o.material=Array.isArray(o.material)?o.material.map(cl):cl(o.material);if(o.isSkinnedMesh)[].concat(o.material).forEach(m=>{if(!m.skinning){m.skinning=true;m.needsUpdate=true}})});
+  model.traverse(o=>{if(!o.isMesh)return;const cl=m=>{let c=mats.get(m);if(!c){c=m.clone();c.metalness=0;c.roughness=Math.max(.6,c.roughness||0);mats.set(m,c);if((key==='Wolf'||key==='Bear')&&/Main/.test(m.name||'')){if(key==='Wolf')c.color.copy(lin(/Light/.test(m.name)?'#ffffff':tint));if(!fur&&!/Light/.test(m.name))fur=c}}return c};o.material=Array.isArray(o.material)?o.material.map(cl):cl(o.material);if(o.isSkinnedMesh)[].concat(o.material).forEach(m=>{if(!m.skinning){m.skinning=true;m.needsUpdate=true}})});
   if(!fur)fur=[...mats.values()].sort((a,b)=>(b.color.r+b.color.g+b.color.b)-(a.color.r+a.color.g+a.color.b))[0]||new T.MeshStandardMaterial();if(!fur.emissive)fur.emissive=new T.Color(0);
   const g=new T.Group();g.add(model);const mixer=new T.AnimationMixer(model),acts={};for(const k in src.clips)acts[k]=mixer.clipAction(src.clips[k]);const idle=acts.Idle;if(idle){idle.play();mixer.update(Math.random()*2)}
   const ring=M_(geo('bring',()=>new T.RingGeometry(26,35,36)),new T.MeshBasicMaterial({color:lin('#ff3b4a'),transparent:true,opacity:.75,side:T.DoubleSide,depthWrite:false}),false);ring.rotation.x=-Math.PI/2;ring.position.y=.9;g.add(ring);
@@ -1629,7 +1629,7 @@ function updateRaid(dt){const ph=(G.t%G.DAY)/G.DAY,night=ph>.72,R=G.raid;
   if(night&&G.day>=2&&R.night!==G.day){R.night=G.day;R.on=true;const fin=!!G.finalPending;if(idleSurvivors().length)setTimeout(()=>{if(running)toast('町の人たちも武器を取った！ 総出で迎え撃て','gold')},1800);G.finalPending=false;R.final=fin;
     R.total=fin?Math.round((34+G.day*2)*G.mod.raid*DM().raid*(1+(YR()-1)*.3)):Math.min(40,Math.round((2+Math.floor(G.day*1.8*(waveDayN(G.day)?.8:1))+(G.level-1)*2+popNow()*.25)*G.mod.raid*DM().raid*(1+(YR()-1)*.3)));
     R.bosses=fin?3:G.day>=5?1+Math.floor((G.day-5)/4):0;R.total+=R.bosses;R.spawn=R.total;R.spawnT=1;R.kills=0;R.left=R.total;R.dmgH=R.dmgW=R.dmgT=0;if(fin&&G.monument){G.monHP=G.monMax=Math.round(60+G.day*4);toast('像を壊されたら負け！ 像を守りきれ','cold',true)}else if(fin){G.monHP=G.monMax=0;toast('夜明けまで井戸を守りぬけ！','cold',true)}
-    if(fin)banner('最終決戦！',`オオカミ ${R.total}頭・ボス${R.bosses}頭`,'朝まで町と像を守りきれ！','cold');else banner(DES()?'夜の襲撃！ 大サソリの群れ':'夜の襲撃！',`${DES()?'サソリ':'オオカミ'} ${R.total}頭${R.bosses?`・ボス${R.bosses}`:''}`,DES()?'門から入って井戸や家を狙う。見張り台・罠・武器で守れ':'門から入ってかまどを狙う。見張り台・罠・銃で守れ','cold');SFX.wave();G.shake=10}
+    if(fin)banner('最終決戦！',`白熊と狼 ${R.total}頭・ボス${R.bosses}頭`,'朝まで町と像を守りきれ！','cold');else banner(DES()?'夜の襲撃！ 大サソリの群れ':'夜の襲撃！',`${DES()?'サソリ':'白熊と狼'} ${R.total}頭${R.bosses?`・ボス${R.bosses}`:''}`,DES()?'門から入って井戸や家を狙う。見張り台・罠・武器で守れ':'門から入ってかまどを狙う。見張り台・罠・銃で守れ','cold');SFX.wave();G.shake=10}
   if(!R.on)return;
   R.spawnT-=dt;if(R.spawn>0&&R.spawnT<=0){R.spawnT=rnd(.5,1.2)*(R.final?.6:1);if(R.bosses>0&&(R.spawn<=R.bosses||Math.random()<R.bosses/R.spawn*.6)){R.bosses--;spawnRaider(true)}else spawnRaider();R.spawn--}
   R.left=R.spawn+G.bears.filter(b=>b.raid&&!b.dead).length;
@@ -2012,7 +2012,7 @@ function show(el,on){$(el).hidden=!on}
 // ================================================================ exploration (story mode): mining, life challenges, the ice cave, the bestiary
 const cnt=(p,k,n=1)=>{if(!p||!isRPG())return;p.cnt=p.cnt||{};p.cnt[k]=(p.cnt[k]||0)+n};
 const bkId=b=>b.bk?b.bk:b.rbi!=null?'rb'+b.rbi:(b.m&&b.m.key==='Spider')?(b.kind==='boss'?'spq':'sp'):b.bt?b.bt:b.kind;
-const BOOK=[['normal','雪オオカミ'],['big','黒オオカミ'],['boss','森の大オオカミ'],['charge','突進ヘラジカ'],['frost','氷息のオオカミ'],['alpha','群れの長'],['king','白き王'],['rb0','鋼角のヘラジカ'],['rb2','氷の魔獣'],['rb3','雪原の覇者'],['sp','洞窟グモ'],['spq','洞窟の女王グモ'],['gl','氷河オオカミ'],['gls','氷河のヘラジカ'],['glb','氷河の主'],['ru','遺跡サソリ'],['rub','砂の王サソリ']];
+const BOOK=[['normal','白熊'],['big','黒オオカミ'],['boss','森の大オオカミ'],['charge','突進ヘラジカ'],['frost','氷息のオオカミ'],['alpha','群れの長'],['king','白き王'],['rb0','鋼角のヘラジカ'],['rb2','氷の魔獣'],['rb3','雪原の覇者'],['sp','洞窟グモ'],['spq','洞窟の女王グモ'],['gl','氷河オオカミ'],['gls','氷河のヘラジカ'],['glb','氷河の主'],['ru','遺跡サソリ'],['rub','砂の王サソリ']];
 const RTK_MINE={iron:{life:'mine',mat:'iron',n:'鉄鉱石の岩',rq:0,hp:5,prop:'Mineral',tint:'#8a8f99',h:44,cash:20},icec:{life:'mine',mat:'icec',n:'氷晶の結晶',rq:2,hp:6,prop:'Crystal1',tint:'#bfe9ff',em:'#4fb8ff',h:64,cash:70},star:{life:'mine',mat:'star',n:'星の結晶',rq:4,hp:8,prop:'Crystal3',tint:'#ffe38a',em:'#ffc629',h:74,cash:220}};
 const NODES_SNOW=[['iron',1500,640],['iron',900,650],['iron',2120,300],['iron',1845,2130],['iron',2040,2325],['iron',2050,2140],['icec',2160,2300],['icec',2310,2190],['icec',160,900],['icec',230,2230],['icec',540,2020],['star',95,2150],['star',2310,1890]];
 function mkNode(k){const K=RTK[k],g=new T.Group();let tr;const P=KK&&KK.prop&&KK.prop[K.prop];
@@ -2127,6 +2127,15 @@ function statusTab(me){const tab=G._stab||'eq',rows=$('lifeRows'),lct=document.q
 $('lifeCard').addEventListener('click',e=>{if(e.target.closest('button[data-deduce]')){$('lifeCard').hidden=true;openDeduce();return}const b=e.target.closest('button[data-tab]');if(!b)return;G._stab=b.dataset.tab;lifeHud(true)});
 
 // ---- workshop recipes: special wood and beast materials become gear
+// where each material comes from (shown in the workshop and on the map)
+const MAT_WHERE={iron:()=>'地図の灰色◆「鉄鉱石の岩」を掘る（北の森・東の雪原・氷の洞窟の中）。町の瓦礫からも少し',icec:()=>`青い◆「氷晶の結晶」を掘る（採掘師「${LR[2].n}」から）。氷の洞窟・凍てつく氷河・西のはずれ`,
+  star:()=>`金色◆「星の結晶」を掘る（採掘師「${LR[4].n}」から）。氷河と洞窟のいちばん奥／金の宝箱`,silk:()=>'氷の洞窟のクモを倒す',core:()=>`緑◆「大きな古木」を切る（木こり「${LR[2].n}」から）／深淵の迷宮`,
+  icew:()=>`水色◆「氷結樹」を切る（木こり「${LR[3].n}」から）`,spirit:()=>`黄◆「精霊の大樹」を切る（木こり「${LR[5].n}」から・南西のはずれ）`,relic:()=>'砂漠「遺跡の地下」の敵や宝箱',herb:()=>'ふつうの木を切ると時々出る',
+  steel:()=>'レア獣「鋼角のヘラジカ」を倒す（北の森）',fang:()=>'凍てつく氷河の狼／レア獣「氷の魔獣」（西のはずれ）',horn:()=>'レア獣「雪原の覇者」を倒す（北のはずれ）'};
+const matWhere=k=>{const f=MAT_WHERE[k];return f?f():''};
+function openMatGuide(){const me=G.players[G.me]||G.players[0];const has=me.mats||{};
+  const rows=Object.keys(MATS).filter(k=>MAT_WHERE[k]).map(k=>`<div class="mg"><span class="mn">${MATS[k]}</span><span class="mc">×${has[k]||0}</span><span class="mw">${matWhere(k)}</span></div>`).join('');
+  Object.assign(DLG,{open:true,npc:{n:{n:'素材の手に入れ方'},x:WB.x,y:WB.y},pages:[`\u0001<div class="mgw">${rows}</div><span class="mw">◆の場所は地図（M）にも出ています</span>`],i:0,ch:[['工房にもどる',()=>setTimeout(()=>openCraft(),60)],['閉じる',null]]});drawDlg()}
 const MATS={iron:'鉄鉱石',icec:'氷晶',star:'星の結晶',silk:'クモの糸',core:'古木の芯材',icew:'氷結木材',spirit:'精霊の枝',relic:'古代の欠片',herb:'香草',steel:'鋼の角',fang:'氷牙',horn:'覇者の角'};
 function addMat(p,k,n){if(!p||!k)return;p.mats=p.mats||{};p.mats[k]=(p.mats[k]||0)+n;p.cnt=p.cnt||{};p.cnt['mt_'+k]=1;float(p.x,p.y,100,`${MATS[k]} +${n}`,'gold',true)}
 const RECIPES={
@@ -2139,11 +2148,11 @@ const RECIPES={
   ax_ice:{life:'smith',id:'w_iceaxe',m:{icec:3,iron:4,fang:1},cash:420,rk:2},ax_relic:{life:'smith',id:'w_relicaxe',m:{relic:5,iron:4},cash:600,rk:3},ax_star:{life:'smith',id:'w_staraxe',m:{star:2,icec:3,horn:1},cash:950,rk:4},
   bow_iron:{life:'smith',id:'w_ironbow',m:{iron:4,core:1},cash:100,rk:0},bow_star:{id:'w_starbow',m:{star:2,spirit:1,core:2},log:8,cash:900,rk:4},
   charm_spirit:{id:'c_spiritcharm',m:{spirit:1,core:3},log:5,cash:400,rk:3},bow_spirit:{id:'w_spiritbow',m:{spirit:2,horn:1,icew:2},log:12,cash:800,rk:4}};
-function craftWhy(p,R){const lf=R.life||'craft';if(lifeRank(p,lf)<R.rk)return `${LIFE[lf].n}「${LR[R.rk].n}」が必要`;for(const k in R.m)if(((p.mats||{})[k]||0)<R.m[k])return `${MATS[k]}が足りない`;if(p.bag.filter(x=>x==='log').length<(R.log||0))return `薪が${R.log}本必要`;if(G.cash<(R.cash||0))return `お金が$${R.cash}必要`;if((p.items||[]).includes(R.id))return 'もう持っている';return null}
+function craftWhy(p,R){const lf=R.life||'craft';if(lifeRank(p,lf)<R.rk)return `${LIFE[lf].n}「${LR[R.rk].n}」が必要`;for(const k in R.m)if(((p.mats||{})[k]||0)<R.m[k])return `${MATS[k]}が足りない（${R.m[k]-((p.mats||{})[k]||0)}個）→ ${matWhere(k)}`;if(p.bag.filter(x=>x==='log').length<(R.log||0))return `薪が${R.log}本必要`;if(G.cash<(R.cash||0))return `お金が$${R.cash}必要`;if((p.items||[]).includes(R.id))return 'もう持っている';return null}
 function openCraft(){const me=G.players[G.me]||G.players[0];const mt=Object.entries(me.mats||{}).filter(([k,n])=>n>0&&MATS[k]).map(([k,n])=>`${MATS[k]}×${n}`).join('・')||'なし';
   const SO={w:0,a:1,c:2};const ch=Object.keys(RECIPES).filter(k=>classOK(me,RECIPES[k].id)).sort((a,b)=>SO[ITEMS[RECIPES[a].id].s]-SO[ITEMS[RECIPES[b].id].s]||(RECIPES[a].rk-RECIPES[b].rk)).map(k=>{const R=RECIPES[k],it=ITEMS[R.id],why=craftWhy(me,R);const need=Object.entries(R.m).map(([m,n])=>`${MATS[m]}${n}`).join('+')+(R.log?`+薪${R.log}`:'')+(R.cash?`+$${R.cash}`:'');
     return [`${why?'🔒':R.life==='smith'?'🔨':'🪚'}【${it.s==='w'?'武器':it.s==='a'?'防具':'お守り'}】${it.n}（${itemDesc(it)}）… ${need}`,()=>{const w=craftWhy(G.players[G.me]||G.players[0],R);if(w){toast(w,'cold',true);return}sendAct('craft',k)}]});
-  ch.unshift(['✦ 武器を合成する（熟練MAXの2本 → 新しい武器）',()=>setTimeout(()=>openSynth(),60)],['⚒ 武器を鍛える（+1〜+10）',()=>setTimeout(()=>openForge(),60)]);ch.push(['やめる',null]);Object.assign(DLG,{open:true,npc:{n:{n:'工房'},x:WB.x,y:WB.y},pages:[`何を作る？ 武器は今の職業「${CLS[clsKey(me)].n}」で使えるものだけ表示。防具・お守りは誰でも使える（素材：${mt}）`],i:0,ch});if(NET.mode==='solo')G.paused=true;for(const j of joys)j.on=false;drawDlg()}
+  ch.unshift(['📍 素材の手に入れ方を見る',()=>setTimeout(()=>openMatGuide(),60)],['✦ 武器を合成する（熟練MAXの2本 → 新しい武器）',()=>setTimeout(()=>openSynth(),60)],['⚒ 武器を鍛える（+1〜+10）',()=>setTimeout(()=>openForge(),60)]);ch.push(['やめる',null]);Object.assign(DLG,{open:true,npc:{n:{n:'工房'},x:WB.x,y:WB.y},pages:[`何を作る？ 武器は今の職業「${CLS[clsKey(me)].n}」で使えるものだけ表示。防具・お守りは誰でも使える（素材：${mt}）`],i:0,ch});if(NET.mode==='solo')G.paused=true;for(const j of joys)j.on=false;drawDlg()}
 // ---- chapter openings (letterboxed text over the town) and the objective tracker
 let OPN=null;
 function playOpening(C,done){const el=$('opening'),tx=$('opTxt');const slides=C.open.map(t=>({t})).concat([{card:1}]);let i=0,tm=null;OPN={done};
@@ -2293,7 +2302,7 @@ function openTalk(v){{const mt=advTalk(v)||mysteryTalk(v);if(mt){Object.assign(D
   else if(q.st===2){pages=Q.done.slice();ch=[['受け取る',()=>sendAct('claim',k)]]}
   else{pages=[Q.act+(Q.type==='bring'?`（${q.p||0}/${Q.n}）`:Q.type==='build'?`（${Math.min(Q.chk(),Q.n)}/${Q.n}）`:Q.type==='count'?`（${Math.min(Q.chk(q),Q.n)}/${Q.n}）`:'')];if(Q.type==='bring'&&has(me,Q.k))ch=[[`渡す（持っている${me.bag.filter(x=>x===Q.k).length}個）`,()=>sendAct('give',k)],['あとで',null]]}
   Object.assign(DLG,{open:true,npc:v,pages,i:0,ch});if(NET.mode==='solo')G.paused=true;for(const j of joys)j.on=false;drawDlg();SFX.pop&&SFX.pop()}
-function drawDlg(){if(DLG.open&&DLG._pl!==DLG.pages)(DLG._pl=DLG.pages,plog('dialog '+((DLG.npc&&DLG.npc.n&&DLG.npc.n.n)||'')));$('dlg').hidden=!DLG.open;if(!DLG.open)return;$('dlgWho').textContent=DLG.npc.n.n;$('dlgTxt').textContent=DLG.pages[DLG.i];const last=DLG.i>=DLG.pages.length-1,box=$('dlgCh');box.innerHTML='';
+function drawDlg(){if(DLG.open&&DLG._pl!==DLG.pages)(DLG._pl=DLG.pages,plog('dialog '+((DLG.npc&&DLG.npc.n&&DLG.npc.n.n)||'')));$('dlg').hidden=!DLG.open;if(!DLG.open)return;$('dlgWho').textContent=DLG.npc.n.n;{const pg=String(DLG.pages[DLG.i]);if(pg[0]==='\u0001')$('dlgTxt').innerHTML=pg.slice(1);else $('dlgTxt').textContent=pg}const last=DLG.i>=DLG.pages.length-1,box=$('dlgCh');box.innerHTML='';
   {let x=$('dlgX');if(!x){x=document.createElement('button');x.id='dlgX';x.textContent='✕';x.title='閉じる（Esc）';x.addEventListener('click',e=>{e.stopPropagation();closeTalk()});$('dlg').appendChild(x)}}box.classList.toggle('many',!!(DLG.ch&&DLG.ch.length>5));
   if(last&&DLG.ch){DLG.ch.forEach(([t,fn],i)=>{const b=document.createElement('button');const nm=!fn&&i===DLG.ch.length-1?'Esc':i<9?String(i+1):'';b.textContent=nm?`${nm}. ${t}`:t;if(!fn)b.className='no';b.addEventListener('click',e=>{e.stopPropagation();closeTalk();if(fn)fn()});box.appendChild(b)});$('dlgHint').textContent='数字キーかクリックで選ぶ・Escで閉じる'}else $('dlgHint').textContent=last?'Eキー / クリックで閉じる':'Eキー / クリックで次へ'}
 function dlgKey(code){const last=DLG.i>=DLG.pages.length-1;if(last&&DLG.ch){const i=/^Digit/.test(code)?(+code.slice(5)-1):(code==='KeyE'||code==='Enter'||code==='Space')&&DLG.ch.length<3?0:-1;if(i<0||!DLG.ch[i])return;const fn=DLG.ch[i][1];closeTalk();if(fn)fn();return}if(last){closeTalk();return}DLG.i++;drawDlg()}
@@ -2748,6 +2757,10 @@ function drawMap(cv,big){const c=cv.getContext('2d'),W=cv.width,H=cv.height,me=G
   if(ADV()&&G.adv)G.adv.tr.forEach((on,i)=>{if(on)dot(TREAS[i][0],TREAS[i][1],big?4:3,'#f5c542','#8a6a1a')});
   // people with something to say
   if(!inA)for(const v of G.npcV||[]){if(!v.m.g.visible)continue;const mk=npcMark(v.n.id);if(mk&&mk!=='…'){const [a,b]=P(v.x,v.y),col=mk==='？'?'#3fc157':'#ffb020',pu=(performance.now()/900)%1,R=big?7:5.5;c.strokeStyle=col;c.globalAlpha=1-pu;c.lineWidth=2;c.beginPath();c.arc(a,b,R+pu*(big?12:9),0,TAU);c.stroke();c.globalAlpha=1;c.fillStyle=col;c.strokeStyle='#16283a';c.lineWidth=1.8;c.beginPath();c.arc(a,b,R,0,TAU);c.fill();c.stroke();c.fillStyle='#fff';c.font=`900 ${big?11:9}px sans-serif`;c.textAlign='center';c.textBaseline='middle';c.fillText(mk==='？'?'?':'!',a,b+.5);c.textBaseline='alphabetic'}}
+  // material nodes (ore rocks and rare trees): small diamonds, colored by material
+  if(!inA&&isRPG()&&G.rtrees){const MC={iron:'#8a8f99',icec:'#5fc6ff',star:'#ffc629',old:'#5f9a4a',ice:'#9fe3ff',spirit:'#ffe27a'};
+    for(const t of G.rtrees){if(!t.alive||!MC[t.k])continue;if(dgAt(t.x,t.y)&&dgAt(t.x,t.y)!==dgAt(me.x,me.y))continue;if(!big&&dist(t.x,t.y,me.x,me.y)>650)continue;const [a,b]=P(t.x,t.y),r=big?5:3.6;
+      c.fillStyle=MC[t.k];c.strokeStyle='#16283a';c.lineWidth=1.3;c.beginPath();c.moveTo(a,b-r);c.lineTo(a+r,b);c.lineTo(a,b+r);c.lineTo(a-r,b);c.closePath();c.fill();c.stroke()}}
   // where accepted quests take you (orange flag)
   if(!inA&&G.story&&G.story.q)for(const k in G.story.q){const Q=QUESTS[k],q=G.story.q[k];if(!Q||q.st!==1||Q.bio!==bioKey()||Q.x==null)continue;const qx=Q.type==='escort'&&q.x!=null?q.x:Q.x,qy=Q.type==='escort'&&q.y!=null?q.y:Q.y;
     let [a,b]=P(qx,qy);if(!big){const dx=a-W/2,dy=b-H/2,r=Math.hypot(dx,dy),lim=W/2-12;if(r>lim){a=W/2+dx/r*lim;b=H/2+dy/r*lim}}
@@ -3047,7 +3060,7 @@ function wpFx(){if(!G||!running||!isRPG())return;for(const p of G.players){const
 // ================================================================ 深層ダンジョン「深淵の迷宮」: an endless stack of arenas outside the map. Deeper = tougher beasts, better materials, a boss every 5 floors
 const ABX=4000;// anything east of this line is the abyss
 const ABY_BOX=[4600,800,5400,1600],ABY_ST={x:4690,y:1510},ABY_EX={x:4660,y:1560},ABY_UP={x:5000,y:1200};
-const ABY_GATE={x:2180,y:300};// hidden: far north-east corner, away from the town and other sites
+const ABY_GATE={x:2240,y:560};// hidden: far north-east corner, away from the town and other sites
 const inAby=(x)=>x>ABX;
 const clX=(x,m)=>x>ABX?clamp(x,ABY_BOX[0]+m,ABY_BOX[2]-m):clamp(x,m,WORLD-m);
 const clY=(y,m,x)=>x>ABX?clamp(y,ABY_BOX[1]+m,ABY_BOX[3]-m):clamp(y,m,WORLD-m);

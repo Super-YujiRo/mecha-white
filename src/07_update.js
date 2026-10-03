@@ -303,7 +303,7 @@ function updateRaid(dt){const ph=(G.t%G.DAY)/G.DAY,night=ph>.72,R=G.raid;
   if(night&&G.day>=2&&R.night!==G.day){R.night=G.day;R.on=true;const fin=!!G.finalPending;if(idleSurvivors().length)setTimeout(()=>{if(running)toast('町の人たちも武器を取った！ 総出で迎え撃て','gold')},1800);G.finalPending=false;R.final=fin;
     R.total=fin?Math.round((34+G.day*2)*G.mod.raid*DM().raid*(1+(YR()-1)*.3)):Math.min(40,Math.round((2+Math.floor(G.day*1.8*(waveDayN(G.day)?.8:1))+(G.level-1)*2+popNow()*.25)*G.mod.raid*DM().raid*(1+(YR()-1)*.3)));
     R.bosses=fin?3:G.day>=5?1+Math.floor((G.day-5)/4):0;R.total+=R.bosses;R.spawn=R.total;R.spawnT=1;R.kills=0;R.left=R.total;R.dmgH=R.dmgW=R.dmgT=0;if(fin&&G.monument){G.monHP=G.monMax=Math.round(60+G.day*4);toast('像を壊されたら負け！ 像を守りきれ','cold',true)}else if(fin){G.monHP=G.monMax=0;toast('夜明けまで井戸を守りぬけ！','cold',true)}
-    if(fin)banner('最終決戦！',`オオカミ ${R.total}頭・ボス${R.bosses}頭`,'朝まで町と像を守りきれ！','cold');else banner(DES()?'夜の襲撃！ 大サソリの群れ':'夜の襲撃！',`${DES()?'サソリ':'オオカミ'} ${R.total}頭${R.bosses?`・ボス${R.bosses}`:''}`,DES()?'門から入って井戸や家を狙う。見張り台・罠・武器で守れ':'門から入ってかまどを狙う。見張り台・罠・銃で守れ','cold');SFX.wave();G.shake=10}
+    if(fin)banner('最終決戦！',`白熊と狼 ${R.total}頭・ボス${R.bosses}頭`,'朝まで町と像を守りきれ！','cold');else banner(DES()?'夜の襲撃！ 大サソリの群れ':'夜の襲撃！',`${DES()?'サソリ':'白熊と狼'} ${R.total}頭${R.bosses?`・ボス${R.bosses}`:''}`,DES()?'門から入って井戸や家を狙う。見張り台・罠・武器で守れ':'門から入ってかまどを狙う。見張り台・罠・銃で守れ','cold');SFX.wave();G.shake=10}
   if(!R.on)return;
   R.spawnT-=dt;if(R.spawn>0&&R.spawnT<=0){R.spawnT=rnd(.5,1.2)*(R.final?.6:1);if(R.bosses>0&&(R.spawn<=R.bosses||Math.random()<R.bosses/R.spawn*.6)){R.bosses--;spawnRaider(true)}else spawnRaider();R.spawn--}
   R.left=R.spawn+G.bears.filter(b=>b.raid&&!b.dead).length;

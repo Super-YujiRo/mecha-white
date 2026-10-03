@@ -10,7 +10,7 @@ function show(el,on){$(el).hidden=!on}
 // ================================================================ exploration (story mode): mining, life challenges, the ice cave, the bestiary
 const cnt=(p,k,n=1)=>{if(!p||!isRPG())return;p.cnt=p.cnt||{};p.cnt[k]=(p.cnt[k]||0)+n};
 const bkId=b=>b.bk?b.bk:b.rbi!=null?'rb'+b.rbi:(b.m&&b.m.key==='Spider')?(b.kind==='boss'?'spq':'sp'):b.bt?b.bt:b.kind;
-const BOOK=[['normal','雪オオカミ'],['big','黒オオカミ'],['boss','森の大オオカミ'],['charge','突進ヘラジカ'],['frost','氷息のオオカミ'],['alpha','群れの長'],['king','白き王'],['rb0','鋼角のヘラジカ'],['rb2','氷の魔獣'],['rb3','雪原の覇者'],['sp','洞窟グモ'],['spq','洞窟の女王グモ'],['gl','氷河オオカミ'],['gls','氷河のヘラジカ'],['glb','氷河の主'],['ru','遺跡サソリ'],['rub','砂の王サソリ']];
+const BOOK=[['normal','白熊'],['big','黒オオカミ'],['boss','森の大オオカミ'],['charge','突進ヘラジカ'],['frost','氷息のオオカミ'],['alpha','群れの長'],['king','白き王'],['rb0','鋼角のヘラジカ'],['rb2','氷の魔獣'],['rb3','雪原の覇者'],['sp','洞窟グモ'],['spq','洞窟の女王グモ'],['gl','氷河オオカミ'],['gls','氷河のヘラジカ'],['glb','氷河の主'],['ru','遺跡サソリ'],['rub','砂の王サソリ']];
 const RTK_MINE={iron:{life:'mine',mat:'iron',n:'鉄鉱石の岩',rq:0,hp:5,prop:'Mineral',tint:'#8a8f99',h:44,cash:20},icec:{life:'mine',mat:'icec',n:'氷晶の結晶',rq:2,hp:6,prop:'Crystal1',tint:'#bfe9ff',em:'#4fb8ff',h:64,cash:70},star:{life:'mine',mat:'star',n:'星の結晶',rq:4,hp:8,prop:'Crystal3',tint:'#ffe38a',em:'#ffc629',h:74,cash:220}};
 const NODES_SNOW=[['iron',1500,640],['iron',900,650],['iron',2120,300],['iron',1845,2130],['iron',2040,2325],['iron',2050,2140],['icec',2160,2300],['icec',2310,2190],['icec',160,900],['icec',230,2230],['icec',540,2020],['star',95,2150],['star',2310,1890]];
 function mkNode(k){const K=RTK[k],g=new T.Group();let tr;const P=KK&&KK.prop&&KK.prop[K.prop];
@@ -125,6 +125,15 @@ function statusTab(me){const tab=G._stab||'eq',rows=$('lifeRows'),lct=document.q
 $('lifeCard').addEventListener('click',e=>{if(e.target.closest('button[data-deduce]')){$('lifeCard').hidden=true;openDeduce();return}const b=e.target.closest('button[data-tab]');if(!b)return;G._stab=b.dataset.tab;lifeHud(true)});
 
 // ---- workshop recipes: special wood and beast materials become gear
+// where each material comes from (shown in the workshop and on the map)
+const MAT_WHERE={iron:()=>'地図の灰色◆「鉄鉱石の岩」を掘る（北の森・東の雪原・氷の洞窟の中）。町の瓦礫からも少し',icec:()=>`青い◆「氷晶の結晶」を掘る（採掘師「${LR[2].n}」から）。氷の洞窟・凍てつく氷河・西のはずれ`,
+  star:()=>`金色◆「星の結晶」を掘る（採掘師「${LR[4].n}」から）。氷河と洞窟のいちばん奥／金の宝箱`,silk:()=>'氷の洞窟のクモを倒す',core:()=>`緑◆「大きな古木」を切る（木こり「${LR[2].n}」から）／深淵の迷宮`,
+  icew:()=>`水色◆「氷結樹」を切る（木こり「${LR[3].n}」から）`,spirit:()=>`黄◆「精霊の大樹」を切る（木こり「${LR[5].n}」から・南西のはずれ）`,relic:()=>'砂漠「遺跡の地下」の敵や宝箱',herb:()=>'ふつうの木を切ると時々出る',
+  steel:()=>'レア獣「鋼角のヘラジカ」を倒す（北の森）',fang:()=>'凍てつく氷河の狼／レア獣「氷の魔獣」（西のはずれ）',horn:()=>'レア獣「雪原の覇者」を倒す（北のはずれ）'};
+const matWhere=k=>{const f=MAT_WHERE[k];return f?f():''};
+function openMatGuide(){const me=G.players[G.me]||G.players[0];const has=me.mats||{};
+  const rows=Object.keys(MATS).filter(k=>MAT_WHERE[k]).map(k=>`<div class="mg"><span class="mn">${MATS[k]}</span><span class="mc">×${has[k]||0}</span><span class="mw">${matWhere(k)}</span></div>`).join('');
+  Object.assign(DLG,{open:true,npc:{n:{n:'素材の手に入れ方'},x:WB.x,y:WB.y},pages:[`\u0001<div class="mgw">${rows}</div><span class="mw">◆の場所は地図（M）にも出ています</span>`],i:0,ch:[['工房にもどる',()=>setTimeout(()=>openCraft(),60)],['閉じる',null]]});drawDlg()}
 const MATS={iron:'鉄鉱石',icec:'氷晶',star:'星の結晶',silk:'クモの糸',core:'古木の芯材',icew:'氷結木材',spirit:'精霊の枝',relic:'古代の欠片',herb:'香草',steel:'鋼の角',fang:'氷牙',horn:'覇者の角'};
 function addMat(p,k,n){if(!p||!k)return;p.mats=p.mats||{};p.mats[k]=(p.mats[k]||0)+n;p.cnt=p.cnt||{};p.cnt['mt_'+k]=1;float(p.x,p.y,100,`${MATS[k]} +${n}`,'gold',true)}
 const RECIPES={
@@ -137,11 +146,11 @@ const RECIPES={
   ax_ice:{life:'smith',id:'w_iceaxe',m:{icec:3,iron:4,fang:1},cash:420,rk:2},ax_relic:{life:'smith',id:'w_relicaxe',m:{relic:5,iron:4},cash:600,rk:3},ax_star:{life:'smith',id:'w_staraxe',m:{star:2,icec:3,horn:1},cash:950,rk:4},
   bow_iron:{life:'smith',id:'w_ironbow',m:{iron:4,core:1},cash:100,rk:0},bow_star:{id:'w_starbow',m:{star:2,spirit:1,core:2},log:8,cash:900,rk:4},
   charm_spirit:{id:'c_spiritcharm',m:{spirit:1,core:3},log:5,cash:400,rk:3},bow_spirit:{id:'w_spiritbow',m:{spirit:2,horn:1,icew:2},log:12,cash:800,rk:4}};
-function craftWhy(p,R){const lf=R.life||'craft';if(lifeRank(p,lf)<R.rk)return `${LIFE[lf].n}「${LR[R.rk].n}」が必要`;for(const k in R.m)if(((p.mats||{})[k]||0)<R.m[k])return `${MATS[k]}が足りない`;if(p.bag.filter(x=>x==='log').length<(R.log||0))return `薪が${R.log}本必要`;if(G.cash<(R.cash||0))return `お金が$${R.cash}必要`;if((p.items||[]).includes(R.id))return 'もう持っている';return null}
+function craftWhy(p,R){const lf=R.life||'craft';if(lifeRank(p,lf)<R.rk)return `${LIFE[lf].n}「${LR[R.rk].n}」が必要`;for(const k in R.m)if(((p.mats||{})[k]||0)<R.m[k])return `${MATS[k]}が足りない（${R.m[k]-((p.mats||{})[k]||0)}個）→ ${matWhere(k)}`;if(p.bag.filter(x=>x==='log').length<(R.log||0))return `薪が${R.log}本必要`;if(G.cash<(R.cash||0))return `お金が$${R.cash}必要`;if((p.items||[]).includes(R.id))return 'もう持っている';return null}
 function openCraft(){const me=G.players[G.me]||G.players[0];const mt=Object.entries(me.mats||{}).filter(([k,n])=>n>0&&MATS[k]).map(([k,n])=>`${MATS[k]}×${n}`).join('・')||'なし';
   const SO={w:0,a:1,c:2};const ch=Object.keys(RECIPES).filter(k=>classOK(me,RECIPES[k].id)).sort((a,b)=>SO[ITEMS[RECIPES[a].id].s]-SO[ITEMS[RECIPES[b].id].s]||(RECIPES[a].rk-RECIPES[b].rk)).map(k=>{const R=RECIPES[k],it=ITEMS[R.id],why=craftWhy(me,R);const need=Object.entries(R.m).map(([m,n])=>`${MATS[m]}${n}`).join('+')+(R.log?`+薪${R.log}`:'')+(R.cash?`+$${R.cash}`:'');
     return [`${why?'🔒':R.life==='smith'?'🔨':'🪚'}【${it.s==='w'?'武器':it.s==='a'?'防具':'お守り'}】${it.n}（${itemDesc(it)}）… ${need}`,()=>{const w=craftWhy(G.players[G.me]||G.players[0],R);if(w){toast(w,'cold',true);return}sendAct('craft',k)}]});
-  ch.unshift(['✦ 武器を合成する（熟練MAXの2本 → 新しい武器）',()=>setTimeout(()=>openSynth(),60)],['⚒ 武器を鍛える（+1〜+10）',()=>setTimeout(()=>openForge(),60)]);ch.push(['やめる',null]);Object.assign(DLG,{open:true,npc:{n:{n:'工房'},x:WB.x,y:WB.y},pages:[`何を作る？ 武器は今の職業「${CLS[clsKey(me)].n}」で使えるものだけ表示。防具・お守りは誰でも使える（素材：${mt}）`],i:0,ch});if(NET.mode==='solo')G.paused=true;for(const j of joys)j.on=false;drawDlg()}
+  ch.unshift(['📍 素材の手に入れ方を見る',()=>setTimeout(()=>openMatGuide(),60)],['✦ 武器を合成する（熟練MAXの2本 → 新しい武器）',()=>setTimeout(()=>openSynth(),60)],['⚒ 武器を鍛える（+1〜+10）',()=>setTimeout(()=>openForge(),60)]);ch.push(['やめる',null]);Object.assign(DLG,{open:true,npc:{n:{n:'工房'},x:WB.x,y:WB.y},pages:[`何を作る？ 武器は今の職業「${CLS[clsKey(me)].n}」で使えるものだけ表示。防具・お守りは誰でも使える（素材：${mt}）`],i:0,ch});if(NET.mode==='solo')G.paused=true;for(const j of joys)j.on=false;drawDlg()}
 // ---- chapter openings (letterboxed text over the town) and the objective tracker
 let OPN=null;
 function playOpening(C,done){const el=$('opening'),tx=$('opTxt');const slides=C.open.map(t=>({t})).concat([{card:1}]);let i=0,tm=null;OPN={done};

@@ -1,7 +1,7 @@
 // ================================================================ 深層ダンジョン「深淵の迷宮」: an endless stack of arenas outside the map. Deeper = tougher beasts, better materials, a boss every 5 floors
 const ABX=4000;// anything east of this line is the abyss
 const ABY_BOX=[4600,800,5400,1600],ABY_ST={x:4690,y:1510},ABY_EX={x:4660,y:1560},ABY_UP={x:5000,y:1200};
-const ABY_GATE={x:2180,y:300};// hidden: far north-east corner, away from the town and other sites
+const ABY_GATE={x:2240,y:560};// hidden: far north-east corner, away from the town and other sites
 const inAby=(x)=>x>ABX;
 const clX=(x,m)=>x>ABX?clamp(x,ABY_BOX[0]+m,ABY_BOX[2]-m):clamp(x,m,WORLD-m);
 const clY=(y,m,x)=>x>ABX?clamp(y,ABY_BOX[1]+m,ABY_BOX[3]-m):clamp(y,m,WORLD-m);
