@@ -1,5 +1,5 @@
 /* めちゃホワイト — built from src/*.js by tools/build.py. Edit the sources, not this file. */
-(()=>{const BUILD='20261004031628';
+(()=>{const BUILD='20261004034034';
 const $=id=>document.getElementById(id);
 if(!window.THREE){$('loading').textContent='3Dの読み込みに失敗しました。再読み込みしてください';return}
 const T=THREE;
@@ -489,7 +489,7 @@ function makeScorpion(kind){const g=new T.Group();const c=kind==='boss'?'#3b1f18
 function beastKK(kind,key){const B=KK&&KK.beast;if(!B)return null;key=key||'Wolf';const src=B[key];if(!src)return null;
   const model=T.SkeletonUtils.clone(src.scene);const L=key==='Stag'?76:key==='Spider'?60:key==='Bear'?80:84;model.scale.setScalar(L/Math.max(1,key==='Bear'&&B.Wolf?B.Wolf.l*.92:src.l));
   const tint=kind==='boss'?'#f3f6fa':kind==='big'?'#8f98a3':'#e6edf4';const mats=new Map();let fur=null;
-  model.traverse(o=>{if(!o.isMesh)return;const cl=m=>{let c=mats.get(m);if(!c){c=m.clone();c.metalness=0;c.roughness=Math.max(.6,c.roughness||0);mats.set(m,c);if((key==='Wolf'||key==='Bear')&&/Main/.test(m.name||'')){if(key==='Wolf')c.color.copy(lin(/Light/.test(m.name)?'#ffffff':tint));if(!fur&&!/Light/.test(m.name))fur=c}}return c};o.material=Array.isArray(o.material)?o.material.map(cl):cl(o.material);if(o.isSkinnedMesh)[].concat(o.material).forEach(m=>{if(!m.skinning){m.skinning=true;m.needsUpdate=true}})});
+  model.traverse(o=>{if(!o.isMesh)return;const cl=m=>{let c=mats.get(m);if(!c){c=m.clone();c.metalness=0;c.roughness=Math.max(.6,c.roughness||0);mats.set(m,c);if((key==='Wolf'||key==='Bear')&&/Main/.test(m.name||'')){if(key==='Wolf')c.color.copy(lin(/Light/.test(m.name)?'#ffffff':tint));else c.color.copy(lin(/Light/.test(m.name)?'#efe3c8':kind==='big'?'#c9b48c':'#d8c6a2'));if(!fur&&!/Light/.test(m.name))fur=c}}return c};o.material=Array.isArray(o.material)?o.material.map(cl):cl(o.material);if(o.isSkinnedMesh)[].concat(o.material).forEach(m=>{if(!m.skinning){m.skinning=true;m.needsUpdate=true}})});
   if(!fur)fur=[...mats.values()].sort((a,b)=>(b.color.r+b.color.g+b.color.b)-(a.color.r+a.color.g+a.color.b))[0]||new T.MeshStandardMaterial();if(!fur.emissive)fur.emissive=new T.Color(0);
   const g=new T.Group();g.add(model);const mixer=new T.AnimationMixer(model),acts={};for(const k in src.clips)acts[k]=mixer.clipAction(src.clips[k]);const idle=acts.Idle;if(idle){idle.play();mixer.update(Math.random()*2)}
   const ring=M_(geo('bring',()=>new T.RingGeometry(26,35,36)),new T.MeshBasicMaterial({color:lin('#ff3b4a'),transparent:true,opacity:.75,side:T.DoubleSide,depthWrite:false}),false);ring.rotation.x=-Math.PI/2;ring.position.y=.9;g.add(ring);
@@ -536,6 +536,7 @@ class Forest{
     trees.forEach(t=>this.upd(t))}
   upd(t){const i=t.i,B=t.bk,j=t.slot;
     if(!t.alive){for(const im of B.ims)im.setMatrixAt(j,this.zero);this.v.set(t.x,3,t.y);this.s.set(1,1,1);this.b.compose(this.v,this.q.identity(),this.s);this.stumps.setMatrixAt(i,this.b)}
+    else if(t.occ){this.stumps.setMatrixAt(i,this.zero);for(const im of B.ims)im.setMatrixAt(j,this.zero)}
     else{this.stumps.setMatrixAt(i,this.zero);const sc=t.s*(t.grow<1?Math.max(.01,easeOutBack(t.grow)):1);
       let rx=0,rz=0;if(t.fall>0){const e=t.fall*t.fall*Math.PI/2*.98;rx=Math.cos(t.fallDir)*e;rz=-Math.sin(t.fallDir)*e}else if(t.shake>0){rx=Math.sin(t.shake*70)*.07}
       this.e.set(rx,t.ry,rz);this.q.setFromEuler(this.e);this.v.set(t.x,0,t.y);this.s.set(sc,sc,sc);this.b.compose(this.v,this.q,this.s);
@@ -921,9 +922,11 @@ function newGame(np,opts){opts=opts||{};plog('newGame players='+np+' '+JSON.stri
     G.zones[z.id]=false;z.fog=m;z.sign=sign;z.fogT=-1}
   // trees
   let guard=0;const trees=[];
-  while(trees.length<Math.round(360*G.mod.trees)&&guard++<30000){const x=sr(60,WORLD-60),y=sr(60,WORLD-60);const d=dist(x,y,CX,CY);if(d<FR+70)continue;if(dist(x,y,ABY_GATE.x,ABY_GATE.y)<110)continue;if(x>900&&x<1700&&y>1580&&y<1840)continue;
+  // keep the ground readable: fewer trees, and none on top of entrances, ore rocks, rare trees or quest spots
+  const CLR=[];try{for(const D of DUNGEONS)CLR.push([D.inp.x,D.inp.y,110],[D.ring.x,D.ring.y,90]);if(!DES()){for(const q of NODES_SNOW)CLR.push([q[1],q[2],70]);for(const q of RTREES_SNOW)CLR.push([q[1],q[2],80])}for(const k in QUESTS){const Q=QUESTS[k];if(Q.x!=null)CLR.push([Q.x,Q.y,90])}}catch(_){}
+  while(trees.length<Math.round(360*.72*G.mod.trees)&&guard++<30000){const x=sr(60,WORLD-60),y=sr(60,WORLD-60);const d=dist(x,y,CX,CY);if(d<FR+70)continue;if(dist(x,y,ABY_GATE.x,ABY_GATE.y)<110)continue;if(x>900&&x<1700&&y>1580&&y<1840)continue;
     if(!DES()&&dist(x,y,2020,1210)<470&&x>1720)continue;if(DES()&&DHOLES.some(h=>dist(h[0],h[1],x,y)<110))continue;if(dist(x,y,ROAD.x,ROAD.y)<230)continue;if(dist(x,y,SPA.x,SPA.y)<260)continue;if(Math.abs(x-CX)<60&&y<CY)continue;if(!DES()&&TSPOTS.some(q=>dist(x,y,q[0],q[1])<150))continue;if(dgBlock(x,y)||desertClear(x,y,40))continue;if(dist(x,y,MON.x,MON.y)<170)continue;if(Math.abs(y-CY)<60&&(x<CX||x>CX))continue;
-    if(trees.some(t=>dist(t.x,t.y,x,y)<54))continue;trees.push({x,y,s:sr(.85,1.25),ry:sr(0,TAU),hp:4,alive:true,regrow:0,shake:0,fall:0,fallDir:0,grow:1,zone:(inZone(x,y)||{}).id||null})}
+    if(CLR.some(c=>dist(x,y,c[0],c[1])<c[2]))continue;if(trees.some(t=>dist(t.x,t.y,x,y)<54))continue;trees.push({x,y,s:sr(.85,1.25),ry:sr(0,TAU),hp:4,alive:true,regrow:0,shake:0,fall:0,fallDir:0,grow:1,zone:(inZone(x,y)||{}).id||null})}
   G.trees=trees;forest=new Forest(trees);makeSecrets(trees,sr);makeRoad();applyBiome();
   // ores (zone C? no — rocky outcrops in the east of the north field feed coal)
   // fishing holes (zone B)
@@ -1979,7 +1982,7 @@ function frame(dt){hideIdle();monBar();frozenFx();vigFx();hideIdleFx(dt);
     const top=150,m=44,mx=86,on=!behind&&sx>m&&sx<W-m&&sy>top&&sy<H-90;if(on)el.hidden=true;else{el.hidden=false;const cx=W/2,cy=(top+H-90)/2;let dx=sx-cx,dy=sy-cy;const k=Math.min((W/2-mx)/Math.abs(dx||1e-3),((H-90-top)/2)/Math.abs(dy||1e-3));const ex=cx+dx*Math.min(1,k),ey=cy+dy*Math.min(1,k);
       const d=Math.round(dist(gp.x,gp.y,R.x,R.y)/10);el.style.transform=`translate(${ex|0}px,${ey|0}px) translate(-50%,-50%)`;el.firstChild.style.transform=`rotate(${Math.atan2(dy,dx)+Math.PI/2}rad)`;$('sosTxt').textContent=`SOS ${Math.ceil(R.t)}秒・${d}m`}}else el.hidden=true}
   {const _gt=running?(coldT||(G.fuel<25&&!G.raid.on?(has(gp,DES()?'water':'log')?{x:CX,y:CY,h:110}:(DES()?freeHole(gp):nearestTree(gp))):null)||rescueT(gp)||storyT(gp)||(MISSIONS[G.mission]?MISSIONS[G.mission].tg(gp):flow(gp))):null;const _g2=(gp&&inAby(gp.x))?null:_gt;G._gt=_g2;guide.set(_g2,gp,G.t)}
-  SAFE('storyVis',storyVis);SAFE('warnFx',warnFx);SAFE('driftFx',driftFx);SAFE('fireFx',fireFx);SAFE('npcFx',npcFx);SAFE('rankFx',rankFx);SAFE('caveFx',caveFx);SAFE('pzFx',pzFx);SAFE('heart4Fx',heart4Fx);SAFE('advFx',advFx);SAFE('occFx',occFx);SAFE('survDesertFx',survDesertFx);SAFE('extrasFx',extrasFx);SAFE('rebuildFx',rebuildFx);SAFE('wpFx',wpFx);SAFE('abyFx',abyFx);SAFE('campfireFx',campfireFx);SAFE('aimFx',aimFx);SAFE('padPrompt',padPromptFx);SAFE('hitFx',hitFx);SAFE('storyPolish',storyPolish);SAFE('cullWorld',cullWorld);SAFE('render',()=>{if(composer)composer.render();else renderer.render(scene,camera)});SAFE('labels',endLabels);
+  SAFE('storyVis',storyVis);SAFE('warnFx',warnFx);SAFE('driftFx',driftFx);SAFE('fireFx',fireFx);SAFE('npcFx',npcFx);SAFE('rankFx',rankFx);SAFE('caveFx',caveFx);SAFE('pzFx',pzFx);SAFE('heart4Fx',heart4Fx);SAFE('advFx',advFx);SAFE('occFx',occFx);SAFE('survDesertFx',survDesertFx);SAFE('extrasFx',extrasFx);SAFE('rebuildFx',rebuildFx);SAFE('wpFx',wpFx);SAFE('abyFx',abyFx);SAFE('campfireFx',campfireFx);SAFE('aimFx',aimFx);SAFE('padPrompt',padPromptFx);SAFE('hitFx',hitFx);SAFE('treeOcc',treeOccFx);SAFE('sosFx',sosFx);SAFE('storyPolish',storyPolish);SAFE('cullWorld',cullWorld);SAFE('render',()=>{if(composer)composer.render();else renderer.render(scene,camera)});SAFE('labels',endLabels);
   joys.forEach((j,i)=>{const el=$('joy'+i);if(!j.on){el.hidden=true;return}el.hidden=false;el.style.left=j.ox+'px';el.style.top=j.oy+'px';const dx=j.x-j.ox,dy=j.y-j.oy,m=Math.hypot(dx,dy),k=m>50?50/m:1;el.firstChild.style.transform=`translate(${dx*k}px,${dy*k}px)`;el.firstChild.style.background=nPlayers===2?HERO[i].tag:'#fff'});
 }
 // ================================================================ HUD
@@ -2757,6 +2760,9 @@ function drawMap(cv,big){const c=cv.getContext('2d'),W=cv.width,H=cv.height,me=G
   if(ADV()&&G.adv)G.adv.tr.forEach((on,i)=>{if(on)dot(TREAS[i][0],TREAS[i][1],big?4:3,'#f5c542','#8a6a1a')});
   // people with something to say
   if(!inA)for(const v of G.npcV||[]){if(!v.m.g.visible)continue;const mk=npcMark(v.n.id);if(mk&&mk!=='…'){const [a,b]=P(v.x,v.y),col=mk==='？'?'#3fc157':'#ffb020',pu=(performance.now()/900)%1,R=big?7:5.5;c.strokeStyle=col;c.globalAlpha=1-pu;c.lineWidth=2;c.beginPath();c.arc(a,b,R+pu*(big?12:9),0,TAU);c.stroke();c.globalAlpha=1;c.fillStyle=col;c.strokeStyle='#16283a';c.lineWidth=1.8;c.beginPath();c.arc(a,b,R,0,TAU);c.fill();c.stroke();c.fillStyle='#fff';c.font=`900 ${big?11:9}px sans-serif`;c.textAlign='center';c.textBaseline='middle';c.fillText(mk==='？'?'?':'!',a,b+.5);c.textBaseline='alphabetic'}}
+  // SOS: big blinking red ring
+  {const R=G.rescue;if(R&&R.state==='wait'&&!inA){let [a,b]=P(R.x,R.y);if(!big){const dx=a-W/2,dy=b-H/2,r=Math.hypot(dx,dy),lim=W/2-10;if(r>lim){a=W/2+dx/r*lim;b=H/2+dy/r*lim}}
+    const pu=(performance.now()/600)%1;c.strokeStyle='#ff3b3b';c.globalAlpha=1-pu;c.lineWidth=3;c.beginPath();c.arc(a,b,7+pu*(big?22:14),0,TAU);c.stroke();c.globalAlpha=1;c.fillStyle='#ff3b3b';c.strokeStyle='#fff';c.lineWidth=2;c.beginPath();c.arc(a,b,big?8:6,0,TAU);c.fill();c.stroke();c.fillStyle='#fff';c.font=`900 ${big?9:7}px sans-serif`;c.textAlign='center';c.textBaseline='middle';c.fillText('SOS',a,b+.5);c.textBaseline='alphabetic'}}
   // material nodes (ore rocks and rare trees): small diamonds, colored by material
   if(!inA&&isRPG()&&G.rtrees){const MC={iron:'#8a8f99',icec:'#5fc6ff',star:'#ffc629',old:'#5f9a4a',ice:'#9fe3ff',spirit:'#ffe27a'};
     for(const t of G.rtrees){if(!t.alive||!MC[t.k])continue;if(dgAt(t.x,t.y)&&dgAt(t.x,t.y)!==dgAt(me.x,me.y))continue;if(!big&&dist(t.x,t.y,me.x,me.y)>650)continue;const [a,b]=P(t.x,t.y),r=big?5:3.6;
@@ -3444,6 +3450,27 @@ function hitFeel(sh,b,dmg,fx){if(!isRPG()||!sh||!G.players.includes(sh)||b.hide|
   if(kill){hitstop(b.kind==='boss'?.14:.06);G.shake=Math.max(G.shake,b.kind==='boss'?12:5);burst(b.x,b.y,28,18,{c:['#ffffff','#ffe07a','#ff9a5a'],s0:80,s1:240,u0:80,u1:220,l0:.3,l1:.6,add:true,r0:3,r1:7})}}
 function hitFx(){if(!G||!running)return;const dt=1/60;for(const b of G.bears){const m=b.m;if(!m||!m.g)continue;
   if(b._sq>0){if(b._bs==null)b._bs=m.g.scale.x;b._sq=Math.max(0,b._sq-dt);const k=b._sq/.16,s=b._bs;m.g.scale.set(s*(1+.14*k),s*(1-.18*k),s*(1+.14*k));if(b._sq<=0){m.g.scale.setScalar(s);b._bs=null}}}}
+// ---- trees never hide what matters: ones between the camera and you, right around you, or on top of an SOS / quest spot are tucked away
+const TOCC={t:0,on:new Set()};
+function treeOccFx(){if(!G||!running||!forest||!G.trees)return;const now=performance.now();if(now-TOCC.t<150)return;TOCC.t=now;
+  const me=G.players[G.me]||G.players[0];if(!me)return;const cx=camera.position.x,cz=camera.position.z,px=me.x,pz=me.y;const sx=px-cx,sz=pz-cz,L2=sx*sx+sz*sz||1;
+  const spots=[];const R=G.rescue;if(R&&R.state==='wait')spots.push([R.x,R.y,110]);
+  if(G.story&&G.story.q)for(const k in G.story.q){const Q=QUESTS[k],q=G.story.q[k];if(Q&&q.st===1&&Q.x!=null&&Q.bio===bioKey())spots.push([Q.x,Q.y,90])}
+  const want=new Set();
+  for(const t of G.trees){if(!t.alive||t.fall>0)continue;const dx=t.x-px,dz=t.y-pz;if(dx*dx+dz*dz<55*55||t===me.chopping)continue;
+    if(Math.abs(t.x-px)<700&&Math.abs(t.y-pz)<700){const u=((t.x-cx)*sx+(t.y-cz)*sz)/L2;if(u>0&&u<1){const qx=cx+sx*u-t.x,qz=cz+sz*u-t.y;if(qx*qx+qz*qz<(40*t.s)**2){want.add(t);continue}}}
+    for(const s of spots)if(Math.abs(t.x-s[0])<s[2]&&Math.abs(t.y-s[1])<s[2]&&dist(t.x,t.y,s[0],s[1])<s[2]){want.add(t);break}}
+  for(const t of TOCC.on)if(!want.has(t)){t.occ=false;forest.upd(t)}
+  for(const t of want)if(!t.occ){t.occ=true;forest.upd(t)}TOCC.on=want}
+// ---- SOS you can't miss: a pulsing chip under the objective, a repeating alarm, and a "hurry" call when time is short
+const SOSU={id:null,beep:0,warned:false};
+function sosFx(){let el=document.getElementById('sosChip');if(!el){el=document.createElement('div');el.id='sosChip';el.hidden=true;document.body.appendChild(el)}
+  const R=G&&running?G.rescue:null,me=G&&(G.players[G.me]||G.players[0]);if(!R||R.state!=='wait'||!me){el.hidden=true;SOSU.id=null;return}
+  const d=Math.round(dist(me.x,me.y,R.x,R.y)/10),t=Math.ceil(R.t),near=d<12;
+  if(SOSU.id!==R.id){SOSU.id=R.id;SOSU.beep=0;SOSU.warned=false}
+  el.hidden=false;el.classList.toggle('urgent',t<=15);el.textContent=`🆘 遭難者${R.n}人がSOS！ あと${t}秒・${near?'ここ！':d+'m'}${R.kind==='hot'&&!R.hotDone?'（お湯が必要）':R.kind==='bears'&&R.gb>0?`（敵${R.gb}体）`:R.kind==='sled'?'（犬ぞりで運ぶ）':''}`;
+  const now=performance.now();if(!near&&now-SOSU.beep>(t<=15?3500:9000)){SOSU.beep=now;try{tone(880,.12,'square',.05);tone(660,.12,'square',.05,0,.16);tone(880,.12,'square',.05,0,.32)}catch(_){}}
+  if(t<=15&&!SOSU.warned&&!near){SOSU.warned=true;toast(`🆘 急げ！ 遭難者があと${t}秒で凍えてしまう`,'cold',true)}}
 // ================================================================ story mode (chapters + morning autosave)
 var gameMode=store.get('mw-mode','story');var SAVE_K='mw-story1';
 var CH={1:{n:'第1章',t:'ホワイトアウト',play:true,open:['暦の上では、もう夏至を過ぎた。','それなのに、この町の雪は\n一日もやんだことがない。','吹雪は家々を押しつぶし、\n人々は散り散りになった。','残っていたのは、村長オルガと、\n消えかけたひとつのかまどだけ――','瓦礫を片付け、町を建て直し、\nもう一度みんなを呼び戻そう。'],sub:'瓦礫を片付けて町を建て直し、散り散りになった仲間を呼び戻せ（Jキー：手がかり帳）',

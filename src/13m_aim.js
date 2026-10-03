@@ -74,3 +74,24 @@ function hitFeel(sh,b,dmg,fx){if(!isRPG()||!sh||!G.players.includes(sh)||b.hide|
   if(kill){hitstop(b.kind==='boss'?.14:.06);G.shake=Math.max(G.shake,b.kind==='boss'?12:5);burst(b.x,b.y,28,18,{c:['#ffffff','#ffe07a','#ff9a5a'],s0:80,s1:240,u0:80,u1:220,l0:.3,l1:.6,add:true,r0:3,r1:7})}}
 function hitFx(){if(!G||!running)return;const dt=1/60;for(const b of G.bears){const m=b.m;if(!m||!m.g)continue;
   if(b._sq>0){if(b._bs==null)b._bs=m.g.scale.x;b._sq=Math.max(0,b._sq-dt);const k=b._sq/.16,s=b._bs;m.g.scale.set(s*(1+.14*k),s*(1-.18*k),s*(1+.14*k));if(b._sq<=0){m.g.scale.setScalar(s);b._bs=null}}}}
+// ---- trees never hide what matters: ones between the camera and you, right around you, or on top of an SOS / quest spot are tucked away
+const TOCC={t:0,on:new Set()};
+function treeOccFx(){if(!G||!running||!forest||!G.trees)return;const now=performance.now();if(now-TOCC.t<150)return;TOCC.t=now;
+  const me=G.players[G.me]||G.players[0];if(!me)return;const cx=camera.position.x,cz=camera.position.z,px=me.x,pz=me.y;const sx=px-cx,sz=pz-cz,L2=sx*sx+sz*sz||1;
+  const spots=[];const R=G.rescue;if(R&&R.state==='wait')spots.push([R.x,R.y,110]);
+  if(G.story&&G.story.q)for(const k in G.story.q){const Q=QUESTS[k],q=G.story.q[k];if(Q&&q.st===1&&Q.x!=null&&Q.bio===bioKey())spots.push([Q.x,Q.y,90])}
+  const want=new Set();
+  for(const t of G.trees){if(!t.alive||t.fall>0)continue;const dx=t.x-px,dz=t.y-pz;if(dx*dx+dz*dz<55*55||t===me.chopping)continue;
+    if(Math.abs(t.x-px)<700&&Math.abs(t.y-pz)<700){const u=((t.x-cx)*sx+(t.y-cz)*sz)/L2;if(u>0&&u<1){const qx=cx+sx*u-t.x,qz=cz+sz*u-t.y;if(qx*qx+qz*qz<(40*t.s)**2){want.add(t);continue}}}
+    for(const s of spots)if(Math.abs(t.x-s[0])<s[2]&&Math.abs(t.y-s[1])<s[2]&&dist(t.x,t.y,s[0],s[1])<s[2]){want.add(t);break}}
+  for(const t of TOCC.on)if(!want.has(t)){t.occ=false;forest.upd(t)}
+  for(const t of want)if(!t.occ){t.occ=true;forest.upd(t)}TOCC.on=want}
+// ---- SOS you can't miss: a pulsing chip under the objective, a repeating alarm, and a "hurry" call when time is short
+const SOSU={id:null,beep:0,warned:false};
+function sosFx(){let el=document.getElementById('sosChip');if(!el){el=document.createElement('div');el.id='sosChip';el.hidden=true;document.body.appendChild(el)}
+  const R=G&&running?G.rescue:null,me=G&&(G.players[G.me]||G.players[0]);if(!R||R.state!=='wait'||!me){el.hidden=true;SOSU.id=null;return}
+  const d=Math.round(dist(me.x,me.y,R.x,R.y)/10),t=Math.ceil(R.t),near=d<12;
+  if(SOSU.id!==R.id){SOSU.id=R.id;SOSU.beep=0;SOSU.warned=false}
+  el.hidden=false;el.classList.toggle('urgent',t<=15);el.textContent=`🆘 遭難者${R.n}人がSOS！ あと${t}秒・${near?'ここ！':d+'m'}${R.kind==='hot'&&!R.hotDone?'（お湯が必要）':R.kind==='bears'&&R.gb>0?`（敵${R.gb}体）`:R.kind==='sled'?'（犬ぞりで運ぶ）':''}`;
+  const now=performance.now();if(!near&&now-SOSU.beep>(t<=15?3500:9000)){SOSU.beep=now;try{tone(880,.12,'square',.05);tone(660,.12,'square',.05,0,.16);tone(880,.12,'square',.05,0,.32)}catch(_){}}
+  if(t<=15&&!SOSU.warned&&!near){SOSU.warned=true;toast(`🆘 急げ！ 遭難者があと${t}秒で凍えてしまう`,'cold',true)}}

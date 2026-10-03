@@ -177,7 +177,7 @@ function makeScorpion(kind){const g=new T.Group();const c=kind==='boss'?'#3b1f18
 function beastKK(kind,key){const B=KK&&KK.beast;if(!B)return null;key=key||'Wolf';const src=B[key];if(!src)return null;
   const model=T.SkeletonUtils.clone(src.scene);const L=key==='Stag'?76:key==='Spider'?60:key==='Bear'?80:84;model.scale.setScalar(L/Math.max(1,key==='Bear'&&B.Wolf?B.Wolf.l*.92:src.l));
   const tint=kind==='boss'?'#f3f6fa':kind==='big'?'#8f98a3':'#e6edf4';const mats=new Map();let fur=null;
-  model.traverse(o=>{if(!o.isMesh)return;const cl=m=>{let c=mats.get(m);if(!c){c=m.clone();c.metalness=0;c.roughness=Math.max(.6,c.roughness||0);mats.set(m,c);if((key==='Wolf'||key==='Bear')&&/Main/.test(m.name||'')){if(key==='Wolf')c.color.copy(lin(/Light/.test(m.name)?'#ffffff':tint));if(!fur&&!/Light/.test(m.name))fur=c}}return c};o.material=Array.isArray(o.material)?o.material.map(cl):cl(o.material);if(o.isSkinnedMesh)[].concat(o.material).forEach(m=>{if(!m.skinning){m.skinning=true;m.needsUpdate=true}})});
+  model.traverse(o=>{if(!o.isMesh)return;const cl=m=>{let c=mats.get(m);if(!c){c=m.clone();c.metalness=0;c.roughness=Math.max(.6,c.roughness||0);mats.set(m,c);if((key==='Wolf'||key==='Bear')&&/Main/.test(m.name||'')){if(key==='Wolf')c.color.copy(lin(/Light/.test(m.name)?'#ffffff':tint));else c.color.copy(lin(/Light/.test(m.name)?'#efe3c8':kind==='big'?'#c9b48c':'#d8c6a2'));if(!fur&&!/Light/.test(m.name))fur=c}}return c};o.material=Array.isArray(o.material)?o.material.map(cl):cl(o.material);if(o.isSkinnedMesh)[].concat(o.material).forEach(m=>{if(!m.skinning){m.skinning=true;m.needsUpdate=true}})});
   if(!fur)fur=[...mats.values()].sort((a,b)=>(b.color.r+b.color.g+b.color.b)-(a.color.r+a.color.g+a.color.b))[0]||new T.MeshStandardMaterial();if(!fur.emissive)fur.emissive=new T.Color(0);
   const g=new T.Group();g.add(model);const mixer=new T.AnimationMixer(model),acts={};for(const k in src.clips)acts[k]=mixer.clipAction(src.clips[k]);const idle=acts.Idle;if(idle){idle.play();mixer.update(Math.random()*2)}
   const ring=M_(geo('bring',()=>new T.RingGeometry(26,35,36)),new T.MeshBasicMaterial({color:lin('#ff3b4a'),transparent:true,opacity:.75,side:T.DoubleSide,depthWrite:false}),false);ring.rotation.x=-Math.PI/2;ring.position.y=.9;g.add(ring);
@@ -224,6 +224,7 @@ class Forest{
     trees.forEach(t=>this.upd(t))}
   upd(t){const i=t.i,B=t.bk,j=t.slot;
     if(!t.alive){for(const im of B.ims)im.setMatrixAt(j,this.zero);this.v.set(t.x,3,t.y);this.s.set(1,1,1);this.b.compose(this.v,this.q.identity(),this.s);this.stumps.setMatrixAt(i,this.b)}
+    else if(t.occ){this.stumps.setMatrixAt(i,this.zero);for(const im of B.ims)im.setMatrixAt(j,this.zero)}
     else{this.stumps.setMatrixAt(i,this.zero);const sc=t.s*(t.grow<1?Math.max(.01,easeOutBack(t.grow)):1);
       let rx=0,rz=0;if(t.fall>0){const e=t.fall*t.fall*Math.PI/2*.98;rx=Math.cos(t.fallDir)*e;rz=-Math.sin(t.fallDir)*e}else if(t.shake>0){rx=Math.sin(t.shake*70)*.07}
       this.e.set(rx,t.ry,rz);this.q.setFromEuler(this.e);this.v.set(t.x,0,t.y);this.s.set(sc,sc,sc);this.b.compose(this.v,this.q,this.s);

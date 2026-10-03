@@ -123,9 +123,9 @@
   @keyframes cpop{0%{transform:scale(1.25)}100%{transform:scale(1)}}
   #coldFx{position:fixed;inset:0;pointer-events:none;z-index:1;opacity:0;transition:opacity .6s;background:radial-gradient(ellipse at center,rgba(200,235,255,0) 45%,rgba(220,242,255,.85) 100%)}
   #wxFx{position:fixed;inset:0;pointer-events:none;z-index:1;opacity:0;transition:opacity 1.2s;background:radial-gradient(ellipse at 50% 50%,rgba(255,255,255,.15) 20%,rgba(238,246,251,.92) 75%)}
-  #sosArrow{position:fixed;left:0;top:0;z-index:3;pointer-events:none;display:grid;justify-items:center;gap:3px;will-change:transform}
-  #sosArrow i{width:0;height:0;border-left:15px solid transparent;border-right:15px solid transparent;border-bottom:26px solid var(--coral);filter:drop-shadow(0 2px 0 rgba(91,70,54,.3));animation:sosb .6s ease-in-out infinite alternate}
-  #sosArrow b{font-family:var(--display);font-weight:900;font-size:12.5px;color:#fff;background:var(--coral);border-radius:999px;padding:4px 11px;white-space:nowrap;box-shadow:0 2px 0 var(--coral-d)}
+  #sosArrow{position:fixed;left:0;top:0;z-index:26;pointer-events:none;display:grid;justify-items:center;gap:3px;will-change:transform}
+  #sosArrow i{width:0;height:0;border-left:15px solid transparent;border-right:15px solid transparent;border-bottom:34px solid #e03a3a;filter:drop-shadow(0 2px 0 rgba(91,70,54,.3));animation:sosb .6s ease-in-out infinite alternate}
+  #sosArrow b{font-family:var(--display);font-weight:900;font-size:16px;color:#fff;background:#e03a3a;border:3px solid #fff;border-radius:999px;padding:6px 14px;animation:sosp .7s ease-in-out infinite alternate;white-space:nowrap;box-shadow:0 2px 0 var(--coral-d)}
   @keyframes sosb{to{scale:1.2}}
   .coin{position:fixed;width:18px;height:18px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff7c0,#f7c948 50%,#d19a1c);box-shadow:0 0 0 2px #fffaf0;z-index:6;pointer-events:none}
   .coin.cash{border-radius:5px;width:22px;height:14px;background:linear-gradient(180deg,#b6e58f,#6ab04c)}
@@ -224,6 +224,7 @@
 #opSkip{position:absolute;right:24px;bottom:calc(11vh + 14px);font:inherit;font-size:13px;color:#fff;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.4);border-radius:20px;padding:6px 14px;cursor:pointer}
 #payBtn{position:fixed;left:50%;bottom:170px;transform:translateX(-50%);z-index:30;font:inherit;font-weight:900;font-size:16px;padding:10px 22px;border:3px solid #16283a;border-radius:14px;background:linear-gradient(#ffe27a,#ffbf2a);color:#16283a;box-shadow:0 4px 0 #16283a;cursor:pointer}#payBtn:disabled{background:#d8d2c6;color:#6a6a6a}#payBtn[hidden]{display:none}
 .mgw{max-height:46vh;overflow:auto;text-align:left;margin:4px 0}.mgw .mg{border-bottom:1px dashed #d6c7ab;padding:5px 2px;text-align:left}.mgw .mn{font-size:14px;font-weight:900;color:#16283a;margin-right:6px}.mgw .mc{color:#c06010;font-weight:900}.mgw .mw,#dlgTxt .mw{display:block;font-size:12px;color:#5a4a3a;line-height:1.5;text-align:left}
+@keyframes sosp{from{transform:scale(1)}to{transform:scale(1.12)}}#sosChip{position:fixed;left:50%;bottom:150px;transform:translateX(-50%);z-index:24;font-weight:900;font-size:15px;color:#fff;background:linear-gradient(#ff5a4a,#c42a2a);border:3px solid #fff;border-radius:12px;padding:6px 16px;box-shadow:0 3px 0 #7a1a1a,0 0 18px rgba(255,60,40,.6);pointer-events:none;animation:sosp .8s ease-in-out infinite alternate;white-space:nowrap}#sosChip[hidden]{display:none}#sosChip.urgent{background:linear-gradient(#ff2a2a,#a01010)}
 #tracker{position:fixed;right:12px;top:196px;width:262px;z-index:19;background:rgba(255,250,240,.94);border:3px solid #16283a;border-radius:14px;padding:8px 10px;color:#16283a;font-size:12px;box-shadow:0 4px 14px rgba(0,0,0,.2);pointer-events:none}
 #tracker .tk-h{font-weight:900;font-size:13px;border-bottom:2px dashed #d6c7ab;padding-bottom:4px;margin-bottom:6px}#tracker .tk-h em{font-style:normal;color:#e8703a}
 #tracker .sec{margin-bottom:7px}#tracker .sec i{display:block;font-style:normal;font-size:10px;font-weight:900;letter-spacing:.1em;color:#8a5a30}#tracker .sec b{display:block;font-size:13.5px;line-height:1.4}
