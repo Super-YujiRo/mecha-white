@@ -2315,9 +2315,9 @@ function p3SyncRhy(y,g,t){const now=rClock(),b0=g.beat??-9,fr=b0-Math.floor(b0);
     if(g.id==='pong'){const L=new THREE.Vector3(0,2.6,-8.2),Pd=new THREE.Vector3(x+1.2,2.2,2);S.pad.rotation.z=since<.15?-1:-.2;S.pad.position.x=x+1.2+(since<.15?-.4:0);
       let k2=0;S.balls.forEach(bl=>bl.visible=false);
       for(const e of g.exp){if(now<e.cueT||now>e.t+1.2)continue;if(k2>2)break;const bl=S.balls[k2++];bl.visible=true;const dur=e.t-e.cueT;const k=(now-e.cueT)/dur;
-        const tbl=new THREE.Vector3(x*.8+(x+1.2-x*.8)*.6,1.55,-3+5*.6);
-        if(k<=1||e.res[i]===null||e.res[i]===-2){if(k<.6){const q=k/.6;bl.position.lerpVectors(L,tbl,q);bl.position.y=L.y+(tbl.y-L.y)*q+Math.sin(q*Math.PI)*(e.kind==='lob'?4:e.kind==='smash'?.3:1.5)}
-          else{const q=(k-.6)/.4;bl.position.lerpVectors(tbl,Pd,q);bl.position.y=tbl.y+(Pd.y-tbl.y)*q+Math.sin(Math.min(1,q)*Math.PI)*(e.kind==='lob'?1.5:.6);if(q>1)bl.position.z+=0}}
+        const tbl=new THREE.Vector3(x*.8+(x+1.2-x*.8)*.5,1.55,-3+5*.5);
+        if(k<=1||e.res[i]===null||e.res[i]===-2){if(k<.5){const q=k/.5;bl.position.lerpVectors(L,tbl,q);bl.position.y=L.y+(tbl.y-L.y)*q+Math.sin(q*Math.PI)*(e.kind==='lob'?4:e.kind==='smash'?.3:1.5)}
+          else{const q=(k-.5)/.5;bl.position.lerpVectors(tbl,Pd,q);bl.position.y=tbl.y+(Pd.y-tbl.y)*q+Math.sin(Math.min(1,q)*Math.PI)*(e.kind==='lob'?1.5:.6);if(q>1)bl.position.z+=0}}
         else{const q=Math.min(1,(now-e.at[i])/(dur*.6));bl.position.lerpVectors(Pd,L,q);bl.position.y+=Math.sin(q*Math.PI)*2;if(e.res[i]>0&&q<.05&&!e['b'+i]){e['b'+i]=1;p3Burst('spark',Pd.x,Pd.y,Pd.z,5)}}}}
     if(g.id==='karate'){for(const k in S.objs)S.objs[k].forEach(o=>o.visible=false);const used={tile:0,pot:0,melon:0};const src=new THREE.Vector3(0,1.2,-7),dst=new THREE.Vector3(x,2.2,2.2);
       for(const e of g.exp){if(now<e.cueT||now>e.t+.6)continue;const arr=S.objs[e.kind];const o=arr[used[e.kind]++];if(!o)continue;const dur=e.t-e.cueT,k=(now-e.cueT)/dur;
@@ -2330,7 +2330,7 @@ function p3OverlayRhy(y,g){const now=rClock(),top=Math.max(110,H*.15);
   for(const e of g.exp){const d=now-e.cueT;if(d>=0&&d<.35){const txt=g.id==='mochi'?({long:'ハ〜イ',off:'ハッ！',tri:'ハ',dbl:'ハイ'}[e.kind]||'ハイ！'):g.id==='pong'?(e.kind==='lob'?'ポーン':e.kind==='smash'?'パシッ':'ポン'):(e.kind==='melon'?'ヒュ〜ン':'ヒュッ');
       ctx.globalAlpha=1-d/.35;popText(txt,W/2,top+(g.id==='mochi'?0:30)-d*30,g.id==='mochi'?44:30,'#ffd23f','#2a1f4a');ctx.globalAlpha=1}}
   for(let i=0;i<4;i++){const pp=p3Proj(RX(i),-0.4,g.id==='mochi'?4.6:3);vt(`${i===PME?'YOU':PYS[i].name}  ${g.pts[i]}点`,pp.x,pp.y,i===PME?15:13,i===PME?'#fff27a':'#fff');
-    const f=rgLastFor(g,i);if(f){const p=p3Proj(RX(i),6.4,1.5),k=f.t/.7;ctx.globalAlpha=1-k;const T=f.grade===2?['ピッタリ！','#ffd23f']:f.grade===1?['OK','#ffffff']:f.grade===-1?['ズレ','#ff8a8a']:['ミス','#9aa3ad'];popText(T[0],p.x,p.y-k*30,i===PME?22:15,T[1]);ctx.globalAlpha=1}}}
+    const f=rgLastFor(g,i);if(f){const p=p3Proj(RX(i),6.4,1.5),k=f.t/.7;ctx.globalAlpha=(1-k)*(i===PME||i===PME2?1:.4);const T=f.grade===2?['ピッタリ！','#ffd23f']:f.grade===1?['OK','#ffffff']:f.grade===-1?['ズレ','#ff8a8a']:['ミス','#9aa3ad'];popText(T[0],p.x,p.y-k*30,i===PME?22:15,T[1]);ctx.globalAlpha=1}}}
 
 function p3BuildRhythm(s){s.background=p3Sky('#2a1f5a','#7a3fa0');
   const st=p3Mesh(new THREE.CylinderGeometry(16,17,1.2,48),[p3Mat('#3a2a5a'),texMat('wood',6,'#b59ae0'),p3Mat('#3a2a5a')],false,true);st.position.y=-.6;s.add(st);
@@ -2358,7 +2358,7 @@ function p3OverlayRhythm(y,g){const s=PY_RHYTHM.seg(g),top=Math.max(110,H*.15);
       ell(x,yy,13,13,on?(s.k==='call'?'#ff7a3d':'#ffd23f'):'rgba(255,255,255,.18)');ctx.strokeStyle='#ffffff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,yy,13,0,TAU);ctx.stroke()})}
   for(let i=0;i<4;i++){const x=(i-1.5)*5.5,pp=p3Proj(x,-0.4,2.5);vt(`${i===PME?'YOU':PYS[i].name}  ${g.pts[i]}点`,pp.x,pp.y,i===PME?15:13,i===PME?'#fff27a':'#fff')}
   const lastFx={};for(const f of g.fx)lastFx[f.i]=f;
-  for(const f of Object.values(lastFx)){const x=(f.i-1.5)*5.5,p=p3Proj(x,6.2,2.5),k=f.t/.7;ctx.globalAlpha=1-k;const T=f.grade===2?['ピッタリ！','#ffd23f']:f.grade===1?['OK','#ffffff']:f.grade===-1?['ズレ','#ff8a8a']:['ミス','#9aa3ad'];if(f.i===PME||f.grade!==0||!f.miss)popText(T[0],p.x,p.y-k*30,f.i===PME?22:15,T[1]);ctx.globalAlpha=1}}
+  for(const f of Object.values(lastFx)){const x=(f.i-1.5)*5.5,p=p3Proj(x,6.2,2.5),k=f.t/.7;ctx.globalAlpha=(1-k)*(i===PME||i===PME2?1:.4);const T=f.grade===2?['ピッタリ！','#ffd23f']:f.grade===1?['OK','#ffffff']:f.grade===-1?['ズレ','#ff8a8a']:['ミス','#9aa3ad'];if(f.i===PME||f.grade!==0||!f.miss)popText(T[0],p.x,p.y-k*30,f.i===PME?22:15,T[1]);ctx.globalAlpha=1}}
 
 /* ---------- 新ミニゲームの3D ---------- */
 function p3Bunting(s,pts,y){const cols=['#e2493b','#ffd23f','#3f7de0','#2f9a7f','#ff7eb6','#ffffff'];
@@ -2767,6 +2767,103 @@ const _rPmShow=pmShow;pmShow=function(){_rPmShow();const y=Y;if(!y||y.ph!=='menu
   const lab=document.createElement('span');const upd=()=>{lab.innerHTML=`リズム判定の調整　<b>${R_OFS>0?'+':''}${R_OFS}ms</b>　<small>${R_OFS===0?'（ふつう）':R_OFS>0?'（おそめに押しても合う）':'（はやめに押しても合う）'}</small>`};
   const mk=(t,d)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.addEventListener('click',()=>{rSetOfs(d===0?0:R_OFS+d);upd();beep(d>0?880:d<0?660:520,.04)});return b};
   row.appendChild(mk('−',-10));row.appendChild(lab);row.appendChild(mk('＋',10));row.appendChild(mk('0',0));upd();bd.appendChild(row)};
+
+/* ---------- リズムゲーム 作り直し：見て聞いたら体が動く ---------- */
+/* ルールは全部「合図と同じリズムを、決まった間だけあとで叩く」。ひねりは1つだけ。 */
+function rgBuild(g,parts,defKind){const ev=[];g.segs=[];let b=0;
+  for(const P of parts){const L=P.len||8;g.segs.push({b0:b,b1:b+L,label:P.label,sub:P.sub||'',kind:P.demo?'demo':P.prac?'prac':'main'});
+    for(const [c,h,kind] of P.ev)ev.push({cue:b+c,hit:b+h,kind:kind||defKind,hard:kind&&kind!==defKind?1:0,demo:!!P.demo,prac:!!P.prac});b+=L}
+  const m=g.segs.find(s=>s.kind==='main');g.songB=m?m.b0:0;return ev}
+const MAIN='ほんばん！';
+PY_MOCHI.compose=function(g){const A=[[0,1],[2,3],[4,5],[6,7]],B=[[0,1],[2,3],[2.5,3.5,'dbl'],[4,5],[6,7]],C=[[0,1],[.5,1.5,'dbl'],[2,3],[4,5],[4.5,5.5,'dbl'],[6,7]],D=[[0,1],[1,2],[2,3],[4,5],[4.5,5.5,'dbl'],[6,7],[6.5,7.5,'dbl']];
+  return rgBuild(g,[{label:'おてほん',sub:'「ハイ！」の1拍あとにペッタン',demo:1,ev:A},{label:'れんしゅう',sub:'まねしてみよう（点は入らないよ）',prac:1,ev:A},
+    {label:'おてほん',sub:'「ハイハイ」なら2回ペッタン',demo:1,ev:[[0,1],[.5,1.5,'dbl'],[4,5],[4.5,5.5,'dbl']]},{label:'れんしゅう',sub:'「ハイハイ」→ペッタンペッタン',prac:1,ev:B},
+    {label:MAIN,ev:A},{label:MAIN,ev:B},{label:MAIN,ev:C},{label:MAIN,ev:D}],'n')};
+PY_PONG.compose=function(g){const A=[[0,1],[1,2],[2,3],[4,5],[5,6],[6,7]],B=[[0,2,'lob'],[2,3],[3,4],[4,6,'lob'],[6,7]],C=[[0,1],[1,2],[2,4,'lob'],[4,5],[5,6],[6,7]],D=[[0,1],[1,2],[2,3],[3,4],[4,6,'lob'],[6,7],[7,8]];
+  return rgBuild(g,[{label:'おてほん',sub:'「ポン」→台で「ポン」→ 次で打つ！',demo:1,ev:[[0,1],[2,3],[4,5],[6,7]]},{label:'れんしゅう',sub:'まねしてみよう（点は入らないよ）',prac:1,ev:[[0,1],[2,3],[4,5],[6,7]]},
+    {label:'おてほん',sub:'ふわっと「ポ〜ン」は2拍あと',demo:1,ev:[[0,2,'lob'],[4,6,'lob']]},{label:'れんしゅう',sub:'「ポ〜ン」はゆっくり待って打つ',prac:1,ev:[[0,1],[2,4,'lob'],[4,5],[6,7]]},
+    {label:MAIN,ev:A},{label:MAIN,ev:B},{label:MAIN,ev:C},{label:MAIN,ev:D}],'n')};
+PY_KARATE.compose=function(g){const A=[[0,1,'tile'],[2,3,'pot'],[4,5,'tile'],[5,6,'pot'],[6,7,'tile']],B=[[0,2,'melon'],[2,3,'tile'],[4,6,'melon'],[6,7,'pot']],C=[[0,1,'tile'],[1,2,'pot'],[2,4,'melon'],[4,5,'tile'],[5,6,'tile'],[6,7,'pot']],D=[[0,1,'pot'],[1,2,'tile'],[2,3,'pot'],[3,4,'tile'],[4,6,'melon'],[6,7,'tile'],[7,8,'tile']];
+  return rgBuild(g,[{label:'おてほん',sub:'「ヒュッ」の1拍あとにパンチ',demo:1,ev:[[0,1,'tile'],[2,3,'pot'],[4,5,'tile'],[6,7,'pot']]},{label:'れんしゅう',sub:'まねしてみよう（点は入らないよ）',prac:1,ev:[[0,1,'tile'],[2,3,'pot'],[4,5,'tile'],[6,7,'pot']]},
+    {label:'おてほん',sub:'スイカは「ヒュ〜ン」で2拍あと',demo:1,ev:[[0,2,'melon'],[4,6,'melon']]},{label:'れんしゅう',sub:'スイカはゆっくり待ってパンチ',prac:1,ev:[[0,1,'tile'],[2,4,'melon'],[4,5,'pot'],[6,7,'tile']]},
+    {label:MAIN,ev:A},{label:MAIN,ev:B},{label:MAIN,ev:C},{label:MAIN,ev:D}],'tile')};
+PY_MOCHI.rule='合いの手が「ハイ！」と言ったら、1拍あとに杵でペッタン。「ハイハイ」なら2回。最初におてほんと練習があるよ。自分の臼に出る輪が閉じた瞬間がタイミング。';
+PY_PONG.rule='球が「ポン」と飛んで、台で「ポン」とはねて、次の拍で手元に届く。そこで打ち返す。ふわっと高い「ポ〜ン」は2拍あと。輪が閉じた瞬間に打とう。';
+PY_KARATE.rule='「ヒュッ」と投げられた瓦やツボを、1拍あとにパンチ。スイカの「ヒュ〜ン」は2拍あと。音がだんだん高くなって、届く瞬間がわかるよ。';
+PY_RHYTHM.rule='太鼓のお手本を聞いたら、次の小節で同じリズムをまねしてタップ。最初の1回はおてほん、2回目は練習（点なし）。';
+/* 合図の音：曲にまぎれない音色。届く瞬間が耳でわかるように */
+function rClap(at,v=.16){if(!AC)return;try{for(let k=0;k<3;k++){const s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain(),t=at+k*.008;s.buffer=rNoise();f.type='bandpass';f.frequency.value=1300;f.Q.value=1.4;g.gain.setValueAtTime(v*(k===2?1:.6),t);g.gain.exponentialRampToValueAtTime(.0001,t+(k===2?.12:.02));s.connect(f);f.connect(g);g.connect(AC.destination);s.start(t);s.stop(t+.13)}}catch(e){}}
+function rRise(at,d,f0,f1,v=.09,type='sine'){if(!AC)return;try{const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f0,at);o.frequency.exponentialRampToValueAtTime(f1,at+d);g.gain.setValueAtTime(.0001,at);g.gain.exponentialRampToValueAtTime(v,at+d*.85);g.gain.exponentialRampToValueAtTime(.0001,at+d);o.connect(g);g.connect(AC.destination);o.start(at);o.stop(at+d+.02)}catch(e){}}
+PY_MOCHI.cueSound=function(e,at){rClap(at,.15);rVoice(at,e.kind==='dbl'?640:560,e.kind==='dbl'?760:700,.09,.13)};
+PY_PONG.cueSound=function(e,at){const d=e.t-at;if(e.kind==='lob'){rTone(at,660,.35,'sine',.16);rTone(at,990,.25,'sine',.05)}else{rTone(at,1046,.07,'sine',.18);rTone(at,2093,.03,'sine',.04)}
+  const mid=at+d/2;rTone(mid,1568,.04,'triangle',.12);rTone(mid,392,.05,'sine',.08)};
+PY_KARATE.cueSound=function(e,at){const d=e.t-at;if(e.kind==='melon'){rWhoosh(at,.18,.06,600,1500);rRise(at+.05,d-.05,300,900,.07,'triangle')}else{rWhoosh(at,.12,.06,1500,4000);rRise(at+.03,d-.03,600,1500,.06,'triangle');rTone(at,e.kind==='pot'?660:880,.05,'triangle',.07)}};
+/* 叩く音は人間のぶんだけ（CPUの音は消す） */
+for(const G of[PY_MOCHI,PY_PONG,PY_KARATE]){const h=G.hitSound;G.hitSound=function(i,at){if(!ISHUM(i)&&i!==-9)return;h.call(this,i===-9?PME:i,at)}}
+const _rDrum0=rDrum;rDrum=function(at,who){if(!ISHUM(who)&&who!==-9)return;_rDrum0(at,who===-9?PME:who)};
+/* 曲：練習中はドラムとベースだけ。本番からメロディ（手作りの固定フレーズ）が入る */
+R_STY.mochi.melody=[7,null,9,7,5,null,2,null,0,null,2,5,7,null,null,null];
+R_STY.pong.melody=[0,null,4,7,9,null,7,null,5,null,4,2,0,null,null,null];
+R_STY.karate.melody=[0,null,3,5,null,7,5,3,0,null,-2,0,null,null,null,null];
+R_STY.rhythm.melody=[0,null,4,null,7,null,4,null,5,4,2,null,0,null,null,null];
+rMusic=function(at,b,g,id){const S=R_STY[id],spb=g.spb,T=x=>at+x*spb,bb=((b%4)+4)%4,f=n=>S.root*Math.pow(2,n/12),sw=x=>(Math.abs(x%1-.5)<.01?x+S.sw:x);
+  if(b<g.lead){rHat(T(.5),.02);return}
+  if(g.lastHitB==null){let L=-1;for(const e of g.exp||[])L=Math.max(L,e.hit);g.lastHitB=L>=0?g.lead+L:1e9}
+  const endB=Math.ceil(g.lastHitB);if(b>endB+1)return;
+  if(b===endB+1){const ch=S.prog[0];rCrash(T(0),.08);rKick(T(0),.2);for(const n of S.tri)rTone(T(0),f(ch+n),spb*3,'triangle',.05);rTone(T(0),f(ch-24),spb*3,'sine',.12);return}
+  const songB=g.songB!=null?g.songB:(g.rounds?16:0),rel=b-g.lead,main=rel>=songB,bar=Math.floor(rel/4),mbar=Math.floor((rel-songB)/4),ch=main?S.prog[((mbar%S.prog.length)+S.prog.length)%S.prog.length]:S.prog[0];
+  if(bb===0)rKick(T(0),.13);
+  rHat(T(sw(.5)),.018);
+  if(!main){rBass(T(0),f(ch-24),spb*.4,.07);return}
+  for(const k of S.kick)if(k>0&&Math.floor(k)===bb)rKick(T(k-bb),.12);
+  if(S.snare.includes(bb))rSnare(T(0),.045);rHat(T(0),.01);
+  if(mbar%4===3&&bb===3){rSnare(T(sw(.5)),.035);rSnare(T(.75),.045)}
+  if(mbar===0&&bb===0)rCrash(T(0),.05);
+  rBass(T(0),f(ch-24),spb*.42,.09);if(bb%2===1)rBass(T(sw(.5)),f(ch-17),spb*.3,.05);
+  if(bb===1||bb===3)for(const n of S.tri)rTone(T(sw(.5)),f(ch+n),spb*.22,'triangle',.014);
+  const M=S.melody;if(M){const base=(mbar%2)*8+bb*2;for(let e=0;e<2;e++){const n=M[base+e];if(n!=null)rTone(T(sw(e*.5)),f(n+12),spb*.4,'triangle',.045)}}};
+/* 判定：おてほんは自動。練習は判定だけ見せて点にしない。空振りペナルティは本番だけ */
+function rgScoreFrom(g){if(g._sf==null||!g._prep){let m=1e9;for(const e of g.exp)if(!e.demo&&!e.prac)m=Math.min(m,e.cueT!=null?e.cueT:e.t-g.spb);g._sf=m-.15;const v=g._sf;if(!g._prep)g._sf=null;return v}return g._sf}
+rgJudgeTap=function(g,i,at){const S=rgSt(g,i);let best=null,bd=.2;for(const e of g.exp){if(e.m[i]||e.demo)continue;const d=Math.abs(at-e.t);if(d<bd){bd=d;best=e}}
+  let grade,dev=0;
+  if(best){best.m[i]=true;dev=at-best.t;grade=bd<.065?2:bd<.14?1:0;if(best.res)best.res[i]=grade;if(best.at)best.at[i]=at;
+    if(!best.prac){g.pts[i]+=grade;if(grade>0){S.combo++;S.max=Math.max(S.max,S.combo);S.devs.push(dev);if(grade===2)S.p++;else S.o++}else{S.combo=0;S.z++}}}
+  else{grade=-1;if(at>=rgScoreFrom(g)){g.pts[i]=Math.max(0,g.pts[i]-1);S.combo=0;S.stray++}}
+  g.fx.push({i,grade,t:0,e:best,dev,combo:S.combo,prac:best&&best.prac});
+  if(i===PME){if(grade===2)beep(1568,.04,'square',.03);else if(grade===1)beep(1175,.035,'triangle',.03);else beep(140,.09,'sawtooth',.035)}
+  return grade};
+rgMissScan=function(g){for(const e of g.exp){if(!e.done||e.cnt)continue;e.cnt=1;if(e.demo)continue;for(let i=0;i<4;i++)if(!e.m[i]){if(e.prac){if(i===PME)beep(110,.1,'sawtooth',.025);continue}const S=rgSt(g,i);S.m++;S.combo=0;if(i===PME)beep(110,.12,'sawtooth',.03)}}};
+/* おてほんの自動演奏・CPUの予定の整理 */
+function rgPrep(g,def){if(g._prep||!g.ready||g.t0==null)return;g._prep=1;
+  if(def===PY_RHYTHM){for(const e of g.exp){if(e.r===0)e.demo=true;else if(e.r===1)e.prac=true;e.cueT=e.t-4*g.spb}
+    g.segs=[];for(let r=0;r<g.rounds;r++)g.segs.push({b0:r*8,b1:r*8+8,label:r===0?'おてほん':r===1?'れんしゅう':MAIN,sub:r===0?'お手本を聞いたら、次の小節で同じリズムを':r===1?'まねしてみよう（点は入らないよ）':'',kind:r===0?'demo':r===1?'prac':'main'});g.songB=16;g.T=b=>g.t0+b*g.spb}
+  const demoT=g.exp.filter(e=>e.demo).map(e=>e.t);
+  for(let i=0;i<4;i++){if(ISHUM(i))continue;g.cpuPlan[i]=g.cpuPlan[i].filter(t=>!demoT.some(d=>Math.abs(d-t)<.25))}
+  for(const t of demoT){if(def.hitSound)def.hitSound(-9,t);else rDrum(t,-9)}}
+function rgDemoTick(g){const now=rClock();for(const e of g.exp){if(!e.demo||e.auto||now<e.t)continue;e.auto=1;for(let i=0;i<4;i++){e.m[i]=true;if(e.res)e.res[i]=2;if(e.at)e.at[i]=e.t;g.taps[i].push(e.t)}}}
+for(const G of[PY_MOCHI,PY_PONG,PY_KARATE,PY_RHYTHM]){const u=G.update;G.update=function(g,dt,inp){if(g._prep)rgDemoTick(g);const r=u.call(this,g,dt,inp);rgPrep(g,this);if(g._prep)rgDemoTick(g);return r}}
+R_PAT.length=0;R_PAT.push([0,1,2,3],[0,2,3],[0,1,2],[0,1.5,2,3],[0,.5,1,2],[0,1,1.5,2,3],[0,1.5,3],[0,.5,1.5,2,3],[0,1,2,2.5,3]);
+/* 画面：自分の叩く場所に縮む輪。今どの段階かを上に出す */
+function rgHitPt(g,i){const x=RX(i);if(g.id==='mochi')return[x,1.9,3.2];if(g.id==='pong')return[x+1.2,2.2,2];if(g.id==='karate')return[x,2.2,2.2];return[x,1.4,2.5]}
+function rgSegNow(g){if(!g.segs||g.beat==null)return null;const rb=g.beat-g.lead;for(const s of g.segs)if(rb>=s.b0-1&&rb<s.b1-1)return{s,k:(rb-s.b0+1)/(s.b1-s.b0)};return null}
+rgOverlayExtra=function(y,g){const now=rClock(),top=Math.max(110,H*.15);
+  for(const who of[PME,PME2]){if(who<0)continue;const hp=rgHitPt(g,who),p=p3Proj(hp[0],hp[1],hp[2]);if(!p.on)continue;const mine=who===PME;
+    ctx.save();ctx.globalAlpha=mine?.22:.12;ctx.fillStyle=mine?'#fff27a':'#7fd0ff';ctx.beginPath();ctx.ellipse(p.x,p.y,mine?34:26,mine?34:26,0,0,TAU);ctx.fill();ctx.restore();
+    for(const e of g.exp){const c0=e.cueT!=null?e.cueT:e.t-g.spb;if(now<c0||now>e.t+.12)continue;if(e.m[who]&&!e.demo)continue;
+      const k=Math.max(0,(e.t-now)/(e.t-c0)),r=(mine?18:14)+k*(mine?70:46);const col=e.demo?'#7fd0ff':e.kind==='lob'||e.kind==='melon'||e.kind==='dbl'?'#ff9f43':'#ffffff';
+      ctx.save();ctx.globalAlpha=(mine?1:.55)*(now>e.t?Math.max(0,1-(now-e.t)/.12):Math.min(1,(1-k)*2+.25));ctx.strokeStyle=col;ctx.lineWidth=mine?5:3;ctx.beginPath();ctx.arc(p.x,p.y,r,0,TAU);ctx.stroke();
+      if(k<.12){ctx.fillStyle=col;ctx.globalAlpha*=.35;ctx.beginPath();ctx.arc(p.x,p.y,r,0,TAU);ctx.fill()}ctx.restore()}}
+  const sg=rgSegNow(g);if(sg){const s=sg.s,show=s.kind!=='main'||(sg.k<.3&&s.b0===g.songB);if(show){const col=s.kind==='demo'?'#3f7de0':s.kind==='prac'?'#2f9a7f':'#e2493b';const w=Math.min(W*.9,460),yy=top-34;
+      rr(W/2-w/2,yy-20,w,s.sub?58:40,20,'rgba(255,255,255,.94)');popText(s.label,W/2,yy+1,20,col,'#ffffff');if(s.sub)vt(s.sub,W/2,yy+26,13,'#3a3f55',null,'"M PLUS Rounded 1c",sans-serif')}}
+  const S=g.rs&&g.rs[PME];
+  if(S&&S.combo>=3){const pul=1+Math.max(0,.25-((now-(g.taps[PME].slice(-1)[0]||0))))*1.2;ctx.save();ctx.translate(W-70,H*.42);ctx.scale(pul,pul);popText(String(S.combo),0,0,34,'#ffd23f','#2a1f4a');popText('コンボ',0,26,13,'#ffffff','#2a1f4a');ctx.restore()}
+  const f=rgLastFor(g,PME);if(f&&f.grade>=0&&f.grade<2&&Math.abs(f.dev||0)>.03&&f.t<.6){const hp=rgHitPt(g,PME),p=p3Proj(hp[0],hp[1]+3.6,hp[2]);ctx.globalAlpha=1-f.t/.6;popText(f.dev<0?'はやい':'おそい',p.x,p.y+22,14,f.dev<0?'#7fd0ff':'#ff9f7f','#2a1f4a');ctx.globalAlpha=1}
+  if(g.end&&now>g.end-.2){const k=Math.min(1,(now-g.end+.2)*3);ctx.save();ctx.translate(W/2,H*.45);ctx.scale(.6+k*.4,.6+k*.4);popText('フィニッシュ！',0,0,56,'#ffd23f','#c02a20');ctx.restore()}};
+/* 結果：本番だけで評価 */
+rStatsLine=function(y,g){const S=g.rs&&g.rs[PME];if(!S)return;const n=g.exp.filter(e=>!e.demo&&!e.prac).length||1;const E=rgEval(S,n);
+  const avg=S.devs.length?S.devs.reduce((a,b)=>a+b,0)/S.devs.length*1000:0;const avgTxt=Math.abs(avg)<12?'ぴったり':`${avg>0?'+':''}${Math.round(avg)}ms ${avg>0?'おそめ':'はやめ'}`;
+  popText(`評価：${E.rank}`,VW/2,310,17,E.col,'#ffffff');
+  vt(`ピッタリ ${S.p}　OK ${S.o}　ミス ${S.m+S.z}　最大 ${S.max} コンボ　平均ズレ ${avgTxt}`,VW/2,331,11,'#3a3f55',null,'"M PLUS Rounded 1c",sans-serif')};
 
 /* ---------- オンライン2人プレイ（PeerJS / テスト用BroadcastChannel） ---------- */
 const NET={on:false,role:null,peer:null,conn:null,code:'',st:'idle',err:'',in2:{mx:0,my:0,act:0,pick:null,flag:null,L:0,R:0,dt:null},rq:[],sfx:[],sfxOn:false,sendT:0,lastPh:null,tg:null,tgAt:0,inT:0,prevK:{},lastIn:'',bc:null};
