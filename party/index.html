@@ -2682,7 +2682,8 @@ let last=0;
 let LOOP_ERR=0,FPS_ACC=0,FPS_N=0;
 function loopErr(e){LOOP_ERR++;try{console.error(e)}catch(_){}if(LOOP_ERR<=3){let el=document.getElementById('errToast');if(!el){el=document.createElement('div');el.id='errToast';el.style.cssText='position:fixed;left:8px;bottom:8px;z-index:99;max-width:70vw;background:rgba(160,30,20,.92);color:#fff;font:12px/1.4 sans-serif;padding:6px 10px;border-radius:8px;pointer-events:none';(document.body||document.documentElement).appendChild(el)}
   el.textContent='エラー: '+String(e&&e.message||e).slice(0,140)+' ('+String(e&&e.stack||'').split('\n')[1]?.trim().slice(0,80)+')';clearTimeout(el._t);el._t=setTimeout(()=>el.remove(),9000)}}
-function loop(ts){
+let LAST_LOOP=0;
+function loop(ts){LAST_LOOP=performance.now();
   try{loopBody(ts)}catch(e){loopErr(e)}
   requestAnimationFrame(loop)}
 function loopBody(ts){
@@ -3050,14 +3051,14 @@ function netInviteURL(){const u=new URL(location.href);u.search='';u.hash='';u.s
 function netUseBC(){return new URLSearchParams(location.search).get('nettest')==='bc'}
 function netHost(){netClose(true);NET.role='host';NET.code=netCode();NET.st='wait';NET.err='';pmShow();
   if(netUseBC()){NET.bc=new BroadcastChannel('hima-'+NET.code);NET.bc.onmessage=e=>{if(e.data.from==='host')return;if(!NET.on)netOpened();netRecv(e.data.m)};return}
-  netLoadPeer(()=>{try{const pr=new Peer(NET_PRE+NET.code,NET_ICE);NET.peer=pr;
+  netLoadPeer(()=>{try{const pr=new Peer(NET_PRE+NET.code,Object.assign({},NET_ICE,window.HIMA_PEER||{}));NET.peer=pr;
     pr.on('connection',c=>{if(NET.conn&&NET.conn.open){try{c.close()}catch(_){}return}NET.conn=c;c.on('open',()=>netOpened());c.on('data',d=>netRecv(d));c.on('close',()=>netLost());c.on('error',()=>netLost())});
     pr.on('error',e=>{if(e&&e.type==='unavailable-id'){NET.code=netCode();netHost();return}if(!NET.on)netFail('部屋を作れませんでした（'+(e&&e.type||'error')+'）')});
     pr.on('disconnected',()=>{try{pr.reconnect()}catch(_){}})}catch(e){netFail('このページではオンラインが使えません。GitHub Pages版で遊んでね')}})}
 function netJoin(code){code=String(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'');if(code.length<4){NET.err='部屋コードを確認してね';pmShow();return}
   netClose(true);NET.role='guest';NET.code=code;NET.st='join';NET.err='';pmShow();
   if(netUseBC()){NET.bc=new BroadcastChannel('hima-'+code);NET.bc.onmessage=e=>{if(e.data.from==='guest')return;if(!NET.on)netOpened();netRecv(e.data.m)};netSend({t:'hello'});return}
-  netLoadPeer(()=>{try{const pr=new Peer(undefined,NET_ICE);NET.peer=pr;
+  netLoadPeer(()=>{try{const pr=new Peer(NET_PRE+'g'+Math.random().toString(36).slice(2,10),Object.assign({},NET_ICE,window.HIMA_PEER||{}));NET.peer=pr;
     pr.on('open',()=>{const c=pr.connect(NET_PRE+code,{reliable:true,serialization:'json'});NET.conn=c;c.on('open',()=>{netOpened();netSend({t:'hello'})});c.on('data',d=>netRecv(d));c.on('close',()=>netLost());c.on('error',()=>netLost());
       setTimeout(()=>{if(!NET.on&&NET.role==='guest'&&NET.st==='join')netFail('部屋が見つかりません。コードを確認してね')},12000)});
     pr.on('error',e=>{if(!NET.on)netFail(e&&e.type==='peer-unavailable'?'部屋が見つかりません。コードを確認してね':'つながりませんでした（'+(e&&e.type||'error')+'）')})}catch(e){netFail('このページではオンラインが使えません。GitHub Pages版で遊んでね')}})}
@@ -3152,6 +3153,11 @@ function netPanel(){const y=Y,el=$('#pmenu'),eye=$('#pmEye'),ti=$('#pmTitle'),bd
   const go=document.createElement('button');go.type='button';go.className='pm-go';go.textContent='入る';go.addEventListener('click',()=>netJoin(inp.value));inp.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter')netJoin(inp.value)});j.appendChild(inp);j.appendChild(go);g.appendChild(j);
   if(NET.err)mk('p','pm-err',NET.err);
   const row=mk('div','pm-row');btn('pm-sub','もどる',()=>{netClose();y.ph='menu';pmShow()},row)}
+
+/* ホストの画面が隠れても（別タブ・最小化）ゲームを進める */
+(function(){let lt=0;const tick=()=>{try{if(!Y||!NET.on||NET.role!=='host'||Y.over||Y.running===false)return;const now=performance.now();if(now-LAST_LOOP<150){lt=0;return}const dt=lt?Math.min(.05,(now-lt)/1000):.016;lt=now;updY(dt)}catch(e){}};
+  let ok=false;try{const src='let t=null;onmessage=e=>{clearInterval(t);if(e.data)t=setInterval(()=>postMessage(1),20)}';const w=new Worker(URL.createObjectURL(new Blob([src],{type:'text/javascript'})));w.onmessage=tick;w.postMessage(1);ok=true}catch(e){}
+  if(!ok)setInterval(tick,20)})();
 /* 招待リンクから来たら自動で入る */
 (function(){try{const r=new URLSearchParams(location.search).get('room');if(!r)return;setTimeout(()=>{start('party');Y.ph='net';netJoin(r)},300)}catch(_){}})();
 MENU_PH.push('wait');
