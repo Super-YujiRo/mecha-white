@@ -168,6 +168,9 @@ a.mode{color:inherit;text-decoration:none;align-content:start}
 @keyframes wipeGo{0%{transform:translateX(-160%) skewX(-14deg)}100%{transform:translateX(220%) skewX(-14deg)}}
 .pm-sheet .pm-row{position:sticky;bottom:-16px;z-index:2;padding:10px 0 6px;margin-bottom:-6px;background:linear-gradient(rgba(255,253,246,0),rgba(255,253,246,.97) 35%)}
 @media (max-height:560px){.pm-sheet{max-height:74vh!important}}
+#verBan{position:fixed;left:50%;top:58px;transform:translateX(-50%);z-index:98;background:#1d2433;color:#fff;border:3px solid #ffd23f;border-radius:14px;padding:8px 12px;font:14px/1.5 "M PLUS Rounded 1c",sans-serif;max-width:92vw;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+#verBan button{margin-left:8px;background:#ffd23f;color:#1d2433;border:none;border-radius:999px;padding:4px 12px;font-weight:800;cursor:pointer}
+.pm-go.wait{background:linear-gradient(#ffb36a,#f08a3a)!important;box-shadow:0 5px 0 #b05a1a}
 </style>
 
 <canvas id="cv" aria-label="ゲーム画面"></canvas>
@@ -3035,7 +3038,7 @@ const _fxBuild=p3Build;p3Build=function(gid){P3.bloom=.22;P3.crowd=null;P3.score
 
 /* ---------- オンライン2人プレイ（PeerJS / テスト用BroadcastChannel） ---------- */
 const NET={on:false,role:null,peer:null,conn:null,code:'',st:'idle',err:'',in2:{mx:0,my:0,act:0,pick:null,flag:null,L:0,R:0,dt:null},rq:[],sfx:[],sfxOn:false,sendT:0,lastPh:null,tg:null,tgAt:0,inT:0,prevK:{},lastIn:'',bc:null};
-const NET_PRE='himatsubushi-party-v1-';const NET_VER='p24';NET.gReady=false;NET.lastSnap=0;NET.selPend=null;
+const NET_PRE='himatsubushi-party-v1-';const NET_VER='p25';NET.gReady=false;NET.lastSnap=0;NET.oldGuest=false;NET.verBad=0;NET.selPend=null;
 const NET_ICE={config:{iceServers:[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302']},{urls:'stun:stun.cloudflare.com:3478'},{urls:['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443','turn:openrelay.metered.ca:443?transport=tcp'],username:'openrelayproject',credential:'openrelayproject'}]}};
 MENU_PH.push('net');
 function netRand(seed){let a=seed>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
@@ -3078,7 +3081,7 @@ function netRecv(m){if(!m||!Y)return;const y=Y;
   if(m.t==='bye'){netLost();return}
   if(m.t==='rt'){NET.rq.push(m);return}
   if(NET.role==='host'){
-    if(m.t==='hello'){if(m.v!==NET_VER&&!NET.verWarn){NET.verWarn=1;netToast('相手と版が違います。2人ともページを再読み込み（Ctrl+Shift+R）してね')}netSnap(true);return}
+    if(m.t==='hello'){NET.oldGuest=!m.v;if(m.v!==NET_VER){NET.verBad=1;verBanner(true)}netSnap(true);if(MENU_PH.includes(y.ph))pmShow();return}
     if(m.t==='in'){const I=NET.in2;I.mx=m.mx||0;I.my=m.my||0;I.act+=m.act||0;if(m.pick!=null)I.pick=m.pick;if(m.flag)I.flag=m.flag;if(m.L)I.L=1;if(m.R)I.R=1;if(m.dt!=null)I.dt=m.dt;return}
     if(m.t==='sel'||m.t==='ready'){if(y.ph==='chars'&&m.i!==PME&&m.i>=0&&m.i<4){PME2=m.i;NET.gReady=m.t==='ready'&&!!m.on;pmShow();netSnap(true)}else netSnap(true);return}
     if(m.t==='tap'){if(['rules','res','final'].includes(y.ph))pyTap();return}}
@@ -3096,7 +3099,7 @@ function netMerge(c,t,k){if(Array.isArray(t)){if(!Array.isArray(c)||c.length!==t
     for(const key in t){const tv=t[key],cv=c[key];if((key==='x'||key==='y')&&typeof tv==='number'&&typeof cv==='number'&&Math.abs(tv-cv)<80)c[key]=cv+(tv-cv)*k;else c[key]=netMerge(cv,tv,k)}return c}
   return t}
 function netApply(s){const y=Y;const phCh=s.ph!==y.ph||s.gi!==y.gi;NET.lastSnap=performance.now()/1000;if(NET.warnOn){NET.warnOn=0;netToast('つながりました')}
-  if(s.v&&s.v!==NET_VER&&!NET.verWarn){NET.verWarn=1;netToast('相手と版が違います。2人ともページを再読み込み（Ctrl+Shift+R）してね')}
+  if(s.v!==NET_VER&&!NET.verBad){NET.verBad=1;verBanner(true)}
   const pend=NET.selPend&&performance.now()/1000-NET.selPend.t<1.5;if(pend&&s.p2!==NET.selPend.i){s.p2=NET.selPend.i;s.gr=NET.myReady}else NET.selPend=null;const grCh=NET.myReady!==!!s.gr;NET.myReady=!!s.gr;
   y.list=s.ids.map(id=>PY_GAMES.find(G=>G.id===id)).filter(Boolean);y.gi=s.gi;y.mode=s.mode;y.coins=s.coins;y.rank=s.rank;y.finalOrder=s.fo;y.shake=Math.max(y.shake||0,s.shake||0);y.seed=s.seed;
   const pmeCh=PME!==s.p2||PME2!==s.hc;PME=s.p2;PME2=s.hc;y.sel=PME;
@@ -3134,7 +3137,8 @@ const _netPmShow=pmShow;pmShow=function(){const y=Y,el=$('#pmenu');if(!y)return 
       const row=document.createElement('div');row.className='pm-row';const q=document.createElement('button');q.type='button';q.className='pm-sub';q.textContent='オンラインをやめる';q.addEventListener('click',()=>{netClose();pmShow()});row.appendChild(q);bd.appendChild(row)}}
   if(y.ph==='chars'&&NET.on){const cards=bd.querySelectorAll('.pm-grid.four .pm-card');cards.forEach((c,i)=>{if(i===PME2){c.disabled=true;c.classList.add('taken');c.insertAdjacentHTML('beforeend','<em class="p2">あいて</em>')}});
     const ok=bd.querySelector('.pm-go');const n=document.createElement('p');n.className='pm-note';n.innerHTML=NET.gReady?`あいて：<b>${PYS[PME2].name}で準備OK！</b>`:`あいて：キャラを選んでいます…`;bd.insertBefore(n,bd.firstChild);
-    if(ok&&y.sel===PME2){ok.disabled=true;ok.textContent='あいてと別のキャラにしてね'}else if(ok&&!NET.gReady){ok.disabled=true;ok.textContent='あいての決定を待っています…'}}}
+    if(ok&&y.sel===PME2){ok.disabled=true;ok.textContent='あいてと別のキャラにしてね'}
+    else if(ok&&!NET.gReady&&!NET.oldGuest){ok.classList.add('wait');ok.textContent=`${PYS[y.sel].name}で決定（あいては選び中）`;ok.addEventListener('click',e=>{if(NET.gReady||ok._armed)return;e.stopImmediatePropagation();e.preventDefault();ok._armed=1;ok.textContent='あいてを待たずに始める？ もう一度押す';beep(440,.06)},{capture:true})}}}
 function netPanel(){const y=Y,el=$('#pmenu'),eye=$('#pmEye'),ti=$('#pmTitle'),bd=$('#pmBody');el.hidden=false;bd.innerHTML='';
   const mk=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;bd.appendChild(e);return e};
   const btn=(cls,txt,fn,parent)=>{const b=document.createElement('button');b.type='button';b.className=cls;b.textContent=txt;b.addEventListener('click',fn);(parent||bd).appendChild(b);return b};
@@ -3160,6 +3164,10 @@ function netPanel(){const y=Y,el=$('#pmenu'),eye=$('#pmEye'),ti=$('#pmTitle'),bd
   if(NET.err)mk('p','pm-err',NET.err);
   const row=mk('div','pm-row');btn('pm-sub','もどる',()=>{netClose();y.ph='menu';pmShow()},row)}
 
+function verBanner(on,newer){let el=document.getElementById('verBan');if(!on){if(el)el.remove();return}if(!el){el=document.createElement('div');el.id='verBan';(document.body||document.documentElement).appendChild(el)}
+  el.innerHTML=(newer?'新しい版が出ています。':'あいてと版が違います。')+'<b>2人とも</b>再読み込みしてね <button type="button">再読み込み</button>';el.querySelector('button').onclick=()=>{try{const u=new URL(location.href);u.searchParams.set('_',Date.now().toString(36));if(NET.role==='guest'&&NET.code)u.searchParams.set('room',NET.code);location.href=u.toString()}catch(_){location.reload()}}}
+function verCheckRemote(){try{if(!/^https?:/.test(location.protocol)||/claude/.test(location.hostname))return;fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=t.match(/NET_VER='([^']+)'/);if(m&&m[1]!==NET_VER)verBanner(true,true)}).catch(()=>{})}catch(_){}}
+setTimeout(verCheckRemote,1500);setInterval(()=>{if(Y&&MENU_PH.includes(Y.ph))verCheckRemote()},60000);
 /* ゲスト：ホストからの通信が止まったら知らせて、つなぎ直す */
 setInterval(()=>{try{if(!NET.on||NET.role!=='guest')return;const now=performance.now()/1000;if(!NET.lastSnap)NET.lastSnap=now;const gap=now-NET.lastSnap;
   if(gap>3){if(!NET.warnOn){NET.warnOn=1;netToast('ホストからの通信が止まっています…つなぎ直しています')}netSend({t:'hello',v:NET_VER});if(NET.peer&&NET.peer.disconnected)try{NET.peer.reconnect()}catch(_){}}
