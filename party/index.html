@@ -2679,15 +2679,21 @@ function hud(){
 
 /* ---------- 画面遷移 ---------- */
 let last=0;
+let LOOP_ERR=0,FPS_ACC=0,FPS_N=0;
+function loopErr(e){LOOP_ERR++;try{console.error(e)}catch(_){}if(LOOP_ERR<=3){let el=document.getElementById('errToast');if(!el){el=document.createElement('div');el.id='errToast';el.style.cssText='position:fixed;left:8px;bottom:8px;z-index:99;max-width:70vw;background:rgba(160,30,20,.92);color:#fff;font:12px/1.4 sans-serif;padding:6px 10px;border-radius:8px;pointer-events:none';(document.body||document.documentElement).appendChild(el)}
+  el.textContent='エラー: '+String(e&&e.message||e).slice(0,140)+' ('+String(e&&e.stack||'').split('\n')[1]?.trim().slice(0,80)+')';clearTimeout(el._t);el._t=setTimeout(()=>el.remove(),9000)}}
 function loop(ts){
-  const dt=Math.min(.05,(ts-last)/1000||0);last=ts;
+  try{loopBody(ts)}catch(e){loopErr(e)}
+  requestAnimationFrame(loop)}
+function loopBody(ts){
+  const raw=(ts-last)/1000||0;const dt=Math.min(.05,raw);last=ts;
+  if(Y&&raw>0&&raw<1&&typeof FX!=='undefined'&&FX.on){FPS_ACC+=raw;FPS_N++;if(FPS_N>=90){if(FPS_ACC/FPS_N>1/32){FX.on=false}FPS_ACC=0;FPS_N=0}}
   if(Y){if(Y.running!==false&&!Y.over)updY(dt);VTF=POPF;renderY();VTF='"DotGothic16",monospace';hudY()}
   else if(M){if(M.running&&!M.over)updM(dt);renderM();hudM()}
   else if(P){if(P.running&&!P.over)updP(dt);renderP();hudP()}
   else if(R){if(R.running&&!R.over)updR(dt);else humSet(0,70);renderR();hudR()}
   else if(G){if(G.running&&!G.over)update(dt);render();hud()}
   else drawIdle(ts/1000);
-  requestAnimationFrame(loop);
 }
 function drawIdle(t){ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle='#2f3542';ctx.fillRect(0,0,W,H)}
 function show(id){['#menu','#levelup','#pause','#result'].forEach(s=>$(s).hidden=s!==id)}
