@@ -215,7 +215,7 @@ a.mode{color:inherit;text-decoration:none;align-content:start}
       <button class="mode" type="button" data-mode="party" id="modeParty">
         <canvas id="pvParty" width="280" height="96"></canvas>
         <b>パーティ 3D</b>
-        <span>4人の中からキャラを選んで、CPU3人とミニゲームで勝負。全21種類。2対2・1対3の「チームバトル」、ランダム5本の「ランダムバトル」、リズムゲームだけの「リズムバトル」、好きな1本を選ぶモードがある。友達とオンラインでも遊べる。</span>
+        <span>4人の中からキャラを選んで、CPU3人とミニゲームで勝負。全27種類。2対2・1対3の「チームバトル」、ランダム5本の「ランダムバトル」、リズムゲームだけの「リズムバトル」、好きな1本を選ぶモードがある。友達とオンラインでも遊べる。</span>
         <em>3Dモデル：Kenney（CC0）</em>
       </button>
       <a class="mode" href="https://super-yujiro.github.io/net-linkers/" target="_blank" rel="noopener">
@@ -2103,14 +2103,14 @@ function pmShow(){const y=Y,el=$('#pmenu');if(!y||!MENU_PH.includes(y.ph)){el.hi
   const btn=(cls,html,fn)=>{const b=document.createElement('button');b.type='button';b.className=cls;b.innerHTML=html;b.addEventListener('click',fn);bd.appendChild(b);return b};
   if(y.ph==='menu'){eye.textContent='パーティ広場';ti.textContent='どうやって遊ぶ？';
     const g=document.createElement('div');g.className='pm-grid two';bd.appendChild(g);
-    [['team','チームバトル','2対2と1対3のチーム戦4本。勝ったチームは全員コイン多め'],['random','ランダムバトル','ミニゲーム5本をランダムで。順位でもらえるコインの合計で優勝を決める'],['rhythm','リズムバトル','リズムゲーム4本だけで勝負。音をよく聞いて、ピッタリでたたけ'],['pick','えらんで遊ぶ','好きなミニゲームを1本ずつ。練習やリベンジに']].forEach(([m,n,d])=>{const b=document.createElement('button');b.type='button';b.className='pm-card big';b.innerHTML=`<b>${n}</b><span>${d}</span>`;b.addEventListener('click',()=>{y.mode=m;y.ph='chars';y.sel=PME;beep(660,.06);pmShow()});g.appendChild(b)})}
+    [['team','チームバトル','2対2と1対3のチーム戦からランダム5本。勝ったチームは全員コイン多め'],['random','ランダムバトル','ミニゲーム5本をランダムで。順位でもらえるコインの合計で優勝を決める'],['rhythm','リズムバトル','リズムゲーム4本だけで勝負。音をよく聞いて、ピッタリでたたけ'],['pick','えらんで遊ぶ','好きなミニゲームを1本ずつ。練習やリベンジに']].forEach(([m,n,d])=>{const b=document.createElement('button');b.type='button';b.className='pm-card big';b.innerHTML=`<b>${n}</b><span>${d}</span>`;b.addEventListener('click',()=>{y.mode=m;y.ph='chars';y.sel=PME;beep(660,.06);pmShow()});g.appendChild(b)})}
   if(y.ph==='chars'){eye.textContent=y.mode==='random'?'ランダムバトル':y.mode==='rhythm'?'リズムバトル':y.mode==='team'?'チームバトル':'えらんで遊ぶ';ti.textContent='キャラをえらぶ';
     const g=document.createElement('div');g.className='pm-grid four';bd.appendChild(g);
     PYS.forEach((p,i)=>{const b=document.createElement('button');b.type='button';b.className='pm-card'+(i===y.sel?' on':'');b.innerHTML=`<i style="background:${p.col}"></i><b>${p.name}</b><span>${p.tag}</span>`;b.addEventListener('click',()=>{y.sel=i;PME=i;beep(520+i*80,.06);pmShow()});g.appendChild(b)});
     const row=document.createElement('div');row.className='pm-row';bd.appendChild(row);
     const back=document.createElement('button');back.type='button';back.className='pm-sub';back.textContent='もどる';back.addEventListener('click',()=>{y.ph='menu';pmShow()});row.appendChild(back);
     const ok=document.createElement('button');ok.type='button';ok.className='pm-go';ok.textContent=`${PYS[y.sel].name}で決定`;ok.addEventListener('click',()=>{PME=y.sel;beep(880,.08);
-      if(y.mode==='team'){const L=PY_GAMES.filter(G=>G.team);for(let i=L.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[L[i],L[j]]=[L[j],L[i]]}y.list=L;y.gi=0;y.coins=[0,0,0,0];y.ph='rules';y.pt=0;y.preview=null}
+      if(y.mode==='team'){const L=PY_GAMES.filter(G=>G.team);for(let i=L.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[L[i],L[j]]=[L[j],L[i]]}y.list=L.slice(0,5);y.gi=0;y.coins=[0,0,0,0];y.ph='rules';y.pt=0;y.preview=null}
       else if(y.mode==='rhythm'){const L=PY_GAMES.filter(G=>G.rhythm);for(let i=L.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[L[i],L[j]]=[L[j],L[i]]}y.list=L;y.gi=0;y.coins=[0,0,0,0];y.ph='rules';y.pt=0;y.preview=null}
       else if(y.mode==='random'){const L=PY_GAMES.slice();for(let i=L.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[L[i],L[j]]=[L[j],L[i]]}y.list=L.slice(0,5);y.gi=0;y.coins=[0,0,0,0];y.ph='rules';y.pt=0;y.preview=null}
       else{y.ph='gamesel'}pmShow()});row.appendChild(ok)}
@@ -3367,9 +3367,221 @@ TM3.oni={team:1,sky:['#3a2a6a','#ffb08a'],build(s){const pl=p3Mesh(new THREE.Cyl
   vt(`${Math.max(0,Math.ceil(g.dur-g.t))}秒　のこり ${g.bs.filter(b=>b.i!==g.oni&&!b.out).length}人`,W/2,top+30,16,'#fff');
   if(g.done)popText(g.win===0?'おにの勝ち！':'にげきった！',W/2,H*.42,44,TCOL[g.win],'#ffffff')}};
 
+/* ---------- マリパ風チーム戦 6本 ---------- */
+function tm13(){if(Y&&Y.teams&&Y.teams.length===4&&Y.teams.filter(v=>v===0).length===1)return Y.teams.slice();const a=[1,1,1,1];a[Math.floor(Math.random()*4)]=0;return a}
+function tm22(){if(Y&&Y.teams&&Y.teams.length===4&&Y.teams.filter(v=>v===0).length===2)return Y.teams.slice();return tmShuffleTeams()}
+const DIRG={look:'udlr',pk:'lcr'};
+const DIRJ={u:'↑',d:'↓',l:'←',r:'→',c:'まん中'};
+
+/* A) トロッコこぎ（Handcar Havoc） 2対2 */
+const HC={L:24,R:5.5,laps:2};HC.P=2*HC.L+2*Math.PI*HC.R;
+function hcPos(s,cz){const P=HC.P,L=HC.L,R=HC.R;let u=((s%P)+P)%P;if(u<L)return{x:-L/2+u,z:cz+R,yaw:Math.PI/2,curve:false};u-=L;if(u<Math.PI*R){const a=u/R;return{x:L/2+Math.sin(a)*R,z:cz+Math.cos(a)*R,yaw:Math.PI/2+a,curve:true}}u-=Math.PI*R;if(u<L)return{x:L/2-u,z:cz-R,yaw:-Math.PI/2,curve:false};u-=L;const a=u/R;return{x:-L/2-Math.sin(a)*R,z:cz-Math.cos(a)*R,yaw:-Math.PI/2+a,curve:true}}
+function hcToCurve(s){const P=HC.P,L=HC.L,R=HC.R;let u=((s%P)+P)%P;if(u<L)return L-u;u-=L;if(u<Math.PI*R)return 0;u-=Math.PI*R;if(u<L)return L-u;return 0}
+const PY_HANDCAR={id:'handcar',team:true,name:'トロッコこぎ',btn:'こぐ',rule:'2対2。2人で連打してトロッコをこげ！ 速いままカーブに入ると脱線してしばらく止まる。カーブの前は手を止めてスピードを落とそう。先に2周したチームの勝ち。',ctrl:'ボタン / 画面タップ / スペースを連打（カーブ前はがまん）',
+ make(){const g={id:'handcar',teamGame:true,teams:tm22(),t:0,dur:50,s:[0,0],v:[0,0],crash:[0,0],pump:[0,0,0,0],next:[0,0,0,0],fin:[null,null],win:-1,endT:0};for(let i=0;i<4;i++)g.next[i]=rand(.1,.3);return g},
+ lim(){return 7.2},
+ update(g,dt,inp){g.t+=dt;for(let i=0;i<4;i++)g.pump[i]=Math.max(0,g.pump[i]-dt*5);
+   if(g.win>=0){g.endT+=dt;for(const tm of[0,1])g.s[tm]+=g.v[tm]*dt*.5;if(g.endT>1.6)return tmRank(g,g.win,i=>g.pump[i]);return null}
+   const push=(i,n)=>{const tm=g.teams[i];if(g.crash[tm]>0)return;g.v[tm]+=n*.46;g.pump[i]=1};
+   for(const i of[PME,PME2]){if(i<0)continue;const n=Math.min(tmHum(i,inp).act||0,3);if(n){push(i,n);if(i===PME)beep(240+Math.random()*60,.03,'triangle',.03)}}
+   for(let i=0;i<4;i++){if(ISHUM(i))continue;const P=CPU(i),tm=g.teams[i];g.next[i]-=dt;const d=hcToCurve(g.s[tm]),onC=hcPos(g.s[tm],0).curve;
+     const k=P==='careful'?.86:P==='greedy'?1.04:(.8+Math.sin(g.t*1.3+i)*.25);const brake=(onC||d<(P==='careful'?7:4))&&g.v[tm]>this.lim()*k;
+     if(g.next[i]<=0){if(!brake)push(i,1);g.next[i]=1/(P==='greedy'?7.6:P==='careful'?7:6.4)*rand(.8,1.2)}}
+   for(const tm of[0,1]){if(g.crash[tm]>0){g.crash[tm]-=dt;g.v[tm]=0;continue}g.v[tm]*=Math.pow(.55,dt);g.v[tm]=Math.min(g.v[tm],16);g.s[tm]+=g.v[tm]*dt;
+     if(hcPos(g.s[tm],0).curve&&g.v[tm]>this.lim()){g.crash[tm]=1.6;g.v[tm]=0;g.s[tm]+=.5;if(Y)Y.shake=Math.max(Y.shake,8);beep(120,.3,'sawtooth',.07);beep(300,.1,'square',.04,.1)}
+     if(g.s[tm]>=HC.P*HC.laps&&g.win<0){g.win=tm;beep(523,.1);beep(784,.16,'square',.05,.1)}}
+   if(g.t>=g.dur&&g.win<0)g.win=g.s[0]>=g.s[1]?0:1;
+   return null},
+ draw(g){tmDraw2D({},'トロッコこぎ');for(const tm of[0,1])vt(`${TNAME[tm]} ${(g.s[tm]/HC.P).toFixed(1)}周`,VW/2,120+tm*60,20,TCOL[tm])}};
+
+/* B) ボブスレー（Bobsled Run） 2対2 */
+const BS={len:260,hw:2.3};
+function bsOff(z){return 2.4*Math.sin(z*.085)+1.5*Math.sin(z*.21+1.3)}
+const PY_BOBSLED={id:'bobsled',team:true,name:'ボブスレー',btn:null,rule:'2対2。2人で左右にかたむけてソリをあやつれ！ 2人の入力を合わせた向きに曲がる。かべにぶつかるとスピードが落ちる。先にゴールしたチームの勝ち。',ctrl:'左右：ドラッグ / 矢印・AD（チームの2人で合わせる）',
+ make(){const g={id:'bobsled',teamGame:true,teams:tm22(),t:0,dur:40,z:[0,0],v:[0,0],u:[0,0],hit:[0,0],steer:[0,0,0,0],fin:[null,null],win:-1,endT:0,err:[0,0,0,0]};return g},
+ update(g,dt,inp){g.t+=dt;
+   if(g.win>=0){g.endT+=dt;for(const tm of[0,1]){g.z[tm]+=g.v[tm]*dt;g.v[tm]*=Math.pow(.3,dt)}if(g.endT>1.6)return tmRank(g,g.win);return null}
+   for(let i=0;i<4;i++){const tm=g.teams[i];let s=0;if(ISHUM(i)){s=tmHum(i,inp).mx||0}else{const P=CPU(i);const look=g.z[tm]+(P==='careful'?7:P==='greedy'?4:5);const tgt=bsOff(look)-bsOff(g.z[tm]);g.err[i]+=(rand(-1,1)*(P==='clumsy'?2.2:P==='greedy'?1.2:.8)-g.err[i])*dt*2;s=Math.max(-1,Math.min(1,(tgt-g.u[tm])*.9+g.err[i]*.5))}g.steer[i]=s}
+   for(const tm of[0,1]){const mem=[0,1,2,3].filter(i=>g.teams[i]===tm);const st=(g.steer[mem[0]]+g.steer[mem[1]])/2;
+     g.v[tm]=Math.min(23,g.v[tm]+dt*7.5);const z0=g.z[tm];g.z[tm]+=g.v[tm]*dt;g.u[tm]+=st*8.5*dt-(bsOff(g.z[tm])-bsOff(z0));g.hit[tm]=Math.max(0,g.hit[tm]-dt);
+     if(Math.abs(g.u[tm])>BS.hw){g.u[tm]=Math.sign(g.u[tm])*BS.hw*.9;if(g.hit[tm]<=0){g.v[tm]*=.55;g.hit[tm]=.5;beep(160,.1,'square',.05);if(Y&&mem.includes(PME))Y.shake=Math.max(Y.shake,6)}}
+     }
+   if(g.win<0&&(g.z[0]>=BS.len||g.z[1]>=BS.len)){g.win=g.z[0]===g.z[1]?(Math.random()<.5?0:1):(g.z[0]>g.z[1]?0:1);beep(523,.1);beep(784,.16,'square',.05,.1)}
+   if(g.t>=g.dur&&g.win<0)g.win=g.z[0]>=g.z[1]?0:1;
+   return null},
+ draw(g){tmDraw2D({},'ボブスレー');for(const tm of[0,1])vt(`${TNAME[tm]} ${Math.round(g.z[tm]/BS.len*100)}%`,VW/2,120+tm*60,20,TCOL[tm])}};
+
+/* C) ピザ大食い（Eatsa Pizza） 2対2 */
+const PY_PIZZA={id:'pizza',team:true,name:'ピザ大食い',btn:'たべる',rule:'2対2。連打でピザを食べろ！ チームで自分たちの半分を先に食べきったら勝ち。サラミののった1切れはかたくて時間がかかる。',ctrl:'ボタン / 画面タップ / スペースを連打',
+ make(){const g={id:'pizza',teamGame:true,teams:tm22(),t:0,dur:30,sl:[[],[]],cur:[0,0],chew:[0,0,0,0],next:[0,0,0,0],win:-1,endT:0,eaten:[0,0,0,0]};
+   const pat=Array.from({length:6},(_,k)=>k%3===1);for(let k=5;k>0;k--){const j=Math.floor(Math.random()*(k+1));[pat[k],pat[j]]=[pat[j],pat[k]]}
+   for(const tm of[0,1])g.sl[tm]=pat.map(p=>({hp:p?28:16,max:p?28:16,pep:p}));for(let i=0;i<4;i++)g.next[i]=rand(.1,.3);return g},
+ update(g,dt,inp){g.t+=dt;for(let i=0;i<4;i++)g.chew[i]=Math.max(0,g.chew[i]-dt*6);
+   if(g.win>=0){g.endT+=dt;if(g.endT>1.6)return tmRank(g,g.win,i=>g.eaten[i]);return null}
+   const bite=(i,n)=>{const tm=g.teams[i];const s=g.sl[tm][g.cur[tm]];if(!s)return;s.hp-=n;g.chew[i]=1;g.eaten[i]+=n;if(s.hp<=0){g.cur[tm]++;if(i===PME||g.teams[PME]===tm)beep(660,.05,'square',.04);if(g.cur[tm]>=g.sl[tm].length&&g.win<0){g.win=tm;beep(523,.1);beep(784,.16,'square',.05,.1)}}};
+   for(const i of[PME,PME2]){if(i<0)continue;const n=Math.min(tmHum(i,inp).act||0,3);if(n){bite(i,n);if(i===PME)beep(200+Math.random()*80,.025,'triangle',.03)}}
+   for(let i=0;i<4;i++){if(ISHUM(i))continue;const P=CPU(i);g.next[i]-=dt;if(g.next[i]<=0){bite(i,1);g.next[i]=1/((P==='greedy'?7.9:P==='careful'?7.5:7.1)*(1+.1*Math.sin(g.t*1.1+i)))*rand(.8,1.2)}}
+   if(g.t>=g.dur&&g.win<0){const r=tm=>g.cur[tm]+(g.sl[tm][g.cur[tm]]?1-g.sl[tm][g.cur[tm]].hp/g.sl[tm][g.cur[tm]].max:0);g.win=r(0)>=r(1)?0:1}
+   return null},
+ draw(g){tmDraw2D({},'ピザ大食い');for(const tm of[0,1])vt(`${TNAME[tm]} ${g.cur[tm]}/6`,VW/2,120+tm*60,20,TCOL[tm])}};
+
+/* D) あっちむいて（Look Away） 1対3 */
+const PY_LOOK={id:'look',team:true,t13:true,tnames:['カメラ','にげる'],name:'あっちむいて',btn:null,rule:'1対3。音楽が止まるまでに上下左右から向きを選ぶ。カメラ役（1人）と同じ向きを選んだ人は写されてアウト。5回以内に3人とも写せばカメラ役の勝ち、1人でも残ればにげる側の勝ち。',ctrl:'向き：矢印・WASD / 画面の上下左右をタップ',
+ make(){const g={id:'look',teamGame:true,teams:tm13(),t:0,round:0,ph:'music',pt:0,md:2.4,ch:[null,null,null,null],out:[false,false,false,false],shot:null,win:-1,endT:0,cpuT:[0,0,0,0],flash:0};g.solo=g.teams.indexOf(0);this.newRound(g);return g},
+ newRound(g){g.round++;g.ph='music';g.pt=0;g.md=rand(2,2.8);g.ch=[null,null,null,null];for(let i=0;i<4;i++)g.cpuT[i]=rand(.4,g.md-.25)},
+ update(g,dt,inp){g.t+=dt;g.pt+=dt;g.flash=Math.max(0,g.flash-dt*2);
+   if(g.win>=0){g.endT+=dt;if(g.endT>1.8)return tmRank(g,g.win,i=>g.out[i]?0:1);return null}
+   if(g.ph==='music'){if(Math.floor(g.pt*4)!==Math.floor((g.pt-dt)*4))beep([523,659,784,659][Math.floor(g.pt*4)%4],.08,'triangle',.04);
+     for(let i=0;i<4;i++){if(g.out[i])continue;if(ISHUM(i)){const f=tmHum(i,inp).flag;if(f&&'udlr'.includes(f)){g.ch[i]=f;if(i===PME)beep(880,.03,'square',.03)}}else if(g.ch[i]===null&&g.pt>=g.cpuT[i])g.ch[i]='udlr'[Math.floor(Math.random()*4)]}
+     if(g.pt>=g.md){for(let i=0;i<4;i++)if(!g.out[i]&&g.ch[i]===null)g.ch[i]='udlr'[Math.floor(Math.random()*4)];g.ph='shot';g.pt=0;g.flash=1;beep(1400,.05,'square',.06);beep(200,.12,'sawtooth',.04,.05);
+       const sd=g.ch[g.solo];g.shot=[];for(let i=0;i<4;i++)if(i!==g.solo&&!g.out[i]&&g.ch[i]===sd){g.out[i]=true;g.shot.push(i)}if(g.shot.length&&Y)Y.shake=6}}
+   else if(g.ph==='shot'){if(g.pt>=1.6){const left=[0,1,2,3].filter(i=>i!==g.solo&&!g.out[i]).length;if(left===0)g.win=0;else if(g.round>=5)g.win=1;else this.newRound(g)}}
+   return null},
+ draw(g){tmDraw2D({},'あっちむいて')}};
+
+/* E) PK戦（GOOOOOOOAL!!） 1対3 */
+const PY_PK={id:'pk',team:true,t13:true,tnames:['キーパー','キッカー'],name:'PK戦',btn:null,rule:'1対3。キッカー3人が交代で6本けり、キーパー（1人）が止める。左・まん中・右から1つ選び、キーパーと同じならセーブ。キッカー側は4点とれば勝ち、キーパーは3本止めれば勝ち。',ctrl:'左・まん中・右：矢印（↓かスペースでまん中）/ 画面の左・中・右をタップ',
+ make(){const g={id:'pk',teamGame:true,teams:tm13(),t:0,k:0,goals:0,saves:0,ph:'aim',pt:0,aimD:2.4,ck:null,cg:null,res:null,win:-1,endT:0,cpuT:[0,0,0,0]};g.solo=g.teams.indexOf(0);g.kickers=[0,1,2,3].filter(i=>i!==g.solo);this.newKick(g);return g},
+ newKick(g){g.ph='aim';g.pt=0;g.ck=null;g.cg=null;g.res=null;g.kicker=g.kickers[g.k%3];g.cpuT=[0,1,2,3].map(()=>rand(.5,g.aimD-.3))},
+ update(g,dt,inp){g.t+=dt;g.pt+=dt;
+   if(g.win>=0){g.endT+=dt;if(g.endT>1.8)return tmRank(g,g.win);return null}
+   if(g.ph==='aim'){if(Math.floor(g.pt)!==Math.floor(g.pt-dt))beep(700,.05,'square',.03);
+     for(const[who,key]of[[g.kicker,'ck'],[g.solo,'cg']]){if(ISHUM(who)){const f=tmHum(who,inp).flag;if(f&&'lcr'.includes(f)){g[key]=f;if(who===PME)beep(880,.03,'square',.03)}}else if(g[key]===null&&g.pt>=g.cpuT[who])g[key]='lcr'[Math.floor(Math.random()*3)]}
+     if(g.pt>=g.aimD){g.ck=g.ck||'lcr'[Math.floor(Math.random()*3)];g.cg=g.cg||'c';g.ph='shot';g.pt=0;beep(220,.08,'square',.05)}}
+   else if(g.ph==='shot'){if(g.pt>=.55&&g.res===null){g.res=g.ck===g.cg?'save':'goal';if(g.res==='goal'){g.goals++;beep(523,.1);beep(784,.16,'square',.05,.1);if(Y)Y.shake=8}else{g.saves++;beep(180,.15,'square',.06)}}
+     if(g.pt>=1.7){g.k++;if(g.goals>=4)g.win=1;else if(g.saves>=3)g.win=0;else this.newKick(g)}}
+   return null},
+ draw(g){tmDraw2D({},'PK戦');vt(`${g.goals}点 / ${g.saves}セーブ`,VW/2,120,22,'#fff')}};
+
+/* F) サーチライト（Spotlight Swim） 1対3 */
+const SP={x0:60,y0:60,x1:420,y1:320,lr:38};
+const PY_SPOT={id:'spot',team:true,t13:true,tnames:['にげる','ライト'],name:'サーチライト',btn:'ダッシュ',rule:'1対3。夜のプールで、ライト係の3人がライトを動かして、泳ぐ1人をてらす。2つ以上のライトが同時に当たるとゲージがたまり、満タンでライト側の勝ち。20秒にげきれば1人側の勝ち。',ctrl:'移動：ドラッグ / 矢印・WASD　（泳ぐ人だけ）ダッシュ：ボタン / スペース',
+ make(){const g={id:'spot',teamGame:true,teams:tm13(),t:0,dur:20,meter:0,hitN:0,bs:[],win:-1,endT:0};g.solo=g.teams.indexOf(0);let k=0;
+   for(let i=0;i<4;i++){if(i===g.solo){const b=mkBody(i,240,190);b.r=14;g.bs.push(b)}else{const b=mkBody(i,120+k*120,80);b.r=SP.lr;b.light=true;k++;g.bs.push(b)}}return g},
+ ai(g,b,dt){const P=CPU(b.i),s=g.bs[g.solo];
+   if(b.i===g.solo){const ls=g.bs.filter(o=>o.light);let fx=0,fy=0;for(const o of ls){const dx=b.x-o.x,dy=b.y-o.y,d=Math.hypot(dx,dy)||1;fx+=dx/d/Math.max(.25,d/120);fy+=dy/d/Math.max(.25,d/120)}
+     const cx=(SP.x0+SP.x1)/2,cy=(SP.y0+SP.y1)/2;fx+=(cx-b.x)/300;fy+=(cy-b.y)/300;let[ax,ay]=pyNorm(fx,fy);if(P==='clumsy'&&Math.random()<.2){ax+=Math.sin(g.t*3);ay+=Math.cos(g.t*2)}
+     if(ls.filter(o=>Math.hypot(o.x-b.x,o.y-b.y)<SP.lr+10).length>=1&&b.dashCd<=0&&Math.random()<dt*(P==='careful'?3:2)){b.fx=ax;b.fy=ay;pyDash(b)}return pyNorm(ax,ay)}
+   const lead=P==='greedy'?.35:P==='careful'?.2:.1;const tx=s.x+s.vx*lead+Math.sin(g.t*2+b.i)*(P==='clumsy'?40:12),ty=s.y+s.vy*lead+Math.cos(g.t*1.7+b.i)*(P==='clumsy'?40:12);return pyNorm(tx-b.x,ty-b.y)},
+ update(g,dt,inp){g.t+=dt;
+   if(g.win>=0){g.endT+=dt;if(g.endT>1.6)return tmRank(g,g.win);return null}
+   for(const b of g.bs){let ax,ay;if(ISHUM(b.i)){const I=tmHum(b.i,inp);ax=I.mx||0;ay=I.my||0;if(I.act&&!b.light)pyDash(b)}else[ax,ay]=this.ai(g,b,dt);
+     pyStep(b,ax,ay,dt,b.light?650:950,b.light?104:162);if(b.light){b.dashT=0}tmClampRect(b,SP.x0+(b.light?-20:0),SP.y0+(b.light?-20:0),SP.x1+(b.light?20:0),SP.y1+(b.light?20:0))}
+   const s=g.bs[g.solo];const n=g.bs.filter(o=>o.light&&Math.hypot(o.x-s.x,o.y-s.y)<SP.lr+s.r*.4).length;g.hitN=n;
+   if(n>=2){g.meter+=dt*(n===3?.42:.24);if(Math.floor(g.t*6)!==Math.floor((g.t-dt)*6))beep(n===3?1200:900,.03,'square',.03)}else g.meter=Math.max(0,g.meter-dt*.12);
+   if(g.meter>=1){g.win=1;beep(523,.1);beep(784,.16,'square',.05,.1);if(Y)Y.shake=8}else if(g.t>=g.dur){g.win=0;beep(523,.1)}
+   return null},
+ draw(g){tmDraw2D({},'サーチライト');for(const b of g.bs)ell(b.x,b.y,b.light?SP.lr:14,b.light?SP.lr:14,b.light?'rgba(255,240,150,.4)':PYS[b.i].col)}};
+
+PY_GAMES.push(PY_HANDCAR,PY_BOBSLED,PY_PIZZA,PY_LOOK,PY_PK,PY_SPOT);
+Object.assign(GCOL,{handcar:'#8a5a3c',bobsled:'#3f7de0',pizza:'#e2493b',look:'#8b4fc4',pk:'#2f9a5a',spot:'#1d4a7a'});
+Object.assign(WORLD,{handcar:{gy:-.02,theme:'park'},bobsled:{gy:-3,theme:'snow'},pizza:{gy:-1.2,theme:'town'},look:{gy:-.02,theme:'park'},pk:{gy:-.02,theme:'park'}});
+
+/* 方向入力（あっちむいて・PK） */
+addEventListener('keydown',e=>{const y=Y;if(!y||y.over||y.ph!=='play'||!y.g||!DIRG[y.g.id]||e.repeat)return;const k=e.key.toLowerCase();
+  const m={arrowleft:'l',a:'l',arrowright:'r',d:'r',arrowup:'u',w:'u',arrowdown:'d',s:'d'}[k];let f=m||null;if(y.g.id==='pk'){if(m==='d'||m==='u'||k===' ')f='c'}else if(k===' ')f=null;if(f&&DIRG[y.g.id].includes(f)){y.flag=f;e.preventDefault()}});
+cv.addEventListener('pointerdown',e=>{const y=Y;if(!y||y.ph!=='play'||!y.g||!DIRG[y.g.id])return;e.stopImmediatePropagation();const dx=e.clientX-W/2,dy=e.clientY-H/2;
+  if(y.g.id==='pk')y.flag=e.clientX<W/3?'l':e.clientX>W*2/3?'r':'c';else y.flag=Math.abs(dx)>Math.abs(dy)?(dx<0?'l':'r'):(dy<0?'u':'d')},{capture:true});
+
+/* ---------- 3D ---------- */
+function charAt(i,X,Z,t,o){const c=P3.chars[i];const b={i,x:240+X*10,y:190+Z*10,vx:o&&o.vx||0,vy:0,fx:0,fy:1,stun:0,out:false,dashT:0,flash:0,fallT:0};p3SyncChar(c,b,t,o||{});return c}
+/* トロッコ */
+TM3.handcar={team:1,build(s){P3.hc=[];for(const tm of[0,1]){const cz=tm?8:-8;const pts=[];for(let k=0;k<=160;k++){const p=hcPos(k/160*HC.P,cz);pts.push(new THREE.Vector3(p.x,0,p.z))}
+    for(const off of[-.55,.55]){const rp=pts.map((p,k)=>{const q=pts[Math.min(160,k+1)],r=pts[Math.max(0,k-1)];const tx=q.x-r.x,tz=q.z-r.z,l=Math.hypot(tx,tz)||1;return new THREE.Vector3(p.x-tz/l*off,.12,p.z+tx/l*off)});const rail=p3Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(rp,true),220,.07,6,true),p3Mat('#8a95a3',{m:.6,r:.3}),false,true);s.add(rail)}
+    for(let k=0;k<70;k++){const p=hcPos(k/70*HC.P,cz);const sl=p3Mesh(new THREE.BoxGeometry(.25,.1,1.6),p3Mat('#6a4a2a'),false,true);sl.position.set(p.x,.05,p.z);sl.rotation.y=p.yaw;s.add(sl)}
+    for(const sx of[-1,1]){const sg=p3Mesh(new THREE.BoxGeometry(.2,1.6,1.4),p3Mat('#ffd23f',{gloss:1}),true);sg.position.set(sx*(HC.L/2-1.5),.8,cz+(tm?-1:1)*(HC.R+1.6));s.add(sg)}
+    const car=new THREE.Group();const plat=p3Mesh(new THREE.BoxGeometry(2.6,.35,1.6),p3Mat(TCOL[tm],{gloss:1}),true);plat.position.y=.45;car.add(plat);const post=p3Mesh(new THREE.BoxGeometry(.25,1.1,.25),p3Mat('#3a3f55'),true);post.position.y=1.1;car.add(post);
+    const lever=p3Mesh(new THREE.BoxGeometry(2.4,.15,.15),p3Mat('#3a3f55'),true);lever.position.y=1.65;car.add(lever);for(const sx of[-1,1])for(const sz of[-1,1]){const w=p3Mesh(new THREE.CylinderGeometry(.3,.3,.15,14),p3Mat('#24262c'));w.rotation.x=Math.PI/2;w.position.set(sx*.9,.3,sz*.62);car.add(w)}
+    s.add(car);P3.hc.push({car,lever,cz})}
+  const fl=plane(70,46,texMat('grass',10,'#8fd16a'));fl.rotation.x=-Math.PI/2;fl.position.y=-.01;s.add(fl)},
+ sync(y,g,t){tmCam(21,19,[0,.85,.52],[0,0,.5]);for(const tm of[0,1]){const H=P3.hc[tm],p=hcPos(g.s[tm],H.cz);const cr=g.crash[tm]>0;H.car.position.set(p.x,cr?.2:0,p.z);H.car.rotation.y=p.yaw-Math.PI/2;H.car.rotation.z=cr?.5*Math.sin(g.crash[tm]*12):0;
+    const mem=[0,1,2,3].filter(i=>g.teams[i]===tm);H.lever.rotation.z=Math.sin(g.s[tm]*1.4)*.45;
+    mem.forEach((i,k)=>{const sd=k?1:-1,ang=H.car.rotation.y;const X=p.x+Math.cos(ang)*sd*.85,Z=p.z-Math.sin(ang)*sd*.85;const c=charAt(i,X,Z,t,{face:ang+(k?-Math.PI/2:Math.PI/2),hop:g.pump[i]*.4,cheer:g.win===tm});c.position.y=.62+g.pump[i]*.2;if(cr){c.rotation.z=Math.sin(t*20)*.3}})}tmRingSync(g)},
+ overlay(y,g){const top=Math.max(110,H*.15);for(const tm of[0,1]){const x=W/2+(tm?1:-1)*W*.22;const v=g.v[tm],lim=PY_HANDCAR.lim(),near=hcToCurve(g.s[tm])<6||hcPos(g.s[tm],0).curve;
+    rr(x-90,top-44,180,16,8,'rgba(0,0,0,.3)');rr(x-90,top-44,180*Math.min(1,v/14),16,8,v>lim?'#ff5a3a':TCOL[tm]);ctx.fillStyle='#fff';ctx.fillRect(x-90+180*lim/14-1,top-48,2,24);
+    vt(`${TNAME[tm]}  ${Math.min(HC.laps,Math.floor(g.s[tm]/HC.P)+1)}/${HC.laps}周`,x,top-14,14,'#fff');if(g.crash[tm]>0)vt('脱線！',x,top+8,18,'#ff8a8a');else if(near&&v>lim*.9&&g.teams[PME]===tm)popText('カーブ！ ゆるめて',x,top+10,20,'#ffd23f','#c02a20')}
+  if(g.win>=0)popText(`${TNAME[g.win]}チームの勝ち！`,W/2,H*.42,40,TCOL[g.win],'#ffffff')}};
+/* ボブスレー */
+TM3.bobsled={team:1,sky:['#7fb7ef','#f2f8ff'],build(s){P3.bs=[];const ice=new THREE.MeshStandardMaterial({color:'#cfe9ff',roughness:.25,metalness:.05}),wallM=new THREE.MeshStandardMaterial({color:'#f2f8ff',roughness:.6});
+  for(const tm of[0,1]){const cx=tm?6.5:-6.5;const N=300,pos=[],wl=[],wr=[];for(let k=0;k<=N;k++){const z=k/N*(BS.len+30)-10,x=cx+bsOff(z);pos.push(x-BS.hw-.4,0,-z,x+BS.hw+.4,0,-z);wl.push(x-BS.hw-.4,0,-z,x-BS.hw-.4,1.1,-z);wr.push(x+BS.hw+.4,1.1,-z,x+BS.hw+.4,0,-z)}
+    const mk=(arr,mat)=>{const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(arr,3));const idx=[];for(let k=0;k<N;k++){const a=k*2;idx.push(a,a+1,a+2,a+1,a+3,a+2)}geo.setIndex(idx);geo.computeVertexNormals();const m=new THREE.Mesh(geo,mat);m.material.side=THREE.DoubleSide;m.receiveShadow=true;s.add(m)};
+    mk(pos,ice);mk(wl,wallM);mk(wr,wallM);
+    const fin=p3Mesh(new THREE.BoxGeometry(BS.hw*2+1,.08,.6),new THREE.MeshBasicMaterial({color:'#e2493b'}),false);fin.position.set(cx+bsOff(BS.len),.05,-BS.len);s.add(fin);
+    const sled=new THREE.Group();const body=p3Mesh(new THREE.BoxGeometry(1.5,.6,3.2),p3Mat(TCOL[tm],{gloss:1}),true);body.position.y=.4;sled.add(body);const nose=p3Mesh(new THREE.SphereGeometry(.75,16,10,0,Math.PI*2,0,Math.PI/2),p3Mat(TCOL[tm],{gloss:1}));nose.rotation.x=-Math.PI/2;nose.position.set(0,.4,-1.6);sled.add(nose);
+    s.add(sled);P3.bs.push({sled,cx})}
+  const gnd=plane(120,400,texMat('snow',30));gnd.rotation.x=-Math.PI/2;gnd.position.set(0,-.05,-130);s.add(gnd);
+  for(let k=0;k<70;k++){const z=-rand(0,280),x=(Math.random()<.5?-1:1)*rand(13,30);const tr=p3Mesh(new THREE.ConeGeometry(rand(1.2,2),rand(4,7),7),p3Mat('#2f6a4a',{flat:true}),true);tr.position.set(x,2,z);s.add(tr)}},
+ sync(y,g,t){const zc=(g.z[0]+g.z[1])/2;const a=W/H,cam=P3.cam;cam.aspect=a;const k=P3.sweep??1,d=1+(1-k)*.4+(a<1.3?(1.3/a-1)*.9:0);cam.position.set(0,13*d,-zc+20*d);cam.lookAt(0,0,-zc-12);cam.updateProjectionMatrix();
+  for(const tm of[0,1]){const B=P3.bs[tm],z=g.z[tm],x=B.cx+bsOff(z)+g.u[tm];B.sled.position.set(x,g.hit[tm]>0?Math.sin(g.hit[tm]*20)*.1:0,-z);const slope=(bsOff(z+1)-bsOff(z));B.sled.rotation.y=-Math.atan(slope)-(g.u[tm]-(g.prevU||[0,0])[tm])*2;B.sled.rotation.z=-((g.steer[[0,1,2,3].filter(i=>g.teams[i]===tm)[0]]||0)+(g.steer[[0,1,2,3].filter(i=>g.teams[i]===tm)[1]]||0))*.12;
+    [0,1,2,3].filter(i=>g.teams[i]===tm).forEach((i,k)=>{const c=charAt(i,x,-z+(k?.7:-.7),t,{face:Math.PI,cheer:g.win===tm});c.position.y=.75;c.rotation.z=-(g.steer[i]||0)*.35;c.body.rotation.x=.3})}
+  if(Math.random()<.3)p3Burst('dust',P3.bs[0].sled.position.x,.2,P3.bs[0].sled.position.z+1.5,1);if(Math.random()<.3)p3Burst('dust',P3.bs[1].sled.position.x,.2,P3.bs[1].sled.position.z+1.5,1);tmRingSync(g)},
+ overlay(y,g){const top=Math.max(110,H*.15);for(const tm of[0,1]){const x=W/2+(tm?1:-1)*W*.22;rr(x-80,top-44,160,14,7,'rgba(0,0,0,.25)');rr(x-80,top-44,160*Math.min(1,g.z[tm]/BS.len),14,7,TCOL[tm]);vt(`${TNAME[tm]}チーム`,x,top-18,14,'#24324a')}
+  const me=g.teams[PME];if(me!=null&&g.t<3)vt('チームの2人で左右を合わせてカーブを曲がれ！',W/2,H-60,15,'#24324a');if(g.win>=0)popText(`${TNAME[g.win]}チームの勝ち！`,W/2,H*.42,40,TCOL[g.win],'#ffffff')}};
+/* ピザ */
+function pizzaTex(){return cvTex(256,256,(x,w,h)=>{x.fillStyle='#f4c26b';x.fillRect(0,0,w,h);for(let i=0;i<400;i++){x.fillStyle=`rgba(${230+Math.random()*25},${150+Math.random()*60},40,.35)`;x.beginPath();x.arc(Math.random()*w,Math.random()*h,Math.random()*6+2,0,TAU);x.fill()}for(let i=0;i<40;i++){x.fillStyle='rgba(60,140,60,.7)';x.fillRect(Math.random()*w,Math.random()*h,4,3)}})}
+TM3.pizza={team:1,sky:['#ff9a62','#ffe3b0'],build(s){const tbl=p3Mesh(new THREE.CylinderGeometry(9,9,1,48),[stdMat({color:'#e9e2d6'}),texMat('tiles',4,'#ffffff'),stdMat({color:'#e9e2d6'})],true,true);tbl.position.y=-.5;s.add(tbl);
+  const cloth=p3Mesh(new THREE.CylinderGeometry(9.05,9.05,.02,48),new THREE.MeshStandardMaterial({map:cvTex(128,128,(x,w,h)=>{for(let i=0;i<8;i++)for(let j=0;j<8;j++){x.fillStyle=(i+j)%2?'#e2493b':'#ffffff';x.fillRect(i*16,j*16,16,16)}},[4,4])}),false,true);cloth.position.y=.01;s.add(cloth);
+  const board=p3Mesh(new THREE.CylinderGeometry(5.6,5.6,.25,48),p3Mat('#a57a4a'),true,true);board.position.y=.15;s.add(board);
+  const tex=pizzaTex();P3.pz=[[],[]];for(const tm of[0,1])for(let k=0;k<6;k++){const a0=(tm?Math.PI:0)+k*Math.PI/6;const sl=new THREE.Group();const m=new THREE.Mesh(new THREE.CylinderGeometry(5,5,.35,10,1,false,a0,Math.PI/6-.02),[stdMat({color:'#d9a35a'}),stdMat({map:tex,roughness:.7}),stdMat({color:'#d9a35a'})]);m.castShadow=true;m.position.y=.45;sl.add(m);
+    const mid=a0+Math.PI/12;const pepN=3;sl.userData.pep=[];for(let q=0;q<pepN;q++){const r=1.6+q*1.1;const pp=p3Mesh(new THREE.CylinderGeometry(.42,.42,.06,14),p3Mat('#b8312a'),false);pp.position.set(Math.sin(mid)*r,.65,Math.cos(mid)*r);pp.visible=false;sl.add(pp);sl.userData.pep.push(pp)}
+    s.add(sl);P3.pz[tm].push(sl)}},
+ sync(y,g,t){tmCam(12,7.5,[0,.62,.79],[0,0,0]);for(const tm of[0,1])P3.pz[tm].forEach((sl,k)=>{const S=g.sl[tm][k];sl.userData.pep.forEach(p=>p.visible=S.pep);const r=Math.max(0,S.hp/S.max);sl.visible=r>0;sl.scale.set(.25+.75*r,1,.25+.75*r)});
+  const pos={0:[],1:[]};for(let i=0;i<4;i++)pos[g.teams[i]].push(i);for(const tm of[0,1])pos[tm].forEach((i,k)=>{const a=(tm?Math.PI:0)+Math.PI/2+(k?.45:-.45);const X=Math.sin(a)*7.3,Z=Math.cos(a)*7.3;const c=charAt(i,X,Z,t,{face:Math.atan2(-X,-Z),hop:g.chew[i]*.3,cheer:g.win===tm});c.body.rotation.x=g.chew[i]*.4});tmRingSync(g)},
+ overlay(y,g){const top=Math.max(110,H*.15);for(const tm of[0,1]){const x=W/2+(tm?-1:1)*W*.22;vt(`${TNAME[tm]} ${g.cur[tm]}/6切れ`,x,top-30,18,TCOL[tm]);const S=g.sl[tm][g.cur[tm]];if(S&&S.pep)vt('サラミでかたい！',x,top-8,13,'#fff')}
+  vt(`${Math.max(0,Math.ceil(g.dur-g.t))}`,W/2,top-30,16,'#fff');if(g.win>=0)popText(`${TNAME[g.win]}チームの勝ち！`,W/2,H*.42,40,TCOL[g.win],'#ffffff')}};
+/* あっちむいて */
+function arrowMesh(col){const g=new THREE.Group();const sh=p3Mesh(new THREE.BoxGeometry(.25,.9,.1),p3Mat(col,{gloss:1,e:col,ei:.4}),false);sh.position.y=-.2;g.add(sh);const hd=p3Mesh(new THREE.ConeGeometry(.45,.6,4),p3Mat(col,{gloss:1,e:col,ei:.4}),false);hd.position.y=.5;g.add(hd);return g}
+const DIRROT={u:0,r:-Math.PI/2,d:Math.PI,l:Math.PI/2};
+TM3.look={team:1,sky:['#2a3a7a','#7a5ab8'],build(s){const st=p3Mesh(new THREE.CylinderGeometry(13,14,1,48),[stdMat({color:'#3a2a5a'}),texMat('wood',5,'#b59ae0'),stdMat({color:'#3a2a5a'})],false,true);st.position.y=-.5;s.add(st);
+  const cam=new THREE.Group();const bx=p3Mesh(new THREE.BoxGeometry(1.6,1.1,1),p3Mat('#24262c',{gloss:1}),true);cam.add(bx);const ln=p3Mesh(new THREE.CylinderGeometry(.4,.45,.6,18),p3Mat('#9aa3ad',{m:.6,r:.3}),true);ln.rotation.x=Math.PI/2;ln.position.z=-.75;cam.add(ln);const fl=p3Mesh(new THREE.BoxGeometry(.6,.3,.2),new THREE.MeshStandardMaterial({color:'#ffffff',emissive:'#ffffff',emissiveIntensity:0}),false);fl.position.set(.4,.7,0);cam.add(fl);cam.position.set(0,6,-4.8);s.add(cam);P3.lkCam=cam;const pod=p3Mesh(new THREE.CylinderGeometry(2,2.3,2.4,24),p3Mat('#ffd23f',{gloss:1}),true,true);pod.position.set(0,1.2,-5.5);s.add(pod);P3.lkFlash=fl;
+  P3.lkArr=[0,1,2,3].map(i=>{const a=arrowMesh('#ffd23f');a.visible=false;s.add(a);return a});
+  for(let k=0;k<5;k++){const sp=new THREE.SpotLight(['#ff7eb6','#5fd0ff','#fff27a','#7ee0b0','#ff9f43'][k],.6,60,.4,.5);sp.position.set((k-2)*7,15,8);sp.target.position.set((k-2)*2,0,0);s.add(sp);s.add(sp.target)}},
+ sync(y,g,t){tmCam(13,9,[0,.3,.95],[0,3,-1.5]);const rev=g.ph==='shot';let k=0;
+  for(let i=0;i<4;i++){if(i===g.solo){const c=charAt(i,0,-5.5,t,{face:0});c.position.y=2.4;P3.lkCam.position.set(0,6+c.body.position.y,-4.8);const dr=rev?g.ch[i]:null;P3.lkCam.rotation.set(dr==='u'?-.5:dr==='d'?.5:0,(dr==='l'?.6:dr==='r'?-.6:0),0);continue}
+    const X=(k-1)*5.5;k++;const out=g.out[i]&&!(rev&&g.shot&&g.shot.includes(i));const dr=rev||g.out[i]?g.ch[i]:null;const c=charAt(i,X,1.5,t,{face:(dr==='l'?Math.PI/2*.8:dr==='r'?-Math.PI/2*.8:0)});c.visible=!out;c.body.rotation.x=dr==='u'?-.45:dr==='d'?.45:c.body.rotation.x;
+    if(rev&&g.shot&&g.shot.includes(i)){c.rotation.z=Math.sin(t*25)*.25}}
+  P3.lkFlash.material.emissiveIntensity=g.flash*4;
+  for(let i=0;i<4;i++){const a=P3.lkArr[i],c=P3.chars[i];const show=rev&&g.ch[i]&&(i===g.solo||!g.out[i]||(g.shot&&g.shot.includes(i)));a.visible=!!show;if(show){a.position.set(c.position.x,c.position.y+(i===g.solo?6.4:5.6),c.position.z);a.rotation.set(0,0,DIRROT[g.ch[i]]);a.children.forEach(m=>m.material.color.set(i===g.solo?'#ff4a3a':'#ffd23f'))}}},
+ overlay(y,g){const top=Math.max(110,H*.15);const meSolo=PME===g.solo;
+  if(g.ph==='music'){popText(`${g.round}回目　${meSolo?'どっちを写す？':'どっちを向く？'}`,W/2,top,28,'#ffffff','#2a1f4a');const my=g.ch[PME];vt(my?`えらんだ：${DIRJ[my]}（変えられる）`:'矢印か、画面の上下左右をタップ',W/2,top+34,16,'#fff27a')}
+  else{popText(g.shot&&g.shot.length?`パシャ！ ${g.shot.map(i=>i===PME?'あなた':PYS[i].name).join('・')} アウト！`:'パシャ！ セーフ！',W/2,top,28,g.shot&&g.shot.length?'#ff8a8a':'#7ee0b0','#2a1f4a')}
+  for(let i=0;i<4;i++){const c=P3.chars[i];if(!c||!c.visible)continue;const p=p3Proj(c.position.x,-0.3,c.position.z+.6);vt(`${i===PME?'YOU':PYS[i].name}${i===g.solo?'（カメラ）':''}`,p.x,p.y,i===PME?15:13,i===PME?'#fff27a':TCOL[g.teams[i]])}
+  if(g.flash>0){ctx.fillStyle=`rgba(255,255,255,${g.flash*.7})`;ctx.fillRect(0,0,W,H)}
+  if(g.win>=0)popText(g.win===0?'カメラ役の勝ち！':'にげきった！',W/2,H*.42,40,TCOL[g.win],'#ffffff')}};
+/* PK */
+TM3.pk={team:1,build(s){const fl=plane(70,46,stdMat({map:cvTex(256,256,(x,w,h)=>{for(let i=0;i<8;i++){x.fillStyle=i%2?'#5fb04a':'#6cbf55';x.fillRect(0,i*h/8,w,h/8+1)}}),roughness:.85}));fl.rotation.x=-Math.PI/2;s.add(fl);
+  const goal=new THREE.Group(),wm=p3Mat('#ffffff',{gloss:1});for(const sx of[-1,1]){const p=p3Mesh(new THREE.CylinderGeometry(.2,.2,4,10),wm);p.position.set(sx*6,2,0);goal.add(p)}const bar=p3Mesh(new THREE.CylinderGeometry(.2,.2,12,10),wm);bar.rotation.z=Math.PI/2;bar.position.y=4;goal.add(bar);
+  const net=p3Mesh(new THREE.BoxGeometry(12,4,2.5),new THREE.MeshStandardMaterial({color:'#ffffff',transparent:true,opacity:.22}),false);net.position.set(0,2,-1.3);goal.add(net);goal.position.set(0,0,-6);s.add(goal);
+  for(const x of[-6,6]){const ln=p3Mesh(new THREE.BoxGeometry(.15,.03,8),new THREE.MeshBasicMaterial({color:'#ffffff'}),false);ln.position.set(x,.03,-2);s.add(ln)}const box=p3Mesh(new THREE.BoxGeometry(12.2,.03,.15),new THREE.MeshBasicMaterial({color:'#ffffff'}),false);box.position.set(0,.03,2);s.add(box);
+  const ball=new THREE.Mesh(new THREE.SphereGeometry(.55,20,14),stdMat({map:ballTex(),roughness:.45}));ball.castShadow=true;s.add(ball);P3.pkBall=ball},
+ sync(y,g,t){tmCam(10,8,[0,.55,.83],[0,1.2,-2.5]);const DX={l:-4,c:0,r:4};const sh=g.ph==='shot',q=sh?Math.min(1,g.pt/.55):0;
+  const gk=g.solo;const dx=sh?DX[g.cg]*Math.min(1,g.pt/.4):0;const c=charAt(gk,dx,-5.2,t,{face:0});if(sh&&g.cg!=='c'){c.rotation.z=-Math.sign(dx)*Math.min(1.2,g.pt*3);c.position.y=Math.sin(Math.min(1,g.pt/.5)*Math.PI)*1}
+  let k=0;for(const i of g.kickers){if(i===g.kicker){charAt(i,-1.4,5.2-(sh?Math.min(1,g.pt*3)*1.2:0),t,{face:Math.PI*.9})}else{charAt(i,-10+k*2.6,4,t,{face:Math.PI*.7});k++}}
+  const tx=sh?DX[g.ck]:0;const save=g.res==='save';let bx=tx*q,bz=4-(4+5.7)*q,by=.55+Math.sin(q*Math.PI)*1.2+(g.ck==='c'?0:q*.6);if(save&&g.pt>.55){const r=(g.pt-.55);bz=-5.2+r*6;by=Math.max(.55,1.5-r*2);bx=tx+r*Math.sign(tx||1)*3}
+  P3.pkBall.position.set(bx,by,bz);P3.pkBall.rotation.x-=sh?.3:0;tmRingSync(g)},
+ overlay(y,g){const top=Math.max(110,H*.15);const meK=PME===g.kicker,meG=PME===g.solo;rr(W/2-130,top-50,260,34,17,'rgba(20,24,40,.75)');vt(`${g.k+1}本目　ゴール ${g.goals}/4　セーブ ${g.saves}/3`,W/2,top-33,15,'#fff');
+  if(g.ph==='aim'){popText(meK?'どこにける？':meG?'どこを守る？':`${PYS[g.kicker].name}がける…`,W/2,top+4,28,'#ffffff','#2a1f4a');if(meK||meG){const my=meK?g.ck:g.cg;vt(my?`えらんだ：${DIRJ[my]}`:'← ・ まん中 ・ →（画面の左・中・右をタップ）',W/2,top+38,16,'#fff27a')}
+    vt(`${Math.max(0,Math.ceil(g.aimD-g.pt))}`,W/2,H-80,30,'#fff')}
+  else if(g.res)popText(g.res==='goal'?'ゴール！':'セーブ！',W/2,H*.38,52,g.res==='goal'?TCOL[1]:TCOL[0],'#ffffff');
+  if(g.win>=0)popText(g.win===0?'キーパーの勝ち！':'キッカーの勝ち！',W/2,H*.52,40,TCOL[g.win],'#ffffff')}};
+/* サーチライト */
+TM3.spot={team:1,sky:['#0b1030','#1d2a5a'],build(s){P3.bloom=.5;dimLights(s,.35,'#9fb3ff');const W0=(SP.x1-SP.x0)/10,H0=(SP.y1-SP.y0)/10,cx=wx((SP.x0+SP.x1)/2),cz=wz((SP.y0+SP.y1)/2);
+  const deck=plane(60,44,texMat('tiles',10,'#5a6a8a'));deck.rotation.x=-Math.PI/2;deck.position.y=.02;s.add(deck);
+  const water=p3Mesh(new THREE.BoxGeometry(W0,.2,H0),new THREE.MeshStandardMaterial({color:'#1d5a9a',roughness:.15,metalness:.1,transparent:true,opacity:.92}),false,true);water.position.set(cx,-.1,cz);s.add(water);P3.water2=water;
+  for(const sx of[-1,1]){const e=p3Mesh(new THREE.BoxGeometry(.6,.4,H0+1.2),p3Mat('#e9eef3'),false,true);e.position.set(cx+sx*(W0/2+.3),.1,cz);s.add(e)}for(const sz of[-1,1]){const e=p3Mesh(new THREE.BoxGeometry(W0+1.2,.4,.6),p3Mat('#e9eef3'),false,true);e.position.set(cx,.1,cz+sz*(H0/2+.3));s.add(e)}
+  P3.spots=[];for(let k=0;k<3;k++){const sp=new THREE.SpotLight('#fff3c0',3,40,.2,.4,1.2);sp.position.set(0,16,0);s.add(sp);s.add(sp.target);const disc=p3Mesh(new THREE.CircleGeometry(SP.lr/10,32),new THREE.MeshBasicMaterial({color:'#fff3a0',transparent:true,opacity:.35}),false);disc.rotation.x=-Math.PI/2;disc.position.y=.05;s.add(disc);
+    const beam=p3Mesh(new THREE.ConeGeometry(SP.lr/10,16,24,1,true),new THREE.MeshBasicMaterial({color:'#fff3a0',transparent:true,opacity:.07,side:THREE.DoubleSide,depthWrite:false}),false);s.add(beam);P3.spots.push({sp,disc,beam})}},
+ sync(y,g,t){tmCam(21,15,[0,.85,.52],[0,0,0]);let k=0;const s=g.bs[g.solo];
+  for(const b of g.bs){if(b.light){const S=P3.spots[k],X=wx(b.x),Z=wz(b.y);S.sp.target.position.set(X,0,Z);S.sp.position.set(X*.6,16,Z*.6+6);S.disc.position.set(X,.05,Z);S.beam.position.set(X,8,Z);S.disc.material.opacity=g.hitN>=2?.6:.35;
+      const side=k-1;const c=charAt(b.i,side*8,14.5,t,{face:Math.PI});k++}else{const c=P3.chars[b.i];p3SyncChar(c,b,t);c.position.y=-.9+Math.sin(t*6)*.08;c.body.rotation.x=.8}}tmRingSync(g)},
+ overlay(y,g){const top=Math.max(110,H*.15);const meSolo=PME===g.solo;const w=Math.min(W*.6,360);rr(W/2-w/2,top-46,w,18,9,'rgba(255,255,255,.2)');rr(W/2-w/2,top-46,w*Math.min(1,g.meter),18,9,'#ffd23f');
+  popText(meSolo?'ライトからにげろ！':'ライトを動かしててらせ！',W/2,top-6,24,'#ffffff','#1d2433');vt(`${Math.max(0,Math.ceil(g.dur-g.t))}　${g.hitN>=2?'てらしてる！':''}`,W/2,top+22,16,'#fff27a');
+  const s=g.bs[g.solo];const p=p3Proj(wx(s.x),3,wz(s.y));if(p.on)vt(s.i===PME?'YOU':PYS[s.i].name,p.x,p.y,15,'#fff');let k=0;for(const b of g.bs){if(!b.light)continue;const q=p3Proj(wx(b.x),.5,wz(b.y));if(q.on)vt(b.i===PME?'YOUのライト':PYS[b.i].name,q.x,q.y,12,b.i===PME?'#fff27a':'#ffe9a0')}
+  if(g.win>=0)popText(g.win===1?'ライト側の勝ち！':'にげきった！',W/2,H*.42,40,TCOL[g.win],'#ffffff')}};
+
 /* ---------- オンライン2人プレイ（PeerJS / テスト用BroadcastChannel） ---------- */
 const NET={on:false,role:null,peer:null,conn:null,code:'',st:'idle',err:'',in2:{mx:0,my:0,act:0,pick:null,flag:null,L:0,R:0,dt:null},rq:[],sfx:[],sfxOn:false,sendT:0,lastPh:null,tg:null,tgAt:0,inT:0,prevK:{},lastIn:'',bc:null};
-const NET_PRE='himatsubushi-party-v1-';const NET_VER='p28';NET.gReady=false;NET.lastSnap=0;NET.oldGuest=false;NET.verBad=0;NET.selPend=null;
+const NET_PRE='himatsubushi-party-v1-';const NET_VER='p29';NET.gReady=false;NET.lastSnap=0;NET.oldGuest=false;NET.verBad=0;NET.selPend=null;
 const NET_ICE={config:{iceServers:[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302']},{urls:'stun:stun.cloudflare.com:3478'},{urls:['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443','turn:openrelay.metered.ca:443?transport=tcp'],username:'openrelayproject',credential:'openrelayproject'}]}};
 MENU_PH.push('net');
 function netRand(seed){let a=seed>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
