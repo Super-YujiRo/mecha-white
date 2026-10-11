@@ -215,7 +215,7 @@ a.mode{color:inherit;text-decoration:none;align-content:start}
       <button class="mode" type="button" data-mode="party" id="modeParty">
         <canvas id="pvParty" width="280" height="96"></canvas>
         <b>パーティ 3D</b>
-        <span>4人の中からキャラを選んで、CPU3人とミニゲームで勝負。全14種類からランダム5本の「ランダムバトル」、リズムゲームだけの「リズムバトル」、好きな1本を選ぶモードで遊べる。</span>
+        <span>4人の中からキャラを選んで、CPU3人とミニゲームで勝負。全19種類。2対2の「チームバトル」、ランダム5本の「ランダムバトル」、リズムゲームだけの「リズムバトル」、好きな1本を選ぶモードがある。友達とオンラインでも遊べる。</span>
         <em>3Dモデル：Kenney（CC0）</em>
       </button>
       <a class="mode" href="https://super-yujiro.github.io/net-linkers/" target="_blank" rel="noopener">
@@ -1708,7 +1708,7 @@ function updY(dt){const y=Y;y.pt+=dt;if(MENU_PH.includes(y.ph)||y.ph==='final')r
     const l=Math.hypot(mx,my);if(l>1){mx/=l;my/=l}
     const G0=y.list[y.gi],inp={mx,my,act:y.act,pick:y.pick,flag:y.flag,rtaps:y.rtaps||[],p2:NET.role==='host'?netP2(y):null};const rank=netRun(y,()=>G0.update(y.g,dt,inp));netSendTaps(y,inp.rtaps);y.act=0;y.pick=null;y.flag=null;y.rtaps=[];
     if(rank){y.rank=rank;y.ph='stop';y.pt=0;beep(440,.1);beep(330,.2,'square',.05,.1)}}
-  else if(y.ph==='stop'){if(y.pt>1){y.ph='res';y.pt=0;y.rank.forEach((p,k)=>y.coins[p]+=PY_AWARD[k])}}
+  else if(y.ph==='stop'){if(y.pt>1){y.ph='res';y.pt=0;y.rank.forEach((p,k)=>y.coins[p]+=rkAw(y,k))}}
 }
 function renderY(){if(P3.ok&&p3Init()){p3Show(true);return renderY3()}const y=Y;pyLayout();if(MENU_PH.includes(y.ph)||y.ph==='final'){ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle='#1d2433';ctx.fillRect(0,0,W,H);return}ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle='#141821';ctx.fillRect(0,0,W,H);
   const{s,ox,oy}=y.view,sx=(Math.random()-.5)*y.shake,sy=(Math.random()-.5)*y.shake;
@@ -1973,9 +1973,9 @@ function renderY3(){const y=Y;pyLayout();const now=performance.now()/1000,dt=Mat
   if(y.ph==='res'){const gc=GCOL[G2.id]||'#e2493b';rr(36,60,408,280,22,'rgba(255,255,255,.95)');popBanner(`${G2.name} 結果`,VW/2,52,320,56,gc);
     const MED=['#ffc93c','#c9d1da','#d9925a','#9aa3ad'];
     y.rank.forEach((p,k)=>{const yy=110+k*54,P=PYS[p],sl=Math.min(1,Math.max(0,(y.pt-k*.08)*4));ctx.save();ctx.translate((1-sl)*80,0);ctx.globalAlpha=sl;
-      rr(62,yy-22,356,44,22,p===PME?'#fff3c4':'#f1f4f9');ell(92,yy,19,19,MED[k]);popText(`${k+1}`,92,yy+1,20,'#ffffff','rgba(0,0,0,.35)');
+      rr(62,yy-22,356,44,22,p===PME?'#fff3c4':'#f1f4f9');ell(92,yy,19,19,MED[k]);popText(`${rkLab(y,k)}`,92,yy+1,20,'#ffffff','rgba(0,0,0,.35)');
       ell(140,yy,15,15,P.col);ell(135,yy-5,5,5,'rgba(255,255,255,.5)');vt(p===PME?`${P.name}(YOU)`:P.name,240,yy,17,'#2a2f3a',null,'"M PLUS Rounded 1c",sans-serif');
-      if(y.mode!=='pick')popText(`+${PY_AWARD[k]}`,372,yy,20,'#ffb800','#ffffff');else if(k===0)popText('WIN!',372,yy,20,'#ffb800','#ffffff');ctx.restore()});ctx.globalAlpha=1;
+      if(y.mode!=='pick')popText(`+${rkAw(y,k)}`,372,yy,20,'#ffb800','#ffffff');else if(k===0)popText('WIN!',372,yy,20,'#ffb800','#ffffff');ctx.restore()});ctx.globalAlpha=1;
     if(y.g&&y.g.rhy&&y.g.rs)try{rStatsLine(y,y.g)}catch(_){}
     if(y.pt>.6&&Math.floor(y.pt*2)%2===0)popText(y.mode==='pick'?'タップでミニゲーム選択へ':y.gi+1<y.list.length?'タップで次へ':'タップで表彰式へ',VW/2,(y.g&&y.g.rhy&&y.g.rs)?352:326,16,'#ffd23f','#7a4a00')}
   ctx.setTransform(DPR,0,0,DPR,0,0);
@@ -2103,14 +2103,15 @@ function pmShow(){const y=Y,el=$('#pmenu');if(!y||!MENU_PH.includes(y.ph)){el.hi
   const btn=(cls,html,fn)=>{const b=document.createElement('button');b.type='button';b.className=cls;b.innerHTML=html;b.addEventListener('click',fn);bd.appendChild(b);return b};
   if(y.ph==='menu'){eye.textContent='パーティ広場';ti.textContent='どうやって遊ぶ？';
     const g=document.createElement('div');g.className='pm-grid two';bd.appendChild(g);
-    [['random','ランダムバトル','ミニゲーム5本をランダムで。順位でもらえるコインの合計で優勝を決める'],['rhythm','リズムバトル','リズムゲーム4本だけで勝負。音をよく聞いて、ピッタリでたたけ'],['pick','えらんで遊ぶ','好きなミニゲームを1本ずつ。練習やリベンジに']].forEach(([m,n,d])=>{const b=document.createElement('button');b.type='button';b.className='pm-card big';b.innerHTML=`<b>${n}</b><span>${d}</span>`;b.addEventListener('click',()=>{y.mode=m;y.ph='chars';y.sel=PME;beep(660,.06);pmShow()});g.appendChild(b)})}
-  if(y.ph==='chars'){eye.textContent=y.mode==='random'?'ランダムバトル':y.mode==='rhythm'?'リズムバトル':'えらんで遊ぶ';ti.textContent='キャラをえらぶ';
+    [['team','チームバトル','2対2のチーム戦3本。勝ったチームは2人とも+7コイン'],['random','ランダムバトル','ミニゲーム5本をランダムで。順位でもらえるコインの合計で優勝を決める'],['rhythm','リズムバトル','リズムゲーム4本だけで勝負。音をよく聞いて、ピッタリでたたけ'],['pick','えらんで遊ぶ','好きなミニゲームを1本ずつ。練習やリベンジに']].forEach(([m,n,d])=>{const b=document.createElement('button');b.type='button';b.className='pm-card big';b.innerHTML=`<b>${n}</b><span>${d}</span>`;b.addEventListener('click',()=>{y.mode=m;y.ph='chars';y.sel=PME;beep(660,.06);pmShow()});g.appendChild(b)})}
+  if(y.ph==='chars'){eye.textContent=y.mode==='random'?'ランダムバトル':y.mode==='rhythm'?'リズムバトル':y.mode==='team'?'チームバトル':'えらんで遊ぶ';ti.textContent='キャラをえらぶ';
     const g=document.createElement('div');g.className='pm-grid four';bd.appendChild(g);
     PYS.forEach((p,i)=>{const b=document.createElement('button');b.type='button';b.className='pm-card'+(i===y.sel?' on':'');b.innerHTML=`<i style="background:${p.col}"></i><b>${p.name}</b><span>${p.tag}</span>`;b.addEventListener('click',()=>{y.sel=i;PME=i;beep(520+i*80,.06);pmShow()});g.appendChild(b)});
     const row=document.createElement('div');row.className='pm-row';bd.appendChild(row);
     const back=document.createElement('button');back.type='button';back.className='pm-sub';back.textContent='もどる';back.addEventListener('click',()=>{y.ph='menu';pmShow()});row.appendChild(back);
     const ok=document.createElement('button');ok.type='button';ok.className='pm-go';ok.textContent=`${PYS[y.sel].name}で決定`;ok.addEventListener('click',()=>{PME=y.sel;beep(880,.08);
-      if(y.mode==='rhythm'){const L=PY_GAMES.filter(G=>G.rhythm);for(let i=L.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[L[i],L[j]]=[L[j],L[i]]}y.list=L;y.gi=0;y.coins=[0,0,0,0];y.ph='rules';y.pt=0;y.preview=null}
+      if(y.mode==='team'){const L=PY_GAMES.filter(G=>G.team);for(let i=L.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[L[i],L[j]]=[L[j],L[i]]}y.list=L;y.gi=0;y.coins=[0,0,0,0];y.ph='rules';y.pt=0;y.preview=null}
+      else if(y.mode==='rhythm'){const L=PY_GAMES.filter(G=>G.rhythm);for(let i=L.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[L[i],L[j]]=[L[j],L[i]]}y.list=L;y.gi=0;y.coins=[0,0,0,0];y.ph='rules';y.pt=0;y.preview=null}
       else if(y.mode==='random'){const L=PY_GAMES.slice();for(let i=L.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[L[i],L[j]]=[L[j],L[i]]}y.list=L.slice(0,5);y.gi=0;y.coins=[0,0,0,0];y.ph='rules';y.pt=0;y.preview=null}
       else{y.ph='gamesel'}pmShow()});row.appendChild(ok)}
   if(y.ph==='gamesel'){eye.textContent=`えらんで遊ぶ · ${PYS[PME].name}`;ti.textContent='どのミニゲーム？';
@@ -2345,7 +2346,7 @@ function p3BuildKarate(s){p3RhyStage(s,'#3a1f3a','#d06a4a','#7a5a3a');P3.st=[];
     melon:()=>{const m=p3Mesh(new THREE.SphereGeometry(.85,22,16),p3Mat('#2f8a3a',{gloss:1}));return m}};
   for(let i=0;i<4;i++){const objs={};for(const k of['tile','pot','melon'])objs[k]=[0,1,2].map(()=>{const o=mk[k]();o.visible=false;s.add(o);return o});P3.st.push({objs})}}
 function rgLastFor(g,i){let L=null;for(const f of g.fx)if(f.i===i)L=f;return L}
-function p3SyncRhy(y,g,t){const now=rClock(),b0=g.beat??-9,fr=b0-Math.floor(b0);
+function p3SyncRhy(y,g,t){const now=rVis(),b0=g.beat??-9,fr=b0-Math.floor(b0);
   if(P3.lights)P3.lights.forEach((l,k)=>{l.intensity=.6+((g.lastBeat+k)%2?g.beatFlash*1.1:0)});
   for(let i=0;i<4;i++){const c=P3.chars[i],x=RX(i);const last=g.taps[i].length?g.taps[i][g.taps[i].length-1]:-9,since=now-last;
     const bb={i,x:240+x*10,y:190+(g.id==='mochi'?-10:15),vx:0,vy:0,fx:0,fy:1,stun:0,out:false,dashT:0,flash:0,fallT:0};
@@ -2366,7 +2367,7 @@ function p3SyncRhy(y,g,t){const now=rClock(),b0=g.beat??-9,fr=b0-Math.floor(b0);
         if(e.res[i]>0&&now>=e.at[i]){if(!e['b'+i]){e['b'+i]=1;p3Burst('star',dst.x,dst.y,dst.z,6);p3Burst('dust',dst.x,dst.y,dst.z,6)}continue}
         o.visible=true;o.position.lerpVectors(src,dst,Math.min(1.3,k));o.position.y=src.y+(dst.y-src.y)*k+Math.sin(Math.min(1,k)*Math.PI)*(e.kind==='melon'?5:3);o.rotation.x=k*8;o.rotation.z=k*5}
       c.body.rotation.x=since<.12?-.3:0}}}
-function p3OverlayRhy(y,g){const now=rClock(),top=Math.max(110,H*.15);
+function p3OverlayRhy(y,g){const now=rVis(),top=Math.max(110,H*.15);
   if(g.beatFlash>0){ctx.strokeStyle=`rgba(255,255,255,${g.beatFlash*.45})`;ctx.lineWidth=12;ctx.strokeRect(6,6,W-12,H-12)}
   if((g.beat??-9)<0&&(g.beat??-9)>-4.2)popText(String(Math.ceil(-(g.beat))),W/2,top,44,'#fff','#2a1f4a');
   for(const e of g.exp){const d=now-e.cueT;if(d>=0&&d<.35){const txt=g.id==='mochi'?({long:'ハ〜イ',off:'ハッ！',tri:'ハ',dbl:'ハイ'}[e.kind]||'ハイ！'):g.id==='pong'?(e.kind==='lob'?'ポーン':e.kind==='smash'?'パシッ':'ポン'):(e.kind==='melon'?'ヒュ〜ン':'ヒュッ');
@@ -2384,7 +2385,7 @@ function p3BuildRhythm(s){s.background=p3Sky('#2a1f5a','#7a3fa0');
   P3.lights=[];for(let k=0;k<5;k++){const sp=new THREE.SpotLight(['#ff7eb6','#5fd0ff','#fff27a','#7ee0b0','#ff9f43'][k],1.2,60,.4,.5);sp.position.set((k-2)*8,16,8);sp.target.position.set((k-2)*3,0,0);s.add(sp);s.add(sp.target);P3.lights.push(sp)}
   for(let k=0;k<70;k++){const st2=p3Mesh(new THREE.SphereGeometry(.09,6,4),new THREE.MeshBasicMaterial({color:'#fff8d0'}),false);st2.position.set(rand(-60,60),rand(10,40),rand(-60,-30));s.add(st2)}}
 function p3SyncRhythm(y,g,t){const b0=g.beat??-9,fr=b0-Math.floor(b0);
-  for(let i=0;i<4;i++){const c=P3.chars[i],x=(i-1.5)*5.5;const last=g.taps[i].length?g.taps[i][g.taps[i].length-1]:-9,since=rClock()-last;
+  for(let i=0;i<4;i++){const c=P3.chars[i],x=(i-1.5)*5.5;const last=g.taps[i].length?g.taps[i][g.taps[i].length-1]:-9,since=rVis()-last;
     const b={i,x:240+x*10,y:190+25,vx:0,vy:0,fx:0,fy:1,stun:0,out:false,dashT:0,flash:0,fallT:0};
     const hop=(b0>=0?Math.max(0,1-fr/.25)*.25:0)+(since<.18?(1-since/.18)*.9:0);p3SyncChar(c,b,t,{face:Math.PI*0,hop,squash:since<.08?.18:0})}
   const jh=g.judgeHop||0;P3.drum.position.y=jh*.8;P3.drum.scale.set(1+jh*.06,1-jh*.05,1+jh*.06);P3.drumTop.material.emissive=new THREE.Color(jh>.5?'#553300':'#000000');
@@ -2873,9 +2874,9 @@ rMusic=function(at,b,g,id){const S=R_STY[id],spb=g.spb,T=x=>at+x*spb,bb=((b%4)+4
   const M=S.melody;if(M){const base=(mbar%2)*8+bb*2;for(let e=0;e<2;e++){const n=M[base+e];if(n!=null)rTone(T(sw(e*.5)),f(n+12),spb*.4,'triangle',.045)}}};
 /* 判定：おてほんは自動。練習は判定だけ見せて点にしない。空振りペナルティは本番だけ */
 function rgScoreFrom(g){if(g._sf==null||!g._prep){let m=1e9;for(const e of g.exp)if(!e.demo&&!e.prac)m=Math.min(m,e.cueT!=null?e.cueT:e.t-g.spb);g._sf=m-.15;const v=g._sf;if(!g._prep)g._sf=null;return v}return g._sf}
-rgJudgeTap=function(g,i,at){const S=rgSt(g,i);let best=null,bd=.2;for(const e of g.exp){if(e.m[i]||e.demo)continue;const d=Math.abs(at-e.t);if(d<bd){bd=d;best=e}}
+rgJudgeTap=function(g,i,at){const S=rgSt(g,i);let best=null,bd=.24;for(const e of g.exp){if(e.m[i]||e.demo)continue;const d=Math.abs(at-e.t);if(d<bd){bd=d;best=e}}
   let grade,dev=0;
-  if(best){best.m[i]=true;dev=at-best.t;grade=bd<.065?2:bd<.14?1:0;if(best.res)best.res[i]=grade;if(best.at)best.at[i]=at;
+  if(best){best.m[i]=true;dev=at-best.t;grade=bd<.085?2:bd<.165?1:0;if(i===PME&&best.prac){(g.calDevs=g.calDevs||[]).push(dev)}if(best.res)best.res[i]=grade;if(best.at)best.at[i]=at;
     if(!best.prac){g.pts[i]+=grade;if(grade>0){S.combo++;S.max=Math.max(S.max,S.combo);S.devs.push(dev);if(grade===2)S.p++;else S.o++}else{S.combo=0;S.z++}}}
   else{grade=-1;if(at>=rgScoreFrom(g)){g.pts[i]=Math.max(0,g.pts[i]-1);S.combo=0;S.stray++}}
   g.fx.push({i,grade,t:0,e:best,dev,combo:S.combo,prac:best&&best.prac});
@@ -2895,7 +2896,7 @@ R_PAT.length=0;R_PAT.push([0,1,2,3],[0,2,3],[0,1,2],[0,1.5,2,3],[0,.5,1,2],[0,1,
 /* 画面：自分の叩く場所に縮む輪。今どの段階かを上に出す */
 function rgHitPt(g,i){const x=RX(i);if(g.id==='mochi')return[x,1.9,3.2];if(g.id==='pong')return[x+1.2,2.2,2];if(g.id==='karate')return[x,2.2,2.2];return[x,1.4,2.5]}
 function rgSegNow(g){if(!g.segs||g.beat==null)return null;const rb=g.beat-g.lead;for(const s of g.segs)if(rb>=s.b0-1&&rb<s.b1-1)return{s,k:(rb-s.b0+1)/(s.b1-s.b0)};return null}
-rgOverlayExtra=function(y,g){const now=rClock(),top=Math.max(110,H*.15);
+rgOverlayExtra=function(y,g){const now=rVis(),top=Math.max(110,H*.15);
   for(const who of[PME,PME2]){if(who<0)continue;const hp=rgHitPt(g,who),p=p3Proj(hp[0],hp[1],hp[2]);if(!p.on)continue;const mine=who===PME;
     ctx.save();ctx.globalAlpha=mine?.22:.12;ctx.fillStyle=mine?'#fff27a':'#7fd0ff';ctx.beginPath();ctx.ellipse(p.x,p.y,mine?34:26,mine?34:26,0,0,TAU);ctx.fill();ctx.restore();
     for(const e of g.exp){const c0=e.cueT!=null?e.cueT:e.t-g.spb;if(now<c0||now>e.t+.12)continue;if(e.m[who]&&!e.demo)continue;
@@ -3036,9 +3037,250 @@ const _fxSyncRhythm=p3SyncRhythm;p3SyncRhythm=function(y,g,t){_fxSyncRhythm(y,g,
 p3RhyStage=function(s){P3.lights=[]};
 const _fxBuild=p3Build;p3Build=function(gid){P3.bloom=.22;P3.crowd=null;P3.score=null;_fxBuild(gid)};
 
+
+/* リズム：見た目は「いま耳に届いている音」の時刻で動かす／練習の結果でタイミングを自動補正 */
+function rVis(){try{if(AC&&AC.getOutputTimestamp){const ts=AC.getOutputTimestamp();if(ts&&ts.contextTime>0&&ts.performanceTime>0){const t=ts.contextTime+(performance.now()-ts.performanceTime)/1000,now=rClock();if(t<=now+.02&&t>now-.6)return t}}}catch(_){}return rClock()-((AC&&(AC.outputLatency||AC.baseLatency))||0)}
+function rgCalib(g){if(g.calDone||!g.exp||g.t0==null||!g._prep)return;const first=g.exp.find(e=>!e.demo&&!e.prac);if(!first)return;const now=rClock();if(now<(first.cueT!=null?first.cueT:first.t-g.spb)-.4)return;g.calDone=1;
+  const d=(g.calDevs||[]).slice().sort((a,b)=>a-b);if(d.length<3)return;const med=d[Math.floor(d.length/2)];if(Math.abs(med)<.02)return;const adj=Math.max(-.15,Math.min(.15,med))*.85;rSetOfs(R_OFS+adj*1000);g.calMsg={t:now,txt:`タイミングを自動で合わせました（${adj>0?'+':''}${Math.round(adj*1000)}ms）`}}
+for(const G of[PY_MOCHI,PY_PONG,PY_KARATE,PY_RHYTHM]){const u=G.update;G.update=function(g,dt,inp){const r=u.call(this,g,dt,inp);try{rgCalib(g)}catch(_){}return r}}
+const _rgOv2=rgOverlayExtra;rgOverlayExtra=function(y,g){_rgOv2(y,g);if(g.calMsg&&rClock()-g.calMsg.t<2.8){const w=Math.min(W*.9,440);rr(W/2-w/2,H*.3-18,w,36,18,'rgba(20,24,40,.85)');vt(g.calMsg.txt,W/2,H*.3,14,'#7fe0b0')}};
+/* ---------- 新ミニゲーム：チーム戦（2対2）と個人戦 ---------- */
+const TCOL=['#e2493b','#3f7de0'],TNAME=['あか','あお'];
+function tmShuffleTeams(){const a=[0,1,2,3];for(let i=3;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}const t=[0,0,0,0];t[a[2]]=1;t[a[3]]=1;return t}
+function tmTeams(){return(Y&&Y.teams&&Y.teams.length===4)?Y.teams.slice():tmShuffleTeams()}
+function tmRank(g,win,key){const sc=i=>key?key(i):0;const W=[0,1,2,3].filter(i=>g.teams[i]===win).sort((a,b)=>sc(b)-sc(a)),L=[0,1,2,3].filter(i=>g.teams[i]!==win).sort((a,b)=>sc(b)-sc(a));g.teamWin=win;return[...W,...L]}
+function tmHum(i,inp){return i===PME?inp:(inp.p2||{})}
+function tmMove(g,b,dt,inp,ai,acc,max){let ax,ay;if(ISHUM(b.i)){const I=tmHum(b.i,inp);ax=I.mx||0;ay=I.my||0;if(I.act)pyDash(b)}else[ax,ay]=ai(g,b,dt);pyStep(b,ax,ay,dt,acc||850,max||150)}
+function tmClampRect(b,x0,y0,x1,y1){if(b.x<x0+b.r){b.x=x0+b.r;if(b.vx<0)b.vx*=-.4}if(b.x>x1-b.r){b.x=x1-b.r;if(b.vx>0)b.vx*=-.4}if(b.y<y0+b.r){b.y=y0+b.r;if(b.vy<0)b.vy*=-.4}if(b.y>y1-b.r){b.y=y1-b.r;if(b.vy>0)b.vy*=-.4}}
+function tmClampCircle(b,cx,cy,R){const dx=b.x-cx,dy=b.y-cy,d=Math.hypot(dx,dy)||1;if(d>R-b.r){b.x=cx+dx/d*(R-b.r);b.y=cy+dy/d*(R-b.r);const vn=(b.vx*dx+b.vy*dy)/d;if(vn>0){b.vx-=dx/d*vn*1.6;b.vy-=dy/d*vn*1.6}}}
+function tmDraw2D(g,title){ctx.fillStyle='#1d2433';ctx.fillRect(0,0,VW,VH);vt(title,VW/2,30,20,'#fff');if(g.bs)for(const b of g.bs)pyDrawBody(b,1)}
+
+/* 1) つなひき（チーム） */
+const PY_TUG={id:'tug',team:true,name:'つなひき',btn:'ひっぱる',rule:'2対2のチーム戦。ボタンを連打してロープを引っぱれ！ 真ん中の旗を自分たちの線までひきこんだら勝ち。ときどき「せーの！」の合図が来たら、その間はひと引きが2倍以上きく。',ctrl:'ボタン / 画面タップ / スペースを連打',
+ make(){const g={id:'tug',teamGame:true,teams:tmTeams(),t:0,dur:25,rope:0,pull:[0,0,0,0],next:[0,0,0,0],flash:[0,0,0,0],sei:-1,seiT:rand(4.5,6.5),win:-1,winT:0};for(let i=0;i<4;i++)g.next[i]=rand(.15,.35);return g},
+ update(g,dt,inp){g.t+=dt;for(let i=0;i<4;i++)g.flash[i]=Math.max(0,g.flash[i]-dt);
+   if(g.win>=0){g.winT+=dt;g.rope+=(g.win===0?-1:1)*dt*30;if(g.winT>1.8)return tmRank(g,g.win,i=>g.pull[i]);return null}
+   g.seiT-=dt;if(g.sei<0&&g.seiT<=0){g.sei=1.1;beep(660,.08,'square',.05);beep(990,.14,'square',.05,.16)}if(g.sei>=0){g.sei-=dt;if(g.sei<0)g.seiT=rand(4.5,6.5)}
+   const pw=g.sei>=0?2.6:1;const tug=(i,n)=>{g.rope+=(g.teams[i]===0?-1:1)*n*1.35*pw;g.flash[i]=.12;g.pull[i]+=n};
+   for(const i of[PME,PME2]){if(i<0)continue;const I=tmHum(i,inp);const n=Math.min(I.act||0,3);if(n){tug(i,n);if(i===PME)beep(260+Math.random()*90,.03,'triangle',.035)}}
+   for(let i=0;i<4;i++){if(ISHUM(i))continue;const P=CPU(i);g.next[i]-=dt;if(g.next[i]<=0){tug(i,1);const base=(P==='greedy'?8.6:P==='careful'?7.9:7.2)*(1+.12*Math.sin(g.t*.9+i*2));const fat=1-Math.min(.22,g.t/g.dur*.22);const boost=g.sei>=0?(P==='careful'?1.4:P==='greedy'?1.2:1.05):1;g.next[i]=1/(base*fat*boost)*rand(.8,1.2)}}
+   if(Math.abs(g.rope)>=100){g.win=g.rope<0?0:1;Y.shake=10;beep(523,.1);beep(784,.16,'square',.05,.1)}
+   else if(g.t>=g.dur){g.win=g.rope<0?0:g.rope>0?1:(Math.random()<.5?0:1);beep(523,.1)}
+   return null},
+ draw(g){tmDraw2D(g,'つなひき')}};
+
+/* 2) ペンキぬり（チーム） */
+const PT={x0:30,y0:40,cs:30,cols:14,rows:10};
+const PY_PAINT={id:'paint',team:true,name:'ペンキぬり',btn:'ダッシュ',rule:'2対2のチーム戦。歩いた床が自分のチームの色にぬられる。30秒で多くぬったチームの勝ち！ ときどき出るペンキ缶をとると、まわりを一気にぬれる。',ctrl:'移動：ドラッグ / 矢印・WASD　ダッシュ：ボタン / スペース',
+ make(){const g={id:'paint',teamGame:true,teams:tmTeams(),t:0,dur:30,cells:Array(PT.cols*PT.rows).fill(-1),bs:[],can:null,canT:5,cnt:[0,0],fx:[],done:false,endT:0};
+   const sp={0:[[70,110],[70,270]],1:[[410,110],[410,270]]},used=[0,0];for(let i=0;i<4;i++){const tm=g.teams[i],[x,y]=sp[tm][used[tm]++];const b=mkBody(i,x,y);b.fx=tm?-1:1;b.fy=0;g.bs.push(b)}return g},
+ cellAt(x,y){const c=Math.floor((x-PT.x0)/PT.cs),r=Math.floor((y-PT.y0)/PT.cs);if(c<0||r<0||c>=PT.cols||r>=PT.rows)return-1;return r*PT.cols+c},
+ paint(g,k,tm){if(k<0||g.cells[k]===tm)return;g.cells[k]=tm;g.fx.push({k,t:0})},
+ ai(g,b,dt){const P=CPU(b.i),tm=g.teams[b.i];b.thinkT-=dt;
+   if(g.can&&Math.hypot(g.can.x-b.x,g.can.y-b.y)<(P==='greedy'?170:110))b.tgt={x:g.can.x,y:g.can.y};
+   if(!b.tgt||b.thinkT<=0||Math.hypot(b.tgt.x-b.x,b.tgt.y-b.y)<14){b.thinkT=P==='careful'?.7:P==='greedy'?1:1.4;let best=null,bs=-1e9;
+     for(let n=0;n<26;n++){const k=Math.floor(Math.random()*g.cells.length),cx=PT.x0+(k%PT.cols+.5)*PT.cs,cy=PT.y0+(Math.floor(k/PT.cols)+.5)*PT.cs;if(g.cells[k]===tm)continue;
+       const d=Math.hypot(cx-b.x,cy-b.y),s=(g.cells[k]===1-tm?60:30)-d*.35+Math.random()*20;if(s>bs){bs=s;best={x:cx,y:cy}}}b.tgt=best||{x:240,y:190}}
+   let[ax,ay]=pyNorm(b.tgt.x-b.x,b.tgt.y-b.y);if(P==='clumsy'&&Math.random()<.25){ax+=Math.sin(g.t*4+b.i);ay+=Math.cos(g.t*3)}
+   if(b.dashCd<=0&&Math.random()<dt*(P==='greedy'?1.6:P==='careful'?.9:.6)){b.fx=ax;b.fy=ay;pyDash(b)}return pyNorm(ax,ay)},
+ update(g,dt,inp){g.t+=dt;for(const f of g.fx)f.t+=dt;g.fx=g.fx.filter(f=>f.t<.5);
+   if(g.done){g.endT+=dt;if(g.endT>1.6)return tmRank(g,g.cnt[0]>=g.cnt[1]?(g.cnt[0]===g.cnt[1]?(Math.random()<.5?0:1):0):1,i=>g.bs[i].score);return null}
+   for(const b of g.bs){tmMove(g,b,dt,inp,(gg,bb,d)=>this.ai(gg,bb,d),900,160);tmClampRect(b,PT.x0,PT.y0,PT.x0+PT.cols*PT.cs,PT.y0+PT.rows*PT.cs);
+     const k=this.cellAt(b.x,b.y),tm=g.teams[b.i];if(k>=0&&g.cells[k]!==tm){this.paint(g,k,tm);b.score++;if(b.i===PME&&Math.random()<.5)beep(700+Math.random()*300,.02,'triangle',.02)}}
+   pyCollide(g,g.bs);
+   g.canT-=dt;if(!g.can&&g.canT<=0){g.can={x:rand(80,400),y:rand(80,300),t:0};beep(880,.06,'square',.04)}
+   if(g.can){g.can.t+=dt;for(const b of g.bs){if(Math.hypot(b.x-g.can.x,b.y-g.can.y)<b.r+16){const tm=g.teams[b.i],c0=Math.floor((b.x-PT.x0)/PT.cs),r0=Math.floor((b.y-PT.y0)/PT.cs);
+     for(let dr=-2;dr<=2;dr++)for(let dc=-2;dc<=2;dc++){if(Math.abs(dr)+Math.abs(dc)>3)continue;const c=c0+dc,r=r0+dr;if(c<0||r<0||c>=PT.cols||r>=PT.rows)continue;const k=r*PT.cols+c;if(g.cells[k]!==tm){this.paint(g,k,tm);b.score++}}
+     g.can=null;g.canT=rand(4,6);Y.shake=Math.max(Y.shake,6);beep(300,.12,'square',.06);beep(600,.1,'square',.04,.06);break}}}
+   g.cnt=[g.cells.filter(c=>c===0).length,g.cells.filter(c=>c===1).length];
+   if(g.t>=g.dur){g.done=true;beep(523,.1);beep(784,.16,'square',.05,.1)}
+   return null},
+ draw(g){tmDraw2D(g,'ペンキぬり')}};
+
+/* 3) ボールおしこみ（チーム） */
+const SC={x0:40,y0:60,x1:440,y1:320,gy0:150,gy1:230};
+const PY_SOCCER={id:'soccer',team:true,name:'ボールおしこみ',btn:'キック',rule:'2対2のチーム戦。大きなボールを相手のゴールにおしこめ！ ダッシュでぶつかると強くける。40秒で点の多いチーム、先に3点とったら即勝ち。',ctrl:'移動：ドラッグ / 矢印・WASD　キック（ダッシュ）：ボタン / スペース',
+ make(){const g={id:'soccer',teamGame:true,teams:tmTeams(),t:0,dur:40,score:[0,0],bs:[],ball:{x:240,y:190,vx:0,vy:0,r:20},goalT:0,lastGoal:-1,done:false,endT:0,touch:-1};this.reset(g,true);return g},
+ reset(g,first){const used=[0,0];g.bs=g.bs.length?g.bs:[0,1,2,3].map(i=>mkBody(i,0,0));for(let i=0;i<4;i++){const tm=g.teams[i],k=used[tm]++;const b=g.bs[i];b.x=tm===0?(k?110:180):(k?370:300);b.y=k?190:(i%2?150:230);b.vx=b.vy=0;b.fx=tm?-1:1;b.fy=0;b.stun=0;b.dashT=0;b.role=k?'def':'atk'}
+   Object.assign(g.ball,{x:240,y:190,vx:0,vy:0})},
+ ai(g,b,dt){const P=CPU(b.i),tm=g.teams[b.i],bl=g.ball,gx=tm===0?SC.x1+20:SC.x0-20,own=tm===0?SC.x0:SC.x1;let tx,ty;
+   const toG=pyNorm(gx-bl.x,190-bl.y);const behind={x:bl.x-toG[0]*34,y:bl.y-toG[1]*34};
+   const ballInOwnHalf=tm===0?bl.x<240:bl.x>240;
+   if(b.role==='def'&&!ballInOwnHalf&&P!=='greedy'){tx=own+(tm===0?70:-70);ty=190+(bl.y-190)*.6}
+   else{const d=Math.hypot(behind.x-b.x,behind.y-b.y);const wrongSide=tm===0?b.x>bl.x+6:b.x<bl.x-6;
+     if(wrongSide||d>26){tx=behind.x;ty=behind.y;if(wrongSide){ty+=(b.y<bl.y?-40:40)}}else{tx=bl.x+toG[0]*30;ty=bl.y+toG[1]*30;if(b.dashCd<=0&&Math.random()<dt*(P==='greedy'?5:P==='careful'?3:1.5)){const[a1,a2]=pyNorm(tx-b.x,ty-b.y);b.fx=a1;b.fy=a2;pyDash(b)}}}
+   let[ax,ay]=pyNorm(tx-b.x,ty-b.y);if(P==='clumsy'&&Math.random()<.2){ax+=Math.sin(g.t*5+b.i)*.8;ay+=Math.cos(g.t*4)*.8}return pyNorm(ax,ay)},
+ update(g,dt,inp){g.t+=dt;const bl=g.ball;
+   if(g.done){g.endT+=dt;if(g.endT>1.6){const w=g.score[0]>g.score[1]?0:g.score[1]>g.score[0]?1:(Math.random()<.5?0:1);return tmRank(g,w,i=>g.bs[i].score)}return null}
+   if(g.goalT>0){g.goalT-=dt;if(g.goalT<=0){if(g.score[0]>=3||g.score[1]>=3||g.t>=g.dur){g.done=true;return null}this.reset(g)}else{bl.vx*=.9;bl.vy*=.9;return null}}
+   for(const b of g.bs){tmMove(g,b,dt,inp,(gg,bb,d)=>this.ai(gg,bb,d),900,155);tmClampRect(b,SC.x0,SC.y0,SC.x1,SC.y1)}
+   pyCollide(g,g.bs);
+   for(const b of g.bs){const dx=bl.x-b.x,dy=bl.y-b.y,d=Math.hypot(dx,dy),m=b.r+bl.r;if(d<m&&d>0){const nx=dx/d,ny=dy/d;bl.x=b.x+nx*m;bl.y=b.y+ny*m;
+     const rel=(b.vx-bl.vx)*nx+(b.vy-bl.vy)*ny;const kick=Math.max(0,rel)*1.15+(b.dashT>0?260:40);bl.vx+=nx*kick;bl.vy+=ny*kick;g.touch=b.i;if(b.dashT>0){b.dashT=0;b.vx*=.3;b.vy*=.3;beep(220,.06,'square',.05);if(Y)Y.shake=Math.max(Y.shake,3)}}}
+   bl.x+=bl.vx*dt;bl.y+=bl.vy*dt;const f=Math.pow(.42,dt);bl.vx*=f;bl.vy*=f;const sp=Math.hypot(bl.vx,bl.vy);if(sp>620){bl.vx*=620/sp;bl.vy*=620/sp}
+   if(bl.y<SC.y0+bl.r){bl.y=SC.y0+bl.r;bl.vy=Math.abs(bl.vy)*.8}if(bl.y>SC.y1-bl.r){bl.y=SC.y1-bl.r;bl.vy=-Math.abs(bl.vy)*.8}
+   const inMouth=bl.y>SC.gy0+6&&bl.y<SC.gy1-6;
+   if(bl.x<SC.x0+bl.r){if(inMouth&&bl.x<SC.x0-4){this.goal(g,1)}else if(!inMouth){bl.x=SC.x0+bl.r;bl.vx=Math.abs(bl.vx)*.8}}
+   if(bl.x>SC.x1-bl.r){if(inMouth&&bl.x>SC.x1+4){this.goal(g,0)}else if(!inMouth){bl.x=SC.x1-bl.r;bl.vx=-Math.abs(bl.vx)*.8}}
+   if(bl.x<SC.x0-30)bl.x=SC.x0-30;if(bl.x>SC.x1+30)bl.x=SC.x1+30;
+   if(g.t>=g.dur&&g.goalT<=0&&g.score[0]!==g.score[1])g.done=true;
+   if(g.t>=g.dur+15&&g.goalT<=0)g.done=true;
+   return null},
+ goal(g,tm){if(g.goalT>0)return;g.score[tm]++;g.lastGoal=tm;g.goalT=1.6;if(g.touch>=0&&g.teams[g.touch]===tm)g.bs[g.touch].score+=1;if(Y)Y.shake=12;beep(523,.1);beep(659,.1,'square',.05,.1);beep(784,.2,'square',.05,.2)},
+ draw(g){tmDraw2D(g,'ボールおしこみ');ell(g.ball.x,g.ball.y,20,20,'#fff')}};
+
+/* 4) 王冠キープ（個人） */
+const PY_CROWN={id:'crown',name:'王冠キープ',btn:'ダッシュ',rule:'王冠を持っている間だけ時間がたまる。王冠を持っている人にぶつかれば、うばえる。30秒で一番長く持っていた人の勝ち！',ctrl:'移動：ドラッグ / 矢印・WASD　ダッシュ：ボタン / スペース',
+ make(){const g={id:'crown',t:0,dur:30,cx:240,cy:190,R:150,bs:[],holder:-1,immune:0,hold:[0,0,0,0],crown:{x:240,y:190},stealT:0};for(let i=0;i<4;i++){const a=i/4*TAU+TAU/8;g.bs.push(mkBody(i,240+Math.cos(a)*105,190+Math.sin(a)*105))}return g},
+ ai(g,b,dt){const P=CPU(b.i);let ax=0,ay=0;
+   if(g.holder<0){[ax,ay]=pyNorm(g.crown.x-b.x,g.crown.y-b.y);if(Math.hypot(g.crown.x-b.x,g.crown.y-b.y)<90&&b.dashCd<=0&&Math.random()<dt*2){b.fx=ax;b.fy=ay;pyDash(b)}}
+   else if(b.i===g.holder){const others=g.bs.filter(o=>o!==b);let fx=0,fy=0;for(const o of others){const dx=b.x-o.x,dy=b.y-o.y,d=Math.hypot(dx,dy)||1;fx+=dx/d/Math.max(.3,d/100);fy+=dy/d/Math.max(.3,d/100)}[ax,ay]=pyNorm(fx,fy);
+     const dc=Math.hypot(b.x-g.cx,b.y-g.cy);if(dc>g.R*.65){const tx=-(b.y-g.cy)/dc,ty=(b.x-g.cx)/dc,s=tx*ax+ty*ay>0?1:-1;ax=ax*.35+tx*s;ay=ay*.35+ty*s;const[cx,cy]=pyNorm(g.cx-b.x,g.cy-b.y);ax+=cx*.3;ay+=cy*.3}
+     if(P==='clumsy'&&Math.random()<.2){ax=Math.sin(g.t*3+b.i);ay=Math.cos(g.t*2)}}
+   else{const h=g.bs[g.holder];[ax,ay]=pyNorm(h.x+h.vx*.25-b.x,h.y+h.vy*.25-b.y);const d=Math.hypot(h.x-b.x,h.y-b.y);if(d<(P==='greedy'?95:85)&&b.dashCd<=0&&g.immune<=0&&Math.random()<dt*(P==='greedy'?2.2:P==='careful'?2.2:1.5)){b.fx=ax;b.fy=ay;pyDash(b)}
+     if(P==='clumsy'&&Math.random()<.25){ax+=Math.sin(g.t*3+b.i);ay+=Math.cos(g.t*2.3)}}
+   return pyNorm(ax,ay)},
+ update(g,dt,inp){g.t+=dt;if(g.immune>0)g.immune-=dt;g.stealT=Math.max(0,g.stealT-dt);
+   for(const b of g.bs){tmMove(g,b,dt,inp,(gg,bb,d)=>this.ai(gg,bb,d),850,b.i===g.holder?147:153);tmClampCircle(b,g.cx,g.cy,g.R)}
+   pyCollide(g,g.bs);
+   if(g.holder<0){for(const b of g.bs)if(Math.hypot(b.x-g.crown.x,b.y-g.crown.y)<b.r+14){g.holder=b.i;g.immune=.8;beep(988,.08,'square',.05);break}}
+   else{const h=g.bs[g.holder];g.hold[g.holder]+=dt;g.crown.x=h.x;g.crown.y=h.y;const cand=g.immune<=0?g.bs.filter(o=>o!==h&&Math.hypot(o.x-h.x,o.y-h.y)<o.r+h.r+3).sort((a,b)=>(b.dashT>0)-(a.dashT>0)||Math.random()-.5):[];for(const o of cand){if(true){g.holder=o.i;g.immune=.9;g.stealT=.5;o.flash=.25;h.stun=.35;h.vx=(h.x-o.x)*4;h.vy=(h.y-o.y)*4;if(Y)Y.shake=Math.max(Y.shake,6);beep(1175,.06,'square',.05);beep(784,.08,'square',.04,.06);break}}}
+   if(g.t>=g.dur)return[0,1,2,3].sort((a,b)=>g.hold[b]-g.hold[a]);
+   return null},
+ draw(g){tmDraw2D(g,'王冠キープ')}};
+
+/* 5) だるまさんがころんだ（個人） */
+const DARUMA_SYL=['だ','る','ま','さ','ん','が','こ','ろ','ん','だ'];
+const PY_DARUMA={id:'daruma',name:'だるまさんがころんだ',btn:'すすむ',rule:'「だるまさんがころんだ」の間だけ連打で前へ進め！ 「だ！」で鬼がふり向いたら、手を止めないと見つかってスタート側へもどされる。先にゴールした人の勝ち。',ctrl:'ボタン / 画面タップ / スペースを連打（鬼がふり向いたら止まる）',
+ make(){const g={id:'daruma',t:0,dur:50,pos:[0,0,0,0],vel:[0,0,0,0],caught:[0,0,0,0],fin:[null,null,null,null],ph:'call',pt:0,callD:3,lookD:1.5,round:0,next:[0,0,0,0],marg:[0,0,0,0],syl:-1};this.newCall(g);return g},
+ newCall(g){g.ph='call';g.pt=0;g.round++;const sp=Math.max(1.1,3.2-g.round*.18+rand(-.5,.5));g.callD=sp;g.syl=-1;const pat=g.round<=1?0:Math.floor(Math.random()*3);g.sylT=Array.from({length:10},(_,k)=>pat===0?k/10:pat===1?(k<6?k/6*.72:.72+(k-6)/4*.26):(k<6?k/6*.42:.74+(k-6)/4*.24));
+   for(let i=0;i<4;i++){const P=CPU(i);g.marg[i]=P==='careful'?rand(.3,.48):P==='greedy'?rand(.06,.22):rand(.05,.45);g.over=g.over||[0,0,0,0];g.over[i]=Math.random()<(P==='greedy'?.3:P==='careful'?.08:.35)?rand(.2,.55):0}},
+ update(g,dt,inp){g.t+=dt;g.pt+=dt;for(let i=0;i<4;i++){g.vel[i]*=Math.pow(.02,dt);g.caught[i]=Math.max(0,g.caught[i]-dt)}
+   const step=(i,n)=>{if(g.fin[i]!==null||g.caught[i]>0)return;if(g.ph==='look'&&g.pt>.15){g.caught[i]=1;g.pos[i]=Math.max(0,g.pos[i]-30);g.vel[i]=-40;if(i===PME){beep(150,.25,'sawtooth',.06);Y.shake=8}else beep(200,.1,'sawtooth',.03);return}
+     if(g.ph==='look')return;g.pos[i]=Math.min(100,g.pos[i]+n*1.9);g.vel[i]+=n*12;if(g.pos[i]>=100&&g.fin[i]===null){g.fin[i]=g.t;beep(784,.1);beep(1046,.16,'square',.05,.1)}};
+   for(const i of[PME,PME2]){if(i<0)continue;const I=tmHum(i,inp);const n=Math.min(I.act||0,3);if(n){step(i,n);if(i===PME&&g.ph==='call')beep(330+Math.random()*60,.025,'triangle',.03)}}
+   if(g.ph==='call'){let k=-1;for(let q=0;q<10;q++)if(g.pt/g.callD>=(g.sylT?g.sylT[q]:q/10))k=q;if(k!==g.syl&&k<10&&k>=0){g.syl=k;beep(k===9?740:[523,587,659,587,523,587,659,698,659,587][k],k===9?.16:.09,'triangle',.07)}
+     for(let i=0;i<4;i++){if(ISHUM(i))continue;const P=CPU(i);g.next[i]-=dt;const left=g.callD-g.pt;if((left>g.marg[i]||g.over[i]>0)&&g.next[i]<=0){step(i,1);g.next[i]=1/(P==='greedy'?9:P==='careful'?8.2:7.6)*rand(.8,1.2)}}
+     if(g.pt>=g.callD){g.ph='turn';g.pt=0}}
+   else if(g.ph==='turn'){for(let i=0;i<4;i++){if(ISHUM(i)||!(g.over[i]>0))continue;g.next[i]-=dt;if(g.next[i]<=0){step(i,1);g.next[i]=.12}}if(g.pt>=.22){g.ph='look';g.pt=0;g.lookD=rand(1.1,1.9);beep(196,.2,'square',.06)}}
+   else if(g.ph==='look'){for(let i=0;i<4;i++){if(ISHUM(i))continue;if(g.over[i]>0&&g.pt<g.over[i]){g.next[i]-=dt;if(g.next[i]<=0){step(i,1);g.next[i]=.12}}}if(g.pt>=g.lookD)this.newCall(g)}
+   const done=g.fin.filter(f=>f!==null).length;
+   if(done>=1&&!g.endT)g.endT=g.t;
+   if((g.endT&&g.t-g.endT>1.4)||g.t>=g.dur)return[0,1,2,3].sort((a,b)=>(g.fin[a]??(999-g.pos[a]))-(g.fin[b]??(999-g.pos[b])));
+   return null},
+ draw(g){ctx.fillStyle='#1d2433';ctx.fillRect(0,0,VW,VH);vt(g.ph==='look'?'ころんだ！':'だるまさんが…',VW/2,40,26,'#fff');for(let i=0;i<4;i++){const x=72+i*112,y=320-g.pos[i]*2.6;const b={i,x,y,r:16,stun:0,out:false,dashT:0,flash:0,fx:0,fy:-1};pyDrawBody(b,1)}}};
+
+PY_GAMES.push(PY_TUG,PY_PAINT,PY_SOCCER,PY_CROWN,PY_DARUMA);
+Object.assign(GCOL,{tug:'#c0392b',paint:'#d14fa0',soccer:'#2f9a5a',crown:'#d4a017',daruma:'#e2493b'});
+
+/* ---------- 3D ---------- */
+const TM3={};
+function tmCam(hw,hh,dir,look){const a=W/H,cam=P3.cam;cam.aspect=a;const tn=Math.tan(cam.fov*Math.PI/360);const k=P3.sweep??1,orb=(1-k)*.9+(P3.spin||0),d=Math.max(hw/(tn*a),hh/tn)*1.05*(1+(1-k)*.45);
+  const v=new THREE.Vector3(dir[0],dir[1],dir[2]).normalize();const ca=Math.cos(orb),sa=Math.sin(orb);const vx=v.x*ca+v.z*sa,vz=-v.x*sa+v.z*ca;v.x=vx;v.z=vz;v.y+=(1-k)*.25;v.normalize();
+  const L=new THREE.Vector3(look[0],look[1],look[2]);cam.position.copy(L).add(v.multiplyScalar(d));cam.lookAt(L);cam.updateProjectionMatrix();
+  const y=Y,sh=((y&&y.shake)||0)*.025;if(sh>0){cam.position.x+=(Math.random()-.5)*sh;cam.position.y+=(Math.random()-.5)*sh}}
+function tmRings(s){P3.trings=[0,1,2,3].map(()=>{const r=p3Mesh(new THREE.RingGeometry(1.25,1.75,40),new THREE.MeshBasicMaterial({color:'#ffffff',transparent:true,opacity:.85,side:THREE.DoubleSide}),false);r.rotation.x=-Math.PI/2;s.add(r);return r})}
+function tmRingSync(g){if(!P3.trings)return;for(let i=0;i<4;i++){const r=P3.trings[i],c=P3.chars[i];if(!g.teams||!c||!c.visible){r.visible=false;continue}r.visible=true;r.material.color.set(TCOL[g.teams[i]]);r.position.set(c.position.x,Math.max(.05,c.position.y)+.06,c.position.z)}}
+function tmBuild(gid){p3Clear();P3.gid=gid;const s=p3Base('#8fc9ee');const chars=[0,1,2,3].map(p3Char);TM3[gid].build(s);chars.forEach(c=>s.add(c));P3.chars=chars;P3.scene=s;P3.floaters=[];
+  const sky=TM3[gid].sky||['#4fb3f5','#e9f6ff'];s.background=p3Sky(sky[0],sky[1]);P3.clouds=p3Clouds(s);if(TM3[gid].team)tmRings(s);try{if(WORLD[gid])p3World(s,gid)}catch(e){}}
+Object.assign(WORLD,{tug:{gy:-.02,theme:'park'},daruma:{gy:-.02,theme:'park'},paint:{gy:-1.3,theme:'park'},soccer:{gy:-1.3,theme:'park'},crown:{gy:-6.5,theme:'sea'}});
+/* つなひき */
+TM3.tug={team:1,build(s){const fl=plane(70,40,texMat('grass',10,'#8fd16a'));fl.rotation.x=-Math.PI/2;fl.position.y=.01;s.add(fl);
+  for(const x of[-5,5,0]){const ln=p3Mesh(new THREE.BoxGeometry(.25,.04,10),new THREE.MeshBasicMaterial({color:x?'#ffffff':'#ffe27a'}),false);ln.position.set(x,.04,0);s.add(ln)}
+  for(const sx of[-1,1]){const fl2=new THREE.Group();const pole=p3Mesh(new THREE.CylinderGeometry(.08,.08,4,8),p3Mat('#ffffff'));pole.position.y=2;fl2.add(pole);const cl=p3Mesh(new THREE.PlaneGeometry(1.6,1),new THREE.MeshStandardMaterial({color:TCOL[sx<0?0:1],side:THREE.DoubleSide}),false);cl.position.set(.8,3.4,0);fl2.add(cl);fl2.position.set(sx*5,0,-5.4);s.add(fl2)}
+  const rope=p3Mesh(new THREE.CylinderGeometry(.16,.16,30,10),p3Mat('#c9a26a',{r:.9}));rope.rotation.z=Math.PI/2;rope.position.y=1.7;s.add(rope);P3.rope=rope;
+  const mk=p3Mesh(new THREE.BoxGeometry(.5,1.2,.5),p3Mat('#ffd23f',{gloss:1,e:'#806000',ei:.3}));mk.position.y=1.4;s.add(mk);P3.ropeMk=mk;
+  const sp=new THREE.SpotLight('#fff1d6',.5,60,.6,.5);sp.position.set(0,20,12);sp.target.position.set(0,0,0);s.add(sp);s.add(sp.target)},
+ sync(y,g,t){tmCam(14,8.5,[0,.36,.93],[0,2,0]);const mx=g.rope/100*5;P3.rope.position.x=mx;P3.ropeMk.position.x=mx;P3.ropeMk.rotation.y=t*2;const order={0:[],1:[]};for(let i=0;i<4;i++)order[g.teams[i]].push(i);
+  for(let i=0;i<4;i++){const tm=g.teams[i],k=order[tm].indexOf(i),sd=tm===0?-1:1;const x=mx+sd*(3.2+k*2.6),b={i,x:240+x*10,y:190+(k?6:-6),vx:g.flash[i]>0?120:0,vy:0,fx:-sd,fy:0,stun:0,out:false,dashT:0,flash:0,fallT:0};
+    const won=g.win>=0;p3SyncChar(P3.chars[i],b,t,{face:sd<0?Math.PI/2:-Math.PI/2,cheer:won&&g.win===tm,hop:won&&g.win===tm?Math.abs(Math.sin(t*8+i))*.6:0});const c=P3.chars[i];c.body.rotation.x=won&&g.win!==tm?.5:-.38-(g.flash[i]>0?.15:0)}
+  tmRingSync(g)},
+ overlay(y,g){const top=Math.max(110,H*.15),w=Math.min(W*.7,420),x0=W/2-w/2,yy=top-30;rr(x0,yy-12,w/2,24,12,TCOL[0]);rr(W/2,yy-12,w/2,24,12,TCOL[1]);const mx=W/2+g.rope/100*(w/2);ctx.fillStyle='#fff';ctx.fillRect(mx-3,yy-18,6,36);
+  vt(`${TNAME[0]}チーム`,x0+50,yy+24,14,'#fff');vt(`${TNAME[1]}チーム`,x0+w-50,yy+24,14,'#fff');
+  if(g.sei>=0){popText('せーの！',W/2,top+40,48,'#ffd23f','#c02a20')}vt(`${Math.max(0,Math.ceil(g.dur-g.t))}`,W/2,yy+24,16,'#fff');
+  for(let i=0;i<4;i++){const c=P3.chars[i];if(!c)continue;const p=p3Proj(c.position.x,5.2,c.position.z);if(p.on)vt(i===PME?'YOU':PYS[i].name,p.x,p.y,i===PME?16:13,i===PME?'#fff27a':'#fff')}
+  if(g.win>=0)popText(`${TNAME[g.win]}チームの勝ち！`,W/2,H*.42,40,TCOL[g.win],'#ffffff')}};
+/* ペンキぬり */
+TM3.paint={team:1,build(s){const W0=PT.cols*PT.cs/10,H0=PT.rows*PT.cs/10,cx=wx(PT.x0)+W0/2,cz=wz(PT.y0)+H0/2;
+  const base=p3Mesh(new THREE.BoxGeometry(W0+2,1.2,H0+2),p3Mat('#5a4a6a'),true,true);base.position.set(cx,-.62,cz);s.add(base);
+  P3.pmat=[new THREE.MeshStandardMaterial({color:'#efe7d6',roughness:.8}),new THREE.MeshStandardMaterial({color:TCOL[0],roughness:.5}),new THREE.MeshStandardMaterial({color:TCOL[1],roughness:.5})];
+  const geo=new THREE.BoxGeometry(PT.cs/10-.12,.12,PT.cs/10-.12);P3.ptiles=[];for(let k=0;k<PT.cols*PT.rows;k++){const c=k%PT.cols,r=Math.floor(k/PT.cols);const m=new THREE.Mesh(geo,P3.pmat[0]);m.receiveShadow=true;m.position.set(wx(PT.x0+(c+.5)*PT.cs),.0,wz(PT.y0+(r+.5)*PT.cs));s.add(m);P3.ptiles.push(m)}
+  for(const sx of[-1,1]){const w=p3Mesh(new THREE.BoxGeometry(.6,1.2,H0+2),p3Mat('#ffffff',{gloss:1}));w.position.set(cx+sx*(W0/2+1),.3,cz);s.add(w)}for(const sz of[-1,1]){const w=p3Mesh(new THREE.BoxGeometry(W0+2.6,1.2,.6),p3Mat('#ffffff',{gloss:1}));w.position.set(cx,.3,cz+sz*(H0/2+1));s.add(w)}
+  const can=new THREE.Group();const body=p3Mesh(new THREE.CylinderGeometry(.8,.8,1.3,20),p3Mat('#d8dde6',{m:.5,r:.3}));can.add(body);const top=p3Mesh(new THREE.CylinderGeometry(.82,.82,.2,20),p3Mat('#ffd23f',{gloss:1,e:'#806000',ei:.4}));top.position.y=.7;can.add(top);can.visible=false;s.add(can);P3.pcan=can},
+ sync(y,g,t){tmCam(23,17,[0,.8,.6],[0,0,1]);for(let k=0;k<P3.ptiles.length;k++){const m=P3.ptiles[k],st=g.cells[k];m.material=P3.pmat[st+1];m.scale.y=1}
+  for(const f of g.fx||[]){const m=P3.ptiles[f.k];if(m){const q=f.t/.5;m.scale.y=1+Math.sin(q*Math.PI)*6;m.position.y=Math.sin(q*Math.PI)*.25}}
+  g.bs.forEach((b,i)=>p3SyncChar(P3.chars[i],b,t));tmRingSync(g);
+  if(g.can){P3.pcan.visible=true;P3.pcan.position.set(wx(g.can.x),1+Math.sin(t*4)*.3,wz(g.can.y));P3.pcan.rotation.y=t*2}else P3.pcan.visible=false},
+ overlay(y,g){const top=Math.max(110,H*.15),w=Math.min(W*.7,420),x0=W/2-w/2,yy=top-30,tot=g.cnt[0]+g.cnt[1]||1,k0=g.cnt[0]/PT.cols/PT.rows,k1=g.cnt[1]/PT.cols/PT.rows;
+  rr(x0,yy-12,w,24,12,'rgba(255,255,255,.6)');rr(x0,yy-12,w*k0,24,12,TCOL[0]);rr(x0+w-w*k1,yy-12,w*k1,24,12,TCOL[1]);vt(`${Math.round(k0*100)}%`,x0+30,yy+24,15,'#fff');vt(`${Math.round(k1*100)}%`,x0+w-30,yy+24,15,'#fff');vt(`${Math.max(0,Math.ceil(g.dur-g.t))}`,W/2,yy+24,16,'#fff');
+  for(const b of g.bs){const p=p3Proj(wx(b.x),5,wz(b.y));if(p.on)vt(b.i===PME?'YOU':PYS[b.i].name,p.x,p.y,b.i===PME?16:13,b.i===PME?'#fff27a':TCOL[g.teams[b.i]])}
+  if(g.done){const w2=g.cnt[0]>g.cnt[1]?0:g.cnt[1]>g.cnt[0]?1:-1;popText(w2<0?'ひきわけ…？':`${TNAME[w2]}チームの勝ち！`,W/2,H*.42,40,w2<0?'#fff':TCOL[w2],'#ffffff')}}};
+/* ボールおしこみ */
+function ballTex(){return cvTex(256,128,(x,w,h)=>{x.fillStyle='#ffffff';x.fillRect(0,0,w,h);x.fillStyle='#1d1d22';for(let i=0;i<10;i++){const cx=(i%5)*w/5+(i<5?20:60),cy=i<5?40:90;x.beginPath();for(let k=0;k<5;k++){const a=k/5*TAU-Math.PI/2;x.lineTo(cx+Math.cos(a)*14,cy+Math.sin(a)*14)}x.fill()}})}
+TM3.soccer={team:1,build(s){const W0=(SC.x1-SC.x0)/10,H0=(SC.y1-SC.y0)/10,cx=wx((SC.x0+SC.x1)/2),cz=wz((SC.y0+SC.y1)/2);
+  const base=p3Mesh(new THREE.BoxGeometry(W0+8,1.2,H0+3),p3Mat('#3a6a3a'),true,true);base.position.set(cx,-.62,cz);s.add(base);
+  const fld=plane(W0,H0,stdMat({map:cvTex(512,320,(x,w,h)=>{for(let i=0;i<8;i++){x.fillStyle=i%2?'#5fb04a':'#6cbf55';x.fillRect(i*w/8,0,w/8+1,h)}x.strokeStyle='rgba(255,255,255,.9)';x.lineWidth=5;x.strokeRect(4,4,w-8,h-8);x.beginPath();x.moveTo(w/2,4);x.lineTo(w/2,h-4);x.stroke();x.beginPath();x.arc(w/2,h/2,46,0,TAU);x.stroke()}),roughness:.85}));fld.rotation.x=-Math.PI/2;fld.position.set(cx,.01,cz);s.add(fld);
+  P3.goals=[];for(const side of[0,1]){const gx=wx(side?SC.x1:SC.x0),sd=side?1:-1,gz0=wz(SC.gy0),gz1=wz(SC.gy1),col=TCOL[side?1:0];const gg=new THREE.Group();
+    for(const z of[gz0,gz1]){const p=p3Mesh(new THREE.CylinderGeometry(.2,.2,3,10),p3Mat(col,{gloss:1}));p.position.set(gx,1.5,z);gg.add(p)}const bar=p3Mesh(new THREE.CylinderGeometry(.2,.2,gz1-gz0,10),p3Mat(col,{gloss:1}));bar.rotation.x=Math.PI/2;bar.position.set(gx,3,(gz0+gz1)/2);gg.add(bar);
+    const net=p3Mesh(new THREE.BoxGeometry(2.6,3,gz1-gz0),new THREE.MeshStandardMaterial({color:'#ffffff',transparent:true,opacity:.28}),false);net.position.set(gx+sd*1.3,1.5,(gz0+gz1)/2);gg.add(net);s.add(gg);P3.goals.push(gg)}
+  for(const sz of[-1,1]){const w=p3Mesh(new THREE.BoxGeometry(W0+.6,.8,.4),p3Mat('#ffffff',{gloss:1}));w.position.set(cx,.4,cz+sz*(H0/2+.2));s.add(w)}
+  for(const sx of[-1,1])for(const sz of[-1,1]){const w=p3Mesh(new THREE.BoxGeometry(.4,.8,(H0-(SC.gy1-SC.gy0)/10)/2),p3Mat('#ffffff',{gloss:1}));w.position.set(cx+sx*(W0/2+.2),.4,cz+sz*((H0/2+(SC.gy1-SC.gy0)/20)/2));s.add(w)}
+  const ball=new THREE.Mesh(new THREE.SphereGeometry(2,28,20),stdMat({map:ballTex(),roughness:.45}));ball.castShadow=true;s.add(ball);P3.sball=ball},
+ sync(y,g,t){tmCam(23,15,[0,.8,.6],[0,0,1]);g.bs.forEach((b,i)=>p3SyncChar(P3.chars[i],b,t));tmRingSync(g);const bl=g.ball,o=P3.sball;
+  const nx=wx(bl.x),nz=wz(bl.y);if(o._px!=null){const dx=nx-o._px,dz=nz-o._pz;o.rotation.z-=dx/2;o.rotation.x+=dz/2}o._px=nx;o._pz=nz;o.position.set(nx,2,nz);
+  if(g.goalT>0&&!g._gb){g._gb=1;p3Burst('conf',nx,4,nz,30)}if(g.goalT<=0)g._gb=0},
+ overlay(y,g){const top=Math.max(110,H*.15);rr(W/2-120,top-46,240,36,18,'rgba(20,24,40,.7)');popText(`${g.score[0]}`,W/2-60,top-28,26,TCOL[0],'#ffffff');popText(`${g.score[1]}`,W/2+60,top-28,26,TCOL[1],'#ffffff');vt(g.t<g.dur?`${Math.max(0,Math.ceil(g.dur-g.t))}`:'延長！',W/2,top-28,16,'#fff');
+  vt('◀ あかのゴール',W*.18,top+4,13,TCOL[0]);vt('あおのゴール ▶',W*.82,top+4,13,TCOL[1]);
+  for(const b of g.bs){const p=p3Proj(wx(b.x),5,wz(b.y));if(p.on)vt(b.i===PME?'YOU':PYS[b.i].name,p.x,p.y,b.i===PME?16:13,b.i===PME?'#fff27a':TCOL[g.teams[b.i]])}
+  if(g.goalT>0)popText(`${TNAME[g.lastGoal]}チーム ゴール！`,W/2,H*.4,44,TCOL[g.lastGoal],'#ffffff');
+  const own=g.teams[PME];if(own!=null&&g.t<3)vt(`あなたは${TNAME[own]}チーム。${own===0?'右':'左'}のゴールをねらえ！`,W/2,H-60,16,'#fff')}};
+/* 王冠キープ */
+function crownObj(){const g=new THREE.Group();const gold=p3Mat('#ffcc33',{gloss:1,e:'#7a5200',ei:.45});const band=p3Mesh(new THREE.CylinderGeometry(.85,.85,.5,20,1,true),gold);band.material.side=THREE.DoubleSide;g.add(band);
+  for(let k=0;k<5;k++){const a=k/5*TAU;const sp=p3Mesh(new THREE.ConeGeometry(.22,.7,8),gold);sp.position.set(Math.cos(a)*.8,.55,Math.sin(a)*.8);g.add(sp);const gem=p3Mesh(new THREE.SphereGeometry(.12,10,8),p3Mat(['#e2493b','#3f7de0','#2fbf71','#e05aa0','#ffffff'][k],{gloss:1,e:'#222',ei:.4}),false);gem.position.set(Math.cos(a)*.88,0,Math.sin(a)*.88);g.add(gem)}return g}
+TM3.crown={sky:['#2a7bd0','#bfe6ff'],build(s){const pl=p3Mesh(new THREE.CylinderGeometry(15,15.4,1.2,64),[p3Mat('#5a3a7a'),texMat('stone',5,'#a99cc8'),p3Mat('#5a3a7a')],true,true);pl.position.y=-.6;s.add(pl);
+  const ring=p3Mesh(new THREE.TorusGeometry(15.2,.5,12,80),p3Mat('#ffcc33',{gloss:1}));ring.rotation.x=Math.PI/2;ring.position.y=.3;s.add(ring);const base=p3Mesh(new THREE.CylinderGeometry(15,11,8,48),p3Mat('#4a3a5a'),false);base.position.y=-5.2;s.add(base);
+  for(let k=0;k<8;k++){const a=k/8*TAU;const col=p3Mesh(new THREE.CylinderGeometry(.5,.6,3,12),p3Mat('#ffffff',{gloss:1}));col.position.set(Math.cos(a)*16.4,1.5,Math.sin(a)*16.4);s.add(col);const t2=p3Mesh(new THREE.SphereGeometry(.5,12,10),p3Mat('#ffcc33',{gloss:1,e:'#7a5200',ei:.4}));t2.position.set(Math.cos(a)*16.4,3.3,Math.sin(a)*16.4);s.add(t2)}
+  const c=crownObj();c.scale.setScalar(1.4);s.add(c);P3.crownO=c},
+ sync(y,g,t){tmCam(17.5,17,[0,.78,.62],[0,0,1]);g.bs.forEach((b,i)=>p3SyncChar(P3.chars[i],b,t));const c=P3.crownO;
+  if(g.holder<0){c.position.set(wx(g.crown.x),1.6+Math.sin(t*3)*.4,wz(g.crown.y));c.rotation.y=t*1.5}else{const h=P3.chars[g.holder];c.position.set(h.position.x,h.position.y+4.6+h.body.position.y+(g.stealT>0?g.stealT*3:0),h.position.z);c.rotation.y=t*2;if(Math.random()<.15)p3Burst('star',c.position.x,c.position.y+.6,c.position.z,1)}},
+ overlay(y,g){const top=Math.max(110,H*.15);
+  for(const b of g.bs){const p=p3Proj(wx(b.x),b.i===g.holder?7:5,wz(b.y));if(p.on){vt(b.i===PME?'YOU':PYS[b.i].name,p.x,p.y,b.i===PME?16:13,b.i===PME?'#fff27a':'#fff');vt(`${g.hold[b.i].toFixed(1)}秒`,p.x,p.y+16,12,'#ffd23f')}}
+  vt(g.holder===PME?'にげろ！':g.holder<0?'王冠をとれ！':`${PYS[g.holder].name}からうばえ！`,W/2,top,g.holder===PME?30:22,g.holder===PME?'#ffd23f':'#fff');vt(`${Math.max(0,Math.ceil(g.dur-g.t))}`,W/2,top+30,16,'#fff')}};
+/* だるまさんがころんだ */
+TM3.daruma={build(s){const track=plane(26,44,texMat('sand',6,'#e3cfa2'));track.rotation.x=-Math.PI/2;track.position.set(0,.02,-8);s.add(track);
+  for(let k=0;k<5;k++){const ln=p3Mesh(new THREE.BoxGeometry(.12,.03,40),new THREE.MeshBasicMaterial({color:'#ffffff'}),false);ln.position.set((k-2)*5.5*.9,.05,-8);s.add(ln)}
+  const gl=p3Mesh(new THREE.BoxGeometry(24,.05,.5),new THREE.MeshBasicMaterial({color:'#e2493b'}),false);gl.position.set(0,.06,-26);s.add(gl);
+  const st=p3Mesh(new THREE.BoxGeometry(24,.05,.4),new THREE.MeshBasicMaterial({color:'#ffffff'}),false);st.position.set(0,.06,10);s.add(st);
+  const oni=new THREE.Group();const bd=p3Mesh(new THREE.SphereGeometry(3,32,24),p3Mat('#d8352a',{gloss:1}));bd.scale.set(1,1.05,1);bd.position.y=3;oni.add(bd);const hd=p3Mesh(new THREE.SphereGeometry(2,28,20),p3Mat('#d8352a',{gloss:1}));hd.position.y=6.6;oni.add(hd);
+  const face=p3Mesh(new THREE.SphereGeometry(1.5,24,18,0,Math.PI*2,0,Math.PI*.55),p3Mat('#fff3e0'),false);face.rotation.x=Math.PI/2;face.position.set(0,6.6,1.05);oni.add(face);
+  const eyes=[];for(const sx of[-1,1]){const e=p3Mesh(new THREE.SphereGeometry(.32,14,10),new THREE.MeshStandardMaterial({color:'#1d1d22',emissive:'#ff2a1a',emissiveIntensity:0}),false);e.position.set(sx*.55,6.9,2.4);oni.add(e);eyes.push(e)}
+  const belly=p3Mesh(new THREE.CircleGeometry(1.6,24),p3Mat('#ffd23f'),false);belly.position.set(0,3.2,3.02);oni.add(belly);
+  oni.position.set(0,0,-30);s.add(oni);P3.oni=oni;P3.oniEyes=eyes;
+  const tr=p3Mesh(new THREE.CylinderGeometry(.8,1,6,10),p3Mat('#7a5232'),true);tr.position.set(-6,3,-32);s.add(tr);const cr=p3Mesh(new THREE.SphereGeometry(4,16,12),p3Mat('#3f8a3a',{flat:true}),true);cr.position.set(-6,7.5,-32);s.add(cr)},
+ sync(y,g,t){const a=W/H,cam=P3.cam;cam.aspect=a;const k=P3.sweep??1;const d=1+(1-k)*.5+(a<1.2?(1.2/a-1)*.8:0);cam.position.set(Math.sin((1-k)*.8)*8,17*d,36*d);cam.lookAt(0,0,-10);cam.updateProjectionMatrix();
+  const look=g.ph==='look',turn=g.ph==='turn';const target=look?0:Math.PI,cur=P3.oni.rotation.y;P3.oni.rotation.y=turn?Math.PI*(1-g.pt/.22):target;P3.oniEyes.forEach(e=>e.material.emissiveIntensity=look?1.6:0);
+  for(let i=0;i<4;i++){const z=10-g.pos[i]/100*35,x=RX(i)*.9;const b={i,x:240+x*10,y:190+z*10,vx:Math.max(0,g.vel[i])*6,vy:0,fx:0,fy:-1,stun:g.caught[i]>0?g.caught[i]:0,out:false,dashT:0,flash:0,fallT:0};
+    p3SyncChar(P3.chars[i],b,t,{face:Math.PI,cheer:g.fin[i]!==null,hop:g.fin[i]!==null?Math.abs(Math.sin(t*8+i))*.6:0})}},
+ overlay(y,g){const top=Math.max(110,H*.15);let txt='';if(g.ph==='call')txt=DARUMA_SYL.slice(0,Math.max(0,g.syl+1)).join('');
+  if(g.ph==='look'||g.ph==='turn')popText('ころんだ！ うごくな！',W/2,top,42,'#ff4a3a','#ffffff');else popText(txt||'…',W/2,top,34,'#ffffff','#2a1f4a');
+  for(let i=0;i<4;i++){const c=P3.chars[i];if(!c)continue;const p=p3Proj(c.position.x,5,c.position.z);if(p.on){vt(i===PME?'YOU':PYS[i].name,p.x,p.y,i===PME?16:13,i===PME?'#fff27a':'#fff');if(g.caught[i]>0)vt('見つかった！',p.x,p.y-18,14,'#ff8a8a');if(g.fin[i]!==null){const rk=g.fin.filter(f=>f!==null&&f<=g.fin[i]).length;vt(`${rk}着！`,p.x,p.y-18,18,'#fff27a')}}}}};
+/* フック */
+const _tmB=p3Build;p3Build=function(gid){if(TM3[gid]){P3.bloom=.22;P3.crowd=null;P3.score=null;P3.trings=null;tmBuild(gid);return}_tmB(gid)};
+const _tmS=p3Sync;p3Sync=function(y,g){if(g&&TM3[g.id]){const t=performance.now()/1000;if(P3.gid!==g.id)p3Build(g.id);try{TM3[g.id].sync(y,g,t)}catch(e){loopErr(e)}return}_tmS(y,g)};
+const _tmO=p3Overlay3;p3Overlay3=function(y,g){if(g&&TM3[g.id]){try{TM3[g.id].overlay(y,g)}catch(e){loopErr(e)}return}_tmO(y,g)};
+/* チーム分け：ルール画面に入ったときに決める（ゲストはホストの決定を使う） */
+const _tmU=updY;updY=function(dt){const y=Y;if(y&&y.ph==='rules'&&y._phPrev!=='rules'&&!(NET.role==='guest'&&NET.on)){const G=y.list&&y.list[y.gi];y.teams=G&&G.team?tmShuffleTeams():null;y.preview=null}if(y)y._phPrev=y.ph;_tmU(dt)};
+function rkAw(y,k){const g=y.g;if(g&&g.teamGame)return k<2?7:2;return PY_AWARD[k]}
+function rkLab(y,k){const g=y.g;if(g&&g.teamGame)return k<2?1:3;return k+1}
+/* ルール画面にチーム分けを表示・結果にチームの勝ち */
+const _tmR3=renderY3;renderY3=function(){const r=_tmR3();try{const y=Y;const G=y&&y.list&&y.list[y.gi];if(y&&G&&G.team&&y.teams&&(y.ph==='rules'||y.ph==='count')){ctx.setTransform(DPR,0,0,DPR,0,0);const w=Math.min(W*.9,460),x0=W/2-w/2,yy=H-(y.ph==='rules'?150:110);
+    rr(x0,yy-26,w,52,26,'rgba(20,24,40,.82)');for(const tm of[0,1]){const mem=[0,1,2,3].filter(i=>y.teams[i]===tm).map(i=>i===PME?'あなた':i===PME2?'あいて':PYS[i].name).join('＋');vt(`${TNAME[tm]}：${mem}`,W/2+(tm?w/4:-w/4),yy,15,TCOL[tm])}
+    vt('チーム戦',W/2,yy-36,13,'#fff')}
+  if(y&&y.ph==='res'&&y.g&&y.g.teamGame&&y.g.teamWin!=null){const{s,ox,oy}=y.view;ctx.setTransform(DPR,0,0,DPR,0,0);popText(`${TNAME[y.g.teamWin]}チームの勝ち！ 2人とも +7`,ox+VW/2*s,oy+306*s,Math.max(13,15*s),TCOL[y.g.teamWin],'#ffffff')}}catch(e){}return r};
+
 /* ---------- オンライン2人プレイ（PeerJS / テスト用BroadcastChannel） ---------- */
 const NET={on:false,role:null,peer:null,conn:null,code:'',st:'idle',err:'',in2:{mx:0,my:0,act:0,pick:null,flag:null,L:0,R:0,dt:null},rq:[],sfx:[],sfxOn:false,sendT:0,lastPh:null,tg:null,tgAt:0,inT:0,prevK:{},lastIn:'',bc:null};
-const NET_PRE='himatsubushi-party-v1-';const NET_VER='p25';NET.gReady=false;NET.lastSnap=0;NET.oldGuest=false;NET.verBad=0;NET.selPend=null;
+const NET_PRE='himatsubushi-party-v1-';const NET_VER='p26';NET.gReady=false;NET.lastSnap=0;NET.oldGuest=false;NET.verBad=0;NET.selPend=null;
 const NET_ICE={config:{iceServers:[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302']},{urls:'stun:stun.cloudflare.com:3478'},{urls:['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443','turn:openrelay.metered.ca:443?transport=tcp'],username:'openrelayproject',credential:'openrelayproject'}]}};
 MENU_PH.push('net');
 function netRand(seed){let a=seed>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
@@ -3088,17 +3330,17 @@ function netRecv(m){if(!m||!Y)return;const y=Y;
   else if(m.t==='s')netApply(m)}
 /* ホスト → 状態を送る */
 function netSnap(force){if(NET.role!=='host'||!NET.on||!Y)return;const y=Y;
-  const s={t:'s',v:NET_VER,gr:NET.gReady,ph:y.ph,pt:y.pt,gi:y.gi,ids:(y.list||[]).map(G=>G.id),mode:y.mode,coins:y.coins,rank:y.rank||null,fo:y.finalOrder||null,shake:y.shake||0,seed:y.seed|0,hc:PME,p2:PME2,g:null,sfx:NET.sfx.splice(0,24)};
+  const s={t:'s',v:NET_VER,gr:NET.gReady,teams:y.teams||null,ph:y.ph,pt:y.pt,gi:y.gi,ids:(y.list||[]).map(G=>G.id),mode:y.mode,coins:y.coins,rank:y.rank||null,fo:y.finalOrder||null,shake:y.shake||0,seed:y.seed|0,hc:PME,p2:PME2,g:null,sfx:NET.sfx.splice(0,24)};
   if(y.g&&!y.g.rhy&&!MENU_PH.includes(y.ph)&&y.ph!=='final'&&y.ph!=='rules')s.g=y.g;
   try{netSend(JSON.parse(JSON.stringify(s)))}catch(e){s.g=null;netSend(s)}}
-function netTick(dt){if(NET.role!=='host'||!NET.on||!Y)return;if(Y.ph!=='chars')NET.gReady=false;NET.sendT+=dt;const ph=Y.ph;const force=ph!==NET.lastPh;NET.lastPh=ph;if(force||NET.sendT>=.05){NET.sendT=0;netSnap()}}
+function netTick(dt){if(NET.role!=='host'||!NET.on||!Y)return;if(Y.ph!=='chars')NET.gReady=false;NET.sendT+=dt;const ph=Y.ph;const force=ph!==NET.lastPh;NET.lastPh=ph;if(force||NET.sendT>=.033){NET.sendT=0;netSnap()}if(Y.ph!=='play'){const I=NET.in2;I.act=0;I.pick=null;I.flag=null;I.L=0;I.R=0;I.dt=null}}
 /* ゲスト → 状態を受け取る */
 function netClone(o){return JSON.parse(JSON.stringify(o))}
 function netMerge(c,t,k){if(Array.isArray(t)){if(!Array.isArray(c)||c.length!==t.length)return netClone(t);for(let i=0;i<t.length;i++)c[i]=netMerge(c[i],t[i],k);return c}
   if(t&&typeof t==='object'){if(!c||typeof c!=='object'||Array.isArray(c))return netClone(t);for(const key in c)if(!(key in t))delete c[key];
     for(const key in t){const tv=t[key],cv=c[key];if((key==='x'||key==='y')&&typeof tv==='number'&&typeof cv==='number'&&Math.abs(tv-cv)<80)c[key]=cv+(tv-cv)*k;else c[key]=netMerge(cv,tv,k)}return c}
   return t}
-function netApply(s){const y=Y;const phCh=s.ph!==y.ph||s.gi!==y.gi;NET.lastSnap=performance.now()/1000;if(NET.warnOn){NET.warnOn=0;netToast('つながりました')}
+function netApply(s){const y=Y;const phCh=s.ph!==y.ph||s.gi!==y.gi;if(JSON.stringify(s.teams||null)!==JSON.stringify(y.teams||null)){y.teams=s.teams;y.preview=null}NET.lastSnap=performance.now()/1000;if(NET.warnOn){NET.warnOn=0;netToast('つながりました')}
   if(s.v!==NET_VER&&!NET.verBad){NET.verBad=1;verBanner(true)}
   const pend=NET.selPend&&performance.now()/1000-NET.selPend.t<1.5;if(pend&&s.p2!==NET.selPend.i){s.p2=NET.selPend.i;s.gr=NET.myReady}else NET.selPend=null;const grCh=NET.myReady!==!!s.gr;NET.myReady=!!s.gr;
   y.list=s.ids.map(id=>PY_GAMES.find(G=>G.id===id)).filter(Boolean);y.gi=s.gi;y.mode=s.mode;y.coins=s.coins;y.rank=s.rank;y.finalOrder=s.fo;y.shake=Math.max(y.shake||0,s.shake||0);y.seed=s.seed;
@@ -3111,7 +3353,7 @@ function netApply(s){const y=Y;const phCh=s.ph!==y.ph||s.gi!==y.gi;NET.lastSnap=
   else if(MENU_PH.includes(s.ph)||s.ph==='rules'||s.ph==='final'){y.g=null;NET.tg=null}
   if(phCh||pmeCh||(grCh&&s.ph==='chars'))pmShow()}
 function netGuestUpd(dt){const y=Y;y.pt+=dt;y.shake=Math.max(0,(y.shake||0)-dt*30);if(MENU_PH.includes(y.ph)||y.ph==='final')return;
-  if(NET.tg&&y.g&&!y.g.rhy){y.g=netMerge(y.g,NET.tg,Math.min(1,dt*14))}
+  if(NET.tg&&y.g&&!y.g.rhy){y.g=netMerge(y.g,NET.tg,Math.min(1,dt*14));if(y.g.bs&&NET.tg.bs)for(let k=0;k<y.g.bs.length;k++){const b=y.g.bs[k],tb=NET.tg.bs[k];if(b&&tb&&b.i===PME){b.x=tb.x;b.y=tb.y}}}
   if(y.ph!=='play'){y.act=0;y.pick=null;y.flag=null;y.rtaps=[];return}
   const G=y.list[y.gi];
   if(y.g&&y.g.rhy){const inp={rtaps:y.rtaps||[],p2:{rtaps:netRemoteTaps(y)}};netRun(y,()=>G.update(y.g,dt,inp));netSendTaps(y,inp.rtaps);y.rtaps=[];y.act=0;return}
@@ -3121,9 +3363,10 @@ function netGuestUpd(dt){const y=Y;y.pt+=dt;y.shake=Math.max(0,(y.shake||0)-dt*3
   const Lk=keys.has('arrowleft')||keys.has('a'),Rk=keys.has('arrowright')||keys.has('d');const L=Lk&&!NET.prevK.L?1:0,R=Rk&&!NET.prevK.R?1:0;NET.prevK={L:Lk,R:Rk};
   let dtap=null;if(y.act&&y.g&&y.g.id==='draw'&&NET.tg&&NET.tg.ph==='wait')dtap=NET.tg.t+(performance.now()/1000-NET.tgAt);
   const ev=y.act||y.pick!=null||y.flag||L||R;const key=mx.toFixed(2)+','+my.toFixed(2);NET.inT+=dt;
+  if(y.act){const G=y.list[y.gi];if(G&&G.btn)beep(G.id==='balloon'?420:G.id==='tug'||G.id==='daruma'?300:340,.035,'triangle',.035)}
   if(ev||(key!==NET.lastIn&&NET.inT>.033)||NET.inT>.25){netSend({t:'in',mx,my,act:y.act||0,pick:y.pick,flag:y.flag,L,R,dt:dtap});NET.lastIn=key;NET.inT=0;y.act=0;y.pick=null;y.flag=null}}
 /* 既存処理へのフック */
-const _netBeep=beep;beep=function(){_netBeep.apply(null,arguments);if(NET.role==='host'&&NET.on&&NET.sfxOn&&NET.sfx.length<40)NET.sfx.push([...arguments])};
+const _netBeep=beep;beep=function(){_netBeep.apply(null,arguments);if(NET.role==='host'&&NET.on&&NET.sfxOn&&NET.sfx.length<40){const a=[...arguments],ph=Y&&Y.ph;if(ph!=='play'||(a[0]<=200)||(a[1]>=.25))NET.sfx.push(a)}};
 const _netUpdY=updY;updY=function(dt){if(NET.role==='guest'&&NET.on)return netGuestUpd(dt);NET.sfxOn=true;try{_netUpdY(dt)}finally{NET.sfxOn=false}netTick(dt)};
 const _netTap=pyTap;pyTap=function(){if(NET.role==='guest'&&NET.on){const y=Y;if(!y)return;if(y.ph==='play'){y.act++;return}if(['rules','res','final'].includes(y.ph)){netSend({t:'tap'});beep(520,.04)}return}_netTap()};
 const _netEndY=endY;endY=function(){if(NET.on&&NET.role==='host'){const y=Y;Object.assign(y,{ph:'menu',pt:0,g:null,gi:0,coins:[0,0,0,0],rank:null,finalOrder:null,mode:null,sel:PME});pmShow();netSnap(true);return}_netEndY()};
