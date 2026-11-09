@@ -6,7 +6,7 @@ import { LivePlay, ACT } from './live.js';
 import { newState, currentBatter, currentPitcher, batTeam, fieldTeam, teamById, cpuPitchIntent, cpuSwing, resolvePitch, pitchFor, applyPlay, playCtx } from './game.js';
 import { buildField, buildZone, buildCursor, buildAim, buildBat } from './field.js';
 import { loadCharacters, Player3D } from './chars.js';
-const BAT_CAM = { pos: [0, 1.02, 2.45], look: [0, 1.02, -18] };
+const BAT_CAM = { pos: [0, 1.25, 5.6], look: [0, 0.12, -18], fov: 17, fovPortrait: 34 };
 import { Net } from './net.js';
 
 // ================= 時計（?test のときはコマ送り） =================
@@ -43,6 +43,7 @@ const landPitch = zoneMark(0.045, 0.06, 0xff5a3d, false);
 function setMarkOpacity(g, a) { g.children.forEach((m, i) => { m.material.opacity = a * (i ? 0.35 : 0.95); }); }
 const ballMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
 const ball = new THREE.Mesh(new THREE.SphereGeometry(BALL_R * 1.5, 16, 12), ballMat);
+ball.renderOrder = 20; ballMat.depthTest = false;
 ball.castShadow = true;
 scene.add(ball);
 const ballShadow = new THREE.Mesh(new THREE.CircleGeometry(0.09, 16), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.3, depthWrite: false }));
@@ -75,11 +76,13 @@ activeRing.rotation.x = -Math.PI / 2;
 activeRing.visible = false;
 scene.add(activeRing);
 
+let S_portrait = false;
 function resize() {
   const w = window.innerWidth, h = window.innerHeight;
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
-  camera.fov = w / h < 1 ? 62 : 40;
+  S_portrait = w / h < 1;
+  camera.fov = S_portrait ? 62 : 40;
   camera.updateProjectionMatrix();
 }
 window.addEventListener('resize', resize);
@@ -163,8 +166,10 @@ function setBatterStance(player) {
   const b = people.batter;
   const left = player.bats === 'L';
   b.holder.visible = true;
-  b.holder.position.set(left ? 1.2 : -1.2, 0, -0.15);
+  b.holder.position.set(left ? 1.0 : -1.0, 0, -0.1);
   b.holder.rotation.y = left ? -Math.PI / 2 : Math.PI / 2;
+  b.holder.scale.setScalar(0.72);
+  bat.scale.setScalar(0.72);
   b.play('Melee_2H_Idle', { fade: 0.2 });
   bat.visible = true;
   S.swingStart = null;
@@ -226,7 +231,7 @@ function send(m) { if (S.net) S.net.send(m); }
 function startMatch(mode, opts = {}) {
   S.mode = mode;
   if (!TEST) S.autoField = $('optField').value === '1';
-  S.assist = $('optAssist').value === '1';
+  S.assist = $('optAssist').value; // '0' なし / 'lock' ロックオン / '1' 着弾点
   S.lv = opts.lv ?? 1;
   const innings = opts.innings || 3;
   if (mode === 'cpu') S.ctrl = ['me', 'cpu'];
@@ -456,7 +461,7 @@ function renderView(v, dt) {
     const actor = d[0] === 0 ? people.batter : people.runners[d[0] - 1];
     if (!actor) continue;
     if (d[4] === 9) continue; // 打者はまだ打席
-    if (d[0] === 0) bat.visible = false;
+    if (d[0] === 0) { bat.visible = false; actor.holder.scale.setScalar(1); }
     if (d[4] === ACT.hide) { actor.holder.visible = false; continue; }
     actor.holder.visible = true;
     const hp = actor.holder.position;
@@ -611,7 +616,7 @@ function updateMode() {
 
 function keyMove(dt) {
   if (S.phase === 'play') return;
-  const sp = 0.9 * dt;
+  const sp = 1.9 * dt;
   let dx = 0, dy = 0;
   if (keys.KeyA || keys.ArrowLeft) dx -= sp;
   if (keys.KeyD || keys.ArrowRight) dx += sp;
@@ -696,7 +701,7 @@ function updateHelp() {
   if (!s) return;
   if (S.phase === 'play' && S.live && S.live.human) ui.help.innerHTML = '<b>守備</b>　<b>WASD</b>：移動（青い輪の選手）　<b>スペース</b>：ダイブ<br><b>1</b>：一塁　<b>2</b>：二塁　<b>3</b>：三塁　<b>4</b>：本塁へ送球';
   else if (iPitch()) ui.help.innerHTML = '<b>投球</b>　マウス：コースをねらう<br><b>1〜' + pitchList().length + ' / ホイール</b>：球種　<b>左クリック</b>：投げる';
-  else if (iBat()) ui.help.innerHTML = '<b>打撃</b>　マウス：カーソル　<b>左クリック/スペース</b>：振る<br><b>右クリック/Shift</b>：ミート⇔強振 切り替え<br><b>白い丸</b>：ボールの今の高さ・コース　<b>赤い輪</b>：ボールが来る場所';
+  else if (iBat()) ui.help.innerHTML = '<b>打撃</b>　マウス：カーソル　<b>左クリック/スペース</b>：振る<br><b>右クリック/Shift</b>：ミート⇔強振 切り替え<br>芯（カーソルの真ん中）の<b>上で打つとフライ・下で打つとゴロ</b>　WASD/矢印キーでも動かせます';
   else ui.help.innerHTML = '観戦中';
 }
 
@@ -731,6 +736,8 @@ function updateCamera(dt, now) {
     tl = new THREE.Vector3(...BAT_CAM.look);
   }
   const k = 1 - Math.exp(-dt * (S.phase === 'play' ? 4.5 : 6));
+  const fv = S.phase === 'play' ? (S_portrait ? 62 : 40) : (S_portrait ? BAT_CAM.fovPortrait : BAT_CAM.fov);
+  if (Math.abs(camera.fov - fv) > 0.01) { camera.fov += (fv - camera.fov) * k; camera.updateProjectionMatrix(); }
   camPos.lerp(tp, k);
   camLook.lerp(tl, k);
   camera.position.copy(camPos);
@@ -773,6 +780,7 @@ function step(now, dt) {
     cursor.scale.set(rx, ry, 1);
     cursor.userData.ring.material.color.set(pw ? 0xff4a3d : 0xffd43d);
     cursor.userData.fill.material.color.set(pw ? 0xff7a6a : 0xffe27a);
+    cursor.userData.line.material.color.set(pw ? 0xff4a3d : 0xffd43d);
     cursor.userData.ring.material.opacity = S.decision ? 0.4 : 0.95;
   }
   aim.visible = iPitch() && S.phase === 'aim';
@@ -780,6 +788,7 @@ function step(now, dt) {
   if (S.autoPitchAt && now >= S.autoPitchAt) { S.autoPitchAt = 0; if (S.phase === 'aim' && iPitch()) { S.aim.x = (Math.random() - 0.5) * 0.5; S.aim.y = 0.55 + Math.random() * 0.5; throwLocal(); } }
   if (aim.visible) aim.position.set(S.aim.x, S.aim.y, 0.03);
 
+  ballMat.depthTest = S.phase === 'play';
   // 投球中のボール
   if (S.phase === 'windup' || S.phase === 'flight') {
     const t = (now - S.t0) / 1000;
@@ -796,21 +805,28 @@ function step(now, dt) {
       }
       ball.visible = t <= p.T + 0.02;
       ball.position.set(pos.x, pos.y, pos.z);
-      ball.scale.setScalar(Math.max(1, camera.position.distanceTo(ball.position) / 8));
+      ball.scale.setScalar(Math.max(1.3, camera.position.distanceTo(ball.position) / 10));
       ballShadow.visible = ball.visible;
       ballShadow.position.set(pos.x, 0.02, pos.z);
       // 目安マーカー
       const sk = Math.max(0, Math.min(1, t / p.T));
-      trackMark.visible = t <= p.T;
+      trackMark.visible = false;
       trackMark.position.set(pos.x, pos.y, 0.03);
       setMarkOpacity(trackMark, 0.6 + 0.4 * sk);
       trackMark.scale.setScalar(1.15 - 0.15 * sk);
-      if (S.assist && iBat() && t <= p.T + 0.2) {
+      if (S.assist === '1' && iBat() && t <= p.T + 0.2) {
         const e = pitchPos(p, p.T);
         landPitch.visible = true;
         landPitch.position.set(e.x, e.y, 0.03);
         setMarkOpacity(landPitch, Math.min(1, 0.5 + sk * 3));
       } else landPitch.visible = false;
+      // ロックオン：カーソルがボールの来る場所へ少しずつ寄る（パワプロのアシスト）
+      if (S.assist === 'lock' && iBat() && S.decision === undefined && t > 0 && t <= p.T) {
+        const e = pitchPos(p, p.T);
+        const k = 1 - Math.exp(-dt * 2.2);
+        S.cursor.x += (e.x - S.cursor.x) * k;
+        S.cursor.y += (e.y - S.cursor.y) * k;
+      }
       // テスト用：自動で芯を打つ
       if (S.autoSwing && iBat() && S.decision === undefined && t >= p.T - SWING_LAG - 0.004) {
         const e = pitchPos(p, p.T); S.cursor.x = e.x; S.cursor.y = e.y - 0.04; localSwing(S.autoSwing === 'power');

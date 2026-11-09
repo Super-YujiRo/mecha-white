@@ -53,7 +53,7 @@ export function makePitch(pitcher, type, target, seed, fatigue = 0) {
 // 投球の位置（t秒後）。t=T で本塁上（z=0）を通過
 export function pitchPos(p, t) {
   const s = t / p.T;
-  const late = Math.pow(Math.max(0, s), 2.3);
+  const late = Math.pow(Math.max(0, s), 1.9);
   const sx = p.end.x - p.bx, sy = p.end.y - p.by;
   return {
     x: p.release.x + (sx - p.release.x) * s + p.bx * late,
@@ -68,13 +68,13 @@ export function inZone(pt) {
 
 // ================= 打撃 =================
 export function cursorSize(batter, power) {
-  const rx = 0.16 + batter.meet * 0.0012;
+  const rx = 0.09 + batter.meet * 0.0012;
   const k = power ? 0.68 : 1;
   return { rx: rx * k, ry: rx * 0.78 * k };
 }
 
-export const SWING_LAG = 0.16;     // クリックしてからバットがゾーンに来るまで
-export const TIMING_WIN = 0.2;   // 当たるタイミングの幅（±）
+export const SWING_LAG = 0.1;     // クリックしてからバットがゾーンに来るまで
+export const TIMING_WIN = 0.17;   // 当たるタイミングの幅（±）
 
 // swing: { ts:クリック時刻(投球開始から), cx, cy, power } / 戻り値：空振り or 打球の初速
 export function judgeSwing(pitch, batter, swing, seed) {
@@ -90,7 +90,7 @@ export function judgeSwing(pitch, batter, swing, seed) {
 
   const tq = Math.abs(dt) / TIMING_WIN;
   // 芯：カーソル中心のやや下で捉えると最高
-  const sweet = Math.hypot(ox, (oy - 0.22) * 0.9);
+  const sweet = Math.hypot(ox, oy * 0.9);
   const q = Math.max(0, 1 - Math.min(1.2, sweet) * 0.45 - tq * tq * 0.3);
   const hand = batter.bats === 'L' ? -1 : 1;
 
@@ -105,7 +105,7 @@ export function judgeSwing(pitch, batter, swing, seed) {
 
   const powerK = swing.power ? 1.17 : 1;
   const ev = (110 + batter.power * 0.8) * (0.55 + 0.45 * q) * powerK * (0.97 + r() * 0.06); // km/h
-  let la = 11 + oy * 27 + gauss(r) * 5;             // 打球角度（上に当てるとゴロ、下ならフライ）
+  let la = 13 + oy * 30 + gauss(r) * 5;             // 打球角度（上に当てるとゴロ、下ならフライ）
   la = Math.max(-25, Math.min(68, la));
   let phi = -dt / TIMING_WIN * 0.62 * hand;          // 早い→引っ張り
   phi += -ox * 0.12 * hand + gauss(r) * 0.07;

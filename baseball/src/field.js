@@ -291,10 +291,10 @@ export function buildCursor() {
   const ring = new THREE.Mesh(new THREE.RingGeometry(0.86, 1, 48), new THREE.MeshBasicMaterial({ color: 0xffd43d, transparent: true, opacity: 0.95, depthTest: false, side: THREE.DoubleSide }));
   const fill = new THREE.Mesh(new THREE.CircleGeometry(0.86, 48), new THREE.MeshBasicMaterial({ color: 0xffe27a, transparent: true, opacity: 0.22, depthTest: false, side: THREE.DoubleSide }));
   const core = new THREE.Mesh(new THREE.CircleGeometry(0.16, 24), new THREE.MeshBasicMaterial({ color: 0xff6a2b, transparent: true, opacity: 0.9, depthTest: false, side: THREE.DoubleSide }));
-  core.position.y = -0.3;
-  ring.renderOrder = fill.renderOrder = core.renderOrder = 12;
-  g.add(fill, ring, core);
-  g.userData = { ring, fill, core };
+  const line = new THREE.Mesh(new THREE.PlaneGeometry(1.72, 0.035), new THREE.MeshBasicMaterial({ color: 0xffd43d, transparent: true, opacity: 0.8, depthTest: false, side: THREE.DoubleSide }));
+  ring.renderOrder = fill.renderOrder = line.renderOrder = core.renderOrder = 12;
+  g.add(fill, ring, line, core);
+  g.userData = { ring, fill, line, core };
   return g;
 }
 
