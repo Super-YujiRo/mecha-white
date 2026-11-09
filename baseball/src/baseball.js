@@ -28,7 +28,7 @@ export function gauss(r) { const u = Math.max(1e-9, r()), v = r(); return Math.s
 
 // ================= 投球 =================
 // パワプロのように体感を遅くする（表示の球速はそのまま）
-export const PITCH_SLOW = 1.6;
+export const PITCH_SLOW = 1;
 // 投手の意図（球種・狙い）＋コントロールのブレ → 実際の投球パラメータ
 export function makePitch(pitcher, type, target, seed, fatigue = 0) {
   const r = rng(seed);

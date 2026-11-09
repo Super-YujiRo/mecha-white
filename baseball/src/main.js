@@ -801,15 +801,15 @@ function step(now, dt) {
       ballShadow.position.set(pos.x, 0.02, pos.z);
       // 目安マーカー
       const sk = Math.max(0, Math.min(1, t / p.T));
-      trackMark.visible = t <= p.T && sk > 0.25;
+      trackMark.visible = t <= p.T;
       trackMark.position.set(pos.x, pos.y, 0.03);
-      setMarkOpacity(trackMark, 0.35 + 0.65 * sk);
-      trackMark.scale.setScalar(1.6 - 0.6 * sk);
-      if (S.assist && iBat() && sk >= 0.4 && t <= p.T + 0.2) {
+      setMarkOpacity(trackMark, 0.6 + 0.4 * sk);
+      trackMark.scale.setScalar(1.15 - 0.15 * sk);
+      if (S.assist && iBat() && t <= p.T + 0.2) {
         const e = pitchPos(p, p.T);
         landPitch.visible = true;
         landPitch.position.set(e.x, e.y, 0.03);
-        setMarkOpacity(landPitch, Math.min(1, (sk - 0.4) * 4));
+        setMarkOpacity(landPitch, Math.min(1, 0.5 + sk * 3));
       } else landPitch.visible = false;
       // テスト用：自動で芯を打つ
       if (S.autoSwing && iBat() && S.decision === undefined && t >= p.T - SWING_LAG - 0.004) {

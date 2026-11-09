@@ -75,7 +75,7 @@ export function cpuSwing(s, pitch, batter, seed, lv) {
   // 変化球は読み違えやすい
   const breaking = pitch.type !== 'ST';
   const posErr = [0.085, 0.06, 0.042][lv] * (breaking ? 1.25 : 1);
-  const timeErr = [0.08, 0.058, 0.042][lv] * (breaking ? 1.2 : 1);
+  const timeErr = [0.05, 0.036, 0.026][lv] * (breaking ? 1.2 : 1);
   return {
     ts: pitch.T - SWING_LAG + gauss(r) * timeErr,
     cx: end.x + gauss(r) * posErr,
