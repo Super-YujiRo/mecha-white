@@ -27,6 +27,8 @@ export function rng(seed) {
 export function gauss(r) { const u = Math.max(1e-9, r()), v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
 
 // ================= 投球 =================
+// パワプロのように体感を遅くする（表示の球速はそのまま）
+export const PITCH_SLOW = 1.6;
 // 投手の意図（球種・狙い）＋コントロールのブレ → 実際の投球パラメータ
 export function makePitch(pitcher, type, target, seed, fatigue = 0) {
   const r = rng(seed);
@@ -40,7 +42,7 @@ export function makePitch(pitcher, type, target, seed, fatigue = 0) {
   const velo = pitcher.velo * def.speed * (1 - fatigue * 0.06) * (0.985 + r() * 0.03);
   const release = { x: -0.5 * hand, y: 1.78, z: RUBBER_Z + 1.4 };
   const dist = Math.abs(release.z);
-  const T = dist / (velo / 3.6 * 0.93);
+  const T = dist / (velo / 3.6 * 0.93) * PITCH_SLOW;
   return {
     type, lv, velo: Math.round(velo), hand,
     release, end, T,
@@ -66,13 +68,13 @@ export function inZone(pt) {
 
 // ================= 打撃 =================
 export function cursorSize(batter, power) {
-  const rx = 0.1 + batter.meet * 0.0011;
-  const k = power ? 0.58 : 1;
-  return { rx: rx * k, ry: rx * 0.74 * k };
+  const rx = 0.16 + batter.meet * 0.0012;
+  const k = power ? 0.68 : 1;
+  return { rx: rx * k, ry: rx * 0.78 * k };
 }
 
 export const SWING_LAG = 0.16;     // クリックしてからバットがゾーンに来るまで
-export const TIMING_WIN = 0.125;   // 当たるタイミングの幅（±）
+export const TIMING_WIN = 0.2;   // 当たるタイミングの幅（±）
 
 // swing: { ts:クリック時刻(投球開始から), cx, cy, power } / 戻り値：空振り or 打球の初速
 export function judgeSwing(pitch, batter, swing, seed) {
@@ -89,11 +91,11 @@ export function judgeSwing(pitch, batter, swing, seed) {
   const tq = Math.abs(dt) / TIMING_WIN;
   // 芯：カーソル中心のやや下で捉えると最高
   const sweet = Math.hypot(ox, (oy - 0.22) * 0.9);
-  const q = Math.max(0, 1 - Math.min(1.2, sweet) * 0.55 - tq * tq * 0.4);
+  const q = Math.max(0, 1 - Math.min(1.2, sweet) * 0.45 - tq * tq * 0.3);
   const hand = batter.bats === 'L' ? -1 : 1;
 
   // 端っこ・タイミングぎりぎりはファウルになりやすい
-  if ((d > 0.86 || tq > 0.85) && r() < 0.55) {
+  if ((d > 0.93 || tq > 0.9) && r() < 0.4) {
     const back = r() < 0.5;
     const phi = (r() < 0.5 ? -1 : 1) * (0.9 + r() * 0.8);
     const sp = 18 + r() * 14;
