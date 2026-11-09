@@ -29,6 +29,18 @@ const field = buildField(scene, renderer);
 const zone = buildZone(); scene.add(zone);
 const cursor = buildCursor(); scene.add(cursor);
 const aim = buildAim(); scene.add(aim);
+// 投球の目安：ボールの今の高さ・コースをゾーンの面に映した影と、着弾点（アシスト）
+function zoneMark(r0, r1, color, fill) {
+  const g = new THREE.Group();
+  const ring = new THREE.Mesh(new THREE.RingGeometry(r0, r1, 32), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.9, depthTest: false, side: THREE.DoubleSide }));
+  ring.renderOrder = 14; g.add(ring);
+  if (fill) { const c = new THREE.Mesh(new THREE.CircleGeometry(r0, 32), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.35, depthTest: false, side: THREE.DoubleSide })); c.renderOrder = 14; g.add(c); }
+  g.visible = false; scene.add(g);
+  return g;
+}
+const trackMark = zoneMark(0.03, 0.045, 0xffffff, true);
+const landPitch = zoneMark(0.045, 0.06, 0xff5a3d, false);
+function setMarkOpacity(g, a) { g.children.forEach((m, i) => { m.material.opacity = a * (i ? 0.35 : 0.95); }); }
 const ballMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
 const ball = new THREE.Mesh(new THREE.SphereGeometry(BALL_R * 1.5, 16, 12), ballMat);
 ball.castShadow = true;
@@ -214,6 +226,7 @@ function send(m) { if (S.net) S.net.send(m); }
 function startMatch(mode, opts = {}) {
   S.mode = mode;
   if (!TEST) S.autoField = $('optField').value === '1';
+  S.assist = $('optAssist').value === '1';
   S.lv = opts.lv ?? 1;
   const innings = opts.innings || 3;
   if (mode === 'cpu') S.ctrl = ['me', 'cpu'];
@@ -683,7 +696,7 @@ function updateHelp() {
   if (!s) return;
   if (S.phase === 'play' && S.live && S.live.human) ui.help.innerHTML = '<b>守備</b>　<b>WASD</b>：移動（青い輪の選手）　<b>スペース</b>：ダイブ<br><b>1</b>：一塁　<b>2</b>：二塁　<b>3</b>：三塁　<b>4</b>：本塁へ送球';
   else if (iPitch()) ui.help.innerHTML = '<b>投球</b>　マウス：コースをねらう<br><b>1〜' + pitchList().length + ' / ホイール</b>：球種　<b>左クリック</b>：投げる';
-  else if (iBat()) ui.help.innerHTML = '<b>打撃</b>　マウス：カーソル　<b>左クリック/スペース</b>：振る<br><b>右クリック/Shift</b>：ミート⇔強振 切り替え';
+  else if (iBat()) ui.help.innerHTML = '<b>打撃</b>　マウス：カーソル　<b>左クリック/スペース</b>：振る<br><b>右クリック/Shift</b>：ミート⇔強振 切り替え<br><b>白い丸</b>：ボールの今の高さ・コース　<b>赤い輪</b>：ボールが来る場所';
   else ui.help.innerHTML = '観戦中';
 }
 
@@ -786,6 +799,18 @@ function step(now, dt) {
       ball.scale.setScalar(Math.max(1, camera.position.distanceTo(ball.position) / 8));
       ballShadow.visible = ball.visible;
       ballShadow.position.set(pos.x, 0.02, pos.z);
+      // 目安マーカー
+      const sk = Math.max(0, Math.min(1, t / p.T));
+      trackMark.visible = t <= p.T && sk > 0.25;
+      trackMark.position.set(pos.x, pos.y, 0.03);
+      setMarkOpacity(trackMark, 0.35 + 0.65 * sk);
+      trackMark.scale.setScalar(1.6 - 0.6 * sk);
+      if (S.assist && iBat() && sk >= 0.4 && t <= p.T + 0.2) {
+        const e = pitchPos(p, p.T);
+        landPitch.visible = true;
+        landPitch.position.set(e.x, e.y, 0.03);
+        setMarkOpacity(landPitch, Math.min(1, (sk - 0.4) * 4));
+      } else landPitch.visible = false;
       // テスト用：自動で芯を打つ
       if (S.autoSwing && iBat() && S.decision === undefined && t >= p.T - SWING_LAG - 0.004) {
         const e = pitchPos(p, p.T); S.cursor.x = e.x; S.cursor.y = e.y - 0.04; localSwing(S.autoSwing === 'power');
@@ -807,6 +832,8 @@ function step(now, dt) {
   } else if (S.phase !== 'play' && S.phase !== 'result') {
     ui.speed.classList.remove('show');
   }
+  if (S.phase !== 'flight') { trackMark.visible = false; if (S.phase !== 'result') landPitch.visible = false; }
+  if (S.phase === 'play') landPitch.visible = false;
   if (S.phase === 'play' && S.live) updateLive(now, dt);
   else activeRing.visible = false;
 
