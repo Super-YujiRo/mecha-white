@@ -66,13 +66,13 @@ export function inZone(pt) {
 
 // ================= 打撃 =================
 export function cursorSize(batter, power) {
-  const rx = 0.075 + batter.meet * 0.0009;
-  const k = power ? 0.62 : 1;
-  return { rx: rx * k, ry: rx * 0.72 * k };
+  const rx = 0.1 + batter.meet * 0.0011;
+  const k = power ? 0.58 : 1;
+  return { rx: rx * k, ry: rx * 0.74 * k };
 }
 
 export const SWING_LAG = 0.16;     // クリックしてからバットがゾーンに来るまで
-export const TIMING_WIN = 0.095;   // 当たるタイミングの幅（±）
+export const TIMING_WIN = 0.125;   // 当たるタイミングの幅（±）
 
 // swing: { ts:クリック時刻(投球開始から), cx, cy, power } / 戻り値：空振り or 打球の初速
 export function judgeSwing(pitch, batter, swing, seed) {
@@ -80,19 +80,20 @@ export function judgeSwing(pitch, batter, swing, seed) {
   const at = pitchPos(pitch, pitch.T);
   const { rx, ry } = cursorSize(batter, swing.power);
   const dt = swing.ts + SWING_LAG - pitch.T;
-  const ox = (at.x - swing.cx) / rx;
-  const oy = (at.y - swing.cy) / ry;
+  // ボールが少しでもカーソルに掛かれば当たる
+  const ox = (at.x - swing.cx) / (rx + BALL_R * 1.2);
+  const oy = (at.y - swing.cy) / (ry + BALL_R * 1.2);
   const d = Math.hypot(ox, oy);
-  if (Math.abs(dt) > TIMING_WIN || d > 1.18) return { miss: true, dt, d };
+  if (Math.abs(dt) > TIMING_WIN || d > 1.0) return { miss: true, dt, d };
 
   const tq = Math.abs(dt) / TIMING_WIN;
   // 芯：カーソル中心のやや下で捉えると最高
-  const sweet = Math.hypot(ox, (oy - 0.32) * 0.9);
-  const q = Math.max(0, 1 - Math.min(1.2, sweet) * 0.62 - tq * tq * 0.45);
+  const sweet = Math.hypot(ox, (oy - 0.22) * 0.9);
+  const q = Math.max(0, 1 - Math.min(1.2, sweet) * 0.55 - tq * tq * 0.4);
   const hand = batter.bats === 'L' ? -1 : 1;
 
   // 端っこ・タイミングぎりぎりはファウルになりやすい
-  if ((d > 0.98 || tq > 0.82) && r() < 0.6) {
+  if ((d > 0.86 || tq > 0.85) && r() < 0.55) {
     const back = r() < 0.5;
     const phi = (r() < 0.5 ? -1 : 1) * (0.9 + r() * 0.8);
     const sp = 18 + r() * 14;
@@ -100,7 +101,7 @@ export function judgeSwing(pitch, batter, swing, seed) {
     return { foulTip: true, v: launchVec(sp, la, back ? Math.PI - phi * 0.3 : phi), q: 0.1, dt, d };
   }
 
-  const powerK = swing.power ? 1.16 : 1;
+  const powerK = swing.power ? 1.17 : 1;
   const ev = (110 + batter.power * 0.8) * (0.55 + 0.45 * q) * powerK * (0.97 + r() * 0.06); // km/h
   let la = 11 + oy * 27 + gauss(r) * 5;             // 打球角度（上に当てるとゴロ、下ならフライ）
   la = Math.max(-25, Math.min(68, la));

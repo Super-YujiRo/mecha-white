@@ -40,7 +40,7 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:none
 #stamina{height:6px;background:#2a3d5e;border-radius:3px;margin-top:5px;overflow:hidden}
 #stamina div{height:100%;width:100%;background:linear-gradient(90deg,#ff7a3d,#ffd43d,#3ee07a);transition:width .3s}
 
-#speed{position:absolute;right:14px;top:118px;font-weight:900;font-size:26px;text-shadow:0 2px 0 rgba(0,0,0,.4);opacity:0;transition:opacity .2s}
+#speed{position:absolute;right:14px;top:118px;background:rgba(13,31,60,.85);padding:4px 12px 6px;border-radius:10px;font-weight:900;font-size:26px;text-shadow:0 2px 0 rgba(0,0,0,.4);opacity:0;transition:opacity .2s}
 #speed small{font-size:14px;margin-left:2px}
 #speed .ty{display:block;font-size:15px;color:var(--gold);text-align:right}
 #speed.show{opacity:1}
@@ -52,6 +52,8 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:none
 #pitchMenu .p.sel{background:linear-gradient(180deg,#ffd76a,#ffb21f);color:#4a2a00;border-color:#fff;transform:translateY(-4px)}
 #pitchMenu .p.sel .k{color:#7a4a00}
 
+#swingMode{position:absolute;right:14px;bottom:96px;font-weight:900;font-size:22px;padding:4px 16px;border-radius:10px;background:linear-gradient(180deg,#ffe082,#ffb21f);color:#4a2a00;border:2px solid #fff;box-shadow:0 4px 0 rgba(0,0,0,.25)}
+#swingMode.power{background:linear-gradient(180deg,#ff8a7a,#e8382b);color:#fff}
 #help{position:absolute;left:14px;bottom:14px;font-size:12px;font-weight:800;background:rgba(13,31,60,.7);padding:6px 10px;border-radius:8px;line-height:1.6;max-width:360px}
 #help b{color:var(--gold)}
 

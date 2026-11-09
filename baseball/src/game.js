@@ -1,7 +1,6 @@
 // 試合の進行（ホストが権威を持つ）。画面は main.js、通信は net.js
 import { TEAMS, PITCHES, battingOrder } from './data.js';
 import { makePitch, judgeSwing, inZone, rng, gauss, SWING_LAG, ZONE } from './baseball.js';
-import { resolvePlay } from './play.js';
 
 export function newState(opts) {
   const teams = opts.teams || [TEAMS[0], TEAMS[1]];
@@ -104,26 +103,37 @@ export function resolvePitch(s, pitch, decision, seed) {
   const h = judgeSwing(pitch, batter, decision, seed);
   if (h.miss) { out.kind = 'MISS'; out.call = '空振り！'; addStrike(n, out, false); return { state: n, out }; }
 
-  const ctx = { fielders: fieldersOf(n), batter, runners: runnersOf(n), outs: n.outs };
-  const { res } = resolvePlay(h, ctx);
-  out.hit = h; out.playRes = res;
-  if (res.kind === 'FOUL') {
-    out.kind = 'FOUL'; out.call = 'ファウル';
-    if (n.strikes < 2) n.strikes++;
-    return { state: n, out };
-  }
-  out.kind = 'INPLAY';
-  out.text = res.text;
-  // 塁・アウト・得点
-  const order = battingOrder(teamById(n.teamIds[bt]));
+  // 打球：この先は live.js でプレーを動かし、applyPlay で状態に反映する
+  out.kind = 'CONTACT';
+  out.hit = h;
+  return { state: n, out };
+}
+
+// プレーの結果 res を状態に反映
+export function applyPlay(s, res) {
+  const n = structuredClone(s);
+  if (res.kind === 'FOUL') { if (n.strikes < 2) n.strikes++; return n; }
+  const bt = batTeam(n);
   n.outs += res.outsAdd;
-  n.bases = res.bases.map(p => (p ? order.indexOf(p) : null));
+  n.bases = res.bases ? res.bases.slice() : [null, null, null];
   addRuns(n, res.runs);
   if (res.kind === 'HIT' || res.kind === 'HR') n.stats[bt].h++;
   if (res.kind === 'HR') n.stats[bt].hr++;
   nextBatter(n);
   checkHalf(n);
-  return { state: n, out };
+  return n;
+}
+
+// 打球の場面（live.js 用）
+export function playCtx(s) {
+  const order = battingOrder(teamById(s.teamIds[batTeam(s)]));
+  const { idx, player } = currentBatter(s);
+  return {
+    fielders: fieldersOf(s),
+    batter: { pl: player, idx },
+    runners: s.bases.map(i => (i == null ? null : { pl: order[i], idx: i })),
+    outs: s.outs,
+  };
 }
 
 function addStrike(n, out, looking) {

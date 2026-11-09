@@ -1,11 +1,12 @@
 import * as THREE from 'three';
 import { TEAMS, PITCHES, rank, battingOrder } from './data.js';
 import { pitchPos, cursorSize, ZONE, RUBBER_Z, SWING_LAG, BASES, BALL_R, rng } from './baseball.js';
-import { resolvePlay, POSITIONS, POS_ORDER, posAt, throwPos, sampleAt } from './play.js';
-import { newState, currentBatter, currentPitcher, batTeam, fieldTeam, teamById, cpuPitchIntent, cpuSwing, resolvePitch, pitchFor, fieldersOf, runnersOf } from './game.js';
+import { POSITIONS, POS_ORDER } from './play.js';
+import { LivePlay, ACT } from './live.js';
+import { newState, currentBatter, currentPitcher, batTeam, fieldTeam, teamById, cpuPitchIntent, cpuSwing, resolvePitch, pitchFor, applyPlay, playCtx } from './game.js';
 import { buildField, buildZone, buildCursor, buildAim, buildBat } from './field.js';
 import { loadCharacters, Player3D } from './chars.js';
-const BAT_CAM = { pos: [0, 2.45, 5.4], look: [0, 1.0, -9] };
+const BAT_CAM = { pos: [0, 1.02, 2.45], look: [0, 1.02, -18] };
 import { Net } from './net.js';
 
 // ================= 時計（?test のときはコマ送り） =================
@@ -56,6 +57,11 @@ const landMark = new THREE.Mesh(new THREE.RingGeometry(0.9, 1.25, 32), new THREE
 landMark.rotation.x = -Math.PI / 2;
 landMark.visible = false;
 scene.add(landMark);
+// 操作している野手の足元
+const activeRing = new THREE.Mesh(new THREE.RingGeometry(0.75, 1.05, 32), new THREE.MeshBasicMaterial({ color: 0x5ad1ff, transparent: true, opacity: 0.9, depthWrite: false, side: THREE.DoubleSide }));
+activeRing.rotation.x = -Math.PI / 2;
+activeRing.visible = false;
+scene.add(activeRing);
 
 function resize() {
   const w = window.innerWidth, h = window.innerHeight;
@@ -74,7 +80,7 @@ const ui = {
   inning: $('inning'), lineHead: $('lineHead'), lineA: $('lineA'), lineB: $('lineB'),
   count: $('count'), b1: $('b1'), b2: $('b2'), b3: $('b3'),
   pName: $('pName'), pStats: $('pStats'), stamina: $('stamina').firstElementChild,
-  bName: $('bName'), bStats: $('bStats'), speed: $('speed'), pitchMenu: $('pitchMenu'), help: $('help'),
+  bName: $('bName'), bStats: $('bStats'), speed: $('speed'), pitchMenu: $('pitchMenu'), help: $('help'), mode: $('swingMode'), baseKeys: $('baseKeys'),
   call: $('call'), toast: $('toast'),
 };
 
@@ -145,7 +151,7 @@ function setBatterStance(player) {
   const b = people.batter;
   const left = player.bats === 'L';
   b.holder.visible = true;
-  b.holder.position.set(left ? 1.05 : -1.05, 0, 0.1);
+  b.holder.position.set(left ? 1.2 : -1.2, 0, -0.15);
   b.holder.rotation.y = left ? -Math.PI / 2 : Math.PI / 2;
   b.play('Melee_2H_Idle', { fade: 0.2 });
   bat.visible = true;
@@ -189,6 +195,8 @@ const S = {
   swingShownAt: -1,
   pitchType: 'ST',
   cursor: { x: 0, y: 0.78 },
+  powerMode: false,     // false: ミート打ち / true: 強振
+  live: null,
   aim: { x: 0, y: 0.78 },
   play: null,          // 再生中のプレー
   waitUntil: 0,
@@ -205,6 +213,7 @@ function send(m) { if (S.net) S.net.send(m); }
 
 function startMatch(mode, opts = {}) {
   S.mode = mode;
+  if (!TEST) S.autoField = $('optField').value === '1';
   S.lv = opts.lv ?? 1;
   const innings = opts.innings || 3;
   if (mode === 'cpu') S.ctrl = ['me', 'cpu'];
@@ -226,7 +235,9 @@ function beginAtBat(first) {
   S.pitch = null;
   S.decision = undefined;
   S.play = null;
+  S.live = null;
   S.swingShownAt = -1;
+  activeRing.visible = false;
   applyTeamsLook(s);
   resetFielders();
   setBatterStance(currentBatter(s).player);
@@ -282,7 +293,7 @@ function localSwing(power) {
   if (S.phase !== 'flight' && S.phase !== 'windup') return;
   const ts = (nowMs() - S.t0) / 1000;
   if (ts < -0.1) return;
-  const sw = { ts, cx: S.cursor.x, cy: S.cursor.y, power: !!power };
+  const sw = { ts, cx: S.cursor.x, cy: S.cursor.y, power: power == null ? S.powerMode : !!power };
   S.decision = sw;
   showSwing(ts);
   if (!isHost()) send({ t: 'swing', id: S.pitchId, sw });
@@ -306,25 +317,146 @@ function resolveNow() {
 }
 
 function playResult(pre, decision, out, next) {
-  (window.__log = window.__log || []).push({ kind: out.kind, call: out.call, text: out.text, dec: decision, hit: out.hit && { ev: out.hit.ev, la: out.hit.la, q: out.hit.q, phi: out.hit.phi } });
+  (window.__log = window.__log || []).push({ kind: out.kind, call: out.call, dec: decision, hit: out.hit && { ev: out.hit.ev, la: out.hit.la, q: out.hit.q, phi: out.hit.phi } });
   S.phase = 'result';
   S.nextState = next;
   const t = nowMs();
-  if (out.hit) {
-    const ctx = { fielders: fieldersOf(pre), batter: currentBatter(pre).player, runners: runnersOf(pre), outs: pre.outs };
-    const { tl } = resolvePlay(out.hit, ctx);
-    S.play = { tl, start: t, out, pre, ctx, calls: tl.calls.slice(), batterRunner: tl.runnerPaths.find(r => r.player === ctx.batter) };
-    S.phase = 'play';
-    ui.speed.classList.remove('show');
+  showSpeed();
+  if (out.kind === 'CONTACT') {
+    startLive(pre, out.hit, next);
     hitFx(out.hit);
-    if (out.kind === 'FOUL') { S.waitUntil = t + Math.min(tl.end, 2.4) * 1000 + 500; }
-    else S.waitUntil = t + tl.end * 1000 + 900;
-    setupRunnersForPlay(S.play);
-  } else {
-    showCall(out.call, out.kind === 'BALL' ? '#7dd3ff' : out.kind === 'K' ? '#ff6b6b' : '#ffe066', out.kind === 'K');
-    S.waitUntil = t + (out.kind === 'K' || out.call === 'フォアボール' ? 1500 : 1000);
+    return;
   }
+  showCall(out.call, out.kind === 'BALL' ? '#7dd3ff' : out.kind === 'K' ? '#ff6b6b' : '#ffe066', out.kind === 'K');
+  S.waitUntil = t + (out.kind === 'K' || out.call === 'フォアボール' ? 1500 : 1000);
   S.nextAction = () => finishPitch();
+}
+
+// ---- 打球が飛んだ後のプレー ----
+// 守備側を操作している人（CPUならホスト）の画面でプレーを動かし、相手には様子を送る
+function startLive(pre, hit, mid) {
+  const fc = myCtrl(fieldTeam(pre));
+  const auth = fc === 'me' || (fc === 'cpu' && isHost());
+  const human = fc === 'me' && !S.autoField;
+  S.phase = 'play';
+  S.live = { pre, mid, auth, human, sim: auth ? new LivePlay(hit, playCtx(pre), { human }) : null, view: null, prev: null, start: nowMs(), sentAt: 0, ended: false };
+  ui.speed.classList.remove('show');
+  bat.visible = true;
+  if (human) toast('守備：WASDで移動　1〜4キーで送球（4＝本塁）　スペースでダイブ', 3500);
+  updateHelp();
+  updateMode();
+}
+
+function liveInput() {
+  const L = S.live;
+  if (!L.human) return {};
+  // カメラの向きに合わせた移動
+  let fx = camLook.x - camPos.x, fz = camLook.z - camPos.z;
+  const fl = Math.hypot(fx, fz) || 1; fx /= fl; fz /= fl;
+  const rx = -fz, rz = fx;
+  let mx = 0, mz = 0;
+  if (keys.KeyW || keys.ArrowUp) { mx += fx; mz += fz; }
+  if (keys.KeyS || keys.ArrowDown) { mx -= fx; mz -= fz; }
+  if (keys.KeyD || keys.ArrowRight) { mx += rx; mz += rz; }
+  if (keys.KeyA || keys.ArrowLeft) { mx -= rx; mz -= rz; }
+  const ml = Math.hypot(mx, mz);
+  const inp = { move: ml ? { x: mx / ml, z: mz / ml } : null, throwTo: L.throwKey || null, dive: !!L.diveKey };
+  L.throwKey = null; L.diveKey = false;
+  return inp;
+}
+
+function updateLive(now, dt) {
+  const L = S.live;
+  if (L.auth) {
+    const sim = L.sim;
+    if (!sim.done) sim.step(dt, liveInput());
+    L.view = sim.view();
+    const calls = sim.calls.splice(0);
+    for (const c of calls) showCall(c.text, c.color, c.big);
+    if (S.net && (now - L.sentAt > 50 || sim.done || calls.length)) { L.sentAt = now; send({ t: 'snap', id: S.pitchId, v: L.view, c: calls }); }
+    if (sim.done && !L.ended) {
+      L.ended = true;
+      if (isHost()) finishLive(sim.res);
+      else send({ t: 'playEnd', id: S.pitchId, res: sim.res });
+    }
+  }
+  if (L.view) renderView(L.view, dt);
+}
+
+function finishLive(res) {
+  // ホスト：結果を状態に反映して相手に送る
+  const next = applyPlay(S.live.mid, res);
+  send({ t: 'playDone', id: S.pitchId, res, state: next });
+  afterLive(res, next);
+}
+function afterLive(res, next) {
+  S.nextState = next;
+  if (S.live) S.live.ended = true;
+  S.waitUntil = nowMs() + (res.kind === 'FOUL' ? 700 : 1300);
+  S.nextAction = () => finishPitch();
+}
+
+const ANIM = { [ACT.idle]: 'Idle_A', [ACT.run]: 'Running_A', [ACT.throw]: 'Throw', [ACT.catch]: 'Melee_Block', [ACT.dive]: 'Dodge_Forward', [ACT.cheer]: 'Cheering', [ACT.jog]: 'Running_A', [ACT.crouch]: 'Crouching' };
+function animFor(p, act) {
+  const name = ANIM[act] || 'Idle_A';
+  if (act === ACT.throw) p.play(name, { loop: false, speed: 1.5 });
+  else if (act === ACT.catch || act === ACT.dive) p.play(name, { loop: false, speed: 1.3 });
+  else if (act === ACT.run) p.play(name, { speed: 1.25 });
+  else if (act === ACT.jog) p.play(name, { speed: 0.85 });
+  else p.play(name);
+}
+function renderView(v, dt) {
+  const L = S.live;
+  const k = L.auth ? 1 : 1 - Math.exp(-dt * 18);
+  // ボール
+  const bv = v.b;
+  ball.visible = !!bv[3];
+  const bp = ball.position;
+  if (k === 1) bp.set(bv[0], bv[1], bv[2]); else bp.lerp(new THREE.Vector3(bv[0], bv[1], bv[2]), k);
+  const far = camera.position.distanceTo(bp);
+  ball.scale.setScalar(Math.max(1, far / 9));
+  ballShadow.visible = ball.visible;
+  ballShadow.position.set(bp.x, 0.02, bp.z);
+  ballShadow.scale.setScalar(Math.max(1, far / 12));
+  if (bv[4] && bp.y > 0.3) pushTrail(bp); else clearTrail();
+  L.ballPos = { x: bp.x, y: bp.y, z: bp.z };
+  if (v.lm) { landMark.visible = true; landMark.position.set(v.lm[0], 0.05, v.lm[1]); landMark.scale.setScalar(1 + 0.15 * Math.sin(nowMs() / 80)); }
+  else landMark.visible = false;
+  // 野手
+  POS_ORDER.forEach((pos, i) => {
+    const f = people.fielders[pos], d = v.f[i];
+    f.holder.visible = Math.hypot(d[0] - camera.position.x, d[1] - camera.position.z) > 3;
+    const hp = f.holder.position;
+    if (k === 1) hp.set(d[0], pos === 'P' && Math.hypot(d[0], d[1] + 17.6) < 2.6 ? 0.2 : 0, d[1]);
+    else { hp.x += (d[0] - hp.x) * k; hp.z += (d[1] - hp.z) * k; hp.y = pos === 'P' && Math.hypot(d[0], d[1] + 17.6) < 2.6 ? 0.2 : 0; }
+    f.holder.rotation.y = d[2];
+    animFor(f, d[3]);
+  });
+  if (v.a) {
+    const af = people.fielders[v.a].holder.position;
+    activeRing.visible = true; activeRing.position.set(af.x, 0.04, af.z);
+    L.activePos = { x: af.x, z: af.z };
+  } else { activeRing.visible = false; L.activePos = null; }
+  L.holder = v.h;
+  // 走者（0 は打者）
+  for (const d of v.r) {
+    const actor = d[0] === 0 ? people.batter : people.runners[d[0] - 1];
+    if (!actor) continue;
+    if (d[4] === 9) continue; // 打者はまだ打席
+    if (d[0] === 0) bat.visible = false;
+    if (d[4] === ACT.hide) { actor.holder.visible = false; continue; }
+    actor.holder.visible = true;
+    const hp = actor.holder.position;
+    if (k === 1) hp.set(d[1], 0, d[2]); else { hp.x += (d[1] - hp.x) * k; hp.z += (d[2] - hp.z) * k; }
+    actor.holder.rotation.y = d[3];
+    animFor(actor, d[4]);
+  }
+}
+
+function showSpeed() {
+  if (!S.pitch) return;
+  ui.speed.innerHTML = `<span class="ty">${PITCHES[S.pitch.type].name}</span>${S.pitch.velo}<small>km/h</small>`;
+  ui.speed.classList.add('show');
 }
 
 function finishPitch() {
@@ -354,102 +486,6 @@ function hitFx(h) {
   if (!h || h.foulTip) return;
   const q = h.q || 0;
   if (q > 0.85 && h.ev > 150) shake = 0.35; else if (q > 0.6) shake = 0.15;
-}
-
-// ---- プレーの再生 ----
-function setupRunnersForPlay(play) {
-  // 打者走者に変身：バッターはそのまま走る
-  const tl = play.tl;
-  const pre = play.pre;
-  play.runnerActors = [];
-  for (const rp of tl.runnerPaths) {
-    let actor = null;
-    if (rp.player === play.ctx.batter) actor = people.batter;
-    else {
-      const baseIdx = pre.bases.findIndex((v, i) => v != null && runnersOf(pre)[i] === rp.player);
-      actor = people.runners[baseIdx];
-    }
-    if (actor) play.runnerActors.push({ rp, actor });
-  }
-}
-
-function updatePlay(now) {
-  const play = S.play;
-  const t = (now - play.start) / 1000;
-  const tl = play.tl;
-  // ボール
-  let bp;
-  const thr = tl.throws.find(s => t >= s.t0 && t <= s.t1 + 0.05) || (t > (tl.catchT || 1e9) && tl.throws.length && t < tl.throws[0].t0 ? null : undefined);
-  if (thr) bp = throwPos(thr, t);
-  else if (tl.catchT != null && t >= tl.catchT) {
-    // 捕球した野手の手元
-    const last = tl.throws.filter(s => t > s.t1).pop();
-    if (last) bp = { x: last.to.x, y: 1.2, z: last.to.z };
-    else { const f = people.fielders[tl.catcher].holder.position; bp = { x: f.x, y: 1.1, z: f.z }; }
-  } else bp = sampleAt(tl.path, Math.min(t, tl.ballEnd ?? 99));
-  ball.visible = true;
-  ball.position.set(bp.x, bp.y, bp.z);
-  const far = camera.position.distanceTo(ball.position);
-  ball.scale.setScalar(Math.max(1, far / 9));
-  ballShadow.visible = true;
-  ballShadow.position.set(bp.x, 0.02, bp.z);
-  ballShadow.scale.setScalar(Math.max(1, far / 12));
-  play.ballPos = bp;
-  if (!thr && !(tl.catchT != null && t >= tl.catchT)) pushTrail(bp); else clearTrail();
-  // 落下地点：まだノーバウンドで飛んでいる間だけ
-  const fb = tl.path.find(s => !s.air);
-  const landT = fb ? fb.t : null;
-  if (landT && t < landT && t < (tl.catchT ?? 1e9) && bp.y > 2) {
-    landMark.visible = true;
-    landMark.position.set(fb.x, 0.05, fb.z);
-    landMark.scale.setScalar(1 + 0.15 * Math.sin(t * 12));
-  } else landMark.visible = false;
-
-  // 野手
-  people.fielders.C.holder.visible = t > 0.3;
-  const moved = new Set();
-  for (const m of tl.movers) {
-    const f = people.fielders[m.pos];
-    if (!f) continue;
-    moved.add(m.pos);
-    const k = Math.max(0, Math.min(1, (t - m.t0) / (m.t1 - m.t0)));
-    const x = m.from.x + (m.to.x - m.from.x) * k, z = m.from.z + (m.to.z - m.from.z) * k;
-    f.holder.position.set(x, 0, z);
-    if (t < m.t0) { f.play('Idle_B'); faceTo(f, bp.x, bp.z); }
-    else if (k < 1) { f.play('Running_A', { speed: 1.2 }); f.holder.rotation.y = Math.atan2(m.to.x - m.from.x, m.to.z - m.from.z); }
-    else {
-      if (m.dive && t < m.t1 + 0.8) f.play('Dodge_Forward', { loop: false });
-      else if (tl.catcher === m.pos && t >= (tl.catchT || 0) && t < (tl.catchT || 0) + 0.5 && !tl.throws.length) f.play('Melee_Block', { loop: false });
-      else {
-        const th = tl.throws.find(s => Math.hypot(s.from.x - x, s.from.z - z) < 1.5 && t >= s.t0 - 0.45 && t < s.t0 + 0.4);
-        if (th) { f.play('Throw', { loop: false, speed: 1.4 }); faceTo(f, th.to.x, th.to.z); }
-        else { f.play('Idle_A'); faceTo(f, bp.x, bp.z); }
-      }
-    }
-  }
-  for (const pos of POS_ORDER) {
-    if (moved.has(pos) || pos === 'C' || pos === 'P') continue;
-    const f = people.fielders[pos];
-    faceTo(f, bp.x, bp.z);
-  }
-  if (!moved.has('P')) faceTo(people.fielders.P, bp.x, bp.z);
-  // 走者
-  for (const { rp, actor } of play.runnerActors || []) {
-    const pp = posAt(rp.pts, t);
-    actor.holder.position.set(pp.x, 0, pp.z);
-    if (actor === people.batter) bat.visible = t < 0.35;
-    if (pp.moving && t >= rp.pts[0].t) { actor.play('Running_A', { speed: rp.jog ? 0.9 : 1.25 }); actor.holder.rotation.y = pp.dir; }
-    else if (t >= rp.pts[0].t) {
-      if (tl.hr && rp.to >= 4) actor.play('Cheering', { loop: true });
-      else actor.play('Idle_A');
-    }
-  }
-  if (tl.hr && t > 0.4 && people.batter.curName !== 'Running_A') bat.visible = false;
-  // 実況のコール
-  while (play.calls.length && t >= play.calls[0].t) {
-    const c = play.calls.shift();
-    showCall(c.text, c.color, c.big);
-  }
 }
 
 // ================= バット（スイングに合わせて動かす） =================
@@ -496,7 +532,8 @@ canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 canvas.addEventListener('mousedown', (e) => {
   if (!S.state) return;
   if (S.phase === 'aim' && iPitch()) { if (e.button === 0) throwLocal(); return; }
-  if (iBat()) localSwing(e.button === 2 || e.shiftKey);
+  if (S.phase === 'play') return;
+  if (iBat()) { if (e.button === 2) toggleMode(); else if (e.button === 0) localSwing(); }
 });
 canvas.addEventListener('wheel', (e) => { if (S.phase === 'aim' && iPitch()) cyclePitch(e.deltaY > 0 ? 1 : -1); });
 canvas.addEventListener('touchstart', (e) => {
@@ -504,7 +541,7 @@ canvas.addEventListener('touchstart', (e) => {
   mouse.x = (t.clientX / window.innerWidth) * 2 - 1;
   mouse.y = -(t.clientY / window.innerHeight) * 2 + 1;
   pointerToPlate();
-  if (S.phase === 'aim' && iPitch()) throwLocal(); else if (iBat()) localSwing(e.touches.length > 1);
+  if (S.phase === 'aim' && iPitch()) throwLocal(); else if (iBat()) { if (e.touches.length > 1) toggleMode(); else localSwing(); }
   e.preventDefault();
 }, { passive: false });
 canvas.addEventListener('touchmove', (e) => {
@@ -525,9 +562,14 @@ window.addEventListener('keydown', (e) => {
     if (e.code === 'KeyQ') cyclePitch(-1);
     if (e.code === 'KeyE') cyclePitch(1);
     if (e.code === 'Space' || e.code === 'Enter') throwLocal();
+  } else if (S.phase === 'play' && S.live && S.live.human) {
+    const n = parseInt(e.key, 10);
+    if (n >= 1 && n <= 4) S.live.throwKey = n;
+    if (e.code === 'Digit0' || e.code === 'Numpad0') S.live.throwKey = 4;
+    if (e.code === 'Space') { S.live.diveKey = true; e.preventDefault(); }
   } else if (iBat()) {
-    if (e.code === 'Space') localSwing(false);
-    if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyF') localSwing(true);
+    if (e.code === 'Space' || e.code === 'Enter') { localSwing(); e.preventDefault(); }
+    if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyR') toggleMode();
   }
 });
 window.addEventListener('keyup', (e) => { keys[e.code] = false; });
@@ -542,7 +584,20 @@ function pointerToPlate() {
   if (iPitch()) { S.aim.x = x; S.aim.y = y; }
 }
 
+function toggleMode() {
+  if (!iBat() || S.decision) return;
+  S.powerMode = !S.powerMode;
+  updateMode();
+}
+function updateMode() {
+  const on = iBat() && S.state && S.phase !== 'play' && S.phase !== 'change' && S.phase !== 'over';
+  ui.mode.classList.toggle('hidden', !on);
+  ui.mode.classList.toggle('power', S.powerMode);
+  ui.mode.innerHTML = S.powerMode ? '強振' : 'ミート';
+}
+
 function keyMove(dt) {
+  if (S.phase === 'play') return;
   const sp = 0.9 * dt;
   let dx = 0, dy = 0;
   if (keys.KeyA || keys.ArrowLeft) dx -= sp;
@@ -613,6 +668,7 @@ function updateHud() {
   ui.bStats.innerHTML = ['meet', 'power', 'speed'].map((k, i) => `<span>${['ミート', 'パワー', '走力'][i]}<b class="${rank(b[k])}">${rank(b[k])}</b></span>`).join('') + `<span>${b.bats === 'L' ? '左打' : '右打'}</span>`;
   updatePitchMenu();
   updateHelp();
+  updateMode();
 }
 
 function updatePitchMenu() {
@@ -625,8 +681,9 @@ function updatePitchMenu() {
 function updateHelp() {
   const s = S.state;
   if (!s) return;
-  if (iPitch()) ui.help.innerHTML = '<b>守備</b>　マウス：コースをねらう<br><b>1〜' + pitchList().length + ' / ホイール</b>：球種　<b>左クリック</b>：投げる';
-  else if (iBat()) ui.help.innerHTML = '<b>攻撃</b>　マウス：ミートカーソル<br><b>左クリック</b>：ミート打ち　<b>右クリック</b>：強振（芯が小さく飛ぶ）';
+  if (S.phase === 'play' && S.live && S.live.human) ui.help.innerHTML = '<b>守備</b>　<b>WASD</b>：移動（青い輪の選手）　<b>スペース</b>：ダイブ<br><b>1</b>：一塁　<b>2</b>：二塁　<b>3</b>：三塁　<b>4</b>：本塁へ送球';
+  else if (iPitch()) ui.help.innerHTML = '<b>投球</b>　マウス：コースをねらう<br><b>1〜' + pitchList().length + ' / ホイール</b>：球種　<b>左クリック</b>：投げる';
+  else if (iBat()) ui.help.innerHTML = '<b>打撃</b>　マウス：カーソル　<b>左クリック/スペース</b>：振る<br><b>右クリック/Shift</b>：ミート⇔強振 切り替え';
   else ui.help.innerHTML = '観戦中';
 }
 
@@ -637,23 +694,25 @@ const camLook = new THREE.Vector3(...BAT_CAM.look);
 function updateCamera(dt, now) {
   if (S.freezeCam) return;
   let tp, tl;
-  if (S.phase === 'play' && S.play && !S.play.tl.foul) {
-    const b = S.play.ballPos || { x: 0, y: 1, z: 0 };
-    const t = (now - S.play.start) / 1000;
-    if (t < 0.2) { tp = new THREE.Vector3(...BAT_CAM.pos); tl = new THREE.Vector3(b.x, b.y, b.z); }
+  if (S.phase === 'play' && S.live && S.live.view) {
+    const L = S.live;
+    const b = L.ballPos || { x: 0, y: 1, z: 0 };
+    const t = (now - L.start) / 1000;
+    // ボールと操作中の野手が両方見える位置
+    const a = L.activePos;
+    let cx = b.x, cz = b.z;
+    if (a) { cx = (b.x + a.x) / 2; cz = (b.z + a.z) / 2; }
+    const spread = a ? Math.hypot(b.x - a.x, b.z - a.z) : 0;
+    const d = Math.hypot(cx, cz);
+    let ux = 0, uz = -1;
+    if (d > 6) { ux = cx / d; uz = cz / d; }
+    if (t < 0.25) { tp = new THREE.Vector3(...BAT_CAM.pos); tl = new THREE.Vector3(b.x, b.y, b.z); }
     else {
-      // 本塁側からボールを追う（ボールの少し後ろ・上）
-      const d = Math.max(1, Math.hypot(b.x, b.z));
-      const ux = b.x / d, uz = b.z / d;
-      const back = 20 + Math.min(20, b.y * 0.6);
-      tp = new THREE.Vector3(b.x - ux * back, 7 + b.y * 0.55, b.z - uz * back + 4);
-      if (tp.z > 14) tp.z = 14;
-      tl = new THREE.Vector3(b.x, Math.max(0.5, b.y * 0.85), b.z);
+      const back = 15 + spread * 0.7 + Math.min(14, b.y * 0.4);
+      tp = new THREE.Vector3(cx - ux * back, 8 + spread * 0.35 + b.y * 0.45, cz - uz * back);
+      if (tp.z > 16) tp.z = 16;
+      tl = new THREE.Vector3(cx, Math.max(0.5, b.y * 0.6), cz);
     }
-  } else if (S.phase === 'play' && S.play && S.play.tl.foul) {
-    const b = S.play.ballPos || { x: 0, y: 1, z: 0 };
-    tp = new THREE.Vector3(0, 3.5, 7);
-    tl = new THREE.Vector3(b.x * 0.6, b.y * 0.6 + 0.6, b.z * 0.6);
   } else {
     tp = new THREE.Vector3(...BAT_CAM.pos);
     tl = new THREE.Vector3(...BAT_CAM.look);
@@ -695,9 +754,12 @@ function step(now, dt) {
   cursor.visible = showCursor;
   zone.visible = S.phase !== 'play' && S.phase !== 'change' && S.phase !== 'over';
   if (showCursor) {
-    const { rx, ry } = cursorSize(currentBatter(s).player, keys.ShiftLeft || keys.ShiftRight);
+    const pw = S.decision ? S.decision.power : S.powerMode;
+    const { rx, ry } = cursorSize(currentBatter(s).player, pw);
     cursor.position.set(S.cursor.x, S.cursor.y, 0.02);
     cursor.scale.set(rx, ry, 1);
+    cursor.userData.ring.material.color.set(pw ? 0xff4a3d : 0xffd43d);
+    cursor.userData.fill.material.color.set(pw ? 0xff7a6a : 0xffe27a);
     cursor.userData.ring.material.opacity = S.decision ? 0.4 : 0.95;
   }
   aim.visible = iPitch() && S.phase === 'aim';
@@ -709,11 +771,7 @@ function step(now, dt) {
   if (S.phase === 'windup' || S.phase === 'flight') {
     const t = (now - S.t0) / 1000;
     if (t >= 0) {
-      if (S.phase === 'windup') {
-        S.phase = 'flight';
-        ui.speed.innerHTML = `<span class="ty">${PITCHES[S.pitch.type].name}</span>${S.pitch.velo}<small>km/h</small>`;
-        ui.speed.classList.add('show');
-      }
+      if (S.phase === 'windup') S.phase = 'flight';
       const p = S.pitch;
       let pos;
       if (t <= p.T) pos = pitchPos(p, t);
@@ -723,9 +781,10 @@ function step(now, dt) {
         const k = Math.min(1, (t - p.T) / 0.08);
         pos = { x: e.x, y: e.y - 0.05 * k, z: 1.0 * k };
       }
-      ball.visible = true;
+      ball.visible = t <= p.T + 0.02;
       ball.position.set(pos.x, pos.y, pos.z);
-      ballShadow.visible = true;
+      ball.scale.setScalar(Math.max(1, camera.position.distanceTo(ball.position) / 8));
+      ballShadow.visible = ball.visible;
       ballShadow.position.set(pos.x, 0.02, pos.z);
       // テスト用：自動で芯を打つ
       if (S.autoSwing && iBat() && S.decision === undefined && t >= p.T - SWING_LAG - 0.004) {
@@ -745,10 +804,11 @@ function step(now, dt) {
         send({ t: 'take', id: S.pitchId });
       }
     }
-  } else if (S.phase !== 'play') {
+  } else if (S.phase !== 'play' && S.phase !== 'result') {
     ui.speed.classList.remove('show');
   }
-  if (S.phase === 'play' && S.play) updatePlay(now);
+  if (S.phase === 'play' && S.live) updateLive(now, dt);
+  else activeRing.visible = false;
 
   if (S.nextAction && now >= S.waitUntil) {
     const f = S.nextAction;
@@ -798,6 +858,18 @@ function onNet(m) {
         if (m.decision && !(iBat())) showSwing(m.decision.ts);
         playResult(m.pre, m.decision, m.out, m.state);
       }
+      break;
+    case 'snap':
+      if (S.live && !S.live.auth && m.id === S.pitchId) {
+        S.live.view = m.v;
+        for (const c of m.c || []) showCall(c.text, c.color, c.big);
+      }
+      break;
+    case 'playEnd':
+      if (isHost() && S.live && !S.live.ended && m.id === S.pitchId) finishLive(m.res);
+      break;
+    case 'playDone':
+      if (!isHost() && m.id === S.pitchId) afterLive(m.res, m.state);
       break;
     case 'pitchIntent':
       if (isHost() && S.phase === 'aim' && myCtrl(fieldTeam(S.state)) === 'remote') doPitch(m.intent);
@@ -868,12 +940,13 @@ async function boot() {
   setBatterStance(TEAMS[0].lineup[0]);
   cursor.visible = false; aim.visible = false;
   requestAnimationFrame(frame);
+  if ('ontouchstart' in window) $('optField').value = '1';
   showTitle();
   // テスト用：?auto=cpu で即開始
   const q = new URLSearchParams(location.search);
   if (q.get('auto') === 'cpu') startMatch('cpu', { innings: +(q.get('inn') || 1), lv: 1 });
-  window.__S = S; window.__now = nowMs; window.__dbg = { beginAtBat, doPitch, people, camera, bat: () => bat, endMatch };
+  window.__S = S; window.__now = nowMs; window.__dbg = { beginAtBat, doPitch, people, camera, bat: () => bat, endMatch, applyPlay };
 }
 boot().catch((e) => { $('loadText').textContent = '読み込みに失敗しました：' + e.message; console.error(e); });
 
-void battingOrder; void rng;
+void battingOrder; void rng; void SWING_LAG;
