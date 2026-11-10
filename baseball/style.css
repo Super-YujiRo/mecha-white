@@ -115,3 +115,4 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:none
 #pitchMenu .p{white-space:nowrap}
 @media (max-width:1000px){ #hud{zoom:.8} }
 @media (max-width:760px){ #hud{zoom:.6} #pitchMenu{bottom:96px} }
+.card .name .hurt{background:#e8382b;color:#fff;font-size:12px;padding:1px 6px;border-radius:6px;margin-left:6px;vertical-align:middle}

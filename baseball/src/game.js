@@ -15,6 +15,7 @@ export function newState(opts) {
     fatigue: [0, 0],
     pitches: [0, 0],
     stats: [{ h: 0, hr: 0, k: 0 }, { h: 0, hr: 0, k: 0 }],
+    injured: [[], []],             // ケガをした選手の名前
     phase: 'aim',
     over: false,
     pitchId: 0,
@@ -26,22 +27,28 @@ export function newState(opts) {
 export const teamById = (id) => TEAMS.find(t => t.id === id);
 export const batTeam = (s) => (s.top ? 0 : 1);
 export const fieldTeam = (s) => (s.top ? 1 : 0);
+// ケガをした選手は能力が下がる
+export function hurtPl(s, ti, pl) {
+  if (!pl || !s.injured || !s.injured[ti].includes(pl.name)) return pl;
+  const d = (v, k) => Math.max(1, Math.round(v * k));
+  return { ...pl, meet: d(pl.meet, 0.7), power: d(pl.power, 0.7), speed: d(pl.speed, 0.6), arm: d(pl.arm, 0.75), field: d(pl.field, 0.75), injured: true };
+}
 export function currentBatter(s) {
   const tb = batTeam(s);
   const order = battingOrder(teamById(s.teamIds[tb]));
-  return { idx: s.order[tb], player: order[s.order[tb]] };
+  return { idx: s.order[tb], player: hurtPl(s, tb, order[s.order[tb]]) };
 }
 export function currentPitcher(s) { return teamById(s.teamIds[fieldTeam(s)]).pitcher; }
 export function fieldersOf(s) {
   const t = teamById(s.teamIds[fieldTeam(s)]);
   const f = {};
-  for (const p of t.lineup) f[p.pos] = p;
+  for (const p of t.lineup) f[p.pos] = hurtPl(s, fieldTeam(s), p);
   f.P = { ...t.pitcher, speed: 50, arm: 72, field: 60 };
   return f;
 }
 export function runnersOf(s) {
   const order = battingOrder(teamById(s.teamIds[batTeam(s)]));
-  return s.bases.map(i => (i == null ? null : order[i]));
+  return s.bases.map(i => (i == null ? null : hurtPl(s, batTeam(s), order[i])));
 }
 
 // ===== CPU =====
@@ -96,6 +103,15 @@ export function resolvePitch(s, pitch, decision, seed) {
   n.fatigue[ft] = Math.min(1, n.fatigue[ft] + 1 / (currentPitcher(n).stamina * 1.25));
 
   if (!decision) {
+    // デッドボール：打者の体に当たる球
+    const side = batter.bats === 'L' ? 1 : -1;
+    const ex = pitch.end.x * side;
+    if (ex > 0.43 && ex < 0.95 && pitch.end.y > 0.25 && pitch.end.y < 1.75) {
+      out.kind = 'HBP'; out.call = 'デッドボール！';
+      if (rng(seed ^ 0x51ed)() < 0.15) addInjury(n, bt, batter.name, out);
+      walk(n);
+      return { state: n, out };
+    }
     if (inZone(pitch.end)) { out.kind = 'STRIKE'; out.call = 'ストライク！'; addStrike(n, out, true); }
     else { out.kind = 'BALL'; out.call = 'ボール'; n.balls++; if (n.balls >= 4) { out.call = 'フォアボール'; walk(n); } }
     return { state: n, out };
@@ -109,11 +125,30 @@ export function resolvePitch(s, pitch, decision, seed) {
   return { state: n, out };
 }
 
+function addInjury(n, ti, name, out) {
+  if (!n.injured) n.injured = [[], []];
+  if (n.injured[ti].includes(name)) return;
+  n.injured[ti].push(name);
+  if (out) out.injury = name;
+}
+
 // プレーの結果 res を状態に反映
 export function applyPlay(s, res) {
   const n = structuredClone(s);
-  if (res.kind === 'FOUL') { if (n.strikes < 2) n.strikes++; return n; }
   const bt = batTeam(n);
+  if (res.injured && res.injured.length) {
+    const order = battingOrder(teamById(n.teamIds[bt]));
+    for (const i of res.injured) addInjury(n, bt, order[i].name);
+  }
+  if (res.kind === 'FOUL') { if (n.strikes < 2) n.strikes++; return n; }
+  if (res.kind === 'STEAL') {
+    // 盗塁：打者はそのまま
+    n.outs += res.outsAdd;
+    n.bases = res.bases.slice();
+    addRuns(n, res.runs);
+    checkHalf(n);
+    return n;
+  }
   n.outs += res.outsAdd;
   n.bases = res.bases ? res.bases.slice() : [null, null, null];
   addRuns(n, res.runs);
@@ -131,7 +166,7 @@ export function playCtx(s) {
   return {
     fielders: fieldersOf(s),
     batter: { pl: player, idx },
-    runners: s.bases.map(i => (i == null ? null : { pl: order[i], idx: i })),
+    runners: s.bases.map(i => (i == null ? null : { pl: hurtPl(s, batTeam(s), order[i]), idx: i })),
     outs: s.outs,
   };
 }

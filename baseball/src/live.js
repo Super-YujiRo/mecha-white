@@ -7,7 +7,7 @@ const INFIELD = { P: 1, C: 1, '1B': 1, '2B': 1, SS: 1, '3B': 1 };
 export const runSpeed = (pl) => 6.3 + pl.speed * 0.03;
 export const fieldSpeed = (pl) => 6.2 + pl.speed * 0.025;
 export const throwSpeed = (pl) => 21 + pl.arm * 0.1;
-export const ACT = { idle: 0, run: 1, throw: 2, catch: 3, dive: 4, cheer: 5, jog: 6, crouch: 7, hide: 8 };
+export const ACT = { idle: 0, run: 1, throw: 2, catch: 3, dive: 4, cheer: 5, jog: 6, crouch: 7, hide: 8, jump: 10, slide: 11, hurt: 12 };
 const BP = (k) => (k % 4 === 0 ? { x: 0, z: 0 } : BASES[k % 4]);
 const dist = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
 const COVER_SPOT = { 1: { x: 19.0, z: -19.9 }, 2: { x: 0.5, z: -38.2 }, 3: { x: -19.0, z: -19.9 }, 4: { x: 0, z: 0.7 } };
@@ -18,7 +18,9 @@ export class LivePlay {
     this.t = 0;
     this.outs0 = ctx.outs; this.outs = ctx.outs;
     this.human = !!opts.human;
-    const sim = simulateBall(hit.v);
+    this.stealOnly = !hit;
+    this.injured = [];
+    const sim = hit ? simulateBall(hit.v) : { path: [{ t: 0, x: 0, y: 1, z: 1.25, air: false }], hr: null, firstBounce: null };
     this.path = sim.path; this.hrInfo = sim.hr; this.fb = sim.firstBounce;
     this.calls = [];
     this.done = false; this.res = null; this.endAt = null;
@@ -28,13 +30,13 @@ export class LivePlay {
     for (const pos of POS_ORDER) {
       const pl = ctx.fielders[pos];
       const h = pos === 'C' ? { x: 0, z: 1.25 } : pos === 'P' ? { x: 0, z: -17.6 } : { x: POSITIONS[pos].x, z: POSITIONS[pos].z };
-      this.f[pos] = { pos, pl, x: h.x, z: h.z, home: h, dir: pos === 'C' ? Math.PI : Math.atan2(-h.x, -h.z), act: pos === 'C' ? ACT.crouch : ACT.idle, spd: fieldSpeed(pl), react: pos === 'P' ? 0.4 : INFIELD[pos] ? 0.2 : 0.38, goal: null, diveT: -9, catchT: -9, wind: null, decided: false };
+      this.f[pos] = { pos, pl, x: h.x, z: h.z, home: h, dir: pos === 'C' ? Math.PI : Math.atan2(-h.x, -h.z), act: pos === 'C' ? ACT.crouch : ACT.idle, spd: fieldSpeed(pl), react: pos === 'P' ? 0.4 : INFIELD[pos] ? 0.2 : 0.38, goal: null, diveT: -9, jumpT: -9, catchT: -9, wind: null, decided: false };
     }
     this.chaser = null; this.chaserAt = -1; this.active = null;
     this.pending = null; // 人の送球予約
     // 走者（0 は打者）
     this.r = [];
-    const mk = (slot, p, base) => ({ slot, pl: p.pl, idx: p.idx, orig: base, seg: base, s: slot === 0 ? 0 : 0.07, goal: base, state: slot === 0 ? 'wait' : 'lead', start: slot === 0 ? 0.32 : 0, spd: runSpeed(p.pl), out: false, scored: false, scoreT: 0, forcedTo: 0, mustReturn: false, pause: 0, x: 0, z: 0, dir: 0, gone: 0 });
+    const mk = (slot, p, base) => ({ slot, pl: p.pl, idx: p.idx, orig: base, seg: base, s: slot === 0 ? 0 : 0.07, goal: base, state: slot === 0 ? 'wait' : 'lead', start: slot === 0 ? 0.32 : 0, spd: runSpeed(p.pl), out: false, scored: false, scoreT: 0, forcedTo: 0, mustReturn: false, pause: 0, x: 0, z: 0, dir: 0, gone: 0, manual: false, slideT: -9, idle: false });
     this.r.push(mk(0, ctx.batter, 0));
     ctx.runners.forEach((p, i) => { if (p) this.r.push(mk(i + 1, p, i + 1)); });
     for (const R of this.r) this.placeRunner(R);
@@ -59,7 +61,66 @@ export class LivePlay {
     this.phi = Math.atan2((fb || path[path.length - 1]).x, -(fb || path[path.length - 1]).z);
     this.flyBall = this.catchableFly();
     this.hr = !!this.hrInfo;
-    this.setupRunners();
+    const steal = opts.steal || [];
+    if (this.stealOnly) {
+      // 盗塁：キャッチャーが捕った瞬間から。打者は打席のまま
+      this.fairKnown = true; this.pathFair = true; this.flyBall = false; this.toOutfield = false; this.phi = 0;
+      this.r[0].idle = true;
+      for (const R of this.r) {
+        if (R.slot === 0) continue;
+        if (steal.includes(R.orig)) { R.state = 'run'; R.goal = R.orig + 1; R.manual = true; R.s = (opts.jump != null ? opts.jump : 0.4) + (R.orig === 2 ? 0.1 : 0); R.steal = true; }
+        else { R.state = 'on'; R.s = 0; R.goal = R.orig; }
+        this.placeRunner(R);
+      }
+      this.hold(this.f.C);
+      this.f.C.catchT = 0;
+    } else {
+      this.setupRunners();
+      // エンドラン：スタートを切っていた走者
+      for (const R of this.r) {
+        if (R.slot === 0 || !steal.includes(R.orig) || this.hr) continue;
+        const j = (opts.jump != null ? opts.jump : 0.3);
+        if (this.flyBall && this.outs < 2) { R.state = 'half'; R.halfS = Math.max(R.halfS || 0.42, j); R.s = j; R.mustReturn = true; }
+        else { R.state = 'run'; R.goal = Math.max(R.goal, R.orig + 1); R.s = j; }
+        this.placeRunner(R);
+      }
+    }
+    this.computeForced();
+  }
+
+  // ---------- 攻撃側の走塁指示（E：進め　Q：戻れ） ----------
+  runCmd(cmd) {
+    let n = 0;
+    // 先の走者から順に（追い越さないように）
+    const list = this.r.filter(R => !R.out && !R.scored && !R.idle).sort((a, b) => (b.seg + b.s) - (a.seg + a.s));
+    for (const R of list) {
+      if (this.t < R.start) continue;
+      if (cmd === 'adv') {
+        if (R.mustReturn && this.flyCaught) continue;
+        const lim = this.aheadLimit(R);
+        if (R.state === 'on' || R.state === 'half' || R.state === 'tag') {
+          const k = R.seg + 1;
+          if (k > 4 || (k < 4 && k >= lim)) continue;
+          R.state = 'run'; R.goal = k; R.mustReturn = false;
+        } else if (R.state === 'ret') {
+          if (R.seg + 1 < 4 && R.seg + 1 >= lim) continue;
+          R.state = 'run'; R.goal = R.seg + 1;
+        } else if (R.state === 'run') {
+          const k = Math.min(4, Math.max(R.goal, R.seg + 1) + 1);
+          if (k < 4 && k >= lim) continue;
+          R.goal = k;
+        } else continue;
+        R.manual = true; n++;
+      } else if (cmd === 'ret') {
+        if (R.slot === 0 && R.seg === 0) { if (R.goal > 1) { R.goal = 1; R.manual = true; n++; } continue; }
+        if (R.state === 'run' || R.state === 'half') {
+          if (R.s > 0.02) { R.state = 'ret'; R.goal = R.seg; }
+          else { R.state = 'on'; R.goal = R.seg; R.s = 0; }
+          R.manual = true; n++;
+        } else if (R.state === 'on') { R.manual = true; }
+      }
+    }
+    if (n) this.call(cmd === 'adv' ? '進め！' : '戻れ！', cmd === 'adv' ? '#7dffb0' : '#7dd3ff');
     this.computeForced();
   }
 
@@ -101,6 +162,7 @@ export class LivePlay {
     }
   }
   computeForced() {
+    if (this.stealOnly) { for (const R of this.r) R.forcedTo = 0; return; }
     let chain = !this.flyCaught;
     const bat = this.r[0];
     bat.forcedTo = chain && !bat.out && bat.seg < 1 ? 1 : 0;
@@ -232,6 +294,7 @@ export class LivePlay {
     const t = this.t;
     if (this.hr) return this.stepHR(dt);
     const b = this.ball;
+    if (input.run) this.runCmd(input.run);
 
     // ボール
     b.px = b.x; b.py = b.y; b.pz = b.z;
@@ -286,6 +349,7 @@ export class LivePlay {
         const mv = input.move;
         if (mv && (mv.x || mv.z)) { goal = { x: F.x + mv.x * 5, z: F.z + mv.z * 5 }; }
         if (input.dive && b.mode !== 'held') { this.dive(F); continue; }
+        if (input.jump && b.mode !== 'held') this.jump(F);
         if (!goal && b.mode === 'thrown' && coverOf[pos]) goal = COVER_SPOT[coverOf[pos]];
       } else if (b.mode === 'held' && b.holder === F) {
         goal = F.goal;
@@ -312,8 +376,9 @@ export class LivePlay {
           F.act = ACT.run;
         } else this.faceBall(F);
       } else this.faceBall(F);
+      if (t - F.jumpT < 0.6) F.act = ACT.jump;
       if (t - F.catchT < 0.35) F.act = ACT.catch;
-      if (pos === 'C' && t < 0.25 && !isHuman) F.act = ACT.crouch;
+      if (pos === 'C' && t < 0.25 && !isHuman && !this.stealOnly) F.act = ACT.crouch;
     }
 
     // 捕球
@@ -351,8 +416,14 @@ export class LivePlay {
     F.dir = Math.atan2(b.x - F.x, b.z - F.z);
     F.diveT = this.t; F.act = ACT.dive;
   }
+  jump(F) {
+    if (this.t - F.jumpT < 0.9) return;
+    F.jumpT = this.t;
+  }
   aiDive(F) {
     const b = this.ball;
+    // 頭の上を抜ける打球はジャンプ
+    if (b.mode === 'flight' && b.air && b.y > 2.3 && b.y < 3.5 && Math.hypot(b.x - F.x, b.z - F.z) < 1.6) this.jump(F);
     if (b.mode !== 'flight' || !b.air || this.t - F.diveT < 1.2) return;
     const d = Math.hypot(b.x - F.x, b.z - F.z);
     if (d < 3.2 && d > 1.2 && b.y < 2.0 && b.y > 0.3) {
@@ -372,7 +443,8 @@ export class LivePlay {
       const diving = F.act === ACT.dive && t - F.diveT < 0.45;
       if (F.act === ACT.dive && !diving) continue;
       if (pos === 'C' && b.mode === 'flight' && t < 0.7) continue;
-      const reachH = b.mode === 'flight' && b.air ? (pos === 'P' ? 1.9 : 2.5) : 1.25;
+      const jumping = t - F.jumpT > 0.08 && t - F.jumpT < 0.55;
+      const reachH = b.mode === 'flight' && b.air ? (pos === 'P' ? 1.9 : 2.5) + (jumping ? 1.1 : 0) : 1.25;
       if (b.y > reachH) continue;
       const reach = (b.mode === 'flight' && b.air ? 0.85 : 0.65) + F.pl.field * 0.004 + (diving ? 1.2 : 0) + (this.human && pos === this.active ? 0.45 : 0);
       // 前のコマからの線分との距離（速いゴロのすり抜け防止）
@@ -398,7 +470,7 @@ export class LivePlay {
       this.flyCaught = true;
       this.batterOutFly = true;
       this.makeOut(this.r[0], 'fly');
-      if (got.act === ACT.dive) this.call('ナイスキャッチ！', '#ffd43d');
+      if (got.act === ACT.dive || t - got.jumpT < 0.6) this.call('ナイスキャッチ！', '#ffd43d');
       this.onFlyCaught();
     }
   }
@@ -469,7 +541,7 @@ export class LivePlay {
     // 1) 投げてアウトにできる走者（先の塁を優先）
     let best = null;
     for (const R of this.r) {
-      if (R.out || R.scored || R.state === 'on' && R.forcedTo === 0) continue;
+      if (R.out || R.scored || R.idle || R.state === 'on' && R.forcedTo === 0) continue;
       let k;
       if (R.forcedTo) k = R.forcedTo;
       else if (R.state === 'ret') k = R.orig;
@@ -501,7 +573,7 @@ export class LivePlay {
   checkOuts(F) {
     if (F.wind && this.t >= F.wind.at - 0.05) return;
     for (const R of this.r) {
-      if (R.out || R.scored) continue;
+      if (R.out || R.scored || R.idle) continue;
       // 封殺（ボールを持って塁を踏む）
       if (R.forcedTo) {
         const k = R.forcedTo;
@@ -511,8 +583,18 @@ export class LivePlay {
         }
       }
       // タッチ
-      if (!this.onBase(R) && dist(F, R) < 1.0 && this.t > R.start) this.makeOut(R, 'tag');
+      if (!this.onBase(R) && dist(F, R) < 1.0 && this.t > R.start) {
+        // 滑り込んでのクロスプレーはまれにケガ
+        if (this.t - R.slideT < 0.8 && Math.random() < 0.04) this.hurt(R);
+        this.makeOut(R, 'tag');
+      }
     }
+  }
+  hurt(R) {
+    if (this.injured.includes(R.idx)) return;
+    this.injured.push(R.idx);
+    R.hurtT = this.t;
+    this.call(R.pl.name + ' 負傷…', '#ff9f43');
   }
   makeOut(R, how) {
     if (R.out) return;
@@ -528,7 +610,8 @@ export class LivePlay {
   stepRunners(dt) {
     const t = this.t;
     for (const R of this.r) {
-      if (R.out || R.scored) { R.act = ACT.idle; continue; }
+      if (R.out || R.scored) { R.act = R.hurtT != null && t - R.hurtT < 2 ? ACT.hurt : ACT.idle; continue; }
+      if (R.idle) { R.act = 9; continue; }
       if (t < R.start) { R.act = R.slot === 0 ? 9 : ACT.idle; continue; }
       if (R.state === 'wait') { R.state = 'run'; R.seg = 0; R.s = 0; }
       if (R.pause > 0) { R.pause -= dt; R.act = ACT.run; continue; }
@@ -537,19 +620,26 @@ export class LivePlay {
       if (R.state === 'run' || R.state === 'jog' || R.state === 'half') {
         R.s += R.spd * dt / BASE;
         R.act = R.state === 'jog' ? ACT.jog : ACT.run;
+        // 止まる塁の手前でクロスプレーになりそうならスライディング
+        if (R.state === 'run' && R.goal <= R.seg + 1 && R.s > 0.88 && R.slideT < 0 && (R.steal || this.closePlay(R.seg + 1))) {
+          R.slideT = t;
+          if (R.slot !== 0 || R.seg + 1 !== 1) this.call('スライディング！', '#ffe066');
+        }
+        if (R.slideT >= 0 && t - R.slideT < 0.7) R.act = ACT.slide;
         if (R.state === 'half' && R.seg === R.orig && R.s >= R.halfS) { R.s = R.halfS; R.act = ACT.idle; }
         if (R.s >= 1) {
           R.seg++; R.s = 0;
           this.arrive(R);
+          if (R.slideT >= 0 && t - R.slideT > 0.7) R.slideT = -9;
         }
       } else if (R.state === 'ret') {
         R.s -= R.spd * dt / BASE;
         R.act = ACT.run;
         if (R.s <= 0) { R.s = 0; R.state = 'on'; R.mustReturn = false; this.computeForced(); }
       } else {
-        R.act = ACT.idle;
+        R.act = R.slideT >= 0 && t - R.slideT < 0.9 ? ACT.slide : ACT.idle;
         // 止まっている走者：大きなチャンスなら次の塁へ
-        if (R.state === 'on' && R.seg < 4 && !(this.flyBall && this.ball.mode === 'flight' && this.outs < 2) && (this.ball.mode !== 'held' || dist(this.ball.holder, BP(R.seg + 1)) > 30) && (t * 10 | 0) % 3 === 0) {
+        if (R.state === 'on' && !R.manual && R.seg < 4 && !(this.flyBall && this.ball.mode === 'flight' && this.outs < 2) && (this.ball.mode !== 'held' || dist(this.ball.holder, BP(R.seg + 1)) > 30) && (t * 10 | 0) % 3 === 0) {
           if (this.shouldAdvance(R, 1.1)) { R.state = 'run'; R.goal = R.seg + 1; }
         }
       }
@@ -570,10 +660,19 @@ export class LivePlay {
     if (R.state === 'jog') return;
     if (R.state === 'half') return;
     let go = k < R.goal;
-    if (!go) go = this.shouldAdvance(R, this.outs === 2 ? 0.15 : 0.4);
+    if (!go && !R.manual) go = this.shouldAdvance(R, this.outs === 2 ? 0.15 : 0.4);
+    if (R.steal && !go) this.call('セーフ！', '#7dffb0');
     if (go && k < 4) { R.goal = Math.max(R.goal, k + 1); R.pause = 0.12; R.state = 'run'; }
     else { R.state = 'on'; R.goal = k; }
     this.computeForced();
+  }
+
+  // その塁でクロスプレーになりそうか
+  closePlay(k) {
+    const b = this.ball, p = BP(k);
+    if (b.mode === 'thrown') return dist(b.thr.to, p) < 3;
+    if (b.mode === 'held') return dist(b.holder, p) < 8;
+    return false;
   }
 
   checkEnd() {
@@ -581,7 +680,7 @@ export class LivePlay {
     if (this.endAt != null) { if (t >= this.endAt) this.finish(); return; }
     if (this.outs >= 3) { this.endAt = t + 1.0; return; }
     const b = this.ball;
-    const settled = this.r.every(R => R.out || R.scored || (R.state === 'on' && R.s === 0));
+    const settled = this.r.every(R => R.out || R.scored || R.idle || (R.state === 'on' && R.s === 0));
     if (b.mode === 'held' && !b.holder.wind && settled) {
       if (this.settleT == null) this.settleT = t;
       if (t - this.settleT > (this.human && b.holder.pos === this.active ? 1.4 : 0.7)) this.endAt = t + 0.3;
@@ -629,10 +728,16 @@ export class LivePlay {
     let runs = 0;
     for (const R of this.r) if (R.scored && !(third && (third.force || R.scoreT > third.t))) runs++;
     const bases = [null, null, null];
-    if (this.outs < 3) for (const R of this.r) if (!R.out && !R.scored && R.seg >= 1 && R.seg <= 3) bases[R.seg - 1] = R.idx;
+    if (this.outs < 3) for (const R of this.r) if (!R.out && !R.scored && !R.idle && R.seg >= 1 && R.seg <= 3) bases[R.seg - 1] = R.idx;
     const outsAdd = Math.min(3, this.outs) - this.outs0;
     const bat = this.r[0];
     let kind, text, hitBases = 0;
+    if (this.stealOnly) {
+      kind = 'STEAL'; text = outsAdd ? '盗塁失敗' : '盗塁成功！';
+      this.res = { kind, outsAdd, runs, bases, hitBases: 0, text, injured: this.injured };
+      this.done = true;
+      return;
+    }
     if (this.batterOutFly) { kind = 'FLYOUT'; text = 'フライアウト'; if (runs > 0) text = '犠牲フライ'; }
     else if (outsAdd >= 2) { kind = 'DP'; text = 'ゲッツー'; }
     else if (outsAdd === 1 && bat.out) { kind = 'GROUNDOUT'; text = 'アウト'; }
@@ -645,7 +750,7 @@ export class LivePlay {
       this.call(text, '#7dffb0', hitBases >= 3);
     }
     if (runs > 0 && kind !== 'HIT') { /* 得点はホームインのコールで表示済み */ }
-    this.res = { kind, outsAdd, runs, bases, hitBases, text };
+    this.res = { kind, outsAdd, runs, bases, hitBases, text, injured: this.injured };
     this.done = true;
   }
 

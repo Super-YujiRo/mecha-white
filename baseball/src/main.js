@@ -3,10 +3,10 @@ import { TEAMS, PITCHES, rank, battingOrder } from './data.js';
 import { pitchPos, predictPlate, cursorSize, ZONE, RUBBER_Z, SWING_LAG, BASES, BALL_R, rng } from './baseball.js';
 import { POSITIONS, POS_ORDER } from './play.js';
 import { LivePlay, ACT } from './live.js';
-import { newState, currentBatter, currentPitcher, batTeam, fieldTeam, teamById, cpuPitchIntent, cpuSwing, resolvePitch, pitchFor, applyPlay, playCtx } from './game.js';
+import { newState, currentBatter, currentPitcher, batTeam, fieldTeam, teamById, cpuPitchIntent, cpuSwing, resolvePitch, pitchFor, applyPlay, playCtx, runnersOf } from './game.js';
 import { buildField, buildZone, buildCursor, buildAim, buildBat } from './field.js';
 import { loadCharacters, Player3D } from './chars.js';
-const BAT_CAM = { pos: [0, 2.0, 5.5], look: [0, 1.0, -18], fov: 40, fovPortrait: 62 };
+const BAT_CAM = { pos: [0, 1.55, 4.2], look: [0, 0.9, -18], fov: 40, fovPortrait: 62 };
 import { Net } from './net.js';
 
 // ================= 時計（?test のときはコマ送り） =================
@@ -253,6 +253,8 @@ function beginAtBat(first) {
   S.play = null;
   S.live = null;
   S.swingShownAt = -1;
+  S.stealShow = false;
+  if (S.stealDecl && S.stealDecl.id <= S.pitchId) S.stealDecl = null;
   activeRing.visible = false;
   applyTeamsLook(s);
   resetFielders();
@@ -301,6 +303,9 @@ function startPitch(pitch, id, seed2) {
   if (isHost() && myCtrl(batTeam(S.state)) === 'cpu') {
     S.decision = cpuSwing(S.state, pitch, currentBatter(S.state).player, seed2, S.lv);
     S.cpuSwingPending = !!S.decision;
+    // CPUの盗塁：足の速い一塁走者がたまに走る
+    const s = S.state, r1 = runnersOf(s)[0];
+    if (r1 && s.bases[1] == null && s.outs < 2 && r1.speed >= 60 && Math.random() < (r1.speed - 50) / 50 * 0.18) { S.stealDecl = { id, jump: 0.41 }; S.stealShow = true; }
   }
 }
 
@@ -328,9 +333,42 @@ function resolveNow() {
   const pre = S.state;
   const decision = S.decision || null;
   const { state, out } = resolvePitch(pre, S.pitch, decision, S.seed2);
+  // 盗塁（スタートを切った走者）
+  if (S.stealDecl && S.stealDecl.id === S.pitchId) {
+    const bases = stealBases(pre);
+    const walked = out.kind === 'HBP' || out.call === 'フォアボール';
+    if (bases.length && !walked && !state.change && !state.over) out.steal = { bases, jump: S.stealDecl.jump };
+    else if (bases.length && out.kind === 'CONTACT') out.steal = { bases, jump: S.stealDecl.jump };
+  }
+  S.stealDecl = null;
   send({ t: 'result', id: S.pitchId, pre, decision, out, state });
   playResult(pre, decision, out, state);
 }
+
+// 盗塁できる走者（先の塁が空いているか、前の走者も走る）
+function stealBases(s) {
+  const b = s.bases, list = [];
+  for (let k = 3; k >= 1; k--) {
+    if (b[k - 1] == null) continue;
+    if (k === 3) continue; // ホームスチールはなし
+    if (b[k] == null || list.includes(k + 1)) list.push(k);
+  }
+  return list;
+}
+function declareSteal() {
+  if (!iBat() || !S.state || S.decision) return;
+  if (S.phase !== 'aim' && S.phase !== 'windup' && S.phase !== 'flight') return;
+  if (S.stealDecl || !stealBases(S.state).length) return;
+  // スタートが早いほど大きくリードできる
+  let jump = 0.41;
+  if (S.phase === 'flight') { const f = Math.min(1, (nowMs() - S.t0) / 1000 / S.pitch.T); jump = 0.41 - 0.3 * f; }
+  const id = S.phase === 'aim' ? S.pitchId + 1 : S.pitchId;
+  S.stealDecl = { id, jump };
+  if (!isHost()) send({ t: 'steal', id, jump });
+  showCall('盗塁！', '#7dffb0');
+  placeRunnersLead(true);
+}
+function placeRunnersLead(on) { S.stealShow = on; }
 
 function playResult(pre, decision, out, next) {
   (window.__log = window.__log || []).push({ kind: out.kind, call: out.call, dec: decision, hit: out.hit && { ev: out.hit.ev, la: out.hit.la, q: out.hit.q, phi: out.hit.phi } });
@@ -339,33 +377,47 @@ function playResult(pre, decision, out, next) {
   const t = nowMs();
   showSpeed();
   if (out.kind === 'CONTACT') {
-    startLive(pre, out.hit, next);
+    startLive(pre, out.hit, next, out.steal);
     hitFx(out.hit);
     return;
   }
-  showCall(out.call, out.kind === 'BALL' ? '#7dd3ff' : out.kind === 'K' ? '#ff6b6b' : '#ffe066', out.kind === 'K');
+  if (out.kind === 'HBP') {
+    people.batter.play('Hit_A', { loop: false, restart: true });
+    if (out.injury) setTimeout(() => toast(out.injury + ' がケガ… 能力が下がります', 2600), 700);
+  }
+  showCall(out.call, out.kind === 'BALL' ? '#7dd3ff' : out.kind === 'K' ? '#ff6b6b' : out.kind === 'HBP' ? '#ff9f43' : '#ffe066', out.kind === 'K');
+  if (out.steal) {
+    // 投球のあと、キャッチャーからの送球で盗塁のプレー
+    setTimeout(() => { if (S.phase === 'result' && S.nextState === next) startLive(next, null, next, out.steal); }, 250);
+    return;
+  }
   S.waitUntil = t + (out.kind === 'K' || out.call === 'フォアボール' ? 1500 : 1000);
   S.nextAction = () => finishPitch();
 }
 
 // ---- 打球が飛んだ後のプレー ----
 // 守備側を操作している人（CPUならホスト）の画面でプレーを動かし、相手には様子を送る
-function startLive(pre, hit, mid) {
+function startLive(pre, hit, mid, steal) {
   const fc = myCtrl(fieldTeam(pre));
   const auth = fc === 'me' || (fc === 'cpu' && isHost());
   const human = fc === 'me' && !S.autoField;
+  const runner = myCtrl(batTeam(pre)) === 'me';
   S.phase = 'play';
-  S.live = { pre, mid, auth, human, sim: auth ? new LivePlay(hit, playCtx(pre), { human }) : null, view: null, prev: null, start: nowMs(), sentAt: 0, ended: false };
+  S.stealShow = false;
+  const opts = { human, steal: steal ? steal.bases : [], jump: steal ? steal.jump : null };
+  S.live = { pre, mid, auth, human, runner, stealOnly: !hit, sim: auth ? new LivePlay(hit, playCtx(pre), opts) : null, view: null, prev: null, start: nowMs(), sentAt: 0, ended: false, runKey: null };
   ui.speed.classList.remove('show');
   bat.visible = true;
-  if (human) toast('守備：WASDで移動　1〜4キーで送球（4＝本塁）　スペースでダイブ', 3500);
+  if (human) toast(hit ? '守備：WASDで移動　1〜4で送球　スペース：ダイブ　F：ジャンプ' : '盗塁！ 2キーで二塁へ送球（3：三塁）', 3500);
+  else if (runner && (hit || steal)) toast('走塁：E 進め　Q 戻れ', 2500);
   updateHelp();
   updateMode();
 }
 
 function liveInput() {
   const L = S.live;
-  if (!L.human) return {};
+  const run = L.runKey; L.runKey = null;
+  if (!L.human) return run ? { run } : {};
   // カメラの向きに合わせた移動
   let fx = camLook.x - camPos.x, fz = camLook.z - camPos.z;
   const fl = Math.hypot(fx, fz) || 1; fx /= fl; fz /= fl;
@@ -376,9 +428,16 @@ function liveInput() {
   if (keys.KeyD || keys.ArrowRight) { mx += rx; mz += rz; }
   if (keys.KeyA || keys.ArrowLeft) { mx -= rx; mz -= rz; }
   const ml = Math.hypot(mx, mz);
-  const inp = { move: ml ? { x: mx / ml, z: mz / ml } : null, throwTo: L.throwKey || null, dive: !!L.diveKey };
-  L.throwKey = null; L.diveKey = false;
+  const inp = { move: ml ? { x: mx / ml, z: mz / ml } : null, throwTo: L.throwKey || null, dive: !!L.diveKey, jump: !!L.jumpKey, run };
+  L.throwKey = null; L.diveKey = false; L.jumpKey = false;
   return inp;
+}
+
+function runCommand(cmd) {
+  const L = S.live;
+  if (!L || L.ended) return;
+  if (L.auth) L.runKey = cmd;
+  else send({ t: 'runCmd', id: S.pitchId, cmd });
 }
 
 function updateLive(now, dt) {
@@ -412,10 +471,13 @@ function afterLive(res, next) {
   S.nextAction = () => finishPitch();
 }
 
-const ANIM = { [ACT.idle]: 'Idle_A', [ACT.run]: 'Running_A', [ACT.throw]: 'Throw', [ACT.catch]: 'Melee_Block', [ACT.dive]: 'Dodge_Forward', [ACT.cheer]: 'Cheering', [ACT.jog]: 'Running_A', [ACT.crouch]: 'Crouching' };
+const ANIM = { [ACT.idle]: 'Idle_A', [ACT.run]: 'Running_A', [ACT.throw]: 'Throw', [ACT.catch]: 'Melee_Block', [ACT.dive]: 'Dodge_Forward', [ACT.cheer]: 'Cheering', [ACT.jog]: 'Running_A', [ACT.crouch]: 'Crouching', [ACT.jump]: 'Jump_Full_Short', [ACT.slide]: 'Sit_Floor_Down', [ACT.hurt]: 'Hit_B' };
 function animFor(p, act) {
   const name = ANIM[act] || 'Idle_A';
   if (act === ACT.throw) p.play(name, { loop: false, speed: 1.5 });
+  else if (act === ACT.jump) p.play(name, { loop: false, speed: 1.6 });
+  else if (act === ACT.slide) p.play(name, { loop: false, speed: 2.2, fade: 0.06 });
+  else if (act === ACT.hurt) p.play(name, { loop: false });
   else if (act === ACT.catch || act === ACT.dive) p.play(name, { loop: false, speed: 1.3 });
   else if (act === ACT.run) p.play(name, { speed: 1.25 });
   else if (act === ACT.jog) p.play(name, { speed: 0.85 });
@@ -578,13 +640,18 @@ window.addEventListener('keydown', (e) => {
     if (e.code === 'KeyQ') cyclePitch(-1);
     if (e.code === 'KeyE') cyclePitch(1);
     if (e.code === 'Space' || e.code === 'Enter') throwLocal();
+  } else if (S.phase === 'play' && S.live && S.live.runner) {
+    if (e.code === 'KeyE') runCommand('adv');
+    if (e.code === 'KeyQ') runCommand('ret');
   } else if (S.phase === 'play' && S.live && S.live.human) {
     const n = parseInt(e.key, 10);
     if (n >= 1 && n <= 4) S.live.throwKey = n;
     if (e.code === 'Digit0' || e.code === 'Numpad0') S.live.throwKey = 4;
     if (e.code === 'Space') { S.live.diveKey = true; e.preventDefault(); }
+    if (e.code === 'KeyF') S.live.jumpKey = true;
   } else if (iBat()) {
     if (e.code === 'Space' || e.code === 'Enter') { localSwing(); e.preventDefault(); }
+    if (e.code === 'KeyT') declareSteal();
     if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyR') toggleMode();
   }
 });
@@ -680,7 +747,7 @@ function updateHud() {
   ui.pStats.innerHTML = `<span>球速<b>${pit.velo}</b></span><span>コン<b class="${rank(pit.control)}">${rank(pit.control)}</b></span><span>スタ<b class="${rank(pit.stamina)}">${rank(pit.stamina)}</b></span><span>${pl}</span>`;
   ui.stamina.style.width = Math.round((1 - s.fatigue[fieldTeam(s)]) * 100) + '%';
   const { idx, player: b } = currentBatter(s);
-  ui.bName.textContent = `${idx + 1}番 ${b.name}`;
+  ui.bName.innerHTML = `${idx + 1}番 ${b.name}` + (b.injured ? ' <span class="hurt">ケガ</span>' : '');
   ui.bStats.innerHTML = ['meet', 'power', 'speed'].map((k, i) => `<span>${['ミート', 'パワー', '走力'][i]}<b class="${rank(b[k])}">${rank(b[k])}</b></span>`).join('') + `<span>${b.bats === 'L' ? '左打' : '右打'}</span>`;
   updatePitchMenu();
   updateHelp();
@@ -697,9 +764,10 @@ function updatePitchMenu() {
 function updateHelp() {
   const s = S.state;
   if (!s) return;
-  if (S.phase === 'play' && S.live && S.live.human) ui.help.innerHTML = '<b>守備</b>　<b>WASD</b>：移動（青い輪の選手）　<b>スペース</b>：ダイブ<br><b>1</b>：一塁　<b>2</b>：二塁　<b>3</b>：三塁　<b>4</b>：本塁へ送球';
+  if (S.phase === 'play' && S.live && S.live.runner) ui.help.innerHTML = '<b>走塁</b>　<b>E</b>：全員 次の塁へ進め　<b>Q</b>：全員 戻れ';
+  else if (S.phase === 'play' && S.live && S.live.human) ui.help.innerHTML = '<b>守備</b>　<b>WASD</b>：移動（青い輪の選手）　<b>スペース</b>：ダイブ　<b>F</b>：ジャンプ<br><b>1</b>：一塁　<b>2</b>：二塁　<b>3</b>：三塁　<b>4</b>：本塁へ送球';
   else if (iPitch()) ui.help.innerHTML = '<b>投球</b>　マウス：コースをねらう<br><b>1〜' + pitchList().length + ' / ホイール</b>：球種　<b>左クリック</b>：投げる';
-  else if (iBat()) ui.help.innerHTML = '<b>打撃</b>　マウス：カーソル　<b>左クリック/スペース</b>：振る<br><b>右クリック/Shift</b>：ミート⇔強振 切り替え<br><b>白い丸</b>：ボールが来る位置（変化球は曲がりに合わせて動く）<br>芯（カーソルの真ん中）の<b>上で打つとフライ・下で打つとゴロ</b>　WASD/矢印キーでも動かせます';
+  else if (iBat()) ui.help.innerHTML = '<b>打撃</b>　マウス：カーソル　<b>左クリック/スペース</b>：振る<br><b>右クリック/Shift</b>：ミート⇔強振 切り替え<br><b>白い丸</b>：ボールが来る位置（変化球は曲がりに合わせて動く）<br><b>T</b>：盗塁　打ったあと <b>E</b>：進め　<b>Q</b>：戻れ<br>芯（カーソルの真ん中）の<b>上で打つとフライ・下で打つとゴロ</b>　WASD/矢印キーでも動かせます';
   else ui.help.innerHTML = '観戦中';
 }
 
@@ -787,6 +855,18 @@ function step(now, dt) {
   if (aim.visible) aim.position.set(S.aim.x, S.aim.y, 0.03);
 
   ballMat.depthTest = S.phase === 'play';
+  // 盗塁でスタートを切った走者
+  if (S.stealShow && (S.phase === 'windup' || S.phase === 'flight' || S.phase === 'result')) {
+    const el = Math.max(0, (now - (S.windupAt || now)) / 1000);
+    for (const k of stealBases(s)) {
+      const r = people.runners[k - 1], a = BASES[k], b = BASES[k + 1] || BASES[0];
+      const dx = b.x - a.x, dz = b.z - a.z, L = Math.hypot(dx, dz);
+      const d = Math.min(L * 0.38, 2.2 + el * 7.5);
+      r.holder.position.set(a.x + dx / L * d, 0, a.z + dz / L * d);
+      r.holder.rotation.y = Math.atan2(dx, dz);
+      r.play('Running_A', { speed: 1.25 });
+    }
+  }
   // 投球中のボール
   if (S.phase === 'windup' || S.phase === 'flight') {
     const t = (now - S.t0) / 1000;
@@ -919,6 +999,12 @@ function onNet(m) {
       break;
     case 'swing':
       if (isHost() && m.id === S.pitchId && S.decision === undefined) { S.decision = m.sw; showSwing(m.sw.ts); }
+      break;
+    case 'steal':
+      if (isHost() && myCtrl(batTeam(S.state)) === 'remote') S.stealDecl = { id: m.id, jump: m.jump };
+      break;
+    case 'runCmd':
+      if (S.live && S.live.auth && !S.live.ended && m.id === S.pitchId) S.live.runKey = m.cmd;
       break;
     case 'take':
       if (isHost() && m.id === S.pitchId && S.decision === undefined) S.decision = null;

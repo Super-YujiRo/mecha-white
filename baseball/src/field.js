@@ -269,16 +269,16 @@ function drawFieldMap() {
 export function buildZone() {
   const g = new THREE.Group();
   const w = ZONE.x1 - ZONE.x0, h = ZONE.y1 - ZONE.y0;
-  const lineMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.75, depthTest: false });
+  const lineMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.35, depthTest: false });
   const pts = [];
-  for (let i = 0; i <= 3; i++) {
+  for (let i = 0; i <= 3; i += 3) {
     const xx = ZONE.x0 + w * i / 3, yy = ZONE.y0 + h * i / 3;
     pts.push(new THREE.Vector3(xx, ZONE.y0, 0), new THREE.Vector3(xx, ZONE.y1, 0));
     pts.push(new THREE.Vector3(ZONE.x0, yy, 0), new THREE.Vector3(ZONE.x1, yy, 0));
   }
   const lines = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), lineMat);
   lines.renderOrder = 10;
-  const fill = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.07, depthTest: false }));
+  const fill = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.0, depthTest: false }));
   fill.position.set((ZONE.x0 + ZONE.x1) / 2, (ZONE.y0 + ZONE.y1) / 2, 0);
   fill.renderOrder = 9;
   g.add(fill, lines);
