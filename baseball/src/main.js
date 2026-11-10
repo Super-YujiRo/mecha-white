@@ -6,7 +6,7 @@ import { LivePlay, ACT } from './live.js';
 import { newState, currentBatter, currentPitcher, batTeam, fieldTeam, teamById, cpuPitchIntent, cpuSwing, resolvePitch, pitchFor, applyPlay, playCtx } from './game.js';
 import { buildField, buildZone, buildCursor, buildAim, buildBat } from './field.js';
 import { loadCharacters, Player3D } from './chars.js';
-const BAT_CAM = { pos: [0, 1.25, 5.6], look: [0, 0.12, -18], fov: 17, fovPortrait: 34 };
+const BAT_CAM = { pos: [0, 2.0, 5.5], look: [0, 1.0, -18], fov: 40, fovPortrait: 62 };
 import { Net } from './net.js';
 
 // ================= 時計（?test のときはコマ送り） =================
@@ -168,8 +168,6 @@ function setBatterStance(player) {
   b.holder.visible = true;
   b.holder.position.set(left ? 1.0 : -1.0, 0, -0.1);
   b.holder.rotation.y = left ? -Math.PI / 2 : Math.PI / 2;
-  b.holder.scale.setScalar(0.72);
-  bat.scale.setScalar(0.72);
   b.play('Melee_2H_Idle', { fade: 0.2 });
   bat.visible = true;
   S.swingStart = null;
@@ -805,7 +803,7 @@ function step(now, dt) {
       }
       ball.visible = t <= p.T + 0.02;
       ball.position.set(pos.x, pos.y, pos.z);
-      ball.scale.setScalar(Math.max(1.3, camera.position.distanceTo(ball.position) / 10));
+      ball.scale.setScalar(Math.max(1.6, camera.position.distanceTo(ball.position) / 7));
       ballShadow.visible = ball.visible;
       ballShadow.position.set(pos.x, 0.02, pos.z);
       // 目安マーカー
