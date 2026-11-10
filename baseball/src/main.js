@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { TEAMS, PITCHES, rank, battingOrder } from './data.js';
-import { pitchPos, cursorSize, ZONE, RUBBER_Z, SWING_LAG, BASES, BALL_R, rng } from './baseball.js';
+import { pitchPos, predictPlate, cursorSize, ZONE, RUBBER_Z, SWING_LAG, BASES, BALL_R, rng } from './baseball.js';
 import { POSITIONS, POS_ORDER } from './play.js';
 import { LivePlay, ACT } from './live.js';
 import { newState, currentBatter, currentPitcher, batTeam, fieldTeam, teamById, cpuPitchIntent, cpuSwing, resolvePitch, pitchFor, applyPlay, playCtx } from './game.js';
@@ -38,7 +38,7 @@ function zoneMark(r0, r1, color, fill) {
   g.visible = false; scene.add(g);
   return g;
 }
-const trackMark = zoneMark(0.03, 0.045, 0xffffff, true);
+const trackMark = zoneMark(0.05, 0.068, 0xffffff, true);
 const landPitch = zoneMark(0.045, 0.06, 0xff5a3d, false);
 function setMarkOpacity(g, a) { g.children.forEach((m, i) => { m.material.opacity = a * (i ? 0.35 : 0.95); }); }
 const ballMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
@@ -699,7 +699,7 @@ function updateHelp() {
   if (!s) return;
   if (S.phase === 'play' && S.live && S.live.human) ui.help.innerHTML = '<b>守備</b>　<b>WASD</b>：移動（青い輪の選手）　<b>スペース</b>：ダイブ<br><b>1</b>：一塁　<b>2</b>：二塁　<b>3</b>：三塁　<b>4</b>：本塁へ送球';
   else if (iPitch()) ui.help.innerHTML = '<b>投球</b>　マウス：コースをねらう<br><b>1〜' + pitchList().length + ' / ホイール</b>：球種　<b>左クリック</b>：投げる';
-  else if (iBat()) ui.help.innerHTML = '<b>打撃</b>　マウス：カーソル　<b>左クリック/スペース</b>：振る<br><b>右クリック/Shift</b>：ミート⇔強振 切り替え<br>芯（カーソルの真ん中）の<b>上で打つとフライ・下で打つとゴロ</b>　WASD/矢印キーでも動かせます';
+  else if (iBat()) ui.help.innerHTML = '<b>打撃</b>　マウス：カーソル　<b>左クリック/スペース</b>：振る<br><b>右クリック/Shift</b>：ミート⇔強振 切り替え<br><b>白い丸</b>：ボールが来る位置（変化球は曲がりに合わせて動く）<br>芯（カーソルの真ん中）の<b>上で打つとフライ・下で打つとゴロ</b>　WASD/矢印キーでも動かせます';
   else ui.help.innerHTML = '観戦中';
 }
 
@@ -808,10 +808,12 @@ function step(now, dt) {
       ballShadow.position.set(pos.x, 0.02, pos.z);
       // 目安マーカー
       const sk = Math.max(0, Math.min(1, t / p.T));
-      trackMark.visible = false;
-      trackMark.position.set(pos.x, pos.y, 0.03);
-      setMarkOpacity(trackMark, 0.6 + 0.4 * sk);
-      trackMark.scale.setScalar(1.15 - 0.15 * sk);
+      trackMark.visible = iBat() && t <= p.T;
+      if (trackMark.visible) {
+        const pr = predictPlate(p, t);
+        trackMark.position.set(pr.x, pr.y, 0.03);
+        setMarkOpacity(trackMark, 0.85);
+      }
       if (S.assist === '1' && iBat() && t <= p.T + 0.2) {
         const e = pitchPos(p, p.T);
         landPitch.visible = true;

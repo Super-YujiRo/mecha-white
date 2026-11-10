@@ -17,17 +17,17 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:none
 #line td.team{text-align:left;min-width:66px;font-size:13px}
 #line td.tot{color:var(--gold);font-size:17px;border-left:2px solid rgba(255,255,255,.2);padding-left:8px}
 #line td.now{background:rgba(255,200,61,.25);border-radius:4px}
-#count{position:absolute;left:14px;top:104px;background:var(--navy);border-radius:10px;padding:6px 10px;box-shadow:0 4px 0 rgba(0,0,0,.25);border:2px solid rgba(255,255,255,.15)}
+#count{position:absolute;right:14px;bottom:100px;background:var(--navy);border-radius:10px;padding:6px 10px;box-shadow:0 4px 0 rgba(0,0,0,.25);border:2px solid rgba(255,255,255,.15)}
 #count .row{display:flex;align-items:center;gap:5px;height:20px}
 #count b{width:14px;font-size:14px;font-weight:900}
 #count i{width:13px;height:13px;border-radius:50%;background:#2a3d5e;display:inline-block}
 #count .row:nth-child(1) i.on{background:var(--green);box-shadow:0 0 8px var(--green)}
 #count .row:nth-child(2) i.on{background:var(--gold);box-shadow:0 0 8px var(--gold)}
 #count .row:nth-child(3) i.on{background:var(--red);box-shadow:0 0 8px var(--red)}
-#bases{position:absolute;left:118px;top:112px;width:62px;height:62px}
-#bases i{position:absolute;width:18px;height:18px;background:#2a3d5e;transform:rotate(45deg);border:2px solid rgba(255,255,255,.35)}
+#bases{position:absolute;right:112px;bottom:104px;width:70px;height:70px}
+#bases i{position:absolute;width:20px;height:20px;background:#2a3d5e;transform:rotate(45deg);border:2px solid rgba(255,255,255,.35)}
 #bases i.on{background:var(--gold);box-shadow:0 0 10px var(--gold)}
-#b2{left:22px;top:2px}#b3{left:2px;top:22px}#b1{left:42px;top:22px}
+#b2{left:25px;top:4px}#b3{left:4px;top:25px}#b1{left:46px;top:25px}
 
 .card{position:absolute;background:linear-gradient(180deg,rgba(13,31,60,.92),rgba(13,31,60,.82));border-radius:12px;padding:6px 12px 8px;min-width:190px;border:2px solid rgba(255,255,255,.15);box-shadow:0 4px 0 rgba(0,0,0,.25)}
 .card .role{font-size:11px;color:#9fb6dd;font-weight:800}
@@ -52,7 +52,7 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:none
 #pitchMenu .p.sel{background:linear-gradient(180deg,#ffd76a,#ffb21f);color:#4a2a00;border-color:#fff;transform:translateY(-4px)}
 #pitchMenu .p.sel .k{color:#7a4a00}
 
-#swingMode{position:absolute;right:14px;bottom:96px;font-weight:900;font-size:22px;padding:4px 16px;border-radius:10px;background:linear-gradient(180deg,#ffe082,#ffb21f);color:#4a2a00;border:2px solid #fff;box-shadow:0 4px 0 rgba(0,0,0,.25)}
+#swingMode{position:absolute;right:194px;bottom:104px;font-weight:900;font-size:22px;padding:4px 16px;border-radius:10px;background:linear-gradient(180deg,#ffe082,#ffb21f);color:#4a2a00;border:2px solid #fff;box-shadow:0 4px 0 rgba(0,0,0,.25)}
 #swingMode.power{background:linear-gradient(180deg,#ff8a7a,#e8382b);color:#fff}
 #help{position:absolute;left:14px;bottom:14px;font-size:12px;font-weight:800;background:rgba(13,31,60,.7);padding:6px 10px;border-radius:8px;line-height:1.6;max-width:360px}
 #help b{color:var(--gold)}

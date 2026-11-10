@@ -62,6 +62,14 @@ export function pitchPos(p, t) {
   };
 }
 
+// パワプロの「ボールの影」：今の曲がり具合のままならゾーンのどこを通るか。
+// 直球はリリース直後から正確、変化球は曲がるにつれて本当の位置へ動く
+export function predictPlate(p, t) {
+  const s = Math.max(0, Math.min(1, t / p.T));
+  const late = Math.pow(s, 1.9);
+  return { x: p.end.x - p.bx * (1 - late), y: p.end.y - p.by * (1 - late) };
+}
+
 export function inZone(pt) {
   return pt.x >= ZONE.x0 - BALL_R && pt.x <= ZONE.x1 + BALL_R && pt.y >= ZONE.y0 - BALL_R && pt.y <= ZONE.y1 + BALL_R;
 }
