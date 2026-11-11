@@ -106,7 +106,7 @@ const $ = (id) => document.getElementById(id);
 const ui = {
   hud: $('hud'), title: $('title'), loading: $('loading'), result: $('result'), netBox: $('netBox'),
   inning: $('inning'), lineHead: $('lineHead'), lineA: $('lineA'), lineB: $('lineB'),
-  count: $('count'), bases: $('bases'), b1: $('b1'), b2: $('b2'), b3: $('b3'),
+  count: $('count'), change: $('change'), bases: $('bases'), b1: $('b1'), b2: $('b2'), b3: $('b3'),
   pName: $('pName'), pStats: $('pStats'), stamina: $('stamina').firstElementChild,
   bName: $('bName'), bStats: $('bStats'), speed: $('speed'), pitchMenu: $('pitchMenu'), help: $('help'), mode: $('swingMode'), baseKeys: $('baseKeys'),
   call: $('call'), toast: $('toast'),
@@ -274,6 +274,7 @@ function startMatch(mode, opts = {}) {
 
 function beginAtBat(first) {
   const s = S.state;
+  ui.change.classList.remove('show');
   updateRadar(null);
   S.release = null;
   S.phase = 'aim';
@@ -595,7 +596,10 @@ function finishPitch() {
   if (next.over) { endMatch(); return; }
   if (changed) {
     S.phase = 'change';
-    showCall('チェンジ', '#fff');
+    sfxCheer(0.3, 1.5);
+    const bt = teamById(next.teamIds[next.top ? 0 : 1]);
+    ui.change.innerHTML = `<div class="c1">チェンジ</div><div class="c2">${next.inning}回${next.top ? '表' : '裏'}　<span style="color:${bt.color}">${bt.name}</span>の攻撃</div><div class="c3">${teamById(next.teamIds[0]).short} ${next.score[0]} - ${next.score[1]} ${teamById(next.teamIds[1]).short}</div>`;
+    ui.change.classList.add('show');
     S.waitUntil = nowMs() + 1500;
     S.nextAction = () => { if (isHost()) beginAtBat(true); else waitForHost(); };
     updateHud();
@@ -951,6 +955,25 @@ function step(now, dt) {
   } else relRing.visible = false;
 
   ballMat.depthTest = S.phase === 'play';
+  // 投手の投球フォーム（体をひねって足を上げ、踏み込んで投げる）
+  {
+    const P = people.fielders.P && people.fielders.P.holder;
+    if (P && (S.phase === 'windup' || S.phase === 'flight' || S.phase === 'result') && S.windupAt) {
+      const el = (now - S.windupAt) / 1000, rel = 0.85;
+      const side = currentPitcher(s).throws === 'L' ? 1 : -1;
+      let ry = 0, lift = 0, lean = 0;
+      if (el < rel) {
+        const k = el / rel;
+        ry = side * 1.15 * Math.sin(Math.min(1, k / 0.7) * Math.PI / 2) * (k > 0.8 ? 1 - (k - 0.8) / 0.2 : 1);
+        lift = k > 0.25 && k < 0.85 ? 0.14 * Math.sin((k - 0.25) / 0.6 * Math.PI) : 0;
+      } else {
+        const k2 = Math.min(1, (el - rel) / 0.45);
+        lean = 0.32 * Math.sin(Math.min(1, k2 * 2) * Math.PI / 2) * (1 - k2 * 0.8);
+      }
+      P.rotation.y = ry; P.rotation.x = lean;
+      P.position.y = 0.25 + lift;
+    } else if (P && S.phase === 'aim') { P.rotation.x = 0; }
+  }
   // 盗塁でスタートを切った走者
   if (S.stealShow && (S.phase === 'windup' || S.phase === 'flight' || S.phase === 'result')) {
     const el = Math.max(0, (now - (S.windupAt || now)) / 1000);
@@ -1048,8 +1071,11 @@ function endMatch() {
   if (s.draw || s.score[0] === s.score[1]) msg = '引き分け';
   else msg = (s.score[mine] > s.score[1 - mine]) ? '勝利！' : '負け…';
   if (s.walkoff) showCall('サヨナラ！', '#ffd43d', true);
+  else showCall('ゲームセット', '#fff', true);
+  umpire('ゲームセット！');
+  sfxCheer(0.8, 3.5);
   setTimeout(() => {
-    ui.result.innerHTML = `<div class="big">${msg}</div>
+    ui.result.innerHTML = `<div class="gs">試合終了</div><div class="big">${msg}</div>
       <div class="score"><span style="color:${tA.color}">${tA.short} ${s.score[0]}</span>-<span style="color:${tB.color}">${s.score[1]} ${tB.short}</span></div>
       <div>安打 ${s.stats[0].h} - ${s.stats[1].h}　本塁打 ${s.stats[0].hr} - ${s.stats[1].hr}</div>
       <button id="again">${S.mode === 'guest' ? 'タイトルへ' : 'もう一度'}</button>`;
