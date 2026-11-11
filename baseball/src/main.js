@@ -850,6 +850,8 @@ function updateHelp() {
   else if (iBat()) ui.help.innerHTML = '<b>打撃</b>　マウス：カーソル　<b>左クリック/スペース</b>：振る<br><b>右クリック/Shift</b>：ミート⇔強振 切り替え<br><b>白い丸</b>：ボールが来る位置（変化球は曲がりに合わせて動く）<br><b>T</b>：盗塁　打ったあと <b>E</b>：進め　<b>Q</b>：戻れ<br>芯（カーソルの真ん中）の<b>上で打つとフライ・下で打つとゴロ</b>　WASD/矢印キーでも動かせます';
   else ui.help.innerHTML = '観戦中';
   if (!S.helpOpen) ui.help.innerHTML = '<b>H</b>：操作説明　<b>M</b>：音のオン/オフ';
+  // ミート/強振の表示は説明の上に
+  ui.mode.style.bottom = (ui.help.offsetHeight + 22) + 'px';
 }
 
 // ================= カメラ =================
