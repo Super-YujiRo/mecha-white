@@ -8,6 +8,7 @@ import { buildField, buildZone, buildCursor, buildAim, buildBat } from './field.
 import { loadCharacters, Player3D } from './chars.js';
 const BAT_CAM = { pos: [0, 1.55, 4.2], look: [0, 0.9, -18], fov: 40, fovPortrait: 62 };
 import { Net } from './net.js';
+import { unlockAudio, sfxHit, sfxTip, sfxMitt, sfxCatch, sfxSwing, sfxRelease, sfxSlide, sfxCue, sfxCheer, sfxBounce, setMuted, isMuted, umpire } from './sound.js';
 
 // ================= 時計（?test のときはコマ送り） =================
 const TEST = new URLSearchParams(location.search).has('test');
@@ -40,6 +41,18 @@ function zoneMark(r0, r1, color, fill) {
 }
 const trackMark = zoneMark(0.05, 0.068, 0xffffff, true);
 const landPitch = zoneMark(0.045, 0.06, 0xff5a3d, false);
+const flash = new THREE.Mesh(new THREE.RingGeometry(0.035, 0.05, 40), new THREE.MeshBasicMaterial({ color: 0xfff3b0, transparent: true, opacity: 1, depthTest: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending }));
+flash.renderOrder = 30; flash.visible = false; scene.add(flash);
+const relRing = new THREE.Mesh(new THREE.RingGeometry(0.058, 0.072, 40), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95, depthTest: false, side: THREE.DoubleSide }));
+relRing.renderOrder = 31; relRing.visible = false; scene.add(relRing);
+function updateFlash(now) {
+  if (!flash.visible) return;
+  const k = (now - flash.userData.t0) / 220;
+  if (k >= 1) { flash.visible = false; return; }
+  flash.scale.setScalar(1 + k * (1.5 + flash.userData.q * 2.5));
+  flash.material.opacity = (1 - k) * (1 - k) * (0.5 + flash.userData.q * 0.5);
+  flash.lookAt(camera.position);
+}
 function setMarkOpacity(g, a) { g.children.forEach((m, i) => { m.material.opacity = a * (i ? 0.35 : 0.95); }); }
 const ballMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
 const ball = new THREE.Mesh(new THREE.SphereGeometry(BALL_R * 1.5, 16, 12), ballMat);
@@ -93,14 +106,27 @@ const $ = (id) => document.getElementById(id);
 const ui = {
   hud: $('hud'), title: $('title'), loading: $('loading'), result: $('result'), netBox: $('netBox'),
   inning: $('inning'), lineHead: $('lineHead'), lineA: $('lineA'), lineB: $('lineB'),
-  count: $('count'), b1: $('b1'), b2: $('b2'), b3: $('b3'),
+  count: $('count'), bases: $('bases'), b1: $('b1'), b2: $('b2'), b3: $('b3'),
   pName: $('pName'), pStats: $('pStats'), stamina: $('stamina').firstElementChild,
   bName: $('bName'), bStats: $('bStats'), speed: $('speed'), pitchMenu: $('pitchMenu'), help: $('help'), mode: $('swingMode'), baseKeys: $('baseKeys'),
   call: $('call'), toast: $('toast'),
 };
 
 let callTimer = 0;
+const UMP = [[/見逃し三振/, 'ストライク、バッターアウト！'], [/三振/, 'ストライク、バッターアウト！'], [/^ストライク/, 'ストライーク！'], [/空振り/, 'ストライーク！'], [/フォアボール/, 'ボール、フォア！'], [/^ボール/, 'ボール'], [/デッドボール/, 'デッドボール！'], [/ファウル/, 'ファウルボール！'], [/ゲッツー/, 'アウト！'], [/アウト/, 'アウト！'], [/セーフ/, 'セーフ！'], [/ホームラン/, 'ホームラン！']];
+function callSound(text) {
+  const u = UMP.find(([re]) => re.test(text));
+  if (u) umpire(u[1], /ホームラン/.test(text) ? { rate: 1.05, pitch: 0.9 } : undefined);
+  if (/アウト|ゲッツー|失敗/.test(text)) sfxCue('out');
+  else if (/セーフ|成功/.test(text)) sfxCue('safe');
+  if (/スライディング/.test(text)) sfxSlide();
+  if (/ホームラン/.test(text)) sfxCheer(1, 4.5);
+  else if (/ホームイン|ナイスキャッチ|スリーベース|ツーベース/.test(text)) sfxCheer(0.7, 2.6);
+  else if (/ヒット|内野安打/.test(text)) sfxCheer(0.45, 2);
+  else if (/三振/.test(text)) sfxCheer(0.35, 1.6);
+}
 function showCall(text, color = '#fff', big = false) {
+  callSound(text);
   ui.call.textContent = text;
   ui.call.style.color = color;
   ui.call.classList.toggle('big', big);
@@ -166,7 +192,7 @@ function setBatterStance(player) {
   const b = people.batter;
   const left = player.bats === 'L';
   b.holder.visible = true;
-  b.holder.position.set(left ? 1.0 : -1.0, 0, -0.1);
+  b.holder.position.set(left ? 1.25 : -1.25, 0, -0.05);
   b.holder.rotation.y = left ? -Math.PI / 2 : Math.PI / 2;
   b.play('Melee_2H_Idle', { fade: 0.2 });
   bat.visible = true;
@@ -228,6 +254,7 @@ function send(m) { if (S.net) S.net.send(m); }
 
 function startMatch(mode, opts = {}) {
   S.mode = mode;
+  S.helpOpen = true; S.pitchCount = 0;
   if (!TEST) S.autoField = $('optField').value === '1';
   S.assist = $('optAssist').value; // '0' なし / 'lock' ロックオン / '1' 着弾点
   S.lv = opts.lv ?? 1;
@@ -247,6 +274,8 @@ function startMatch(mode, opts = {}) {
 
 function beginAtBat(first) {
   const s = S.state;
+  updateRadar(null);
+  S.release = null;
   S.phase = 'aim';
   S.pitch = null;
   S.decision = undefined;
@@ -270,6 +299,7 @@ function beginAtBat(first) {
   if (first) showCall(s.top ? `${s.inning}回表` : `${s.inning}回裏`, '#fff');
   if (isHost()) {
     send({ t: 'state', s, phase: 'aim' });
+    if (S.pendingIntent && myCtrl(fieldTeam(s)) === 'remote') { const it = S.pendingIntent; S.pendingIntent = null; setTimeout(() => { if (S.phase === 'aim') doPitch(it); }, 300); }
     if (myCtrl(fieldTeam(s)) === 'cpu') {
       S.waitUntil = nowMs() + 1100;
       S.nextAction = () => doPitch(cpuPitchIntent(s, Math.floor(Math.random() * 1e9), S.lv));
@@ -290,6 +320,8 @@ function doPitch(intent) {
 
 function startPitch(pitch, id, seed2) {
   S.pitch = pitch; S.pitchId = id; S.seed2 = seed2;
+  S.mittPlayed = false; S.sentIntent = null; S.pendingIntent = null;
+  ui.speed.classList.remove('show');
   S.phase = 'windup';
   S.windupAt = nowMs();
   S.t0 = S.windupAt + 850;
@@ -322,6 +354,7 @@ function localSwing(power) {
 
 function showSwing(ts) {
   S.swingStart = nowMs();
+  sfxSwing(S.decision && S.decision.power);
   const b = people.batter;
   const len = b.clipLength('Melee_2H_Attack_Slice');
   b.play('Melee_2H_Attack_Slice', { loop: false, restart: true, speed: (len * 0.42) / SWING_LAG, fade: 0.05 });
@@ -378,9 +411,10 @@ function playResult(pre, decision, out, next) {
   showSpeed();
   if (out.kind === 'CONTACT') {
     startLive(pre, out.hit, next, out.steal);
-    hitFx(out.hit);
+    hitFx(out.hit, decision);
     return;
   }
+  if (!S.mittPlayed) { S.mittPlayed = true; sfxMitt(); }
   if (out.kind === 'HBP') {
     people.batter.play('Hit_A', { loop: false, restart: true });
     if (out.injury) setTimeout(() => toast(out.injury + ' がケガ… 能力が下がります', 2600), 700);
@@ -442,6 +476,7 @@ function runCommand(cmd) {
 
 function updateLive(now, dt) {
   const L = S.live;
+  if (S.hitStopUntil && now < S.hitStopUntil) { if (L.view) renderView(L.view, 0); return; }
   if (L.auth) {
     const sim = L.sim;
     if (!sim.done) sim.step(dt, liveInput());
@@ -483,6 +518,17 @@ function animFor(p, act) {
   else if (act === ACT.jog) p.play(name, { speed: 0.85 });
   else p.play(name);
 }
+// 右下のダイヤモンドに、プレー中の走者とボールを点で出す
+const radarDots = [];
+function updateRadar(v) {
+  const box = ui.bases;
+  if (!radarDots.length) for (let i = 0; i < 5; i++) { const d = document.createElement('span'); d.className = 'rdot' + (i === 4 ? ' ball' : ''); box.appendChild(d); radarDots.push(d); }
+  const put = (d, x, z) => { d.style.display = 'block'; d.style.left = (35 + x / 19.4 * 21) + 'px'; d.style.top = (56 + z / 19.4 * 21) + 'px'; };
+  radarDots.forEach(d => (d.style.display = 'none'));
+  if (!v) return;
+  v.r.forEach((r, i) => { if (i < 4 && r[4] !== ACT.hide && r[4] !== 9) put(radarDots[i], r[1], r[2]); });
+  if (v.b[3] && Math.hypot(v.b[0], v.b[2]) < 60) put(radarDots[4], v.b[0], v.b[2]);
+}
 function renderView(v, dt) {
   const L = S.live;
   const k = L.auth ? 1 : 1 - Math.exp(-dt * 18);
@@ -515,6 +561,8 @@ function renderView(v, dt) {
     activeRing.visible = true; activeRing.position.set(af.x, 0.04, af.z);
     L.activePos = { x: af.x, z: af.z };
   } else { activeRing.visible = false; L.activePos = null; }
+  updateRadar(v);
+  if (v.h && v.h !== L.holder) sfxCatch();
   L.holder = v.h;
   // 走者（0 は打者）
   for (const d of v.r) {
@@ -538,6 +586,8 @@ function showSpeed() {
 }
 
 function finishPitch() {
+  S.pitchCount = (S.pitchCount || 0) + 1;
+  if (S.pitchCount === 5 && S.helpOpen) { S.helpOpen = false; updateHelp(); }
   const next = S.nextState;
   const changed = next.change;
   delete next.change;
@@ -560,10 +610,22 @@ function waitForHost() {
   if (S.pendingAim) { const st = S.pendingAim; S.pendingAim = null; S.state = st; beginAtBat(false); }
 }
 
-function hitFx(h) {
-  if (!h || h.foulTip) return;
+function hitFx(h, dec) {
+  if (!h) return;
+  if (h.foulTip) { sfxTip(); return; }
   const q = h.q || 0;
+  sfxHit(q, dec && dec.power);
   if (q > 0.85 && h.ev > 150) shake = 0.35; else if (q > 0.6) shake = 0.15;
+  // ヒットストップ：芯で捉えるほど一瞬止まる
+  S.hitStopUntil = nowMs() + 40 + q * 90;
+  // 当たった場所に光の輪
+  if (S.pitch) {
+    const e = pitchPos(S.pitch, S.pitch.T);
+    flash.position.set(e.x, e.y, 0.05);
+    flash.userData.t0 = nowMs(); flash.userData.q = q;
+    flash.visible = true;
+  }
+  if (q > 0.75) sfxCheer(Math.min(1, (h.ev - 120) / 60), 2.6);
 }
 
 // ================= バット（スイングに合わせて動かす） =================
@@ -630,8 +692,12 @@ canvas.addEventListener('touchmove', (e) => {
   e.preventDefault();
 }, { passive: false });
 
+window.addEventListener('pointerdown', () => unlockAudio());
 window.addEventListener('keydown', (e) => {
   keys[e.code] = true;
+  unlockAudio();
+  if (e.code === 'KeyM') { setMuted(!isMuted()); toast(isMuted() ? '音：オフ' : '音：オン', 1000); }
+  if (e.code === 'KeyH') { S.helpOpen = !S.helpOpen; updateHelp(); }
   if (!S.state) return;
   if (S.phase === 'aim' && iPitch()) {
     const n = parseInt(e.key, 10);
@@ -704,12 +770,22 @@ function cyclePitch(d) {
   S.pitchType = list[(i + d + list.length) % list.length];
   updatePitchMenu();
 }
+// 投球：1回目でモーション開始、縮んでくる輪がねらいに重なった瞬間にもう1回押すとナイスピッチ
+const REL_DUR = 0.95, REL_PERFECT = 0.68;
 function throwLocal() {
   if (S.phase !== 'aim' || !iPitch()) return;
-  const intent = { type: S.pitchType, target: { x: S.aim.x, y: S.aim.y } };
+  const now = nowMs();
+  if (!S.release) { S.release = { t0: now }; people.fielders.P.play('Idle_B', { fade: 0.15 }); return; }
+  const k = (now - S.release.t0) / 1000 / REL_DUR;
+  releaseNow(Math.max(0, 1 - Math.abs(k - REL_PERFECT) / 0.3));
+}
+function releaseNow(q) {
+  S.release = null; relRing.visible = false;
+  if (q > 0.85) showCall('ナイスピッチ！', '#7dffb0'); else if (q < 0.35) toast('リリースが乱れた…', 900);
+  const intent = { type: S.pitchType, target: { x: S.aim.x, y: S.aim.y }, q };
   S.phase = 'sent';
   if (isHost()) doPitch(intent);
-  else send({ t: 'pitchIntent', intent });
+  else { S.sentIntent = { intent, at: nowMs() }; send({ t: 'pitchIntent', intent }); }
 }
 
 // ================= HUD =================
@@ -766,9 +842,10 @@ function updateHelp() {
   if (!s) return;
   if (S.phase === 'play' && S.live && S.live.runner) ui.help.innerHTML = '<b>走塁</b>　<b>E</b>：全員 次の塁へ進め　<b>Q</b>：全員 戻れ';
   else if (S.phase === 'play' && S.live && S.live.human) ui.help.innerHTML = '<b>守備</b>　<b>WASD</b>：移動（青い輪の選手）　<b>スペース</b>：ダイブ　<b>F</b>：ジャンプ<br><b>1</b>：一塁　<b>2</b>：二塁　<b>3</b>：三塁　<b>4</b>：本塁へ送球';
-  else if (iPitch()) ui.help.innerHTML = '<b>投球</b>　マウス：コースをねらう<br><b>1〜' + pitchList().length + ' / ホイール</b>：球種　<b>左クリック</b>：投げる';
+  else if (iPitch()) ui.help.innerHTML = '<b>投球</b>　マウス：コースをねらう<br><b>1〜' + pitchList().length + ' / ホイール</b>：球種　<br><b>左クリック/スペース</b>：投球開始 → 白い輪がねらいに重なったらもう一度押す（ナイスピッチ）';
   else if (iBat()) ui.help.innerHTML = '<b>打撃</b>　マウス：カーソル　<b>左クリック/スペース</b>：振る<br><b>右クリック/Shift</b>：ミート⇔強振 切り替え<br><b>白い丸</b>：ボールが来る位置（変化球は曲がりに合わせて動く）<br><b>T</b>：盗塁　打ったあと <b>E</b>：進め　<b>Q</b>：戻れ<br>芯（カーソルの真ん中）の<b>上で打つとフライ・下で打つとゴロ</b>　WASD/矢印キーでも動かせます';
   else ui.help.innerHTML = '観戦中';
+  if (!S.helpOpen) ui.help.innerHTML = '<b>H</b>：操作説明　<b>M</b>：音のオン/オフ';
 }
 
 // ================= カメラ =================
@@ -787,15 +864,15 @@ function updateCamera(dt, now) {
     let cx = b.x, cz = b.z;
     if (a) { cx = (b.x + a.x) / 2; cz = (b.z + a.z) / 2; }
     const spread = a ? Math.hypot(b.x - a.x, b.z - a.z) : 0;
+    if (a) { cx = b.x * 0.6 + a.x * 0.4; cz = b.z * 0.6 + a.z * 0.4; }
     const d = Math.hypot(cx, cz);
-    let ux = 0, uz = -1;
-    if (d > 6) { ux = cx / d; uz = cz / d; }
     if (t < 0.25) { tp = new THREE.Vector3(...BAT_CAM.pos); tl = new THREE.Vector3(b.x, b.y, b.z); }
     else {
-      const back = 15 + spread * 0.7 + Math.min(14, b.y * 0.4);
-      tp = new THREE.Vector3(cx - ux * back, 8 + spread * 0.35 + b.y * 0.45, cz - uz * back);
-      if (tp.z > 16) tp.z = 16;
-      tl = new THREE.Vector3(cx, Math.max(0.5, b.y * 0.6), cz);
+      // パワプロのように、いつも本塁の後ろ上空から見下ろす（遠いほど引く）
+      const f = Math.max(0.15, 0.36 - Math.min(0.18, spread / 160));
+      const hx = 0, hz = 15;
+      tp = new THREE.Vector3(hx + (cx - hx) * f, 11 + d * 0.17 + spread * 0.35 + Math.min(10, b.y * 0.35), hz + (cz - hz) * f);
+      tl = new THREE.Vector3(cx, Math.max(0.5, b.y * 0.75), cz);
     }
   } else {
     tp = new THREE.Vector3(...BAT_CAM.pos);
@@ -819,15 +896,22 @@ function updateCamera(dt, now) {
 let last = nowMs();
 function frame() {
   requestAnimationFrame(frame);
-  if (TEST) simNow += 1000 / 60;
-  const now = nowMs();
-  const dt = Math.min(0.05, (now - last) / 1000);
-  last = now;
-  if (S.state) step(now, dt);
-  for (const pos in people.fielders) people.fielders[pos].update(dt);
-  if (people.batter) { people.batter.update(dt); people.batter.holder.updateMatrixWorld(true); updateBat(nowMs()); }
-  for (const r of people.runners) r.update(dt);
-  updateCamera(dt, now);
+  // テスト用：1回の描画でゲームを何コマか進める（自動テストを速くするため）
+  const n = TEST ? (window.__turbo || 1) : 1;
+  for (let i = 0; i < n; i++) {
+    if (TEST) simNow += 1000 / 60;
+    const now = nowMs();
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (S.state) step(now, dt);
+    if (TEST && window.__onStep) window.__onStep(now, dt);
+    for (const pos in people.fielders) people.fielders[pos].update(dt);
+    if (people.batter) { people.batter.update(dt); people.batter.holder.updateMatrixWorld(true); updateBat(nowMs()); }
+    for (const r of people.runners) r.update(dt);
+    updateCamera(dt, now);
+    updateFlash(now);
+    if (TEST && window.__holdFrame) break;
+  }
   renderer.render(scene, camera);
 }
 
@@ -850,9 +934,21 @@ function step(now, dt) {
     cursor.userData.ring.material.opacity = S.decision ? 0.4 : 0.95;
   }
   aim.visible = iPitch() && S.phase === 'aim';
+  if (S.phase === 'sent' && !isHost() && S.sentIntent && now - S.sentIntent.at > 2500) { S.sentIntent.at = now; send({ t: 'pitchIntent', intent: S.sentIntent.intent }); }
   if (S.autoPitch && aim.visible && !S.autoPitchAt) S.autoPitchAt = now + 400;
   if (S.autoPitchAt && now >= S.autoPitchAt) { S.autoPitchAt = 0; if (S.phase === 'aim' && iPitch()) { S.aim.x = (Math.random() - 0.5) * 0.5; S.aim.y = 0.55 + Math.random() * 0.5; throwLocal(); } }
   if (aim.visible) aim.position.set(S.aim.x, S.aim.y, 0.03);
+  if (S.release && S.phase === 'aim' && iPitch()) {
+    const k = (now - S.release.t0) / 1000 / REL_DUR;
+    if (k >= 1) releaseNow(0.15);
+    else {
+      relRing.visible = true;
+      relRing.position.set(S.aim.x, S.aim.y, 0.04);
+      relRing.scale.setScalar(Math.max(0.05, (1 - k) / (1 - REL_PERFECT)));
+      const near = Math.abs(k - REL_PERFECT) < 0.045;
+      relRing.material.color.set(near ? 0x7dffb0 : 0xffffff);
+    }
+  } else relRing.visible = false;
 
   ballMat.depthTest = S.phase === 'play';
   // 盗塁でスタートを切った走者
@@ -871,8 +967,9 @@ function step(now, dt) {
   if (S.phase === 'windup' || S.phase === 'flight') {
     const t = (now - S.t0) / 1000;
     if (t >= 0) {
-      if (S.phase === 'windup') S.phase = 'flight';
+      if (S.phase === 'windup') { S.phase = 'flight'; sfxRelease(); }
       const p = S.pitch;
+      if (!S.mittPlayed && t >= p.T + 0.03 && !S.decision) { S.mittPlayed = true; sfxMitt(p.velo > 145 ? 1.15 : 1); }
       let pos;
       if (t <= p.T) pos = pitchPos(p, t);
       else {
@@ -916,11 +1013,11 @@ function step(now, dt) {
       // 判定タイミング
       if (isHost()) {
         const remoteBatter = myCtrl(batTeam(s)) === 'remote';
-        if (S.decision === undefined && !remoteBatter && t > p.T + 0.25) S.decision = null;
-        const ready = S.decision !== undefined && (S.decision ? t >= Math.max(S.decision.ts + SWING_LAG, 0) : t > p.T + 0.25);
+        if (S.decision === undefined && !remoteBatter && t > p.T + 0.1) S.decision = null;
+        const ready = S.decision !== undefined && (S.decision ? t >= Math.max(S.decision.ts + SWING_LAG, 0) : t > p.T + 0.1);
         if (ready) resolveNow();
         if (remoteBatter && S.decision === undefined && t > p.T + 4) S.decision = null;
-      } else if (iBat() && S.decision === undefined && t > p.T + 0.25) {
+      } else if (iBat() && S.decision === undefined && t > p.T + 0.1) {
         S.decision = null;
         send({ t: 'take', id: S.pitchId });
       }
@@ -995,7 +1092,9 @@ function onNet(m) {
       if (!isHost() && m.id === S.pitchId) afterLive(m.res, m.state);
       break;
     case 'pitchIntent':
-      if (isHost() && S.phase === 'aim' && myCtrl(fieldTeam(S.state)) === 'remote') doPitch(m.intent);
+      if (!isHost() || myCtrl(fieldTeam(S.state)) !== 'remote') break;
+      if (S.phase === 'aim') doPitch(m.intent);
+      else if (S.phase !== 'windup' && S.phase !== 'flight') S.pendingIntent = m.intent; // まだ準備中なら、打席が始まったら投げる
       break;
     case 'swing':
       if (isHost() && m.id === S.pitchId && S.decision === undefined) { S.decision = m.sw; showSwing(m.sw.ts); }

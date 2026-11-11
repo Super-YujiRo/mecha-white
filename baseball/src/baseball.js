@@ -30,21 +30,23 @@ export function gauss(r) { const u = Math.max(1e-9, r()), v = r(); return Math.s
 // パワプロのように体感を遅くする（表示の球速はそのまま）
 export const PITCH_SLOW = 1;
 // 投手の意図（球種・狙い）＋コントロールのブレ → 実際の投球パラメータ
-export function makePitch(pitcher, type, target, seed, fatigue = 0) {
+// quality：リリースのタイミング（1＝ナイスピッチ）。よいほど狙いどおり・球が走る
+export function makePitch(pitcher, type, target, seed, fatigue = 0, quality = 0.7) {
   const r = rng(seed);
   const def = PITCHES[type];
   const lv = type === 'ST' ? 0 : (pitcher.pitches[type] || 1);
   const hand = pitcher.throws === 'L' ? -1 : 1;
   const ctl = pitcher.control * (1 - fatigue * 0.35);
-  const sigma = 0.018 + (100 - ctl) / 100 * 0.085;
+  const qk = Math.max(0, Math.min(1, quality));
+  const sigma = (0.018 + (100 - ctl) / 100 * 0.085) * (1.45 - 0.75 * qk);
   const end = { x: target.x + gauss(r) * sigma, y: target.y + gauss(r) * sigma * 0.85 };
-  const k = type === 'ST' ? 1 : 0.5 + lv * 0.1;
-  const velo = pitcher.velo * def.speed * (1 - fatigue * 0.06) * (0.985 + r() * 0.03);
+  const k = (type === 'ST' ? 1 : 0.5 + lv * 0.1) * (0.9 + 0.15 * qk);
+  const velo = pitcher.velo * def.speed * (1 - fatigue * 0.06) * (0.975 + r() * 0.02 + qk * 0.02);
   const release = { x: -0.5 * hand, y: 1.78, z: RUBBER_Z + 1.4 };
   const dist = Math.abs(release.z);
   const T = dist / (velo / 3.6 * 0.93) * PITCH_SLOW;
   return {
-    type, lv, velo: Math.round(velo), hand,
+    type, lv, velo: Math.round(velo), hand, q: Math.round(qk * 100) / 100,
     release, end, T,
     bx: def.bx * k * hand, by: def.by * k, arc: def.arc * (type === 'CU' ? 0.8 + lv * 0.05 : 1),
   };
@@ -103,7 +105,7 @@ export function judgeSwing(pitch, batter, swing, seed) {
   const hand = batter.bats === 'L' ? -1 : 1;
 
   // 端っこ・タイミングぎりぎりはファウルになりやすい
-  if ((d > 0.93 || tq > 0.9) && r() < 0.4) {
+  if ((d > 0.86 || tq > 0.78) && r() < 0.5) {
     const back = r() < 0.5;
     const phi = (r() < 0.5 ? -1 : 1) * (0.9 + r() * 0.8);
     const sp = 18 + r() * 14;
@@ -113,9 +115,9 @@ export function judgeSwing(pitch, batter, swing, seed) {
 
   const powerK = swing.power ? 1.17 : 1;
   const ev = (110 + batter.power * 0.8) * (0.55 + 0.45 * q) * powerK * (0.97 + r() * 0.06); // km/h
-  let la = 13 + oy * 30 + gauss(r) * 5;             // 打球角度（上に当てるとゴロ、下ならフライ）
+  let la = 8 + oy * 32 + gauss(r) * 6;             // 打球角度（上に当てるとゴロ、下ならフライ）
   la = Math.max(-25, Math.min(68, la));
-  let phi = -dt / TIMING_WIN * 0.62 * hand;          // 早い→引っ張り
+  let phi = -dt / TIMING_WIN * 0.9 * hand;           // 早い→引っ張り（早すぎ・遅すぎはファウル）
   phi += -ox * 0.12 * hand + gauss(r) * 0.07;
   return { v: launchVec(ev / 3.6, la, phi), ev, la, phi, q, dt, d };
 }
@@ -152,7 +154,7 @@ export function simulateBall(v0, opts = {}) {
       if (v.y < -1.2) {
         if (bounces === 0) firstBounce = { t, x: p.x, z: p.z };
         bounces++;
-        v.y = -v.y * 0.42; v.x *= 0.72; v.z *= 0.72;
+        v.y = -v.y * 0.42; v.x *= 0.84; v.z *= 0.84;
       } else { v.y = 0; }
     }
     // フェンス

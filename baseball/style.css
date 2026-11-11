@@ -40,9 +40,9 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:none
 #stamina{height:6px;background:#2a3d5e;border-radius:3px;margin-top:5px;overflow:hidden}
 #stamina div{height:100%;width:100%;background:linear-gradient(90deg,#ff7a3d,#ffd43d,#3ee07a);transition:width .3s}
 
-#speed{position:absolute;right:14px;top:118px;background:rgba(13,31,60,.85);padding:4px 12px 6px;border-radius:10px;font-weight:900;font-size:26px;text-shadow:0 2px 0 rgba(0,0,0,.4);opacity:0;transition:opacity .2s}
+#speed{position:absolute;left:50%;transform:translateX(-50%);top:58px;text-align:center;background:rgba(13,31,60,.85);padding:4px 12px 6px;border-radius:10px;font-weight:900;font-size:26px;text-shadow:0 2px 0 rgba(0,0,0,.4);opacity:0;transition:opacity .2s}
 #speed small{font-size:14px;margin-left:2px}
-#speed .ty{display:block;font-size:15px;color:var(--gold);text-align:right}
+#speed .ty{display:block;font-size:15px;color:var(--gold);text-align:center}
 #speed.show{opacity:1}
 
 #pitchMenu{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:8px}
@@ -62,7 +62,7 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:none
 #call.show{animation:call 1.25s ease-out forwards}
 #call.big{font-size:104px}
 @keyframes call{0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}12%{opacity:1;transform:translate(-50%,-50%) scale(1.12)}22%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(1)}}
-#toast{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:rgba(13,31,60,.9);padding:8px 18px;border-radius:20px;font-weight:800;font-size:15px;opacity:0;transition:opacity .25s;border:2px solid rgba(255,255,255,.2)}
+#toast{position:absolute;left:50%;top:112px;transform:translateX(-50%);background:rgba(13,31,60,.9);padding:8px 18px;border-radius:20px;font-weight:800;font-size:15px;opacity:0;transition:opacity .25s;border:2px solid rgba(255,255,255,.2)}
 #toast.show{opacity:1}
 
 /* ---------- screens ---------- */
@@ -116,3 +116,6 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:none
 @media (max-width:1000px){ #hud{zoom:.8} }
 @media (max-width:760px){ #hud{zoom:.6} #pitchMenu{bottom:96px} }
 .card .name .hurt{background:#e8382b;color:#fff;font-size:12px;padding:1px 6px;border-radius:6px;margin-left:6px;vertical-align:middle}
+#bases .rdot{position:absolute;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;background:#ffd43d;box-shadow:0 0 6px #ffd43d;display:none;z-index:2}
+#bases .rdot.ball{width:6px;height:6px;margin:-3px 0 0 -3px;background:#fff;box-shadow:0 0 5px #fff}
+#bases::after{content:'';position:absolute;left:28px;top:49px;width:14px;height:14px;background:#2a3d5e;transform:rotate(45deg);border:2px solid rgba(255,255,255,.35)}

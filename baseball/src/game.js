@@ -61,7 +61,7 @@ export function cpuPitchIntent(s, seed, lv) {
   for (let i = 0; i < types.length; i++) { x -= weights[i]; if (x <= 0) { type = types[i]; break; } }
   const ahead = s.strikes > s.balls;
   const behind = s.balls >= 3 || s.balls > s.strikes + 1;
-  const edge = behind ? 0.7 : ahead ? 1.5 : 1.2;
+  const edge = behind ? 1.2 : ahead ? 2.4 : 2.0;
   const cx = (ZONE.x0 + ZONE.x1) / 2, cy = (ZONE.y0 + ZONE.y1) / 2;
   const hw = (ZONE.x1 - ZONE.x0) / 2, hh = (ZONE.y1 - ZONE.y0) / 2;
   const target = {
@@ -69,20 +69,22 @@ export function cpuPitchIntent(s, seed, lv) {
     y: cy + (r() * 2 - 1) * hh * edge * (0.9 + lv * 0.05),
   };
   if (type === 'FK' || type === 'SK' || type === 'CH') target.y = Math.min(target.y, cy - hh * 0.2);
-  return { type, target };
+  return { type, target, q: Math.min(1, 0.5 + lv * 0.12 + r() * 0.3) };
 }
 
 export function cpuSwing(s, pitch, batter, seed, lv) {
   const r = rng(seed ^ 0x9e3779b9);
   const end = pitch.end;
   const zoneIn = inZone(end);
-  const pSwing = zoneIn ? [0.62, 0.72, 0.8][lv] + (s.strikes === 2 ? 0.15 : 0) : [0.32, 0.24, 0.16][lv] + (s.strikes === 2 ? 0.12 : 0);
+  // 初球は見ていくことが多い。追い込まれると振る
+  const early = s.strikes === 0 && s.balls === 0 ? -0.15 : 0;
+  const pSwing = zoneIn ? [0.6, 0.66, 0.72][lv] + early + (s.strikes === 2 ? 0.2 : 0) : [0.3, 0.24, 0.18][lv] + early * 0.5 + (s.strikes === 2 ? 0.14 : 0);
   if (s.balls === 3 && s.strikes < 2 && !zoneIn && r() < 0.5) return null;
   if (r() > pSwing) return null;
   // 変化球は読み違えやすい
   const breaking = pitch.type !== 'ST';
-  const posErr = [0.085, 0.06, 0.042][lv] * (breaking ? 1.25 : 1);
-  const timeErr = [0.05, 0.036, 0.026][lv] * (breaking ? 1.2 : 1);
+  const posErr = [0.125, 0.115, 0.1][lv] * (breaking ? 1.25 : 1);
+  const timeErr = [0.085, 0.076, 0.066][lv] * (breaking ? 1.25 : 1);
   return {
     ts: pitch.T - SWING_LAG + gauss(r) * timeErr,
     cx: end.x + gauss(r) * posErr,
@@ -106,7 +108,7 @@ export function resolvePitch(s, pitch, decision, seed) {
     // デッドボール：打者の体に当たる球
     const side = batter.bats === 'L' ? 1 : -1;
     const ex = pitch.end.x * side;
-    if (ex > 0.43 && ex < 0.95 && pitch.end.y > 0.25 && pitch.end.y < 1.75) {
+    if (ex > 0.56 && ex < 0.95 && pitch.end.y > 0.3 && pitch.end.y < 1.6) {
       out.kind = 'HBP'; out.call = 'デッドボール！';
       if (rng(seed ^ 0x51ed)() < 0.15) addInjury(n, bt, batter.name, out);
       walk(n);
@@ -235,5 +237,5 @@ export function pitchFor(s, intent, seed) {
   const ft = fieldTeam(s);
   const pit = currentPitcher(s);
   const type = PITCHES[intent.type] && (intent.type === 'ST' || pit.pitches[intent.type] != null) ? intent.type : 'ST';
-  return makePitch(pit, type, intent.target, seed, s.fatigue[ft]);
+  return makePitch(pit, type, intent.target, seed, s.fatigue[ft], intent.q == null ? 0.7 : intent.q);
 }

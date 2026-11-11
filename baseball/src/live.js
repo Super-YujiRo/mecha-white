@@ -5,11 +5,13 @@ import { POSITIONS, POS_ORDER } from './play.js';
 
 const INFIELD = { P: 1, C: 1, '1B': 1, '2B': 1, SS: 1, '3B': 1 };
 export const runSpeed = (pl) => 6.3 + pl.speed * 0.03;
-export const fieldSpeed = (pl) => 6.2 + pl.speed * 0.025;
+export const fieldSpeed = (pl) => 6.6 + pl.speed * 0.025;
 export const throwSpeed = (pl) => 21 + pl.arm * 0.1;
 export const ACT = { idle: 0, run: 1, throw: 2, catch: 3, dive: 4, cheer: 5, jog: 6, crouch: 7, hide: 8, jump: 10, slide: 11, hurt: 12 };
 const BP = (k) => (k % 4 === 0 ? { x: 0, z: 0 } : BASES[k % 4]);
 const dist = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
+// 走り出しの加速にかかる時間
+const ACCEL_T = 0.45;
 const COVER_SPOT = { 1: { x: 19.0, z: -19.9 }, 2: { x: 0.5, z: -38.2 }, 3: { x: -19.0, z: -19.9 }, 4: { x: 0, z: 0.7 } };
 
 export class LivePlay {
@@ -30,7 +32,7 @@ export class LivePlay {
     for (const pos of POS_ORDER) {
       const pl = ctx.fielders[pos];
       const h = pos === 'C' ? { x: 0, z: 1.25 } : pos === 'P' ? { x: 0, z: -17.6 } : { x: POSITIONS[pos].x, z: POSITIONS[pos].z };
-      this.f[pos] = { pos, pl, x: h.x, z: h.z, home: h, dir: pos === 'C' ? Math.PI : Math.atan2(-h.x, -h.z), act: pos === 'C' ? ACT.crouch : ACT.idle, spd: fieldSpeed(pl), react: pos === 'P' ? 0.4 : INFIELD[pos] ? 0.2 : 0.38, goal: null, diveT: -9, jumpT: -9, catchT: -9, wind: null, decided: false };
+      this.f[pos] = { pos, pl, x: h.x, z: h.z, home: h, dir: pos === 'C' ? Math.PI : Math.atan2(-h.x, -h.z), act: pos === 'C' ? ACT.crouch : ACT.idle, spd: fieldSpeed(pl), react: (pos === 'P' ? 0.45 : INFIELD[pos] ? 0.32 : 0.22) - pl.field * 0.0012, goal: null, diveT: -9, jumpT: -9, catchT: -9, wind: null, decided: false };
     }
     this.chaser = null; this.chaserAt = -1; this.active = null;
     this.pending = null; // 人の送球予約
@@ -247,8 +249,9 @@ export class LivePlay {
       const s = path[i];
       const reachH = s.air ? 2.4 : 1.1;
       if (s.y > reachH) continue;
-      const reach = s.air ? 0.9 : 0.7;
-      const need = delay + Math.max(0, Math.hypot(s.x - F.x, s.z - F.z) - reach) / F.spd;
+      const reach = s.air ? 0.8 : 0.55;
+      const dd = Math.max(0, Math.hypot(s.x - F.x, s.z - F.z) - reach);
+      const need = delay + dd / F.spd + (dd > 0.5 ? ACCEL_T * 0.5 : 0);
       if (need <= s.t - this.t) return { T: s.t, x: s.x, z: s.z, air: s.air };
     }
     const l = path[path.length - 1];
@@ -370,7 +373,10 @@ export class LivePlay {
         const dx = goal.x - F.x, dz = goal.z - F.z, L = Math.hypot(dx, dz);
         const stopR = isHuman ? 0.05 : 0.15;
         if (L > stopR) {
-          const st = Math.min(L, speed * dt);
+          // 動き出しは遅く、だんだん速く
+          if (F.act !== ACT.run) F.runT = t;
+          const acc = Math.min(1, 0.35 + (t - (F.runT || 0)) / ACCEL_T * 0.65);
+          const st = Math.min(L, speed * acc * dt);
           F.x += dx / L * st; F.z += dz / L * st;
           F.dir = Math.atan2(dx, dz);
           F.act = ACT.run;
@@ -446,7 +452,7 @@ export class LivePlay {
       const jumping = t - F.jumpT > 0.08 && t - F.jumpT < 0.55;
       const reachH = b.mode === 'flight' && b.air ? (pos === 'P' ? 1.9 : 2.5) + (jumping ? 1.1 : 0) : 1.25;
       if (b.y > reachH) continue;
-      const reach = (b.mode === 'flight' && b.air ? 0.85 : 0.65) + F.pl.field * 0.004 + (diving ? 1.2 : 0) + (this.human && pos === this.active ? 0.45 : 0);
+      const reach = (b.mode === 'flight' && b.air ? 0.7 : 0.45) + F.pl.field * 0.003 + (diving ? 1.1 : 0) + (this.human && pos === this.active ? 0.45 : 0);
       // 前のコマからの線分との距離（速いゴロのすり抜け防止）
       const ax = b.px, az = b.pz, bx = b.x, bz = b.z;
       const vx = bx - ax, vz = bz - az, L2 = vx * vx + vz * vz;
