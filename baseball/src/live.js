@@ -20,6 +20,7 @@ export class LivePlay {
     this.t = 0;
     this.outs0 = ctx.outs; this.outs = ctx.outs;
     this.human = !!opts.human;
+    this.semi = opts.semi !== false;
     this.stealOnly = !hit;
     this.injured = [];
     const sim = hit ? simulateBall(hit.v) : { path: [{ t: 0, x: 0, y: 1, z: 1.25, air: false }], hr: null, firstBounce: null };
@@ -354,6 +355,8 @@ export class LivePlay {
         if (input.dive && b.mode !== 'held') { this.dive(F); continue; }
         if (input.jump && b.mode !== 'held') this.jump(F);
         if (!goal && b.mode === 'thrown' && coverOf[pos]) goal = COVER_SPOT[coverOf[pos]];
+        // セミオート：方向キーを押していない間はボールへ自動で向かう
+        if (!goal && this.semi && (b.mode === 'flight' || b.mode === 'loose') && t >= F.react) { const it = this.intercept(F); goal = { x: it.x, z: it.z }; this.aiDive(F); }
       } else if (b.mode === 'held' && b.holder === F) {
         goal = F.goal;
       } else if (pos === this.chaser && (b.mode === 'flight' || b.mode === 'loose')) {

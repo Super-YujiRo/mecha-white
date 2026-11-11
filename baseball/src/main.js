@@ -443,7 +443,7 @@ function startLive(pre, hit, mid, steal) {
   S.live = { pre, mid, auth, human, runner, stealOnly: !hit, sim: auth ? new LivePlay(hit, playCtx(pre), opts) : null, view: null, prev: null, start: nowMs(), sentAt: 0, ended: false, runKey: null };
   ui.speed.classList.remove('show');
   bat.visible = true;
-  if (human) toast(hit ? '守備：WASDで移動　1〜4で送球　スペース：ダイブ　F：ジャンプ' : '盗塁！ 2キーで二塁へ送球（3：三塁）', 3500);
+  if (human) toast(hit ? '守備：ボールを捕ったら 1〜4 で送球（WASDで自分で動かすこともできます）' : '盗塁！ 2キーで二塁へ送球（3：三塁）', 3500);
   else if (runner && (hit || steal)) toast('走塁：E 進め　Q 戻れ', 2500);
   updateHelp();
   updateMode();
@@ -845,7 +845,7 @@ function updateHelp() {
   const s = S.state;
   if (!s) return;
   if (S.phase === 'play' && S.live && S.live.runner) ui.help.innerHTML = '<b>走塁</b>　<b>E</b>：全員 次の塁へ進め　<b>Q</b>：全員 戻れ';
-  else if (S.phase === 'play' && S.live && S.live.human) ui.help.innerHTML = '<b>守備</b>　<b>WASD</b>：移動（青い輪の選手）　<b>スペース</b>：ダイブ　<b>F</b>：ジャンプ<br><b>1</b>：一塁　<b>2</b>：二塁　<b>3</b>：三塁　<b>4</b>：本塁へ送球';
+  else if (S.phase === 'play' && S.live && S.live.human) ui.help.innerHTML = '<b>守備</b>　<b>WASD</b>：移動（青い輪の選手。離すと自動でボールへ）　<b>スペース</b>：ダイブ　<b>F</b>：ジャンプ<br><b>1</b>：一塁　<b>2</b>：二塁　<b>3</b>：三塁　<b>4</b>：本塁へ送球';
   else if (iPitch()) ui.help.innerHTML = '<b>投球</b>　マウス：コースをねらう<br><b>1〜' + pitchList().length + ' / ホイール</b>：球種　<br><b>左クリック/スペース</b>：投球開始 → 白い輪がねらいに重なったらもう一度押す（ナイスピッチ）';
   else if (iBat()) ui.help.innerHTML = '<b>打撃</b>　マウス：カーソル　<b>左クリック/スペース</b>：振る<br><b>右クリック/Shift</b>：ミート⇔強振 切り替え<br><b>白い丸</b>：ボールが来る位置（変化球は曲がりに合わせて動く）<br><b>T</b>：盗塁　打ったあと <b>E</b>：進め　<b>Q</b>：戻れ<br>芯（カーソルの真ん中）の<b>上で打つとフライ・下で打つとゴロ</b>　WASD/矢印キーでも動かせます';
   else ui.help.innerHTML = '観戦中';
