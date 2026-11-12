@@ -3,6 +3,7 @@ import { TEAMS, PITCHES, rank, battingOrder } from './data.js';
 import { pitchPos, predictPlate, cursorSize, ZONE, RUBBER_Z, SWING_LAG, BASES, BALL_R, rng } from './baseball.js';
 import { POSITIONS, POS_ORDER } from './play.js';
 import { LivePlay, ACT } from './live.js';
+import { turnAt } from './anims.js';
 import { newState, currentBatter, currentPitcher, batTeam, fieldTeam, teamById, cpuPitchIntent, cpuSwing, resolvePitch, pitchFor, applyPlay, playCtx, runnersOf } from './game.js';
 import { buildField, buildZone, buildCursor, buildAim, buildBat } from './field.js';
 import { loadCharacters, Player3D } from './chars.js';
@@ -122,8 +123,6 @@ function callSound(text) {
   if (/スライディング/.test(text)) sfxSlide();
   if (/ホームラン/.test(text)) sfxCheer(1, 4.5);
   else if (/ホームイン|ナイスキャッチ|スリーベース|ツーベース/.test(text)) sfxCheer(0.7, 2.6);
-  else if (/ヒット|内野安打/.test(text)) sfxCheer(0.45, 2);
-  else if (/三振/.test(text)) sfxCheer(0.35, 1.6);
 }
 function showCall(text, color = '#fff', big = false) {
   callSound(text);
@@ -329,7 +328,7 @@ function startPitch(pitch, id, seed2) {
   S.decision = undefined;
   S.swingShownAt = -1;
   const p = people.fielders.P;
-  p.play('Throw', { loop: false, restart: true, speed: 1.15 });
+  p.play(currentPitcher(S.state).throws === 'L' ? 'PitchL' : 'PitchR', { loop: false, restart: true, speed: 1, fade: 0.08 });
   aim.visible = false;
   updatePitchMenu();
   // CPUの打者
@@ -629,7 +628,6 @@ function hitFx(h, dec) {
     flash.userData.t0 = nowMs(); flash.userData.q = q;
     flash.visible = true;
   }
-  if (q > 0.75) sfxCheer(Math.min(1, (h.ev - 120) / 60), 2.6);
 }
 
 // ================= バット（スイングに合わせて動かす） =================
@@ -961,20 +959,10 @@ function step(now, dt) {
   {
     const P = people.fielders.P && people.fielders.P.holder;
     if (P && (S.phase === 'windup' || S.phase === 'flight' || S.phase === 'result') && S.windupAt) {
-      const el = (now - S.windupAt) / 1000, rel = 0.85;
-      const side = currentPitcher(s).throws === 'L' ? 1 : -1;
-      let ry = 0, lift = 0, lean = 0;
-      if (el < rel) {
-        const k = el / rel;
-        ry = side * 1.15 * Math.sin(Math.min(1, k / 0.7) * Math.PI / 2) * (k > 0.8 ? 1 - (k - 0.8) / 0.2 : 1);
-        lift = k > 0.25 && k < 0.85 ? 0.14 * Math.sin((k - 0.25) / 0.6 * Math.PI) : 0;
-      } else {
-        const k2 = Math.min(1, (el - rel) / 0.45);
-        lean = 0.32 * Math.sin(Math.min(1, k2 * 2) * Math.PI / 2) * (1 - k2 * 0.8);
-      }
-      P.rotation.y = ry; P.rotation.x = lean;
-      P.position.y = 0.25 + lift;
-    } else if (P && S.phase === 'aim') { P.rotation.x = 0; }
+      const el = (now - S.windupAt) / 1000;
+      P.rotation.y = turnAt(el, currentPitcher(s).throws === 'L');
+      P.rotation.x = 0; P.position.y = 0.25;
+    } else if (P && S.phase === 'aim') { P.rotation.x = 0; P.rotation.y = turnAt(0, currentPitcher(s).throws === 'L'); }
   }
   // 盗塁でスタートを切った走者
   if (S.stealShow && (S.phase === 'windup' || S.phase === 'flight' || S.phase === 'result')) {

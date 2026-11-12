@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
+import { buildCustomClips } from './anims.js';
 
 const loader = new GLTFLoader();
 let base = null;
@@ -21,6 +22,7 @@ export async function loadCharacters(onProgress) {
     clips[c.name] = c;
   }
   base.updateMatrixWorld(true);
+  Object.assign(clips, buildCustomClips(base));
   const box = new THREE.Box3().setFromObject(base);
   baseHeight = box.max.y - box.min.y;
   base.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = false; o.frustumCulled = false; } });
