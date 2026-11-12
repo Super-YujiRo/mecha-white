@@ -20,6 +20,17 @@ const SWING = [
   { t: 0.9, pose: {upperlegl: [0.35, -0.94, 0.0], lowerlegl: [0.05, -1, 0.0], upperlegr: [-0.15, -0.92, 0.3], lowerlegr: [0.2, -1, -0.4], upperarmr: [0.75, 0.0, 0.6], lowerarmr: [0.55, 0.7, -0.3], upperarml: [0.75, 0.1, -0.2], lowerarml: [0.15, 0.85, -0.45], spine: [6, 60, 0], _hipsY: -0.07} },
 ];
 
+
+// 野手：構え・捕球・送球（右投げ）
+const READY = {upperlegl: [0.35, -0.88, 0.25], lowerlegl: [0.05, -1, -0.25], upperlegr: [-0.35, -0.88, 0.25], lowerlegr: [-0.05, -1, -0.25], upperarml: [0.25, -0.75, 0.55], lowerarml: [0.0, -0.85, 0.5], upperarmr: [-0.25, -0.75, 0.55], lowerarmr: [0.0, -0.85, 0.5], spine: [22, 0, 0], _hipsY: -0.13};
+const CATCH = {upperlegl: [0.2, -0.95, 0.15], lowerlegl: [0, -1, -0.1], upperlegr: [-0.2, -0.95, 0.1], lowerlegr: [0, -1, -0.1], upperarml: [0.25, 0.15, 0.95], lowerarml: [-0.1, 0.75, 0.65], upperarmr: [-0.15, -0.1, 0.95], lowerarmr: [0.35, 0.55, 0.75], spine: [5, 0, 0], _hipsY: -0.04};
+const FTHROW = [
+  { t: 0, pose: {upperlegl: [0.3, -0.85, 0.4], lowerlegl: [0, -1, 0], upperlegr: [-0.15, -0.9, -0.35], lowerlegr: [0, -0.9, -0.4], upperarmr: [-0.9, 0.35, -0.25], lowerarmr: [-0.1, 1, 0.1], upperarml: [0.8, 0.2, 0.55], lowerarml: [0.6, 0.1, 0.8], spine: [0, -35, 0], _hipsY: -0.06} },
+  { t: 0.2, pose: {upperlegl: [0.2, -0.8, 0.55], lowerlegl: [0, -1, 0.1], upperlegr: [-0.1, -0.75, -0.6], lowerlegr: [0, -0.6, -0.8], upperarmr: [-0.25, 0.6, 0.75], lowerarmr: [0, 0.3, 0.95], upperarml: [0.5, -0.6, 0.5], lowerarml: [-0.3, 0.1, 0.95], spine: [20, 20, 0], _hipsY: -0.08} },
+  { t: 0.4, pose: {upperlegl: [0.15, -0.85, 0.5], lowerlegl: [0, -1, 0], upperlegr: [-0.1, -0.4, -0.9], lowerlegr: [0, -0.6, -0.8], upperarmr: [0.45, -0.75, 0.45], lowerarmr: [0.6, -0.6, 0.4], upperarml: [0.45, -0.8, -0.1], lowerarml: [0.2, -0.5, 0.8], spine: [35, 25, 0], _hipsY: -0.1} },
+  { t: 0.7, pose: {upperlegl: [0.15, -0.85, 0.5], lowerlegl: [0, -1, 0], upperlegr: [-0.1, -0.4, -0.9], lowerlegr: [0, -0.6, -0.8], upperarmr: [0.45, -0.75, 0.45], lowerarmr: [0.6, -0.6, 0.4], upperarml: [0.45, -0.8, -0.1], lowerarml: [0.2, -0.5, 0.8], spine: [35, 25, 0], _hipsY: -0.1} },
+];
+
 // 体の向き（投げる腕と反対の肩をホームへ）。main.js が投手の向きに使う
 export const PITCH_TURN = [[0, -90], [0.38, -92], [0.66, -78], [0.85, -10], [1.05, 8], [1.6, 0]];
 
@@ -43,6 +54,9 @@ export function buildCustomClips(base) {
     PitchR: buildClip('PitchR', base, PITCH), PitchL: buildClip('PitchL', base, mirror(PITCH)),
     StanceR: buildClip('StanceR', base, st), StanceL: buildClip('StanceL', base, mirror(st)),
     SwingR: buildClip('SwingR', base, SWING), SwingL: buildClip('SwingL', base, mirror(SWING)),
+    Ready: buildClip('Ready', base, [{ t: 0, pose: READY }, { t: 1, pose: READY }]),
+    CatchUp: buildClip('CatchUp', base, [{ t: 0, pose: CATCH }, { t: 0.4, pose: CATCH }]),
+    FThrow: buildClip('FThrow', base, FTHROW),
   };
 }
 export function turnAt(t, left) {

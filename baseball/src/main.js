@@ -183,7 +183,7 @@ function resetFielders() {
     if (pos === 'C') { p.holder.position.set(0, 0, 1.25); p.holder.rotation.y = Math.PI; p.play('Crouching', { fade: 0.2 }); p.holder.visible = false; continue; }
     if (pos === 'P') { p.holder.position.set(0, 0.25, RUBBER_Z + 0.2); p.holder.rotation.y = 0; p.play('Idle_A'); continue; }
     faceTo(p, 0, 0);
-    p.play('Idle_B');
+    p.play('Ready', { fade: 0.25 });
   }
 }
 
@@ -513,10 +513,10 @@ function afterLive(res, next) {
   S.nextAction = () => finishPitch();
 }
 
-const ANIM = { [ACT.idle]: 'Idle_A', [ACT.run]: 'Running_A', [ACT.throw]: 'Throw', [ACT.catch]: 'Melee_Block', [ACT.dive]: 'Dodge_Forward', [ACT.cheer]: 'Cheering', [ACT.jog]: 'Running_A', [ACT.crouch]: 'Crouching', [ACT.jump]: 'Jump_Full_Short', [ACT.slide]: 'Sit_Floor_Down', [ACT.hurt]: 'Hit_B' };
+const ANIM = { [ACT.idle]: 'Idle_A', [ACT.run]: 'Running_A', [ACT.throw]: 'FThrow', [ACT.catch]: 'CatchUp', [ACT.dive]: 'Dodge_Forward', [ACT.cheer]: 'Cheering', [ACT.jog]: 'Running_A', [ACT.crouch]: 'Crouching', [ACT.jump]: 'Jump_Full_Short', [ACT.slide]: 'Sit_Floor_Down', [ACT.hurt]: 'Hit_B' };
 function animFor(p, act) {
   const name = ANIM[act] || 'Idle_A';
-  if (act === ACT.throw) p.play(name, { loop: false, speed: 1.5 });
+  if (act === ACT.throw) p.play(name, { loop: false, speed: 0.9, fade: 0.06 });
   else if (act === ACT.jump) p.play(name, { loop: false, speed: 1.6 });
   else if (act === ACT.slide) p.play(name, { loop: false, speed: 2.2, fade: 0.06 });
   else if (act === ACT.hurt) p.play(name, { loop: false });
@@ -645,12 +645,12 @@ function updateBat(now) {
   const b = people.batter;
   const left = b.holder.position.x > 0;
   _f.set(left ? -1 : 1, 0, 0);
-  let th = 70, el = 55;
+  let th = 95, el = 50;
   if (S.swingStart != null) {
     const st = (now - S.swingStart) / 1000;
     const k1 = Math.min(1, st / SWING_LAG);
     const e1 = k1 * k1;
-    if (st <= SWING_LAG) { th = 70 - 70 * e1; el = 55 - 62 * e1; }
+    if (st <= SWING_LAG) { th = 95 - 95 * e1; el = 50 - 57 * e1; }
     else { const k2 = Math.min(1, (st - SWING_LAG) / 0.22); th = -170 * (1 - (1 - k2) * (1 - k2)); el = -7 + 45 * k2; }
   }
   const t = th * Math.PI / 180, e = el * Math.PI / 180;
