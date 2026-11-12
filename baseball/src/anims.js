@@ -31,6 +31,14 @@ const FTHROW = [
   { t: 0.7, pose: {upperlegl: [0.15, -0.85, 0.5], lowerlegl: [0, -1, 0], upperlegr: [-0.1, -0.4, -0.9], lowerlegr: [0, -0.6, -0.8], upperarmr: [0.45, -0.75, 0.45], lowerarmr: [0.6, -0.6, 0.4], upperarml: [0.45, -0.8, -0.1], lowerarml: [0.2, -0.5, 0.8], spine: [35, 25, 0], _hipsY: -0.1} },
 ];
 
+// 足から滑り込むスライディング
+const SLIDE_P = {upperlegr: [0.05, -0.25, 1], lowerlegr: [0, -0.12, 1], upperlegl: [0.15, -0.3, 0.94], lowerlegl: [0.05, -0.35, -0.94], upperarml: [0.55, 0.55, -0.4], lowerarml: [0.2, 0.95, 0.1], upperarmr: [-0.55, 0.55, -0.4], lowerarmr: [-0.2, 0.95, 0.1], spine: [-48, 0, 0], head: [20, 0, 0], _hipsY: -0.25};
+const SLIDE = [
+  { t: 0, pose: {upperlegl: [0.1, -0.7, 0.7], lowerlegl: [0, -1, -0.3], upperlegr: [-0.1, -0.9, -0.3], lowerlegr: [0, -0.7, -0.7], upperarml: [0.3, -0.6, -0.6], lowerarml: [0.2, 0.2, 0.95], upperarmr: [-0.3, -0.6, 0.6], lowerarmr: [-0.2, 0.2, 0.95], spine: [15, 0, 0], _hipsY: -0.04} },
+  { t: 0.16, pose: SLIDE_P },
+  { t: 1.4, pose: SLIDE_P },
+];
+
 // 体の向き（投げる腕と反対の肩をホームへ）。main.js が投手の向きに使う
 export const PITCH_TURN = [[0, -90], [0.38, -92], [0.66, -78], [0.85, -10], [1.05, 8], [1.6, 0]];
 
@@ -57,6 +65,7 @@ export function buildCustomClips(base) {
     Ready: buildClip('Ready', base, [{ t: 0, pose: READY }, { t: 1, pose: READY }]),
     CatchUp: buildClip('CatchUp', base, [{ t: 0, pose: CATCH }, { t: 0.4, pose: CATCH }]),
     FThrow: buildClip('FThrow', base, FTHROW),
+    Slide: buildClip('Slide', base, SLIDE),
   };
 }
 export function turnAt(t, left) {

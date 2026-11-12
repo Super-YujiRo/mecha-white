@@ -126,8 +126,9 @@ function callSound(text) {
 }
 function showCall(text, color = '#fff', big = false) {
   callSound(text);
-  ui.call.textContent = text;
-  ui.call.style.color = color;
+  ui.call.innerHTML = '<span class="band"></span><span class="txt"></span>';
+  ui.call.lastChild.textContent = text;
+  ui.call.style.setProperty('--c', color);
   ui.call.classList.toggle('big', big);
   ui.call.classList.remove('show');
   void ui.call.offsetWidth;
@@ -515,12 +516,12 @@ function afterLive(res, next) {
   S.nextAction = () => finishPitch();
 }
 
-const ANIM = { [ACT.idle]: 'Idle_A', [ACT.run]: 'Running_A', [ACT.throw]: 'FThrow', [ACT.catch]: 'CatchUp', [ACT.dive]: 'Dodge_Forward', [ACT.cheer]: 'Cheering', [ACT.jog]: 'Running_A', [ACT.crouch]: 'Crouching', [ACT.jump]: 'Jump_Full_Short', [ACT.slide]: 'Sit_Floor_Down', [ACT.hurt]: 'Hit_B' };
+const ANIM = { [ACT.idle]: 'Idle_A', [ACT.run]: 'Running_A', [ACT.throw]: 'FThrow', [ACT.catch]: 'CatchUp', [ACT.dive]: 'Dodge_Forward', [ACT.cheer]: 'Cheering', [ACT.jog]: 'Running_A', [ACT.crouch]: 'Crouching', [ACT.jump]: 'Jump_Full_Short', [ACT.slide]: 'Slide', [ACT.hurt]: 'Hit_B' };
 function animFor(p, act) {
   const name = ANIM[act] || 'Idle_A';
   if (act === ACT.throw) p.play(name, { loop: false, speed: 0.9, fade: 0.06 });
   else if (act === ACT.jump) p.play(name, { loop: false, speed: 1.6 });
-  else if (act === ACT.slide) p.play(name, { loop: false, speed: 2.2, fade: 0.06 });
+  else if (act === ACT.slide) p.play(name, { loop: false, speed: 1, fade: 0.05 });
   else if (act === ACT.hurt) p.play(name, { loop: false });
   else if (act === ACT.catch || act === ACT.dive) p.play(name, { loop: false, speed: 1.3 });
   else if (act === ACT.run) p.play(name, { speed: 1.25 });

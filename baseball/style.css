@@ -57,11 +57,20 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:none
 #help{position:absolute;left:14px;bottom:14px;font-size:12px;font-weight:800;background:rgba(13,31,60,.7);padding:6px 10px;border-radius:8px;line-height:1.6;max-width:360px}
 #help b{color:var(--gold)}
 
-#call{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%) scale(.6);font-size:72px;font-weight:900;letter-spacing:.04em;opacity:0;white-space:nowrap;
-  -webkit-text-stroke:3px #0d1f3c;paint-order:stroke fill;text-shadow:0 6px 0 rgba(13,31,60,.6)}
-#call.show{animation:call 1.25s ease-out forwards}
-#call.big{font-size:104px}
-@keyframes call{0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}12%{opacity:1;transform:translate(-50%,-50%) scale(1.12)}22%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(1)}}
+#call{position:absolute;left:0;right:0;top:38%;height:0;opacity:0;pointer-events:none;--c:#fff}
+#call .band{position:absolute;left:-5%;right:-5%;top:50%;height:96px;transform:translateY(-50%) skewY(-4deg) scaleX(0);
+  background:linear-gradient(90deg,rgba(8,24,52,0),rgba(8,24,52,.82) 18%,rgba(8,24,52,.82) 82%,rgba(8,24,52,0));
+  border-top:4px solid var(--c);border-bottom:4px solid var(--c);box-shadow:0 0 24px rgba(0,0,0,.35)}
+#call .txt{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) skewX(-12deg);white-space:nowrap;font-size:76px;font-weight:900;font-style:italic;letter-spacing:.06em;
+  color:var(--c);-webkit-text-stroke:4px #0d1f3c;paint-order:stroke fill;text-shadow:0 6px 0 rgba(13,31,60,.8),0 0 18px rgba(255,255,255,.35)}
+#call.big .band{height:140px}
+#call.big .txt{font-size:112px}
+#call.show{animation:callFade 1.3s linear forwards}
+#call.show .band{animation:callBand 1.3s cubic-bezier(.2,.8,.2,1) forwards}
+#call.show .txt{animation:callTxt 1.3s cubic-bezier(.2,.9,.25,1.2) forwards}
+@keyframes callFade{0%{opacity:1}82%{opacity:1}100%{opacity:0}}
+@keyframes callBand{0%{transform:translateY(-50%) skewY(-4deg) scaleX(0)}18%{transform:translateY(-50%) skewY(-4deg) scaleX(1)}100%{transform:translateY(-50%) skewY(-4deg) scaleX(1)}}
+@keyframes callTxt{0%{transform:translate(60%,-50%) skewX(-12deg);opacity:0}10%{opacity:1}22%{transform:translate(-52%,-50%) skewX(-12deg);opacity:1}30%{transform:translate(-50%,-50%) skewX(-12deg) scale(1.08);opacity:1}38%{transform:translate(-50%,-50%) skewX(-12deg) scale(1);opacity:1}84%{transform:translate(-50%,-50%) skewX(-12deg);opacity:1}100%{transform:translate(-120%,-50%) skewX(-12deg);opacity:0}}
 #toast{position:absolute;left:50%;top:112px;transform:translateX(-50%);background:rgba(13,31,60,.9);padding:8px 18px;border-radius:20px;font-weight:800;font-size:15px;opacity:0;transition:opacity .25s;border:2px solid rgba(255,255,255,.2)}
 #toast.show{opacity:1}
 
@@ -98,7 +107,7 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:none
 @media (max-width:760px){
   #batterCard,#pitcherCard{min-width:150px}
   #help{display:none}
-  #call{font-size:48px}
+  #call .txt{font-size:46px}#call.big .txt{font-size:64px}#call .band{height:64px}#call.big .band{height:90px}
 }
 #title.net .menu,#title.net .opts{display:none}
 @media (max-height:620px){
