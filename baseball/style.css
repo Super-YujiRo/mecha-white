@@ -126,3 +126,33 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:none
 #change .c3{font-size:20px;font-weight:800;color:var(--gold)}
 @media (max-width:760px){#change .c1{font-size:44px}#change .c2{font-size:18px}}
 #result .gs{font-size:22px;font-weight:900;letter-spacing:.3em;color:#cfe2ff}
+/* ---- パワプロ風の表示 ---- */
+#compass{position:absolute;left:50%;top:6px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;opacity:0;transition:opacity .2s;pointer-events:none}
+#compass.show{opacity:1;pointer-events:auto}
+#compass .pk{cursor:pointer}
+#compass .lbl{margin-top:-6px;background:linear-gradient(180deg,#1f5fc2,#0c3378);border:2px solid #9fd0ff;border-radius:8px;padding:1px 14px;font-weight:900;font-size:14px;color:#fff;text-shadow:0 1px 0 #000}
+#speed{top:150px!important}
+#pitchMenu{display:none}
+.card{padding:6px 12px 8px;min-width:250px;background:linear-gradient(180deg,rgba(18,52,110,.95),rgba(8,26,60,.92));border:2px solid #7fb6ff}
+.card .role{display:none}
+.card .name{font-size:18px;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.card .name small{font-size:11px;color:#bcd3f5;font-weight:800}
+.card .name .pos{background:#ffd43d;color:#3a2600;border-radius:5px;padding:0 6px;font-size:14px}
+.card .name .ord{background:#fff;color:#0d1f3c;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:14px}
+.card .name .pl{font-size:11px;color:#ffd43d;margin-left:auto}
+.card .stats{gap:10px;margin-top:4px;align-items:flex-end}
+.card .stats .st{display:flex;flex-direction:column;align-items:center;gap:1px}
+.card .stats .st i{font-style:normal;font-size:10px;color:#bcd3f5}
+.card .stats .st b{margin:0}
+.card .stats b.rk{display:inline-flex;align-items:center;justify-content:center;width:28px;height:24px;border-radius:5px;font-size:19px;font-weight:900;color:#fff!important;text-shadow:0 1px 0 rgba(0,0,0,.5);border:1.5px solid rgba(255,255,255,.8)}
+.card .stats b.rk.S{background:linear-gradient(180deg,#ffe36b,#e8a400)}
+.card .stats b.rk.A{background:linear-gradient(180deg,#ff7aa8,#e0306a)}
+.card .stats b.rk.B{background:linear-gradient(180deg,#ff9a6a,#e0501f)}
+.card .stats b.rk.C{background:linear-gradient(180deg,#ffd06a,#e09a10)}
+.card .stats b.rk.D{background:linear-gradient(180deg,#e0e65a,#a8b010)}
+.card .stats b.rk.E{background:linear-gradient(180deg,#8ee07a,#3aa830)}
+.card .stats b.rk.F{background:linear-gradient(180deg,#7ac8f0,#2a7ab8)}
+.card .stats b.rk.G{background:linear-gradient(180deg,#b0b8c8,#6a7488)}
+.card .stats b.kmh{font-size:20px;color:#fff!important}
+.card .stats b.kmh small{font-size:10px;margin-left:1px}
+.card .stats b.traj{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#fff;color:#0d1f3c!important;font-size:16px}

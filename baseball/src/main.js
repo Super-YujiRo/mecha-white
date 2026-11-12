@@ -109,7 +109,7 @@ const ui = {
   inning: $('inning'), lineHead: $('lineHead'), lineA: $('lineA'), lineB: $('lineB'),
   count: $('count'), change: $('change'), bases: $('bases'), b1: $('b1'), b2: $('b2'), b3: $('b3'),
   pName: $('pName'), pStats: $('pStats'), stamina: $('stamina').firstElementChild,
-  bName: $('bName'), bStats: $('bStats'), speed: $('speed'), pitchMenu: $('pitchMenu'), help: $('help'), mode: $('swingMode'), baseKeys: $('baseKeys'),
+  bName: $('bName'), bStats: $('bStats'), speed: $('speed'), pitchMenu: $('pitchMenu'), compass: $('compass'), help: $('help'), mode: $('swingMode'), baseKeys: $('baseKeys'),
   call: $('call'), toast: $('toast'),
 };
 
@@ -328,6 +328,7 @@ function doPitch(intent) {
 function startPitch(pitch, id, seed2) {
   S.pitch = pitch; S.pitchId = id; S.seed2 = seed2;
   S.mittPlayed = false; S.sentIntent = null; S.pendingIntent = null;
+  setTimeout(updateCompass, 0);
   ui.speed.classList.remove('show');
   S.phase = 'windup';
   S.windupAt = nowMs();
@@ -439,6 +440,7 @@ function playResult(pre, decision, out, next) {
 // ---- 打球が飛んだ後のプレー ----
 // 守備側を操作している人（CPUならホスト）の画面でプレーを動かし、相手には様子を送る
 function startLive(pre, hit, mid, steal) {
+  ui.compass.classList.remove('show');
   const fc = myCtrl(fieldTeam(pre));
   const auth = fc === 'me' || (fc === 'cpu' && isHost());
   const human = fc === 'me' && !S.autoField;
@@ -588,7 +590,7 @@ function renderView(v, dt) {
 
 function showSpeed() {
   if (!S.pitch) return;
-  ui.speed.innerHTML = `<span class="ty">${PITCHES[S.pitch.type].name}</span>${S.pitch.velo}<small>km/h</small>`;
+  ui.speed.innerHTML = `${S.pitch.velo}<small>km/h</small>`;
   ui.speed.classList.add('show');
 }
 
@@ -827,19 +829,58 @@ function updateHud() {
   ui.b3.classList.toggle('on', s.bases[2] != null);
 
   const pit = currentPitcher(s);
-  ui.pName.textContent = pit.name + (pit.throws === 'L' ? '（左）' : '（右）');
   const pl = Object.keys(pit.pitches).filter(k => k !== 'ST').map(k => `${PITCHES[k].short}${pit.pitches[k]}`).join(' ');
-  ui.pStats.innerHTML = `<span>球速<b>${pit.velo}</b></span><span>コン<b class="${rank(pit.control)}">${rank(pit.control)}</b></span><span>スタ<b class="${rank(pit.stamina)}">${rank(pit.stamina)}</b></span><span>${pl}</span>`;
+  ui.pName.innerHTML = `<span class="pos">P</span>${pit.name}<small>${pit.throws === 'L' ? '左投' : '右投'}</small><span class="pl">${pl}</span>`;
+  const bd = (lb, v) => `<span class="st"><i>${lb}</i><b class="rk ${rank(v)}">${rank(v)}</b></span>`;
+  ui.pStats.innerHTML = `<span class="st"><i>球速</i><b class="kmh">${pit.velo}<small>km/h</small></b></span>${bd('コントロール', pit.control)}${bd('スタミナ', pit.stamina)}`;
   ui.stamina.style.width = Math.round((1 - s.fatigue[fieldTeam(s)]) * 100) + '%';
   const { idx, player: b } = currentBatter(s);
-  ui.bName.innerHTML = `${idx + 1}番 ${b.name}` + (b.injured ? ' <span class="hurt">ケガ</span>' : '');
-  ui.bStats.innerHTML = ['meet', 'power', 'speed'].map((k, i) => `<span>${['ミート', 'パワー', '走力'][i]}<b class="${rank(b[k])}">${rank(b[k])}</b></span>`).join('') + `<span>${b.bats === 'L' ? '左打' : '右打'}</span>`;
+  const traj = Math.max(1, Math.min(4, 1 + Math.floor(b.power / 28)));
+  ui.bStats.innerHTML = `<span class="st"><i>弾道</i><b class="traj t${traj}">${traj}</b></span>` + ['meet', 'power', 'speed'].map((k, i) => `<span class="st"><i>${['ミート', 'パワー', '走力'][i]}</i><b class="rk ${rank(b[k])}">${rank(b[k])}</b></span>`).join('');
+  ui.bName.innerHTML = `<span class="ord">${idx + 1}</span><span class="pos">${b.pos || ''}</span>${b.name}<small>${b.bats === 'L' ? '左打' : '右打'}</small>` + (b.injured ? ' <span class="hurt">ケガ</span>' : '');
   updatePitchMenu();
   updateHelp();
   updateMode();
 }
 
+// 球種チャート：キャッチャーから見た変化の向きと変化量
+function updateCompass() {
+  const s = S.state;
+  if (!s || S.phase === 'play' || S.phase === 'change' || S.phase === 'over') { ui.compass.classList.remove('show'); return; }
+  const pit = currentPitcher(s), hand = pit.throws === 'L' ? -1 : 1;
+  const thrown = S.pitch && S.phase !== 'aim' ? S.pitch.type : null;
+  const sel = thrown || (iPitch() ? S.pitchType : null);
+  const R = 46, C = 60;
+  let svg = `<svg viewBox="0 0 120 120" width="120" height="120">
+    <circle cx="${C}" cy="${C}" r="${R + 8}" fill="rgba(10,30,70,.82)" stroke="#9fd0ff" stroke-width="2"/>
+    <circle cx="${C}" cy="${C}" r="${R * 0.55}" fill="none" stroke="rgba(159,208,255,.35)" stroke-width="1"/>
+    <line x1="${C - R - 4}" y1="${C}" x2="${C + R + 4}" y2="${C}" stroke="rgba(159,208,255,.3)"/><line x1="${C}" y1="${C - R - 4}" x2="${C}" y2="${C + R + 4}" stroke="rgba(159,208,255,.3)"/>`;
+  const list = pitchList(), keys = list.map((k, i) => i + 1);
+  list.forEach((k, i) => {
+    const d = PITCHES[k];
+    const lv = k === 'ST' ? 0 : pit.pitches[k];
+    let x = C, y = C;
+    if (k !== 'ST') {
+      const a = Math.atan2(-d.by, d.bx * hand);
+      // 点はいつも外周に、変化量は線の長さで
+      x = C + Math.cos(a) * R * 0.86; y = C + Math.sin(a) * R * 0.86;
+      const ll = R * (0.15 + 0.09 * lv);
+      svg += `<line x1="${C}" y1="${C}" x2="${C + Math.cos(a) * ll}" y2="${C + Math.sin(a) * ll}" stroke="${k === sel ? '#ffd43d' : 'rgba(255,255,255,.55)'}" stroke-width="${k === sel ? 5 : 4}" stroke-linecap="round"/>`;
+    }
+    const on = k === sel;
+    svg += `<g class="pk" data-k="${k}"><circle cx="${x}" cy="${y}" r="${k === 'ST' ? 10 : 9}" fill="${on ? '#ffd43d' : k === 'ST' ? '#ffffff' : '#2b6fd6'}" stroke="#fff" stroke-width="1.5"/>
+      <text x="${x}" y="${y + 4}" text-anchor="middle" font-size="11" font-weight="900" fill="${on ? '#4a2a00' : k === 'ST' ? '#0d1f3c' : '#fff'}">${k === 'ST' ? '直' : lv}</text></g>`;
+    if (iPitch() && S.phase === 'aim') svg += `<text x="${x + 10}" y="${y - 8}" font-size="8" font-weight="900" fill="#9fd0ff">${keys[i]}</text>`;
+  });
+  svg += '</svg>';
+  const label = sel ? PITCHES[sel].name : '球種';
+  ui.compass.innerHTML = svg + `<div class="lbl">${label}</div>`;
+  ui.compass.classList.add('show');
+  ui.compass.querySelectorAll('.pk').forEach(g => (g.onclick = () => { if (S.phase === 'aim' && iPitch()) { S.pitchType = g.dataset.k; updatePitchMenu(); } }));
+}
+
 function updatePitchMenu() {
+  updateCompass();
   if (!S.state || S.phase !== 'aim' || !iPitch()) { ui.pitchMenu.innerHTML = ''; return; }
   const pit = currentPitcher(S.state);
   ui.pitchMenu.innerHTML = pitchList().map((k, i) =>
