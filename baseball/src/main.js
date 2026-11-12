@@ -194,7 +194,7 @@ function setBatterStance(player) {
   b.holder.position.set(left ? 1.25 : -1.25, 0, -0.05);
   b.setGear('helmet', { flapLeft: !left });
   b.holder.rotation.y = left ? -Math.PI / 2 : Math.PI / 2;
-  b.play('Melee_2H_Idle', { fade: 0.2 });
+  b.play(left ? 'StanceL' : 'StanceR', { fade: 0.2 });
   bat.visible = true;
   S.swingStart = null;
 }
@@ -363,8 +363,8 @@ function showSwing(ts) {
   S.swingStart = nowMs();
   sfxSwing(S.decision && S.decision.power);
   const b = people.batter;
-  const len = b.clipLength('Melee_2H_Attack_Slice');
-  b.play('Melee_2H_Attack_Slice', { loop: false, restart: true, speed: (len * 0.42) / SWING_LAG, fade: 0.05 });
+  const left = b.holder.position.x > 0;
+  b.play(left ? 'SwingL' : 'SwingR', { loop: false, restart: true, speed: 0.1 / SWING_LAG, fade: 0.04 });
   S.swingShownAt = ts;
 }
 
