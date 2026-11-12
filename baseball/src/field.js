@@ -269,7 +269,7 @@ function drawFieldMap() {
 export function buildZone() {
   const g = new THREE.Group();
   const w = ZONE.x1 - ZONE.x0, h = ZONE.y1 - ZONE.y0;
-  const lineMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.35, depthTest: false });
+  const lineMat = new THREE.LineBasicMaterial({ color: 0xff5f8f, transparent: true, opacity: 0.85, depthTest: false });
   const pts = [];
   for (let i = 0; i <= 3; i += 3) {
     const xx = ZONE.x0 + w * i / 3, yy = ZONE.y0 + h * i / 3;

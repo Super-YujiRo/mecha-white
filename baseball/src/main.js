@@ -148,7 +148,7 @@ const SKIN = '#f2c6a0';
 const people = { fielders: {}, batter: null, runners: [], catcherBat: null };
 let bat = null;
 
-function lookOf(team) { return { shirt: team.color, sleeve: team.color2, pants: team.pants, skin: SKIN }; }
+function lookOf(team) { return { shirt: team.color, sleeve: team.color2, pants: team.pants, skin: SKIN, cap: team.cap || team.color, brim: team.cap || team.color }; }
 
 function makePeople() {
   for (const pos of POS_ORDER) {
@@ -192,6 +192,7 @@ function setBatterStance(player) {
   const left = player.bats === 'L';
   b.holder.visible = true;
   b.holder.position.set(left ? 1.25 : -1.25, 0, -0.05);
+  b.setGear('helmet', { flapLeft: !left });
   b.holder.rotation.y = left ? -Math.PI / 2 : Math.PI / 2;
   b.play('Melee_2H_Idle', { fade: 0.2 });
   bat.visible = true;
@@ -201,9 +202,15 @@ function setBatterStance(player) {
 function applyTeamsLook(s) {
   const bt = teamById(s.teamIds[batTeam(s)]);
   const ft = teamById(s.teamIds[fieldTeam(s)]);
-  for (const pos of POS_ORDER) people.fielders[pos].setLook(lookOf(ft));
+  const pL = currentPitcher(s).throws === 'L';
+  for (const pos of POS_ORDER) {
+    const f = people.fielders[pos];
+    f.setLook(lookOf(ft));
+    f.setGear('cap', { glove: true, gloveLeft: pos === 'P' ? !pL : true });
+  }
   people.batter.setLook(lookOf(bt));
-  for (const r of people.runners) r.setLook(lookOf(bt));
+  people.batter.setGear('helmet');
+  for (const r of people.runners) { r.setLook(lookOf(bt)); r.setGear('helmet'); }
 }
 
 function placeRunners(s) {

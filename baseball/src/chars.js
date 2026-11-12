@@ -23,11 +23,45 @@ export async function loadCharacters(onProgress) {
   }
   base.updateMatrixWorld(true);
   Object.assign(clips, buildCustomClips(base));
+  // 頭の大きさ（帽子・ヘルメットを合わせるため）
+  const hb = base.getObjectByName('head'), hm = base.getObjectByName('Mannequin_Medium_Head');
+  if (hb && hm) {
+    const hp = new THREE.Vector3(); hb.getWorldPosition(hp);
+    // スキンの変形後の頂点から実際の頭の大きさを測る
+    const bb = new THREE.Box3(), v = new THREE.Vector3(), pos = hm.geometry.attributes.position;
+    for (let i = 0; i < pos.count; i += 3) { hm.getVertexPosition(i, v); v.applyMatrix4(hm.matrixWorld); bb.expandByPoint(v); }
+    HEAD.w = bb.max.x - bb.min.x; HEAD.d = bb.max.z - bb.min.z; HEAD.top = bb.max.y - hp.y; HEAD.cz = (bb.max.z + bb.min.z) / 2 - hp.z;
+    HEAD.bb = [bb.min.toArray(), bb.max.toArray(), hp.toArray()];
+    HEAD.mat = hm.material;
+    HEAD.map = faceOnly(hm.material.map);
+  }
+  window.__HEAD = HEAD;
   const box = new THREE.Box3().setFromObject(base);
   baseHeight = box.max.y - box.min.y;
   base.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = false; o.frustumCulled = false; } });
 }
 
+const HEAD = { w: 0.5, d: 0.45, top: 0.45, cz: 0 };
+// 頭のテクスチャから色つきの模様を消して、顔の線（暗い部分）だけ残す
+function faceOnly(tex) {
+  if (!tex || !tex.image) return tex;
+  try {
+    const img = tex.image, c = document.createElement('canvas');
+    c.width = img.width; c.height = img.height;
+    const g = c.getContext('2d'); g.drawImage(img, 0, 0);
+    const d = g.getImageData(0, 0, c.width, c.height), a = d.data;
+    for (let i = 0; i < a.length; i += 4) {
+      const r = a[i], gg = a[i + 1], b = a[i + 2], mx = Math.max(r, gg, b), mn = Math.min(r, gg, b);
+      if (mx < 70) continue; // 目・口の線
+      const v = Math.min(255, 200 + (r + gg + b) / 3 * 0.2);
+      a[i] = a[i + 1] = a[i + 2] = mx - mn > 40 ? 235 : v;
+    }
+    g.putImageData(d, 0, 0);
+    const t = new THREE.CanvasTexture(c);
+    t.flipY = tex.flipY; t.colorSpace = tex.colorSpace; t.wrapS = tex.wrapS; t.wrapT = tex.wrapT;
+    return t;
+  } catch (e) { return tex; }
+}
 const matCache = new Map();
 function mat(color) {
   const key = color;
@@ -58,6 +92,72 @@ export class Player3D {
     this.cur = null;
     this.handR = this.root.getObjectByName('handr') || this.root.getObjectByName('wristr');
     this.handL = this.root.getObjectByName('handl') || this.root.getObjectByName('wristl');
+    this.gear = {};
+    this.buildGear();
+    this.setGear('cap');
+  }
+
+  // 帽子・ヘルメット・グラブ
+  buildGear() {
+    const head = this.root.getObjectByName('head');
+    if (!head) return;
+    const r = Math.max(HEAD.w, HEAD.d) * 0.53;
+    const mk = (helmet) => {
+      const g = new THREE.Group();
+      const crown = new THREE.Mesh(new THREE.SphereGeometry(r * (helmet ? 1.06 : 1), 28, 14, 0, Math.PI * 2, 0, Math.PI * (helmet ? 0.5 : 0.44)), mat('#ffffff'));
+      crown.scale.set(HEAD.w / (2 * r) * (helmet ? 1.12 : 1.1), helmet ? 0.8 : 0.66, HEAD.d / (2 * r) * (helmet ? 1.14 : 1.12));
+      crown.position.set(0, HEAD.top - r * (helmet ? 0.66 : 0.55), HEAD.cz);
+      g.add(crown);
+      const brimG = new THREE.CircleGeometry(r * (helmet ? 0.55 : 0.7), 24, 0, Math.PI);
+      const brim = new THREE.Mesh(brimG, mat('#ffffff'));
+      brim.material = brim.material.clone(); brim.material.side = THREE.DoubleSide;
+      brim.rotation.x = -Math.PI / 2 + 0.22; brim.rotation.z = Math.PI;
+      brim.scale.set(HEAD.w / (2 * r) * 0.9, 1, 0.9);
+      brim.position.set(0, crown.position.y + 0.005, HEAD.cz + HEAD.d * 0.42);
+      g.add(brim);
+      if (helmet) {
+        const flap = new THREE.Mesh(new THREE.SphereGeometry(r * 0.24, 12, 8), mat('#ffffff'));
+        flap.scale.set(0.35, 1, 1);
+        flap.position.set(HEAD.w * 0.55, crown.position.y - r * 0.4, HEAD.cz);
+        g.add(flap);
+        g.userData.flap = flap;
+      }
+      for (const m of g.children) m.castShadow = true;
+      g.userData.crown = crown; g.userData.brim = brim;
+      g.visible = false;
+      head.add(g);
+      return g;
+    };
+    this.gear.cap = mk(false);
+    this.gear.helmet = mk(true);
+    // グラブ（利き手と反対の手）
+    const glove = new THREE.Mesh(new THREE.SphereGeometry(0.14, 14, 10), mat('#8a5a2b'));
+    glove.scale.set(1.1, 1.3, 0.7);
+    glove.castShadow = true;
+    glove.visible = false;
+    this.gloveMesh = glove;
+    this.applyGearColor();
+  }
+  setGear(kind, { glove = false, gloveLeft = true, flapLeft = true } = {}) {
+    if (this.gear.cap) this.gear.cap.visible = kind === 'cap';
+    if (this.gear.helmet) { this.gear.helmet.visible = kind === 'helmet'; const f = this.gear.helmet.userData.flap; if (f) f.position.x = Math.abs(f.position.x) * (flapLeft ? 1 : -1); }
+    if (this.gloveMesh) {
+      const hand = gloveLeft ? this.handL : this.handR;
+      if (glove && hand && this.gloveMesh.parent !== hand) hand.add(this.gloveMesh);
+      this.gloveMesh.visible = !!glove;
+      // 手のひらの先あたりに
+      this.gloveMesh.position.set(0, 0.06, 0.02);
+    }
+  }
+  applyGearColor() {
+    const L = this.look || {};
+    const cap = L.cap || L.sleeve || L.shirt || '#223366', brim = L.brim || L.shirt || cap;
+    for (const k of ['cap', 'helmet']) {
+      const g = this.gear[k]; if (!g) continue;
+      g.userData.crown.material = mat(cap);
+      const bm = mat(brim).clone(); bm.side = THREE.DoubleSide; g.userData.brim.material = bm;
+      if (g.userData.flap) g.userData.flap.material = mat(cap);
+    }
   }
 
   setLook(look) {
@@ -66,11 +166,18 @@ export class Player3D {
       if (!o.isMesh || !o.name.startsWith('Mannequin')) return;
       const n = o.name;
       let c = look.shirt;
-      if (n.includes('Head')) c = look.skin;
+      if (n.includes('Head')) {
+        // 顔の模様（テクスチャ）は残して、肌の色をのせる
+        const key = 'head' + look.skin;
+        if (!matCache.has(key)) { const m = new THREE.MeshToonMaterial({ map: HEAD.map || (HEAD.mat && HEAD.mat.map), color: new THREE.Color(look.skin), gradientMap: toonRamp() }); matCache.set(key, m); }
+        o.material = matCache.get(key);
+        return;
+      }
       else if (n.includes('Leg')) c = look.pants;
       else if (n.includes('Arm')) c = look.sleeve || look.shirt;
       o.material = mat(c);
     });
+    if (this.gear) this.applyGearColor();
   }
 
   play(name, { loop = true, fade = 0.15, speed = 1, restart = false, clamp = true } = {}) {
