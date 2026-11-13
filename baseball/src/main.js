@@ -484,6 +484,7 @@ function startLive(pre, hit, mid, steal) {
   S.phase = 'play';
   S.stealShow = false;
   const opts = { human, steal: steal ? steal.bases : [], jump: steal ? steal.jump : null };
+  S.runSel = 0;
   S.live = { pre, mid, auth, human, runner, stealOnly: !hit, sim: auth ? new LivePlay(hit, playCtx(pre), opts) : null, view: null, prev: null, start: nowMs(), sentAt: 0, ended: false, runKey: null };
   ui.speed.classList.remove('show');
   bat.visible = true;
@@ -768,8 +769,12 @@ window.addEventListener('keydown', (e) => {
     if (dir !== undefined) { pickPitchDir(dir); e.preventDefault(); }
     if (e.code === 'Space' || e.code === 'Enter') throwLocal();
   } else if (S.phase === 'play' && S.live && S.live.runner) {
-    if (e.code === 'KeyE') runCommand('adv');
-    if (e.code === 'KeyQ') runCommand('ret');
+    // 矢印で走者を選ぶ（→一塁へ向かう走者 ↑二塁 ←三塁 ↓本塁）。選んでいなければ全員
+    const rb = { ArrowRight: 1, ArrowUp: 2, ArrowLeft: 3, ArrowDown: 4 }[e.code];
+    if (rb) { S.runSel = S.runSel === rb ? 0 : rb; toast(S.runSel ? ['', '一塁', '二塁', '三塁', '本塁'][rb] + 'へ向かう走者を選択' : '全員に指示', 900); e.preventDefault(); }
+    const sel = S.runSel ? ':' + S.runSel : '';
+    if (e.code === 'KeyE') runCommand('adv' + sel);
+    if (e.code === 'KeyQ') runCommand('ret' + sel);
   } else if (S.phase === 'play' && S.live && S.live.human) {
     const n = parseInt(e.key, 10);
     if (n >= 1 && n <= 4) S.live.throwKey = n;
@@ -972,7 +977,7 @@ function updatePitchMenu() {
 function updateHelp() {
   const s = S.state;
   if (!s) return;
-  if (S.phase === 'play' && S.live && S.live.runner) ui.help.innerHTML = '<b>走塁</b>　<b>E</b>：全員 次の塁へ進め　<b>Q</b>：全員 戻れ';
+  if (S.phase === 'play' && S.live && S.live.runner) ui.help.innerHTML = '<b>走塁</b>　<b>E</b>：進め　<b>Q</b>：戻れ（ふだんは全員）<br><b>矢印</b>で走者を選ぶ：→一塁 ↑二塁 ←三塁 ↓本塁へ向かう走者';
   else if (S.phase === 'play' && S.live && S.live.human) ui.help.innerHTML = '<b>守備</b>　<b>WASD</b>：移動（青い輪の選手。離すと自動でボールへ）　<b>スペース</b>：ダイブ　<b>F</b>：ジャンプ<br>送球：<b>→</b>一塁　<b>↑</b>二塁　<b>←</b>三塁　<b>↓</b>本塁（1〜4でも可）';
   else if (iPitch()) ui.help.innerHTML = '<b>投球</b>　マウス/WASD：コースをねらう<br><b>矢印キー</b>：曲がる方向で球種を選ぶ（同じ方向をもう一度でストレート）　<b>1〜' + pitchList().length + '</b>でも可<br><b>左クリック/スペース</b>：投げる（投球モーション中もコースを動かせる）';
   else if (iBat()) ui.help.innerHTML = '<b>打撃</b>　マウス：カーソル　<b>左クリック/スペース</b>：振る<br><b>右クリック/Shift</b>：ミート⇔強振　<b>B</b>：バントの構え（ボールに青いバットを合わせるだけ）<br><b>白い丸</b>：ボールが来る位置（変化球は曲がりに合わせて動く）<br><b>T</b>：盗塁　打ったあと <b>E</b>：進め　<b>Q</b>：戻れ<br>芯（カーソルの真ん中）の<b>上で打つとフライ・下で打つとゴロ</b>　WASD/矢印キーでも動かせます';

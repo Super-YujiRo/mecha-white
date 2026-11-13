@@ -94,8 +94,12 @@ export class LivePlay {
   // ---------- 攻撃側の走塁指示（E：進め　Q：戻れ） ----------
   runCmd(cmd) {
     let n = 0;
+    // 'adv:2' のように塁を付けると、その塁へ向かう走者だけに指示する
+    const [c0, selS] = String(cmd).split(':'); cmd = c0;
+    const sel = selS ? +selS : 0;
     // 先の走者から順に（追い越さないように）
-    const list = this.r.filter(R => !R.out && !R.scored && !R.idle).sort((a, b) => (b.seg + b.s) - (a.seg + a.s));
+    let list = this.r.filter(R => !R.out && !R.scored && !R.idle).sort((a, b) => (b.seg + b.s) - (a.seg + a.s));
+    if (sel) list = list.filter(R => Math.min(4, R.seg + 1) === sel || (R.state === 'run' && R.goal === sel));
     for (const R of list) {
       if (this.t < R.start) continue;
       if (cmd === 'adv') {
