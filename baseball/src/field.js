@@ -146,19 +146,58 @@ function buildStands(g) {
   stepMesh.instanceMatrix.needsUpdate = true;
   stepMesh.receiveShadow = true;
   g.add(stepMesh);
-  const inst = new THREE.InstancedMesh(new THREE.BoxGeometry(0.55, 0.75, 0.45), new THREE.MeshLambertMaterial({ color: 0xffffff }), crowd.length);
+  // 観客：服の胴体と頭（帽子をかぶった人も）
+  const body = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.2, 0.27, 0.55, 8), new THREE.MeshLambertMaterial({ color: 0xffffff }), crowd.length);
+  const head = new THREE.InstancedMesh(new THREE.SphereGeometry(0.17, 10, 8), new THREE.MeshLambertMaterial({ color: 0xffffff }), crowd.length);
   const col = new THREE.Color();
-  const palette = [0xffd166, 0xef476f, 0x118ab2, 0x06d6a0, 0xffffff, 0xff9f1c, 0x1d6fd8, 0xf4a261, 0x8ecae6, 0xe63946];
+  const palette = [0xffd166, 0xef476f, 0x118ab2, 0x06d6a0, 0xffffff, 0xff9f1c, 0x1d6fd8, 0xf4a261, 0x8ecae6, 0xe63946, 0xffffff, 0x2b2d42];
+  const skins = [0xf2c6a0, 0xe8b48a, 0xf6d2b4, 0xd9a07a];
+  const hair = [0x2b1d14, 0x3a2a1c, 0x1b1b1b, 0x5a3a22];
+  const caps = [0xff9f1c, 0x1d6fd8, 0xe63946, 0xffffff];
   crowd.forEach((c, i) => {
+    const h = ((i * 2654435761) >>> 0);
+    c.h = 0.92 + (h % 7) / 40; c.ph = (h % 1000) / 1000 * Math.PI * 2; c.i = i;
     q.setFromAxisAngle(up, c.a);
-    m.compose(new THREE.Vector3(c.x, c.y, c.z), q, new THREE.Vector3(1, 0.9 + ((i * 37) % 7) / 20, 1));
-    inst.setMatrixAt(i, m);
-    inst.setColorAt(i, col.setHex(palette[((i * 2654435761) >>> 0) % palette.length]));
+    m.compose(new THREE.Vector3(c.x, c.y - 0.1, c.z), q, new THREE.Vector3(1, c.h, 1));
+    body.setMatrixAt(i, m);
+    body.setColorAt(i, col.setHex(palette[h % palette.length]));
+    m.compose(new THREE.Vector3(c.x, c.y + 0.32 * c.h, c.z), q, new THREE.Vector3(1, 1, 1));
+    head.setMatrixAt(i, m);
+    const capped = (h >> 5) % 3 === 0;
+    head.setColorAt(i, col.setHex(capped ? caps[(h >> 8) % caps.length] : ((h >> 9) % 3 === 0 ? hair[(h >> 3) % hair.length] : skins[(h >> 3) % skins.length])));
   });
-  inst.instanceMatrix.needsUpdate = true;
-  g.add(inst);
-  g.userData.crowd = inst;
+  body.instanceMatrix.needsUpdate = true; head.instanceMatrix.needsUpdate = true;
+  g.add(body, head);
+  g.userData.crowd = { body, head, list: crowd, cheer: 0, t: 0 };
   g.userData.crowdBase = crowd;
+}
+
+// 観客：盛り上がると立ち上がって跳ねる
+export function cheerCrowd(g, level = 1) {
+  const C = g.userData.crowd; if (!C) return;
+  C.cheer = Math.max(C.cheer, 1.6 + level * 2.2); C.level = Math.max(C.level || 0, level);
+}
+const _m = new THREE.Matrix4(), _q2 = new THREE.Quaternion(), _p = new THREE.Vector3(), _s = new THREE.Vector3(1, 1, 1), _up2 = new THREE.Vector3(0, 1, 0);
+export function updateCrowd(g, dt) {
+  const C = g.userData.crowd; if (!C) return;
+  if (C.cheer <= 0 && !C.dirty) return;
+  C.t += dt;
+  const on = C.cheer > 0;
+  C.cheer = Math.max(0, C.cheer - dt);
+  C.dirty = on;
+  const amp = on ? Math.min(1, C.cheer) * (0.12 + 0.18 * Math.min(1, C.level || 1)) : 0;
+  if (!on) C.level = 0;
+  const L = C.list;
+  for (let i = 0; i < L.length; i++) {
+    const c = L[i];
+    const j = amp * Math.max(0, Math.sin(C.t * 11 + c.ph));
+    _q2.setFromAxisAngle(_up2, c.a);
+    _s.set(1, c.h, 1);
+    _m.compose(_p.set(c.x, c.y - 0.1 + j, c.z), _q2, _s); C.body.setMatrixAt(i, _m);
+    _s.set(1, 1, 1);
+    _m.compose(_p.set(c.x, c.y + 0.32 * c.h + j, c.z), _q2, _s); C.head.setMatrixAt(i, _m);
+  }
+  C.body.instanceMatrix.needsUpdate = true; C.head.instanceMatrix.needsUpdate = true;
 }
 
 function skyTexture() {

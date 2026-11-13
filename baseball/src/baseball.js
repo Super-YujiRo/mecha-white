@@ -90,6 +90,7 @@ export const TIMING_WIN = 0.17;   // 当たるタイミングの幅（±）
 export function judgeSwing(pitch, batter, swing, seed) {
   const r = rng(seed);
   const at = pitchPos(pitch, pitch.T);
+  if (swing.bunt) return judgeBunt(pitch, batter, swing, r, at);
   const { rx, ry } = cursorSize(batter, swing.power);
   const dt = swing.ts + SWING_LAG - pitch.T;
   // ボールが少しでもカーソルに掛かれば当たる
@@ -120,6 +121,34 @@ export function judgeSwing(pitch, batter, swing, seed) {
   let phi = -dt / TIMING_WIN * 0.9 * hand;           // 早い→引っ張り（早すぎ・遅すぎはファウル）
   phi += -ox * 0.12 * hand + gauss(r) * 0.07;
   return { v: launchVec(ev / 3.6, la, phi), ev, la, phi, q, dt, d };
+}
+
+// バント：構えたバット（ミートカーソルより横に広い）にボールが当たれば転がる
+export function buntSize(batter) {
+  const { rx, ry } = cursorSize(batter, false);
+  return { rx: rx * 1.45, ry: ry * 0.9 };
+}
+export function buntTouches(pitch, batter, cx, cy) {
+  const at = pitchPos(pitch, pitch.T), { rx, ry } = buntSize(batter);
+  return Math.hypot((at.x - cx) / (rx + BALL_R), (at.y - cy) / (ry + BALL_R)) <= 1;
+}
+function judgeBunt(pitch, batter, swing, r, at) {
+  const { rx, ry } = buntSize(batter);
+  const ox = (at.x - swing.cx) / (rx + BALL_R), oy = (at.y - swing.cy) / (ry + BALL_R);
+  const d = Math.hypot(ox, oy);
+  if (d > 1) return { miss: true, dt: 0, d };
+  const hand = batter.bats === 'L' ? -1 : 1;
+  // 端で当てるとファウルになりやすい
+  if (r() < 0.12 + Math.max(0, d - 0.55) * 0.9) {
+    const phi = (r() < 0.5 ? -1 : 1) * (0.85 + r() * 0.5);
+    return { foulTip: true, bunt: true, v: launchVec(8 + r() * 8, oy > 0.3 ? 35 + r() * 30 : -8 + r() * 10, phi), q: 0.05, dt: 0, d };
+  }
+  const ev = (22 + r() * 16) * (1 - d * 0.25);
+  let la = -14 - oy * 12 + (r() - 0.5) * 10;
+  la = Math.max(-30, Math.min(25, la));
+  let phi = -ox * 0.55 * hand + (r() - 0.5) * 0.35;
+  phi = Math.max(-0.7, Math.min(0.7, phi));
+  return { v: launchVec(ev / 3.6, la, phi), ev, la, phi, q: 0.2, dt: 0, d, bunt: true };
 }
 
 function launchVec(speed, laDeg, phi) {

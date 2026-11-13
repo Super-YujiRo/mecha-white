@@ -56,6 +56,7 @@ export async function loadCharacters(onProgress) {
     HEAD.map = faceOnly(hm.material.map);
   }
   window.__HEAD = HEAD;
+  squashHair(base);
   const box = new THREE.Box3().setFromObject(base);
   baseHeight = box.max.y - box.min.y;
   base.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = false; o.frustumCulled = false; } });
@@ -63,6 +64,32 @@ export async function loadCharacters(onProgress) {
 
 const HEAD = { w: 0.5, d: 0.45, top: 0.45, cz: 0 };
 const BODY = { map: null, mat: null };
+// 帽子をかぶる体は、帽子からはみ出す髪を帽子の内側に収める
+function squashHair(base) {
+  const m = base.getObjectByName('Player_Body'), hb = base.getObjectByName('head');
+  if (!m || !hb || !HEAD.w) return;
+  const hp = hb.getWorldPosition(new THREE.Vector3());
+  const r = Math.max(HEAD.w, HEAD.d) * 0.53;
+  const a = HEAD.w / 2 * 0.98, b = r * 0.85, c = HEAD.d / 2 * 1.08;
+  const cy = hp.y + HEAD.top - r * 0.85, cz = hp.z + HEAD.cz;
+  const rim = cy + b * Math.cos(Math.PI * 0.44);
+  const P = m.geometry.attributes.position, si = m.geometry.attributes.skinIndex, sw = m.geometry.attributes.skinWeight;
+  const hi = m.skeleton.bones.indexOf(hb);
+  for (let i = 0; i < P.count; i++) {
+    if (si.getX(i) !== hi || sw.getX(i) < 0.5) continue;
+    let x = P.getX(i), y = P.getY(i), z = P.getZ(i);
+    if (y < rim - 0.1) continue;
+    const dx = x / a, dy = Math.max(0, y - cy) / b, dz = (z - cz) / c;
+    const e = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    // 帽子の縁より上はしっかり、縁の少し下はゆるく内側へ
+    const lim = y >= rim ? 0.93 : 0.93 + (rim - y) / 0.1 * 0.12;
+    if (e <= lim) continue;
+    const k = lim / e;
+    P.setXYZ(i, x * k, y >= cy ? cy + (y - cy) * k : y, cz + (z - cz) * k);
+  }
+  P.needsUpdate = true;
+  m.geometry.computeVertexNormals();
+}
 // 頭の大きさを測るために、取り付けたモデルの頭の部分だけを見る
 function headPart(base) {
   const m = base.getObjectByName('Player_Body'), hb = base.getObjectByName('head');

@@ -1,11 +1,11 @@
 import * as THREE from 'three';
 import { TEAMS, PITCHES, rank, battingOrder } from './data.js';
-import { pitchPos, predictPlate, cursorSize, ZONE, RUBBER_Z, SWING_LAG, BASES, BALL_R, rng } from './baseball.js';
+import { pitchPos, predictPlate, cursorSize, buntSize, buntTouches, ZONE, RUBBER_Z, SWING_LAG, BASES, BALL_R, rng } from './baseball.js';
 import { POSITIONS, POS_ORDER } from './play.js';
 import { LivePlay, ACT } from './live.js';
 import { turnAt } from './anims.js';
 import { newState, currentBatter, currentPitcher, batTeam, fieldTeam, teamById, cpuPitchIntent, cpuSwing, resolvePitch, pitchFor, applyPlay, playCtx, runnersOf } from './game.js';
-import { buildField, buildZone, buildCursor, buildAim, buildBat } from './field.js';
+import { buildField, buildZone, buildCursor, buildAim, buildBat, cheerCrowd, updateCrowd } from './field.js';
 import { loadCharacters, Player3D } from './chars.js';
 const BAT_CAM = { pos: [0, 1.55, 4.2], look: [0, 0.9, -18], fov: 40, fovPortrait: 62 };
 import { Net } from './net.js';
@@ -121,8 +121,9 @@ function callSound(text) {
   if (/アウト|ゲッツー|失敗/.test(text)) sfxCue('out');
   else if (/セーフ|成功/.test(text)) sfxCue('safe');
   if (/スライディング/.test(text)) sfxSlide();
-  if (/ホームラン/.test(text)) sfxCheer(1, 4.5);
-  else if (/ホームイン|ナイスキャッチ|スリーベース|ツーベース/.test(text)) sfxCheer(0.7, 2.6);
+  if (/ホームラン/.test(text)) { sfxCheer(1, 4.5); cheerCrowd(field, 1.4); }
+  else if (/ホームイン|ナイスキャッチ|スリーベース|ツーベース/.test(text)) { sfxCheer(0.7, 2.6); cheerCrowd(field, 0.8); }
+  else if (/ヒット|サヨナラ|ゲームセット|三振/.test(text)) cheerCrowd(field, 0.5);
 }
 function showCall(text, color = '#fff', big = false) {
   callSound(text);
@@ -165,7 +166,7 @@ function makePeople() {
     r.holder.visible = false;
     people.runners.push(r);
   }
-  bat = buildBat();
+  bat = buildBat(); bat.scale.setScalar(BAT_SCALE);
   scene.add(bat);
 }
 
@@ -195,6 +196,7 @@ function setBatterStance(player) {
   b.holder.position.set(left ? 1.25 : -1.25, 0, -0.05);
   b.setGear('helmet', { flapLeft: !left });
   b.holder.rotation.y = left ? -Math.PI / 2 : Math.PI / 2;
+  S.buntMode = false; updateMode();
   b.play(left ? 'StanceL' : 'StanceR', { fade: 0.2 });
   bat.visible = true;
   S.swingStart = null;
@@ -357,6 +359,7 @@ function localSwing(power) {
   if (S.phase !== 'flight' && S.phase !== 'windup') return;
   const ts = (nowMs() - S.t0) / 1000;
   if (ts < -0.1) return;
+  if (S.buntMode) return;
   const sw = { ts, cx: S.cursor.x, cy: S.cursor.y, power: power == null ? S.powerMode : !!power };
   S.decision = sw;
   showSwing(ts);
@@ -368,6 +371,7 @@ function showSwing(ts) {
   sfxSwing(S.decision && S.decision.power);
   const b = people.batter;
   const left = b.holder.position.x > 0;
+  if (S.decision && S.decision.bunt) return;
   b.play(left ? 'SwingL' : 'SwingR', { loop: false, restart: true, speed: 0.1 / SWING_LAG, fade: 0.04 });
   S.swingShownAt = ts;
 }
@@ -420,6 +424,7 @@ function playResult(pre, decision, out, next) {
   S.nextState = next;
   const t = nowMs();
   showSpeed();
+  updateCompass();
   if (out.kind === 'CONTACT') {
     startLive(pre, out.hit, next, out.steal);
     hitFx(out.hit, decision);
@@ -469,10 +474,10 @@ function liveInput() {
   const fl = Math.hypot(fx, fz) || 1; fx /= fl; fz /= fl;
   const rx = -fz, rz = fx;
   let mx = 0, mz = 0;
-  if (keys.KeyW || keys.ArrowUp) { mx += fx; mz += fz; }
-  if (keys.KeyS || keys.ArrowDown) { mx -= fx; mz -= fz; }
-  if (keys.KeyD || keys.ArrowRight) { mx += rx; mz += rz; }
-  if (keys.KeyA || keys.ArrowLeft) { mx -= rx; mz -= rz; }
+  if (keys.KeyW) { mx += fx; mz += fz; }
+  if (keys.KeyS) { mx -= fx; mz -= fz; }
+  if (keys.KeyD) { mx += rx; mz += rz; }
+  if (keys.KeyA) { mx -= rx; mz -= rz; }
   const ml = Math.hypot(mx, mz);
   const inp = { move: ml ? { x: mx / ml, z: mz / ml } : null, throwTo: L.throwKey || null, dive: !!L.diveKey, jump: !!L.jumpKey, run };
   L.throwKey = null; L.diveKey = false; L.jumpKey = false;
@@ -645,6 +650,7 @@ function hitFx(h, dec) {
 // ================= バット（スイングに合わせて動かす） =================
 const _v = new THREE.Vector3(), _f = new THREE.Vector3(), _c = new THREE.Vector3(0, 0, 1), _up = new THREE.Vector3(0, 1, 0), _d = new THREE.Vector3();
 const _q = new THREE.Quaternion();
+const BAT_SCALE = 1.3, BAT_LEN = 0.865 * BAT_SCALE;
 function updateBat(now) {
   if (!bat || !bat.visible || !people.batter) return;
   const b = people.batter;
@@ -658,11 +664,20 @@ function updateBat(now) {
     if (st <= SWING_LAG) { th = 95 - 95 * e1; el = 50 - 57 * e1; }
     else { const k2 = Math.min(1, (st - SWING_LAG) / 0.22); th = -170 * (1 - (1 - k2) * (1 - k2)); el = -7 + 45 * k2; }
   }
+  const bunting = (S.buntMode && !S.decision) || (S.decision && S.decision.bunt);
+  if (bunting && S.swingStart == null) {
+    // バント：バットを寝かせて、芯をカーソルの位置に
+    _d.set(_f.x, 0.06, 0.05).normalize();
+    bat.position.set(S.cursor.x, S.cursor.y, 0.05).addScaledVector(_d, -BAT_LEN * 0.62);
+    _q.setFromUnitVectors(_up, _d);
+    bat.quaternion.copy(_q);
+    return;
+  }
   const t = th * Math.PI / 180, e = el * Math.PI / 180;
   _d.copy(_f).multiplyScalar(Math.cos(t)).addScaledVector(_c, Math.sin(t)).multiplyScalar(Math.cos(e)).addScaledVector(_up, Math.sin(e)).normalize();
-  const hand = b.handR || b.root;
+  const hand = (left ? b.handL : b.handR) || b.root;
   hand.getWorldPosition(_v);
-  bat.position.copy(_v).addScaledVector(_d, -0.06);
+  bat.position.copy(_v).addScaledVector(_d, -0.08);
   _q.setFromUnitVectors(_up, _d);
   bat.quaternion.copy(_q);
 }
@@ -719,6 +734,8 @@ window.addEventListener('keydown', (e) => {
     if (n >= 1 && n <= list.length) { S.pitchType = list[n - 1]; updatePitchMenu(); }
     if (e.code === 'KeyQ') cyclePitch(-1);
     if (e.code === 'KeyE') cyclePitch(1);
+    const dir = { ArrowRight: 0, ArrowDown: Math.PI / 2, ArrowLeft: Math.PI, ArrowUp: -Math.PI / 2 }[e.code];
+    if (dir !== undefined) { pickPitchDir(dir); e.preventDefault(); }
     if (e.code === 'Space' || e.code === 'Enter') throwLocal();
   } else if (S.phase === 'play' && S.live && S.live.runner) {
     if (e.code === 'KeyE') runCommand('adv');
@@ -727,12 +744,16 @@ window.addEventListener('keydown', (e) => {
     const n = parseInt(e.key, 10);
     if (n >= 1 && n <= 4) S.live.throwKey = n;
     if (e.code === 'Digit0' || e.code === 'Numpad0') S.live.throwKey = 4;
+    // パワプロと同じく、方向で送球先（→一塁 ↑二塁 ←三塁 ↓本塁）
+    const tb = { ArrowRight: 1, ArrowUp: 2, ArrowLeft: 3, ArrowDown: 4 }[e.code];
+    if (tb) { S.live.throwKey = tb; e.preventDefault(); }
     if (e.code === 'Space') { S.live.diveKey = true; e.preventDefault(); }
     if (e.code === 'KeyF') S.live.jumpKey = true;
   } else if (iBat()) {
     if (e.code === 'Space' || e.code === 'Enter') { localSwing(); e.preventDefault(); }
     if (e.code === 'KeyT') declareSteal();
     if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyR') toggleMode();
+    if (e.code === 'KeyB') toggleBunt();
   }
 });
 window.addEventListener('keyup', (e) => { keys[e.code] = false; });
@@ -749,24 +770,34 @@ function pointerToPlate() {
 
 function toggleMode() {
   if (!iBat() || S.decision) return;
-  S.powerMode = !S.powerMode;
+  S.powerMode = !S.powerMode; S.buntMode = false;
   updateMode();
+}
+// バントの構え（B）：もう一度押すと戻す
+function toggleBunt() {
+  if (!iBat() || S.decision) return;
+  S.buntMode = !S.buntMode;
+  updateMode();
+  const b = people.batter, left = b.holder.position.x > 0;
+  b.play(S.buntMode ? (left ? 'BuntL' : 'BuntR') : (left ? 'StanceL' : 'StanceR'), { fade: 0.15 });
 }
 function updateMode() {
   const on = iBat() && S.state && S.phase !== 'play' && S.phase !== 'change' && S.phase !== 'over';
   ui.mode.classList.toggle('hidden', !on);
-  ui.mode.classList.toggle('power', S.powerMode);
-  ui.mode.innerHTML = S.powerMode ? '強振' : 'ミート';
+  ui.mode.classList.toggle('power', S.powerMode && !S.buntMode);
+  ui.mode.classList.toggle('bunt', !!S.buntMode);
+  ui.mode.innerHTML = S.buntMode ? 'バント' : S.powerMode ? '強振' : 'ミート';
 }
 
 function keyMove(dt) {
   if (S.phase === 'play') return;
   const sp = 1.9 * dt;
   let dx = 0, dy = 0;
-  if (keys.KeyA || keys.ArrowLeft) dx -= sp;
-  if (keys.KeyD || keys.ArrowRight) dx += sp;
-  if (keys.KeyW || keys.ArrowUp) dy += sp;
-  if (keys.KeyS || keys.ArrowDown) dy -= sp;
+  const ar = !iPitch();
+  if (keys.KeyA || (ar && keys.ArrowLeft)) dx -= sp;
+  if (keys.KeyD || (ar && keys.ArrowRight)) dx += sp;
+  if (keys.KeyW || (ar && keys.ArrowUp)) dy += sp;
+  if (keys.KeyS || (ar && keys.ArrowDown)) dy -= sp;
   if (!dx && !dy) return;
   const t = iBat() ? S.cursor : iPitch() ? S.aim : null;
   if (!t) return;
@@ -777,6 +808,23 @@ function keyMove(dt) {
 function pitchList() {
   const pit = currentPitcher(S.state);
   return ['ST', ...Object.keys(pit.pitches).filter(k => k !== 'ST')];
+}
+// パワプロのように、曲がる方向のキーで球種を選ぶ（同じキーをもう一度でストレート／同じ方向の別の球種）
+function pitchAngle(k) {
+  const pit = currentPitcher(S.state), hand = pit.throws === 'L' ? -1 : 1, d = PITCHES[k];
+  return Math.atan2(-d.by, d.bx * hand);
+}
+function pickPitchDir(dir) {
+  const near = pitchList().filter(k => k !== 'ST').map(k => {
+    let a = Math.abs(pitchAngle(k) - dir); if (a > Math.PI) a = Math.PI * 2 - a;
+    return { k, a };
+  }).filter(o => o.a < Math.PI * 0.4).sort((x, y) => x.a - y.a).map(o => o.k);
+  if (!near.length) S.pitchType = 'ST';
+  else {
+    const i = near.indexOf(S.pitchType);
+    S.pitchType = i < 0 ? near[0] : i + 1 < near.length ? near[i + 1] : 'ST';
+  }
+  updatePitchMenu();
 }
 function cyclePitch(d) {
   const list = pitchList();
@@ -850,7 +898,9 @@ function updateCompass() {
   const s = S.state;
   if (!s || S.phase === 'play' || S.phase === 'change' || S.phase === 'over') { ui.compass.classList.remove('show'); return; }
   const pit = currentPitcher(s), hand = pit.throws === 'L' ? -1 : 1;
-  const thrown = S.pitch && S.phase !== 'aim' ? S.pitch.type : null;
+  // 打者側には、投げた球種は投球が終わるまで見せない（パワプロと同じ）
+  const reveal = iPitch() || S.phase === 'result' || !iBat();
+  const thrown = S.pitch && S.phase !== 'aim' && reveal ? S.pitch.type : null;
   const sel = thrown || (iPitch() ? S.pitchType : null);
   const R = 46, C = 60;
   let svg = `<svg viewBox="0 0 120 120" width="120" height="120">
@@ -893,9 +943,9 @@ function updateHelp() {
   const s = S.state;
   if (!s) return;
   if (S.phase === 'play' && S.live && S.live.runner) ui.help.innerHTML = '<b>走塁</b>　<b>E</b>：全員 次の塁へ進め　<b>Q</b>：全員 戻れ';
-  else if (S.phase === 'play' && S.live && S.live.human) ui.help.innerHTML = '<b>守備</b>　<b>WASD</b>：移動（青い輪の選手。離すと自動でボールへ）　<b>スペース</b>：ダイブ　<b>F</b>：ジャンプ<br><b>1</b>：一塁　<b>2</b>：二塁　<b>3</b>：三塁　<b>4</b>：本塁へ送球';
-  else if (iPitch()) ui.help.innerHTML = '<b>投球</b>　マウス：コースをねらう<br><b>1〜' + pitchList().length + ' / ホイール</b>：球種　<br><b>左クリック/スペース</b>：投げる（投球モーション中もコースを動かせる）';
-  else if (iBat()) ui.help.innerHTML = '<b>打撃</b>　マウス：カーソル　<b>左クリック/スペース</b>：振る<br><b>右クリック/Shift</b>：ミート⇔強振 切り替え<br><b>白い丸</b>：ボールが来る位置（変化球は曲がりに合わせて動く）<br><b>T</b>：盗塁　打ったあと <b>E</b>：進め　<b>Q</b>：戻れ<br>芯（カーソルの真ん中）の<b>上で打つとフライ・下で打つとゴロ</b>　WASD/矢印キーでも動かせます';
+  else if (S.phase === 'play' && S.live && S.live.human) ui.help.innerHTML = '<b>守備</b>　<b>WASD</b>：移動（青い輪の選手。離すと自動でボールへ）　<b>スペース</b>：ダイブ　<b>F</b>：ジャンプ<br>送球：<b>→</b>一塁　<b>↑</b>二塁　<b>←</b>三塁　<b>↓</b>本塁（1〜4でも可）';
+  else if (iPitch()) ui.help.innerHTML = '<b>投球</b>　マウス/WASD：コースをねらう<br><b>矢印キー</b>：曲がる方向で球種を選ぶ（同じ方向をもう一度でストレート）　<b>1〜' + pitchList().length + '</b>でも可<br><b>左クリック/スペース</b>：投げる（投球モーション中もコースを動かせる）';
+  else if (iBat()) ui.help.innerHTML = '<b>打撃</b>　マウス：カーソル　<b>左クリック/スペース</b>：振る<br><b>右クリック/Shift</b>：ミート⇔強振　<b>B</b>：バントの構え（ボールに青いバットを合わせるだけ）<br><b>白い丸</b>：ボールが来る位置（変化球は曲がりに合わせて動く）<br><b>T</b>：盗塁　打ったあと <b>E</b>：進め　<b>Q</b>：戻れ<br>芯（カーソルの真ん中）の<b>上で打つとフライ・下で打つとゴロ</b>　WASD/矢印キーでも動かせます';
   else ui.help.innerHTML = '観戦中';
   if (!S.helpOpen) ui.help.innerHTML = '<b>H</b>：操作説明　<b>M</b>：音のオン/オフ';
   // ミート/強振の表示は説明の上に
@@ -962,6 +1012,7 @@ function frame() {
     for (const pos in people.fielders) people.fielders[pos].update(dt);
     if (people.batter) { people.batter.update(dt); people.batter.holder.updateMatrixWorld(true); updateBat(nowMs()); }
     for (const r of people.runners) r.update(dt);
+    updateCrowd(field, dt);
     updateCamera(dt, now);
     updateFlash(now);
     if (TEST && window.__holdFrame) break;
@@ -979,12 +1030,14 @@ function step(now, dt) {
   zone.visible = S.phase !== 'play' && S.phase !== 'change' && S.phase !== 'over';
   if (showCursor) {
     const pw = S.decision ? S.decision.power : S.powerMode;
-    const { rx, ry } = cursorSize(currentBatter(s).player, pw);
+    const bu = S.decision ? !!S.decision.bunt : !!S.buntMode;
+    const { rx, ry } = bu ? buntSize(currentBatter(s).player) : cursorSize(currentBatter(s).player, pw);
     cursor.position.set(S.cursor.x, S.cursor.y, 0.02);
     cursor.scale.set(rx, ry, 1);
-    cursor.userData.ring.material.color.set(pw ? 0xff4a3d : 0xffd43d);
-    cursor.userData.fill.material.color.set(pw ? 0xff7a6a : 0xffe27a);
-    cursor.userData.line.material.color.set(pw ? 0xff4a3d : 0xffd43d);
+    const cc = bu ? 0x5ad1ff : pw ? 0xff4a3d : 0xffd43d;
+    cursor.userData.ring.material.color.set(cc);
+    cursor.userData.fill.material.color.set(bu ? 0x9be4ff : pw ? 0xff7a6a : 0xffe27a);
+    cursor.userData.line.material.color.set(cc);
     cursor.userData.ring.material.opacity = S.decision ? 0.4 : 0.95;
   }
   aim.visible = iPitch() && S.phase === 'aim';
@@ -1057,6 +1110,15 @@ function step(now, dt) {
         const k = 1 - Math.exp(-dt * 2.2);
         S.cursor.x += (e.x - S.cursor.x) * k;
         S.cursor.y += (e.y - S.cursor.y) * k;
+      }
+      // バントの構え：バットにボールが当たれば転がす（当たらなければ見送り）
+      if (S.buntMode && iBat() && S.decision === undefined && t >= p.T - SWING_LAG - 0.004) {
+        const bp = currentBatter(s).player;
+        if (buntTouches(p, bp, S.cursor.x, S.cursor.y)) {
+          const sw = { ts: p.T - SWING_LAG, cx: S.cursor.x, cy: S.cursor.y, power: false, bunt: true };
+          S.decision = sw;
+          if (!isHost()) send({ t: 'swing', id: S.pitchId, sw });
+        }
       }
       // テスト用：自動で芯を打つ
       if (S.autoSwing && iBat() && S.decision === undefined && t >= p.T - SWING_LAG - 0.004) {
