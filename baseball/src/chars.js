@@ -24,6 +24,13 @@ export async function loadCharacters(onProgress) {
     const pm = await loader.loadAsync('./assets/player.glb');
     fit = fitModel(base, pm.scene);
     BODY.map = fit.mesh.material.map; BODY.mat = fit.mesh.material;
+    try {
+      const hm = await loader.loadAsync('./assets/player_helmet.glb');
+      const h = fitModel(base, hm.scene, { ref: fit, name: 'Player_Helmet' });
+      BODY.hmap = h.mesh.material.map; h.mesh.visible = false;
+      const hm2 = fitModel(base, hm.scene, { ref: fit, name: 'Player_HelmetM', mirror: true });
+      hm2.mesh.visible = false;
+    } catch (e) { }
   } catch (e) { console.warn('player model', e); }
   for (let i = 1; i < results.length; i++) for (const c of results[i].animations) {
     c.tracks = c.tracks.filter(t => !t.name.startsWith('handslot'));
@@ -66,9 +73,9 @@ function headPart(base) {
 }
 // 青い部分（帽子・ライン・ベルト・ソックス・靴）をチームの色に塗り替えたテクスチャ
 const recolorCache = new Map();
-function recolored(tex, color) {
+function recolored(tex, color, tag = '') {
   if (!tex || !tex.image) return tex;
-  const key = color;
+  const key = tag + color;
   if (recolorCache.has(key)) return recolorCache.get(key);
   let out = tex;
   try {
@@ -193,8 +200,11 @@ export class Player3D {
     this.applyGearColor();
   }
   setGear(kind, { glove = false, gloveLeft = true, flapLeft = true } = {}) {
+    const hb = this.root.getObjectByName('Player_Helmet'), hm = this.root.getObjectByName('Player_HelmetM'), cb = this.root.getObjectByName('Player_Body');
+    const useH = !!(hb && kind === 'helmet');
+    if (hb && cb) { hb.visible = useH && (flapLeft || !hm); cb.visible = !useH; if (hm) hm.visible = useH && !flapLeft; }
     if (this.gear.cap) this.gear.cap.visible = kind === 'cap';
-    if (this.gear.helmet) { this.gear.helmet.visible = kind === 'helmet'; const f = this.gear.helmet.userData.flap; if (f) f.position.x = Math.abs(f.position.x) * (flapLeft ? 1 : -1); }
+    if (this.gear.helmet) { this.gear.helmet.visible = kind === 'helmet' && !useH; const f = this.gear.helmet.userData.flap; if (f) f.position.x = Math.abs(f.position.x) * (flapLeft ? 1 : -1); }
     if (this.gloveMesh) {
       const hand = gloveLeft ? this.handL : this.handR;
       if (glove && hand && this.gloveMesh.parent !== hand) hand.add(this.gloveMesh);
@@ -220,6 +230,11 @@ export class Player3D {
       if (o.isMesh && o.name === 'Player_Body' && BODY.map) {
         const key = 'body' + look.shirt;
         if (!matCache.has(key)) matCache.set(key, new THREE.MeshToonMaterial({ map: recolored(BODY.map, look.shirt), gradientMap: toonRamp() }));
+        o.material = matCache.get(key);
+      }
+      if (o.isMesh && (o.name === 'Player_Helmet' || o.name === 'Player_HelmetM') && BODY.hmap) {
+        const key = 'helm' + look.shirt;
+        if (!matCache.has(key)) matCache.set(key, new THREE.MeshToonMaterial({ map: recolored(BODY.hmap, look.shirt, 'h'), gradientMap: toonRamp() }));
         o.material = matCache.get(key);
       }
       if (!o.isMesh || !o.name.startsWith('Mannequin')) return;

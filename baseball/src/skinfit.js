@@ -6,7 +6,7 @@ export function fitModel(base, model, opt = {}) {
   base.updateMatrixWorld(true);
   const bones = {};
   base.traverse(o => { if (o.isBone) bones[o.name] = o; });
-  const old = base.getObjectByName('Mannequin_Medium_Body');
+  const old = base.getObjectByName(opt.ref ? 'Player_Body' : 'Mannequin_Medium_Body');
   const skeleton = old.skeleton;
 
   // モデルの頂点をまとめる（Tポーズ、足元が0、正面が+z）
@@ -17,6 +17,12 @@ export function fitModel(base, model, opt = {}) {
   const geo = src.geometry.clone();
   geo.applyMatrix4(src.matrixWorld);
   if (opt.rotY) geo.rotateY(opt.rotY);
+  if (opt.mirror) {
+    // 左右反転（ヘルメットの耳当てを反対側にするため）。面の向きも直す
+    geo.scale(-1, 1, 1);
+    const ix = geo.index;
+    if (ix) for (let i = 0; i < ix.count; i += 3) { const a = ix.getX(i + 1); ix.setX(i + 1, ix.getX(i + 2)); ix.setX(i + 2, a); }
+  }
   geo.computeBoundingBox();
   let bb = geo.boundingBox;
   const hBase = 2.0;
@@ -27,8 +33,13 @@ export function fitModel(base, model, opt = {}) {
   const P = geo.attributes.position, n = P.count, H = bb.max.y;
 
   // 体の目印を測る
-  const L = measure(P, H, bb);
-  window.__fitL = L;
+  let L = measure(P, H, bb);
+  if (opt.ref) {
+    // 2体目（ヘルメット姿など）：骨はそのままで、腕の高さが同じになるよう大きさを合わせる
+    const k = opt.ref.L.armY / L.armY;
+    geo.scale(k, k, k); geo.computeBoundingBox(); bb = geo.boundingBox;
+    L = measure(P, bb.max.y, bb);
+  } else window.__fitL = L;
 
   // 骨を動かす（ワールド座標で置いてからローカルに直す）
   const W = {
@@ -39,7 +50,7 @@ export function fitModel(base, model, opt = {}) {
   for (const k of Object.keys(W)) if (k.endsWith('l') && k !== 'hips') { const v = W[k]; W[k.slice(0, -1) + 'r'] = [-v[0], v[1], v[2]]; }
   const order = ['hips', 'spine', 'chest', 'head', 'upperarml', 'lowerarml', 'wristl', 'handl', 'upperarmr', 'lowerarmr', 'wristr', 'handr', 'upperlegl', 'lowerlegl', 'footl', 'toesl', 'upperlegr', 'lowerlegr', 'footr', 'toesr'];
   const oldHipY = bones.hips.getWorldPosition(new THREE.Vector3()).y;
-  for (const k of order) {
+  if (!opt.ref) for (const k of order) {
     const b = bones[k]; if (!b) continue;
     const v = new THREE.Vector3(...W[k]);
     b.parent.updateMatrixWorld(true);
@@ -47,7 +58,7 @@ export function fitModel(base, model, opt = {}) {
     b.updateMatrixWorld(true);
   }
   base.updateMatrixWorld(true);
-  skeleton.calculateInverses();
+  if (!opt.ref) skeleton.calculateInverses();
 
   // 骨ごとの線分（頂点に近い骨を選ぶため）
   const wp = (k) => bones[k].getWorldPosition(new THREE.Vector3());
@@ -95,10 +106,10 @@ export function fitModel(base, model, opt = {}) {
 
   const mat = src.material;
   const sm = new THREE.SkinnedMesh(geo, mat);
-  sm.name = 'Player_Body';
+  sm.name = opt.name || 'Player_Body';
   // マネキンの体は外す
   const rm = [];
-  base.traverse(o => { if (o.isMesh && o.name.startsWith('Mannequin')) rm.push(o); });
+  if (!opt.ref) base.traverse(o => { if (o.isMesh && o.name.startsWith('Mannequin')) rm.push(o); });
   const parent = old.parent;
   for (const o of rm) o.parent.remove(o);
   parent.add(sm);
