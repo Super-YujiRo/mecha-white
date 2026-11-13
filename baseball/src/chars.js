@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import { buildCustomClips } from './anims.js';
+import { fitModel } from './skinfit.js';
 
 const loader = new GLTFLoader();
 let base = null;
@@ -17,14 +18,26 @@ export async function loadCharacters(onProgress) {
   let n = 0;
   const results = await Promise.all(all.map(f => loader.loadAsync('./assets/' + f + '.glb').then(g => { onProgress && onProgress(++n / all.length); return g; })));
   base = results[0].scene;
+  // 選手モデル（Tripo）を骨に取り付ける
+  let fit = null;
+  try {
+    const pm = await loader.loadAsync('./assets/player.glb');
+    fit = fitModel(base, pm.scene);
+    BODY.map = fit.mesh.material.map; BODY.mat = fit.mesh.material;
+  } catch (e) { console.warn('player model', e); }
   for (let i = 1; i < results.length; i++) for (const c of results[i].animations) {
     c.tracks = c.tracks.filter(t => !t.name.startsWith('handslot'));
+    if (fit) {
+      // 骨の長さは体に合わせたので、位置のアニメーションは腰だけ使う（腰は体の比率で縮める）
+      c.tracks = c.tracks.filter(t => !t.name.endsWith('.scale') && (!t.name.endsWith('.position') || t.name === 'hips.position'));
+      for (const t of c.tracks) if (t.name === 'hips.position') { t.values = t.values.slice(); for (let k = 0; k < t.values.length; k++) t.values[k] *= fit.hipRatio; }
+    }
     clips[c.name] = c;
   }
   base.updateMatrixWorld(true);
   Object.assign(clips, buildCustomClips(base));
   // 頭の大きさ（帽子・ヘルメットを合わせるため）
-  const hb = base.getObjectByName('head'), hm = base.getObjectByName('Mannequin_Medium_Head');
+  const hb = base.getObjectByName('head'), hm = base.getObjectByName('Mannequin_Medium_Head') || headPart(base);
   if (hb && hm) {
     const hp = new THREE.Vector3(); hb.getWorldPosition(hp);
     // スキンの変形後の頂点から実際の頭の大きさを測る
@@ -42,6 +55,47 @@ export async function loadCharacters(onProgress) {
 }
 
 const HEAD = { w: 0.5, d: 0.45, top: 0.45, cz: 0 };
+const BODY = { map: null, mat: null };
+// 頭の大きさを測るために、取り付けたモデルの頭の部分だけを見る
+function headPart(base) {
+  const m = base.getObjectByName('Player_Body'), hb = base.getObjectByName('head');
+  if (!m || !hb) return null;
+  const hi = m.skeleton.bones.indexOf(hb), si = m.geometry.attributes.skinIndex, sw = m.geometry.attributes.skinWeight;
+  return { geometry: { attributes: { position: { count: m.geometry.attributes.position.count } } }, matrixWorld: m.matrixWorld, material: m.material,
+    getVertexPosition(i, v) { m.getVertexPosition(i, v); if (!(si.getX(i) === hi && sw.getX(i) > 0.9)) v.set(0, hb.getWorldPosition(new THREE.Vector3()).y, 0).applyMatrix4(m.matrixWorld.clone().invert()); return v; } };
+}
+// 青い部分（帽子・ライン・ベルト・ソックス・靴）をチームの色に塗り替えたテクスチャ
+const recolorCache = new Map();
+function recolored(tex, color) {
+  if (!tex || !tex.image) return tex;
+  const key = color;
+  if (recolorCache.has(key)) return recolorCache.get(key);
+  let out = tex;
+  try {
+    const img = tex.image, c = document.createElement('canvas');
+    c.width = img.width; c.height = img.height;
+    const g = c.getContext('2d'); g.drawImage(img, 0, 0);
+    const d = g.getImageData(0, 0, c.width, c.height), a = d.data;
+    const tc = new THREE.Color(color);
+    const tr = tc.r * 255, tg = tc.g * 255, tb = tc.b * 255;
+    for (let i = 0; i < a.length; i += 4) {
+      const r = a[i], gg = a[i + 1], b = a[i + 2], mx = Math.max(r, gg, b), mn = Math.min(r, gg, b), dd = mx - mn;
+      if (dd < 30 || mx === 0) continue;
+      let h = mx === r ? ((gg - b) / dd) % 6 : mx === gg ? (b - r) / dd + 2 : (r - gg) / dd + 4; h /= 6; if (h < 0) h += 1;
+      const s = dd / mx;
+      if (h < 0.55 || h > 0.75 || s < 0.25) continue;
+      // 青の明るさ（陰影）を保って色を置き換える
+      const k = Math.min(1.25, mx / 190);
+      const w = Math.min(1, (s - 0.25) / 0.2);
+      a[i] = r + (Math.min(255, tr * k) - r) * w; a[i + 1] = gg + (Math.min(255, tg * k) - gg) * w; a[i + 2] = b + (Math.min(255, tb * k) - b) * w;
+    }
+    g.putImageData(d, 0, 0);
+    out = new THREE.CanvasTexture(c);
+    out.flipY = tex.flipY; out.colorSpace = tex.colorSpace; out.wrapS = tex.wrapS; out.wrapT = tex.wrapT;
+  } catch (e) { }
+  recolorCache.set(key, out);
+  return out;
+}
 // 頭のテクスチャから色つきの模様を消して、顔の線（暗い部分）だけ残す
 function faceOnly(tex) {
   if (!tex || !tex.image) return tex;
@@ -105,8 +159,8 @@ export class Player3D {
     const mk = (helmet) => {
       const g = new THREE.Group();
       const crown = new THREE.Mesh(new THREE.SphereGeometry(r * (helmet ? 1.06 : 1), 28, 14, 0, Math.PI * 2, 0, Math.PI * (helmet ? 0.5 : 0.44)), mat('#ffffff'));
-      crown.scale.set(HEAD.w / (2 * r) * (helmet ? 1.12 : 1.1), helmet ? 0.8 : 0.66, HEAD.d / (2 * r) * (helmet ? 1.14 : 1.12));
-      crown.position.set(0, HEAD.top - r * (helmet ? 0.66 : 0.55), HEAD.cz);
+      crown.scale.set(HEAD.w / (2 * r) * (helmet ? 1.0 : 0.98), helmet ? 0.95 : 0.85, HEAD.d / (2 * r) * (helmet ? 1.1 : 1.08));
+      crown.position.set(0, HEAD.top - r * (helmet ? 0.95 : 0.85), HEAD.cz);
       g.add(crown);
       const brimG = new THREE.CircleGeometry(r * (helmet ? 0.55 : 0.7), 24, 0, Math.PI);
       const brim = new THREE.Mesh(brimG, mat('#ffffff'));
@@ -163,6 +217,11 @@ export class Player3D {
   setLook(look) {
     this.look = look;
     this.root.traverse(o => {
+      if (o.isMesh && o.name === 'Player_Body' && BODY.map) {
+        const key = 'body' + look.shirt;
+        if (!matCache.has(key)) matCache.set(key, new THREE.MeshToonMaterial({ map: recolored(BODY.map, look.shirt), gradientMap: toonRamp() }));
+        o.material = matCache.get(key);
+      }
       if (!o.isMesh || !o.name.startsWith('Mannequin')) return;
       const n = o.name;
       let c = look.shirt;
