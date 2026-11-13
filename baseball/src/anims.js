@@ -59,13 +59,23 @@ function mirror(keys) {
   });
 }
 
+// 構えたまま止まらないよう、少し揺らす（体重移動とバットの小さな揺れ）
+function sway(pose, keys, dur) {
+  return keys.map(([t, dh, sy, ax]) => {
+    const p = JSON.parse(JSON.stringify(pose));
+    p._hipsY = (p._hipsY || 0) + dh;
+    if (p.spine) p.spine = [p.spine[0], p.spine[1] + sy, p.spine[2]];
+    for (const k of ['lowerarmr', 'lowerarml']) if (p[k]) p[k] = [p[k][0], p[k][1], p[k][2] + ax];
+    return { t: t * dur, pose: p };
+  });
+}
 export function buildCustomClips(base) {
-  const st = [{ t: 0, pose: STANCE }, { t: 1, pose: STANCE }];
+  const st = sway(STANCE, [[0, 0, 0, 0], [0.3, -0.015, -3, 0.08], [0.55, 0, 1, -0.04], [0.8, -0.01, -2, 0.05], [1, 0, 0, 0]], 2.2);
   return {
     PitchR: buildClip('PitchR', base, PITCH), PitchL: buildClip('PitchL', base, mirror(PITCH)),
     StanceR: buildClip('StanceR', base, st), StanceL: buildClip('StanceL', base, mirror(st)),
     SwingR: buildClip('SwingR', base, SWING), SwingL: buildClip('SwingL', base, mirror(SWING)),
-    Ready: buildClip('Ready', base, [{ t: 0, pose: READY }, { t: 1, pose: READY }]),
+    Ready: buildClip('Ready', base, sway(READY, [[0, 0, 0, 0], [0.5, -0.02, 4, 0], [1, 0, 0, 0]], 1.8)),
     CatchUp: buildClip('CatchUp', base, [{ t: 0, pose: CATCH }, { t: 0.4, pose: CATCH }]),
     FThrow: buildClip('FThrow', base, FTHROW),
     Slide: buildClip('Slide', base, SLIDE),

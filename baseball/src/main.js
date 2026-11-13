@@ -189,6 +189,24 @@ function resetFielders() {
   }
 }
 
+const ENTER_DUR = 1.5;
+// 打席に入る歩き（終わったら構える）
+function updateEnter(now) {
+  const E = S.enter, b = people.batter;
+  if (!E || !b) return;
+  const k = Math.min(1, (now - E.t0) / 1000 / ENTER_DUR);
+  const tx = E.left ? 1.25 : -1.25, tz = -0.05;
+  const e = k < 1 ? k : 1;
+  const x = E.x0 + (tx - E.x0) * e, z = E.z0 + (tz - E.z0) * e;
+  b.holder.position.set(x, 0, z);
+  if (k < 0.85) b.holder.rotation.y = Math.atan2(tx - E.x0, tz - E.z0);
+  else {
+    const fy = E.left ? -Math.PI / 2 : Math.PI / 2, wy = Math.atan2(tx - E.x0, tz - E.z0);
+    b.holder.rotation.y = wy + (fy - wy) * ((k - 0.85) / 0.15);
+  }
+  if (k >= 1) { S.enter = null; b.holder.rotation.y = E.left ? -Math.PI / 2 : Math.PI / 2; b.play(E.left ? 'StanceL' : 'StanceR', { fade: 0.25 }); }
+}
+
 function setBatterStance(player) {
   const b = people.batter;
   const left = player.bats === 'L';
@@ -197,7 +215,17 @@ function setBatterStance(player) {
   b.setGear('helmet', { flapLeft: !left });
   b.holder.rotation.y = left ? -Math.PI / 2 : Math.PI / 2;
   S.buntMode = false; updateMode();
-  b.play(left ? 'StanceL' : 'StanceR', { fade: 0.2 });
+  // 打者が替わったら、ネクストの方から歩いて打席に入る
+  if (S.batterName !== player.name) {
+    S.batterName = player.name;
+    S.enter = { t0: nowMs(), left, x0: (left ? 1 : -1) * 4.6, z0: 0.6 };
+    b.holder.position.set(S.enter.x0, 0, S.enter.z0);
+    b.play('Walking_A', { fade: 0.1, speed: 1.15 });
+  } else if (S.enter) {
+    updateEnter(nowMs());
+  } else {
+    b.play(left ? 'StanceL' : 'StanceR', { fade: 0.2 });
+  }
   bat.visible = true;
   S.swingStart = null;
 }
@@ -311,7 +339,7 @@ function beginAtBat(first) {
     send({ t: 'state', s, phase: 'aim' });
     if (S.pendingIntent && myCtrl(fieldTeam(s)) === 'remote') { const it = S.pendingIntent; S.pendingIntent = null; setTimeout(() => { if (S.phase === 'aim') doPitch(it); }, 300); }
     if (myCtrl(fieldTeam(s)) === 'cpu') {
-      S.waitUntil = nowMs() + 1100;
+      S.waitUntil = nowMs() + 1100 + (S.enter ? ENTER_DUR * 1000 : 0);
       S.nextAction = () => doPitch(cpuPitchIntent(s, Math.floor(Math.random() * 1e9), S.lv));
     }
   }
@@ -657,6 +685,8 @@ function updateBat(now) {
   const left = b.holder.position.x > 0;
   _f.set(left ? -1 : 1, 0, 0);
   let th = 95, el = 50;
+  if (S.enter) { th = 20; el = -55; }
+  else if (S.swingStart == null) { const w = now / 1000; th += Math.sin(w * 2.6) * 7; el += Math.sin(w * 2.6 + 1.2) * 5; }
   if (S.swingStart != null) {
     const st = (now - S.swingStart) / 1000;
     const k1 = Math.min(1, st / SWING_LAG);
@@ -836,7 +866,7 @@ function cyclePitch(d) {
 // ボタンを押すと投球モーションに入り、リリースの少し前までコースを動かせる
 const WIND_SEND = 0.55;
 function throwLocal() {
-  if (S.phase !== 'aim' || !iPitch()) return;
+  if (S.phase !== 'aim' || !iPitch() || S.enter) return;
   if (S.localWind && nowMs() - S.localWind.at < 3000) return;
   S.localWind = { at: nowMs(), sent: false };
   people.fielders.P.play(currentPitcher(S.state).throws === 'L' ? 'PitchL' : 'PitchR', { loop: false, restart: true, speed: 1, fade: 0.08 });
@@ -1010,7 +1040,7 @@ function frame() {
     if (S.state) step(now, dt);
     if (TEST && window.__onStep) window.__onStep(now, dt);
     for (const pos in people.fielders) people.fielders[pos].update(dt);
-    if (people.batter) { people.batter.update(dt); people.batter.holder.updateMatrixWorld(true); updateBat(nowMs()); }
+    if (people.batter) { updateEnter(nowMs()); people.batter.update(dt); people.batter.holder.updateMatrixWorld(true); updateBat(nowMs()); }
     for (const r of people.runners) r.update(dt);
     updateCrowd(field, dt);
     updateCamera(dt, now);
