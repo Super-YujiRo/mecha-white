@@ -332,12 +332,14 @@ function startPitch(pitch, id, seed2) {
   setTimeout(updateCompass, 0);
   ui.speed.classList.remove('show');
   S.phase = 'windup';
-  S.windupAt = nowMs();
+  const lw = S.localWind && nowMs() - S.localWind.at < 1500 ? S.localWind : null;
+  S.localWind = null;
+  S.windupAt = lw ? lw.at : nowMs();
   S.t0 = S.windupAt + 850;
   S.decision = undefined;
   S.swingShownAt = -1;
   const p = people.fielders.P;
-  p.play(currentPitcher(S.state).throws === 'L' ? 'PitchL' : 'PitchR', { loop: false, restart: true, speed: 1, fade: 0.08 });
+  if (!lw) p.play(currentPitcher(S.state).throws === 'L' ? 'PitchL' : 'PitchR', { loop: false, restart: true, speed: 1, fade: 0.08 });
   aim.visible = false;
   updatePitchMenu();
   // CPUの打者
@@ -782,18 +784,17 @@ function cyclePitch(d) {
   S.pitchType = list[(i + d + list.length) % list.length];
   updatePitchMenu();
 }
-// 投球：1回目でモーション開始、縮んでくる輪がねらいに重なった瞬間にもう1回押すとナイスピッチ
-const REL_DUR = 0.95, REL_PERFECT = 0.68;
+// 投球：球種とコースを決めてボタンを押すと投げる（家庭用のパワプロと同じ）
+// ボタンを押すと投球モーションに入り、リリースの少し前までコースを動かせる
+const WIND_SEND = 0.55;
 function throwLocal() {
   if (S.phase !== 'aim' || !iPitch()) return;
-  const now = nowMs();
-  if (!S.release) { S.release = { t0: now }; people.fielders.P.play('Idle_B', { fade: 0.15 }); return; }
-  const k = (now - S.release.t0) / 1000 / REL_DUR;
-  releaseNow(Math.max(0, 1 - Math.abs(k - REL_PERFECT) / 0.3));
+  if (S.localWind && nowMs() - S.localWind.at < 3000) return;
+  S.localWind = { at: nowMs(), sent: false };
+  people.fielders.P.play(currentPitcher(S.state).throws === 'L' ? 'PitchL' : 'PitchR', { loop: false, restart: true, speed: 1, fade: 0.08 });
 }
 function releaseNow(q) {
   S.release = null; relRing.visible = false;
-  if (q > 0.85) showCall('ナイスピッチ！', '#7dffb0'); else if (q < 0.35) toast('リリースが乱れた…', 900);
   const intent = { type: S.pitchType, target: { x: S.aim.x, y: S.aim.y }, q };
   S.phase = 'sent';
   if (isHost()) doPitch(intent);
@@ -893,7 +894,7 @@ function updateHelp() {
   if (!s) return;
   if (S.phase === 'play' && S.live && S.live.runner) ui.help.innerHTML = '<b>走塁</b>　<b>E</b>：全員 次の塁へ進め　<b>Q</b>：全員 戻れ';
   else if (S.phase === 'play' && S.live && S.live.human) ui.help.innerHTML = '<b>守備</b>　<b>WASD</b>：移動（青い輪の選手。離すと自動でボールへ）　<b>スペース</b>：ダイブ　<b>F</b>：ジャンプ<br><b>1</b>：一塁　<b>2</b>：二塁　<b>3</b>：三塁　<b>4</b>：本塁へ送球';
-  else if (iPitch()) ui.help.innerHTML = '<b>投球</b>　マウス：コースをねらう<br><b>1〜' + pitchList().length + ' / ホイール</b>：球種　<br><b>左クリック/スペース</b>：投球開始 → 白い輪がねらいに重なったらもう一度押す（ナイスピッチ）';
+  else if (iPitch()) ui.help.innerHTML = '<b>投球</b>　マウス：コースをねらう<br><b>1〜' + pitchList().length + ' / ホイール</b>：球種　<br><b>左クリック/スペース</b>：投げる（投球モーション中もコースを動かせる）';
   else if (iBat()) ui.help.innerHTML = '<b>打撃</b>　マウス：カーソル　<b>左クリック/スペース</b>：振る<br><b>右クリック/Shift</b>：ミート⇔強振 切り替え<br><b>白い丸</b>：ボールが来る位置（変化球は曲がりに合わせて動く）<br><b>T</b>：盗塁　打ったあと <b>E</b>：進め　<b>Q</b>：戻れ<br>芯（カーソルの真ん中）の<b>上で打つとフライ・下で打つとゴロ</b>　WASD/矢印キーでも動かせます';
   else ui.help.innerHTML = '観戦中';
   if (!S.helpOpen) ui.help.innerHTML = '<b>H</b>：操作説明　<b>M</b>：音のオン/オフ';
@@ -991,17 +992,8 @@ function step(now, dt) {
   if (S.autoPitch && aim.visible && !S.autoPitchAt) S.autoPitchAt = now + 400;
   if (S.autoPitchAt && now >= S.autoPitchAt) { S.autoPitchAt = 0; if (S.phase === 'aim' && iPitch()) { S.aim.x = (Math.random() - 0.5) * 0.5; S.aim.y = 0.55 + Math.random() * 0.5; throwLocal(); } }
   if (aim.visible) aim.position.set(S.aim.x, S.aim.y, 0.03);
-  if (S.release && S.phase === 'aim' && iPitch()) {
-    const k = (now - S.release.t0) / 1000 / REL_DUR;
-    if (k >= 1) releaseNow(0.15);
-    else {
-      relRing.visible = true;
-      relRing.position.set(S.aim.x, S.aim.y, 0.04);
-      relRing.scale.setScalar(Math.max(0.05, (1 - k) / (1 - REL_PERFECT)));
-      const near = Math.abs(k - REL_PERFECT) < 0.045;
-      relRing.material.color.set(near ? 0x7dffb0 : 0xffffff);
-    }
-  } else relRing.visible = false;
+  relRing.visible = false;
+  if (S.localWind && !S.localWind.sent && S.phase === 'aim' && iPitch() && now - S.localWind.at >= WIND_SEND * 1000) { S.localWind.sent = true; releaseNow(0.75); }
 
   ballMat.depthTest = S.phase === 'play';
   // 投手の投球フォーム（体をひねって足を上げ、踏み込んで投げる）
@@ -1011,7 +1003,7 @@ function step(now, dt) {
       const el = (now - S.windupAt) / 1000;
       P.rotation.y = turnAt(el, currentPitcher(s).throws === 'L');
       P.rotation.x = 0; P.position.y = 0.25;
-    } else if (P && S.phase === 'aim') { P.rotation.x = 0; P.rotation.y = turnAt(0, currentPitcher(s).throws === 'L'); }
+    } else if (P && (S.phase === 'aim' || S.phase === 'sent')) { P.rotation.x = 0; P.rotation.y = turnAt(S.localWind ? (now - S.localWind.at) / 1000 : 0, currentPitcher(s).throws === 'L'); }
   }
   // 盗塁でスタートを切った走者
   if (S.stealShow && (S.phase === 'windup' || S.phase === 'flight' || S.phase === 'result')) {
@@ -1237,7 +1229,7 @@ async function boot() {
   showTitle();
   // テスト用：?auto=cpu で即開始
   const q = new URLSearchParams(location.search);
-  if (q.get('auto') === 'cpu') startMatch('cpu', { innings: +(q.get('inn') || 1), lv: 1 });
+  if (q.get('auto') === 'cpu') { startMatch('cpu', { innings: +(q.get('inn') || 1), lv: 1 }); if (TEST && q.get('side') === 'p') S.ctrl = ['cpu', 'me']; }
   window.__S = S; window.__now = nowMs; window.__dbg = { beginAtBat, doPitch, people, camera, bat: () => bat, endMatch, applyPlay };
 }
 boot().catch((e) => { $('loadText').textContent = '読み込みに失敗しました：' + e.message; console.error(e); });
