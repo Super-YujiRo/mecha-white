@@ -189,22 +189,12 @@ function resetFielders() {
   }
 }
 
-const ENTER_DUR = 1.5;
-// 打席に入る歩き（終わったら構える）
+const ENTER_DUR = 1.7, RIT_K = 0.45;
+// 新しい打者：打席でゆっくり素振りをしてから構える
 function updateEnter(now) {
   const E = S.enter, b = people.batter;
   if (!E || !b) return;
-  const k = Math.min(1, (now - E.t0) / 1000 / ENTER_DUR);
-  const tx = E.left ? 1.25 : -1.25, tz = -0.05;
-  const e = k < 1 ? k : 1;
-  const x = E.x0 + (tx - E.x0) * e, z = E.z0 + (tz - E.z0) * e;
-  b.holder.position.set(x, 0, z);
-  if (k < 0.85) b.holder.rotation.y = Math.atan2(tx - E.x0, tz - E.z0);
-  else {
-    const fy = E.left ? -Math.PI / 2 : Math.PI / 2, wy = Math.atan2(tx - E.x0, tz - E.z0);
-    b.holder.rotation.y = wy + (fy - wy) * ((k - 0.85) / 0.15);
-  }
-  if (k >= 1) { S.enter = null; b.holder.rotation.y = E.left ? -Math.PI / 2 : Math.PI / 2; b.play(E.left ? 'StanceL' : 'StanceR', { fade: 0.25 }); }
+  if ((now - E.t0) / 1000 >= ENTER_DUR) { S.enter = null; b.play(E.left ? 'StanceL' : 'StanceR', { fade: 0.35 }); }
 }
 
 function setBatterStance(player) {
@@ -218,11 +208,11 @@ function setBatterStance(player) {
   // 打者が替わったら、ネクストの方から歩いて打席に入る
   if (S.batterName !== player.name) {
     S.batterName = player.name;
-    S.enter = { t0: nowMs(), left, x0: (left ? 1 : -1) * 4.6, z0: 0.6 };
-    b.holder.position.set(S.enter.x0, 0, S.enter.z0);
-    b.play('Walking_A', { fade: 0.1, speed: 1.15 });
+    S.enter = { t0: nowMs(), left };
+    b.play(left ? 'StanceL' : 'StanceR', { fade: 0.1 });
+    setTimeout(() => { if (S.enter && S.enter.left === left) b.play(left ? 'SwingL' : 'SwingR', { loop: false, restart: true, speed: 0.1 / SWING_LAG * RIT_K, fade: 0.15 }); }, 300);
   } else if (S.enter) {
-    updateEnter(nowMs());
+    // 素振りの途中
   } else {
     b.play(left ? 'StanceL' : 'StanceR', { fade: 0.2 });
   }
@@ -686,10 +676,18 @@ function updateBat(now) {
   const left = b.holder.position.x > 0;
   _f.set(left ? -1 : 1, 0, 0);
   let th = 95, el = 50;
-  if (S.enter) { th = 20; el = -55; }
-  else if (S.swingStart == null) { const w = now / 1000; th += Math.sin(w * 2.6) * 7; el += Math.sin(w * 2.6 + 1.2) * 5; }
-  if (S.swingStart != null) {
-    const st = (now - S.swingStart) / 1000;
+  let st = -1;
+  if (S.enter) {
+    // 素振り：ゆっくり振って、構えに戻す
+    const rt = (now - S.enter.t0) / 1000 - 0.3;
+    if (rt > 0) {
+      const sw = rt * RIT_K, end = SWING_LAG + 0.22;
+      if (sw <= end) st = sw;
+      else { const k = Math.min(1, (rt - end / RIT_K) / (ENTER_DUR - 0.3 - end / RIT_K)); th = -170 + (95 + 170) * k; el = 38 + (50 - 38) * k; }
+    }
+  } else if (S.swingStart == null) { const w = now / 1000; th += Math.sin(w * 2.6) * 7; el += Math.sin(w * 2.6 + 1.2) * 5; }
+  if (S.swingStart != null) st = (now - S.swingStart) / 1000;
+  if (st >= 0) {
     const k1 = Math.min(1, st / SWING_LAG);
     const e1 = k1 * k1;
     if (st <= SWING_LAG) { th = 95 - 95 * e1; el = 50 - 57 * e1; }
