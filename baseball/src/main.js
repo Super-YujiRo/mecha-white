@@ -1054,7 +1054,7 @@ function frame() {
     updateFlash(now);
     if (TEST && window.__holdFrame) break;
   }
-  renderer.render(scene, camera);
+  if (!window.__scOpen) renderer.render(scene, camera);
 }
 
 function step(now, dt) {
