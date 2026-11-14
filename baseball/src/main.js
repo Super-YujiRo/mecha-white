@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { TEAMS, PITCHES, rank, battingOrder } from './data.js';
+import { openSuccess, applyMyPlayers } from './success.js';
+const TEAM0 = structuredClone(TEAMS[0]);
 import { pitchPos, predictPlate, cursorSize, buntSize, buntTouches, ZONE, RUBBER_Z, SWING_LAG, BASES, BALL_R, rng } from './baseball.js';
 import { POSITIONS, POS_ORDER } from './play.js';
 import { LivePlay, ACT } from './live.js';
@@ -281,6 +283,8 @@ function send(m) { if (S.net) S.net.send(m); }
 
 function startMatch(mode, opts = {}) {
   S.mode = mode;
+  // CPU対戦では、サクセスで作った選手を自分のチームに入れる
+  Object.assign(TEAMS[0], mode === 'cpu' ? applyMyPlayers(TEAM0) : structuredClone(TEAM0));
   S.helpOpen = true; S.pitchCount = 0;
   if (!TEST) S.autoField = $('optField').value === '1';
   S.assist = $('optAssist').value; // '0' なし / 'lock' ロックオン / '1' 着弾点
@@ -1287,6 +1291,7 @@ function showTitle() {
     b.onclick = () => {
       const act = b.dataset.act;
       if (act === 'cpu') startMatch('cpu', { innings: +$('optInn').value, lv: +$('optLv').value });
+      if (act === 'success') { ui.title.classList.add('hidden'); openSuccess($('success'), () => ui.title.classList.remove('hidden')); }
       if (act === 'host') {
         const code = Net.makeCode();
         ui.title.classList.add('net');

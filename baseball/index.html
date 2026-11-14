@@ -43,6 +43,7 @@
     <button data-act="cpu" class="primary">CPUと対戦</button>
     <button data-act="host">友達を呼ぶ</button>
     <button data-act="join">友達の試合に参加</button>
+    <button data-act="success">サクセス</button>
   </div>
   <div class="opts">
     <label>イニング <select id="optInn"><option value="1">1回</option><option value="3" selected>3回</option><option value="5">5回</option><option value="9">9回</option></select></label>
@@ -56,6 +57,7 @@
 
 <div id="loading" class="screen"><div class="spin"></div><div id="loadText">読み込み中…</div></div>
 <div id="result" class="screen hidden"></div>
+<div id="success" class="screen hidden"></div>
 
 <script src="./vendor/peerjs.min.js"></script>
 <script type="module" src="./src/main.js"></script>
