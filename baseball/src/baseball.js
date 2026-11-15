@@ -151,7 +151,7 @@ function judgeBunt(pitch, batter, swing, r, at) {
   return { v: launchVec(ev / 3.6, la, phi), ev, la, phi, q: 0.2, dt: 0, d, bunt: true };
 }
 
-function launchVec(speed, laDeg, phi) {
+export function launchVec(speed, laDeg, phi) {
   const la = laDeg * Math.PI / 180;
   const h = Math.cos(la) * speed;
   return { x: Math.sin(phi) * h, y: Math.sin(la) * speed, z: -Math.cos(phi) * h };

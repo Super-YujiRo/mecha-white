@@ -69,6 +69,8 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:none
 #call.show{animation:callFade 1.3s linear forwards}
 #call.show .band{animation:callBand 1.3s cubic-bezier(.2,.8,.2,1) forwards}
 #call.show .txt{animation:callTxt 1.3s cubic-bezier(.2,.9,.25,1.2) forwards}
+#call.show.long,#call.show.long .band,#call.show.long .txt{animation-duration:3.2s}
+#call.long .txt{background:linear-gradient(90deg,#ffe066,#fff6c2,#ffb21f,#fff6c2,#ffe066);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:0;filter:drop-shadow(0 0 3px #0d1f3c) drop-shadow(0 5px 0 #0d1f3c) drop-shadow(3px 0 0 #0d1f3c) drop-shadow(-3px 0 0 #0d1f3c) drop-shadow(0 -3px 0 #0d1f3c)}
 @keyframes callFade{0%{opacity:1}82%{opacity:1}100%{opacity:0}}
 @keyframes callBand{0%{transform:translateY(-50%) skewY(-4deg) scaleX(0)}18%{transform:translateY(-50%) skewY(-4deg) scaleX(1)}100%{transform:translateY(-50%) skewY(-4deg) scaleX(1)}}
 @keyframes callTxt{0%{transform:translate(60%,-50%) skewX(-12deg);opacity:0}10%{opacity:1}22%{transform:translate(-52%,-50%) skewX(-12deg);opacity:1}30%{transform:translate(-50%,-50%) skewX(-12deg) scale(1.08);opacity:1}38%{transform:translate(-50%,-50%) skewX(-12deg) scale(1);opacity:1}84%{transform:translate(-50%,-50%) skewX(-12deg);opacity:1}100%{transform:translate(-120%,-50%) skewX(-12deg);opacity:0}}
@@ -293,3 +295,15 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:none
   .sc-up{grid-template-columns:80px 70px 1fr 56px;font-size:13px}
   .sc-face{bottom:calc(min(22vh,150px) + 4px)}
 }
+.sc-cnt{position:absolute;right:14px;bottom:18px;background:rgba(13,31,60,.9);border-radius:12px;padding:8px 12px;font-weight:900;border:2px solid rgba(255,255,255,.2);pointer-events:none}
+.sc-cnt div{display:flex;align-items:center;gap:6px;height:24px}.sc-cnt b{width:16px}
+.sc-cnt i{width:16px;height:16px;border-radius:50%;background:#2a3d5e;display:inline-block}
+.sc-cnt i.on.b{background:var(--green);box-shadow:0 0 8px var(--green)}.sc-cnt i.on.s{background:var(--gold);box-shadow:0 0 8px var(--gold)}
+.sc-pinfo{position:absolute;left:50%;top:92px;transform:translateX(-50%);background:rgba(13,31,60,.85);padding:4px 16px;border-radius:10px;font-weight:900;font-size:18px;pointer-events:none}
+.sc-pinfo.pop{animation:scIn .25s}
+.sc-toast{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);background:rgba(13,31,60,.9);padding:8px 18px;border-radius:12px;font-weight:900;pointer-events:none;animation:scIn .3s both;white-space:nowrap}
+.sc-ptypes{position:absolute;left:12px;bottom:16px;display:flex;flex-direction:column;gap:6px}
+#success .sc-ptypes button{font-size:14px;padding:6px 12px;display:flex;align-items:center;gap:6px;opacity:.85}
+#success .sc-ptypes button.on{background:linear-gradient(180deg,#ffe082,#ffb21f);opacity:1;transform:translateX(6px)}
+.sc-ptypes small{background:var(--navy);color:#fff;border-radius:6px;padding:0 6px;font-size:11px}
+.sc-ptypes i{font-style:normal;background:#ff6b5a;color:#fff;border-radius:6px;padding:0 6px;font-size:12px}

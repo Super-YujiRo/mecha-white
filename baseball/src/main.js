@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { TEAMS, PITCHES, rank, battingOrder } from './data.js';
 import { openSuccess, applyMyPlayers } from './success.js';
 const TEAM0 = structuredClone(TEAMS[0]);
-import { pitchPos, predictPlate, cursorSize, buntSize, buntTouches, ZONE, RUBBER_Z, SWING_LAG, BASES, BALL_R, rng } from './baseball.js';
+import { pitchPos, predictPlate, cursorSize, buntSize, buntTouches, ZONE, RUBBER_Z, SWING_LAG, BASES, BALL_R, rng, launchVec } from './baseball.js';
 import { POSITIONS, POS_ORDER } from './play.js';
 import { LivePlay, ACT } from './live.js';
 import { turnAt } from './anims.js';
@@ -127,17 +127,59 @@ function callSound(text) {
   else if (/ホームイン|ナイスキャッチ|スリーベース|ツーベース/.test(text)) { sfxCheer(0.7, 2.6); cheerCrowd(field, 0.8); }
   else if (/ヒット|サヨナラ|ゲームセット|三振/.test(text)) cheerCrowd(field, 0.5);
 }
+// ホームランの一周はクリック・スペースで飛ばせる
+function skipHr() { const L = S.live; if (L && L.auth && L.sim && L.view && L.view.hr > 1.5) L.sim.skipHr = true; }
+// 花火（ホームラン）
+const fireworks = [];
+let sparkTex = null;
+function spark() {
+  if (sparkTex) return sparkTex;
+  const c = document.createElement('canvas'); c.width = c.height = 32;
+  const g = c.getContext('2d'), r = g.createRadialGradient(16, 16, 0, 16, 16, 16);
+  r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(0.35, 'rgba(255,255,255,.8)'); r.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = r; g.fillRect(0, 0, 32, 32);
+  sparkTex = new THREE.CanvasTexture(c);
+  return sparkTex;
+}
+function launchFireworks() {
+  for (let i = 0; i < 8; i++) {
+    const n = 90, geo = new THREE.BufferGeometry(), pos = new Float32Array(n * 3), vel = [];
+    const c = new THREE.Color().setHSL(Math.random(), 0.9, 0.62);
+    const o = new THREE.Vector3((Math.random() - 0.5) * 120, 20 + Math.random() * 12, -78 - Math.random() * 20);
+    for (let j = 0; j < n; j++) { pos.set([o.x, o.y, o.z], j * 3); vel.push(new THREE.Vector3().randomDirection().multiplyScalar(10 + Math.random() * 4)); }
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    const m = new THREE.Points(geo, new THREE.PointsMaterial({ color: c, size: 1.1, map: spark(), transparent: true, opacity: 1, depthWrite: false }));
+    m.frustumCulled = false; m.visible = false;
+    scene.add(m); fireworks.push({ m, vel, t: -i * 0.35 });
+  }
+}
+function updateFireworks(dt) {
+  for (let i = fireworks.length - 1; i >= 0; i--) {
+    const f = fireworks[i]; f.t += dt;
+    if (f.t < 0) continue;
+    f.m.visible = true;
+    const P = f.m.geometry.attributes.position;
+    for (let j = 0; j < f.vel.length; j++) { const v = f.vel[j]; v.y -= 6 * dt; v.multiplyScalar(1 - dt * 1.4); P.setXYZ(j, P.getX(j) + v.x * dt, P.getY(j) + v.y * dt, P.getZ(j) + v.z * dt); }
+    P.needsUpdate = true;
+    f.m.material.opacity = Math.max(0, 1 - f.t / 1.8);
+    if (f.t > 1.8) { scene.remove(f.m); f.m.geometry.dispose(); fireworks.splice(i, 1); }
+  }
+}
 function showCall(text, color = '#fff', big = false) {
   callSound(text);
   ui.call.innerHTML = '<span class="band"></span><span class="txt"></span>';
   ui.call.lastChild.textContent = text;
   ui.call.style.setProperty('--c', color);
   ui.call.classList.toggle('big', big);
+  ui.call.classList.toggle('long', /ホームラン/.test(text) && !/ランニング/.test(text));
   ui.call.classList.remove('show');
   void ui.call.offsetWidth;
   ui.call.classList.add('show');
   clearTimeout(callTimer);
-  callTimer = setTimeout(() => ui.call.classList.remove('show'), 1300);
+  const hr = /ホームラン/.test(text) && !/ランニング/.test(text);
+  ui.call.classList.toggle('long', hr);
+  if (hr) launchFireworks();
+  callTimer = setTimeout(() => ui.call.classList.remove('show'), hr ? 3200 : 1300);
 }
 let toastTimer = 0;
 function toast(text, ms = 2200) {
@@ -285,7 +327,8 @@ function startMatch(mode, opts = {}) {
   S.mode = mode;
   // CPU対戦では、サクセスで作った選手を自分のチームに入れる
   Object.assign(TEAMS[0], mode === 'cpu' ? applyMyPlayers(TEAM0) : structuredClone(TEAM0));
-  S.helpOpen = true; S.pitchCount = 0;
+  S.helpOpen = true; S.pitchCount = 0; S.celebrate = null;
+  for (const pos in people.fielders) people.fielders[pos].userData = null;
   if (!TEST) S.autoField = $('optField').value === '1';
   S.assist = $('optAssist').value; // '0' なし / 'lock' ロックオン / '1' 着弾点
   S.lv = opts.lv ?? 1;
@@ -403,6 +446,7 @@ function resolveNow() {
   const pre = S.state;
   const decision = S.decision || null;
   const { state, out } = resolvePitch(pre, S.pitch, decision, S.seed2);
+  if (TEST && window.__force) { const f = window.__force; window.__force = null; out.kind = 'CONTACT'; out.call = ''; out.hit = { v: launchVec(f.ev / 3.6, f.la, f.phi), ev: f.ev, la: f.la, phi: f.phi, q: f.q ?? 0.95, dt: 0, d: 0 }; }
   // 盗塁（スタートを切った走者）
   if (S.stealDecl && S.stealDecl.id === S.pitchId) {
     const bases = stealBases(pre);
@@ -478,7 +522,7 @@ function startLive(pre, hit, mid, steal) {
   S.phase = 'play';
   S.stealShow = false;
   const opts = { human, steal: steal ? steal.bases : [], jump: steal ? steal.jump : null };
-  S.runSel = 0;
+  S.runSel = 0; S.hrCut = false;
   S.live = { pre, mid, auth, human, runner, stealOnly: !hit, sim: auth ? new LivePlay(hit, playCtx(pre), opts) : null, view: null, prev: null, start: nowMs(), sentAt: 0, ended: false, runKey: null };
   ui.speed.classList.remove('show');
   bat.visible = true;
@@ -609,7 +653,11 @@ function renderView(v, dt) {
     const actor = d[0] === 0 ? people.batter : people.runners[d[0] - 1];
     if (!actor) continue;
     if (d[4] === 9) continue; // 打者はまだ打席
-    if (d[0] === 0) { bat.visible = false; actor.holder.scale.setScalar(1); }
+    if (d[0] === 0) {
+      actor.holder.scale.setScalar(1);
+      // 走り出したらバットを本塁のそばに放る
+      if (!L.batDrop) { const left = people.batter.holder.position.x > 0; L.batDrop = true; bat.visible = true; bat.position.set(left ? 0.9 : -0.9, 0.04, 0.5); bat.quaternion.setFromEuler(new THREE.Euler(0, Math.random() * Math.PI, Math.PI / 2)); }
+    }
     if (d[4] === ACT.hide) { actor.holder.visible = false; continue; }
     actor.holder.visible = true;
     const hp = actor.holder.position;
@@ -676,6 +724,7 @@ const _q = new THREE.Quaternion();
 const BAT_SCALE = 1.3, BAT_LEN = 0.865 * BAT_SCALE;
 function updateBat(now) {
   if (!bat || !bat.visible || !people.batter) return;
+  if (S.phase === 'play' && S.live && S.live.batDrop) return;
   const b = people.batter;
   const left = b.holder.position.x > 0;
   _f.set(left ? -1 : 1, 0, 0);
@@ -734,7 +783,7 @@ canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 canvas.addEventListener('mousedown', (e) => {
   if (!S.state) return;
   if (S.phase === 'aim' && iPitch()) { if (e.button === 0) throwLocal(); return; }
-  if (S.phase === 'play') return;
+  if (S.phase === 'play') { skipHr(); return; }
   if (iBat()) { if (e.button === 2) toggleMode(); else if (e.button === 0) localSwing(); }
 });
 canvas.addEventListener('wheel', (e) => { if (S.phase === 'aim' && iPitch()) cyclePitch(e.deltaY > 0 ? 1 : -1); });
@@ -758,6 +807,7 @@ window.addEventListener('pointerdown', () => unlockAudio());
 window.addEventListener('keydown', (e) => {
   keys[e.code] = true;
   unlockAudio();
+  if (e.code === 'Space' && S.phase === 'play') skipHr();
   if (e.code === 'KeyM') { setMuted(!isMuted()); toast(isMuted() ? '音：オフ' : '音：オン', 1000); }
   if (e.code === 'KeyH') { S.helpOpen = !S.helpOpen; updateHelp(); }
   if (!S.state) return;
@@ -996,7 +1046,19 @@ const camLook = new THREE.Vector3(...BAT_CAM.look);
 function updateCamera(dt, now) {
   if (S.freezeCam) return;
   let tp, tl;
-  if (S.phase === 'play' && S.live && S.live.view) {
+  if (S.phase === 'over' && S.celebrate && S.celebrate.fieldWon && nowMs() - S.celebrate.t0 > 600) {
+    tp = new THREE.Vector3(5, 4.5, RUBBER_Z + 11); tl = new THREE.Vector3(0, 1.2, RUBBER_Z);
+  }
+  const hv = S.phase === 'play' && S.live && S.live.view && S.live.view.hr;
+  if (hv != null && hv > 1.5 && S.live.view.r.some(d => d[0] === 0)) {
+    // ホームラン：打者のダイヤモンド一周を追いかける
+    const d = S.live.view.r.find(d => d[0] === 0);
+    const rx = d[1], rz = d[2];
+    const ang = Math.atan2(rx, rz + 13.7) + 0.9;
+    tp = new THREE.Vector3(rx + Math.sin(ang) * 7, 3.2, rz + Math.cos(ang) * 7);
+    tl = new THREE.Vector3(rx, 1.0, rz);
+    if (!S.hrCut) { S.hrCut = true; camPos.copy(tp); camLook.copy(tl); }
+  } else if (S.phase === 'play' && S.live && S.live.view) {
     const L = S.live;
     const b = L.ballPos || { x: 0, y: 1, z: 0 };
     const t = (now - L.start) / 1000;
@@ -1015,7 +1077,7 @@ function updateCamera(dt, now) {
       tp = new THREE.Vector3(hx + (cx - hx) * f, 11 + d * 0.17 + spread * 0.35 + Math.min(10, b.y * 0.35), hz + (cz - hz) * f);
       tl = new THREE.Vector3(cx, Math.max(0.5, b.y * 0.75), cz);
     }
-  } else {
+  } else if (!tp) {
     tp = new THREE.Vector3(...BAT_CAM.pos);
     tl = new THREE.Vector3(...BAT_CAM.look);
   }
@@ -1050,6 +1112,8 @@ function frame() {
     if (people.batter) { updateEnter(nowMs()); people.batter.update(dt); people.batter.holder.updateMatrixWorld(true); updateBat(nowMs()); }
     for (const r of people.runners) r.update(dt);
     updateCrowd(field, dt);
+    updateFireworks(dt);
+    if (S.phase === 'over' && S.celebrate) updateCelebrate(dt);
     updateCamera(dt, now);
     updateFlash(now);
     if (TEST && window.__holdFrame) break;
@@ -1191,6 +1255,16 @@ function step(now, dt) {
 }
 
 // ================= 試合終了 =================
+function updateCelebrate(dt) {
+  if (!S.celebrate.fieldWon) return;
+  for (const pos of POS_ORDER) {
+    const f = people.fielders[pos], g = f.userData && f.userData.goal;
+    if (!g) continue;
+    const p = f.holder.position, dx = g.x - p.x, dz = g.z - p.z, d = Math.hypot(dx, dz);
+    if (d > 0.3) { const st = Math.min(d, 7.5 * dt); p.x += dx / d * st; p.z += dz / d * st; p.y = g.y; f.holder.rotation.y = Math.atan2(dx, dz); }
+    else if (!f.userData.done) { f.userData.done = true; f.holder.rotation.y = Math.atan2(-p.x, RUBBER_Z - p.z); f.play('Cheering'); }
+  }
+}
 function endMatch() {
   S.phase = 'over';
   const s = S.state;
@@ -1200,8 +1274,12 @@ function endMatch() {
   const mine = S.mode === 'guest' ? 1 : 0;
   if (s.draw || s.score[0] === s.score[1]) msg = '引き分け';
   else msg = (s.score[mine] > s.score[1 - mine]) ? '勝利！' : '負け…';
-  if (s.walkoff) showCall('サヨナラ！', '#ffd43d', true);
+  if (s.walkoff) { showCall('サヨナラ！', '#ffd43d', true); launchFireworks(); }
   else showCall('ゲームセット', '#fff', true);
+  // 勝ったチームがマウンドに集まって喜ぶ
+  const fieldWon = !s.walkoff && s.score[fieldTeam(s)] > s.score[batTeam(s)];
+  S.celebrate = { t0: nowMs(), fieldWon };
+  if (fieldWon) POS_ORDER.forEach((pos, i) => { const f = people.fielders[pos]; f.holder.visible = true; f.play('Running_A', { speed: 1.2 }); f.userData = { goal: new THREE.Vector3(Math.sin(i / 9 * Math.PI * 2) * 2.2, 0.25, RUBBER_Z + Math.cos(i / 9 * Math.PI * 2) * 2.2) }; });
   umpire('ゲームセット！');
   sfxCheer(0.8, 3.5);
   setTimeout(() => {
@@ -1211,7 +1289,7 @@ function endMatch() {
       <button id="again">${S.mode === 'guest' ? 'タイトルへ' : 'もう一度'}</button>`;
     ui.result.classList.remove('hidden');
     $('again').onclick = () => { if (S.mode === 'cpu') startMatch('cpu', { innings: s.innings, lv: S.lv }); else location.reload(); };
-  }, s.walkoff ? 2200 : 1200);
+  }, s.walkoff ? 3600 : 3000);
 }
 
 // ================= 通信 =================

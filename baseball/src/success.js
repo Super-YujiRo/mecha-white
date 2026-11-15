@@ -491,7 +491,37 @@ function power() {
   const st = S.st;
   return S.kind === 'P' ? ((st.velo - 120) * 1.6 + st.control + st.stamina * 0.6 + Object.values(st.pitches).reduce((a, b) => a + b * 4, 0)) / 3.2 : (st.meet * 1.2 + st.power + st.speed * 0.5 + st.field * 0.4) / 3.1;
 }
-const RES = { hr: ['ホームラン！！', 'rainbow'], double: ['ツーベース！', 'good'], hit: ['ヒット！', 'good'], out: ['センターフライ', 'bad'], k: ['空振り三振…', 'bad'], look: ['見逃し三振…', 'bad'] };
+const RES = { hr: ['ホームラン！！', 'rainbow'], double: ['ツーベース！', 'good'], hit: ['ヒット！', 'good'], out: ['外野フライ', 'bad'], gout: ['内野ゴロ', 'bad'], lout: ['ライナー…アウト', 'bad'], bb: ['フォアボール', 'blue'], k: ['空振り三振…', 'bad'], look: ['見逃し三振…', 'bad'] };
+function showCount(b, s) {
+  let el = q('.sc-cnt');
+  if (!el) { el = document.createElement('div'); el.className = 'sc-cnt'; q('.sc').appendChild(el); }
+  el.classList.remove('hidden');
+  el.innerHTML = `<div><b>B</b>${[0, 1, 2].map(i => `<i class="${i < b ? 'on b' : ''}"></i>`).join('')}</div><div><b>S</b>${[0, 1].map(i => `<i class="${i < s ? 'on s' : ''}"></i>`).join('')}</div>`;
+}
+function showTypes(p) {
+  let el = q('.sc-ptypes');
+  if (!el) { el = document.createElement('div'); el.className = 'sc-ptypes'; q('.sc').appendChild(el); }
+  el.classList.remove('hidden');
+  el.innerHTML = Object.keys(p.pitches).map((k, i) => `<button data-p="${k}"><small>${i + 1}</small>${PITCHES[k].name}${k === 'ST' ? '' : `<i>${p.pitches[k]}</i>`}</button>`).join('');
+  el.querySelectorAll('button').forEach(b => (b.onclick = (e) => { e.stopPropagation(); stage.setType && stage.setType(b.dataset.p); }));
+  el.onpointerdown = (e) => e.stopPropagation();
+}
+function markType(t) { const el = q('.sc-ptypes'); if (el) el.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.p === t)); }
+function hideTypes() { const el = q('.sc-ptypes'); if (el) el.classList.add('hidden'); }
+function hideCount() { const el = q('.sc-cnt'); if (el) el.classList.add('hidden'); const i = q('.sc-pinfo'); if (i) i.remove(); }
+function showPitchCall(text, cls) {
+  if (cls === 'info') {
+    let el = q('.sc-pinfo');
+    if (!el) { el = document.createElement('div'); el.className = 'sc-pinfo'; q('.sc').appendChild(el); }
+    el.textContent = text; el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+    return;
+  }
+  stamp(text, cls === 'ball' ? 'blue' : '', 600);
+}
+function toastSc(text) {
+  const d = document.createElement('div'); d.className = 'sc-toast'; d.textContent = text;
+  q('.sc').appendChild(d); setTimeout(() => d.remove(), 3500);
+}
 function board(me, op, upto, opp) {
   const sb = q('.sc-sb'); sb.classList.remove('hidden');
   const row = (n, a) => `<tr><td class="t">${n}</td>${a.map((v, i) => `<td class="${i === upto - 1 ? 'now' : ''}">${i < upto ? v : ''}</td>`).join('')}<td class="sum">${a.slice(0, upto).reduce((x, y) => x + y, 0)}</td></tr>`;
@@ -503,58 +533,84 @@ async function game(title, lv) {
   stage.season(lv >= 1 ? 'summer' : 'evening');
   await stamp(`<small>${title}</small><br>白鷺台 <i>VS</i> ${opp.name}`, 'vs', 1600);
   const me = power();
-  const win = Math.random() < 0.35 + (me - 45) * 0.012 + MOOD_K[S.mood] * 0.06 - lv * 0.08;
-  // 打席の結果
-  const results = [];
-  let myScore = 0, gotPts = 0;
-  if (S.kind === 'F') {
-    for (let i = 0; i < 4; i++) {
-      const p = 0.2 + (S.st.meet - 40) * 0.006 + MOOD_K[S.mood] * 0.05 - lv * 0.03;
-      const r = Math.random();
-      let res;
-      if (r < p * 0.25 * (S.st.power / 60)) res = 'hr';
-      else if (r < p * 0.45) res = 'double';
-      else if (r < p) res = 'hit';
-      else res = ['out', 'k', 'look', 'out'][Math.floor(Math.random() * 4)];
-      results.push(res);
-      myScore += { hr: 4, double: 2.5, hit: 2 }[res] || 0;
-    }
-    gotPts = 8 + myScore * 4;
-  }
-  // 点数：勝ち負けに合わせて作る
+  let win = Math.random() < 0.35 + (me - 45) * 0.012 + MOOD_K[S.mood] * 0.06 - lv * 0.08;
   const inn = (n) => { const a = Array(9).fill(0); for (let i = 0; i < n; i++) a[Math.floor(Math.random() * 9)]++; return a; };
-  const hrs = results.filter(r => r === 'hr').length;
-  let myR = hrs + Math.floor(Math.random() * 4) + results.filter(r => r === 'hit' || r === 'double').length;
-  let er = S.kind === 'P' ? Math.max(0, Math.round((3.5 - (me - 40) * 0.06 + lv * 0.7) * (0.5 + Math.random()))) : Math.floor(Math.random() * 6);
-  if (win && myR <= er) myR = er + 1 + Math.floor(Math.random() * 2);
-  if (!win && myR >= er) er = myR + 1;
-  const mine = inn(myR), theirs = inn(er);
-  // 自分の打席の回に、ホームランの点を入れる
-  const abInn = [0, 3, 5, 7];
-  results.forEach((r, i) => { if (r === 'hr' && mine[abInn[i]] === 0) { const j = mine.findIndex(v => v > 0); if (j >= 0) { mine[j]--; mine[abInn[i]]++; } } });
-  board(mine, theirs, 0, opp);
+  let gotPts = 0, mine, theirs, er;
   if (S.kind === 'F') {
+    // 野手：自分の打席を実際に打つ（おまかせもできる）。点数は打席の結果で決まる
+    er = Math.max(0, Math.round(Math.random() * 3 + lv * 1.1 + Math.random() * 2 - 1));
+    theirs = inn(er); mine = inn(Math.floor(Math.random() * 3 + (S.mood - 2) * 0.5 + 0.5));
+    const opPit = { name: '相手投手', velo: 126 + lv * 6, control: 42 + lv * 9, stamina: 60, throws: Math.random() < 0.3 ? 'L' : 'R', pitches: lv === 0 ? { ST: 0, CU: 1 } : lv === 1 ? { ST: 0, SL: 2, CU: 2 } : lv === 2 ? { ST: 0, SL: 3, FK: 2 } : { ST: 0, SL: 4, FK: 3, SH: 2 } };
+    const batter = { meet: S.st.meet, power: S.st.power, speed: S.st.speed, bats: S.hand };
+    const abInn = [0, 3, 5, 7];
+    let myScore = 0;
     for (let i = 0; i < 4; i++) {
       board(mine, theirs, abInn[i] + 1, opp);
-      await say(null, `${abInn[i] + 1}回、${S.name}の打席！`);
+      const chance = i === 1 || i === 3 || Math.random() < 0.3;
+      await say(null, chance ? `${abInn[i] + 1}回、ランナー2塁のチャンス！ ${S.name}の打席！` : `${abInn[i] + 1}回、${S.name}の打席！`);
+      const c = await ask(['⚾ 自分で打つ', 'おまかせ']);
       hideMsg();
-      await stage.act('atbat', { res: results[i], oppColor: opp.color });
-      await stamp(RES[results[i]][0], RES[results[i]][1], 900);
+      let res;
+      if (c === 0) {
+        showCount(0, 0);
+        toastSc('マウスでミートカーソルを動かし、クリック（スペース）で振る');
+        res = await stage.atBatLive({ batter, pitcher: opPit, oppColor: opp.color, onCount: showCount, onCall: showPitchCall });
+        hideCount();
+      } else {
+        const p = 0.2 + (S.st.meet - 40) * 0.006 + MOOD_K[S.mood] * 0.05 - lv * 0.03, r = Math.random();
+        res = r < p * 0.25 * (S.st.power / 60) ? 'hr' : r < p * 0.45 ? 'double' : r < p ? 'hit' : r < p + 0.08 ? 'bb' : ['out', 'k', 'look', 'gout'][Math.floor(Math.random() * 4)];
+        await stage.act('atbat', { res: res === 'bb' ? 'look' : res === 'gout' || res === 'lout' ? 'out' : res, oppColor: opp.color });
+      }
+      await stamp(RES[res][0], RES[res][1], 1000);
+      // 点：ホームランは自分＋ランナー、ヒットはチャンスなら1点
+      let add = res === 'hr' ? 1 + (chance ? 1 : 0) + (Math.random() < 0.3 ? 1 : 0) : (res === 'hit' || res === 'double') && chance ? 1 : res === 'double' && Math.random() < 0.3 ? 1 : 0;
+      if (add) { mine[abInn[i]] += add; board(mine, theirs, abInn[i] + 1, opp); await say(null, `${add}点が入った！`); hideMsg(); }
+      myScore += { hr: 4, double: 2.5, hit: 2, bb: 1 }[res] || 0;
     }
     stage.reset();
+    const sum = (a) => a.reduce((x, y) => x + y, 0);
+    if (sum(mine) === sum(theirs)) { if (Math.random() < 0.5 + (S.mood - 2) * 0.1) mine[8]++; else theirs[8]++; }
+    win = sum(mine) > sum(theirs);
+    gotPts = 8 + myScore * 4 + (win ? 6 : 0);
   } else {
+    // 投手：ピンチの場面を実際に投げる（おまかせもできる）。失点は結果で決まる
+    const base = Math.max(0, Math.round((2.2 - (me - 40) * 0.05 + lv * 0.5) * (0.4 + Math.random() * 0.8)));
+    mine = inn(Math.floor(Math.random() * 4 + (S.mood - 2) * 0.5 + 0.5)); theirs = inn(base);
     const ip = Math.min(9, Math.round(4 + S.st.stamina / 18));
+    // 降板後の回は、控え投手の失点を少し
+    for (let i = ip; i < 9; i++) if (Math.random() < 0.15 + lv * 0.05) theirs[i]++;
     const show = [2, Math.max(3, ip - 2), ip];
+    const myP = { velo: S.st.velo, control: S.st.control, stamina: S.st.stamina, throws: S.hand, pitches: { ST: 0, ...S.st.pitches } };
+    let ks = 0;
     for (let i = 0; i < 3; i++) {
       board(mine, theirs, show[i], opp);
-      const res = theirs[show[i] - 1] > 0 && Math.random() < 0.6 ? 'hit' : 'k';
-      await say(null, `${show[i]}回、ピンチの場面！`);
+      await say(null, `${show[i]}回、ランナー2塁のピンチ！`);
+      const c = await ask(['⚾ 自分で投げる', 'おまかせ']);
       hideMsg();
-      await stage.act('mound', { res, oppColor: opp.color });
-      await stamp(res === 'k' ? '三振！' : '打たれた…', res === 'k' ? 'good' : 'bad', 800);
+      let res;
+      if (c === 0) {
+        showCount(0, 0); showTypes(myP);
+        toastSc('1〜' + Object.keys(myP.pitches).length + 'キーかボタンで球種、マウスでコースをねらってクリック（スペース）');
+        res = await stage.pitchLive({ pitcher: myP, lv, oppColor: opp.color, onCount: showCount, onCall: showPitchCall, onType: markType });
+        hideCount(); hideTypes();
+      } else {
+        const k = Math.random() < 0.45 + (me - 45) * 0.012 - lv * 0.06;
+        res = k ? (Math.random() < 0.6 ? 'k' : 'gout') : Math.random() < 0.2 ? 'double' : 'hit';
+        await stage.act('mound', { res: res === 'k' || res === 'gout' ? 'k' : 'hit', oppColor: opp.color });
+      }
+      const PR = { k: ['三振！', 'good'], gout: ['打ち取った！', 'good'], out: ['打ち取った！', 'good'], bb: ['フォアボール…', 'bad'], hit: ['打たれた…', 'bad'], double: ['長打を打たれた…', 'bad'], hr: ['ホームランを打たれた…', 'bad'] };
+      await stamp(PR[res][0], PR[res][1], 1000);
+      const add = { hit: 1, double: 1 + (Math.random() < 0.4 ? 1 : 0), hr: 2, bb: 0 }[res] || 0;
+      if (res === 'k') ks++;
+      if (add) { theirs[show[i] - 1] += add; board(mine, theirs, show[i], opp); await say(null, `${add}点を取られた……`); hideMsg(); }
     }
+    stage.reset();
+    const sum = (a) => a.reduce((x, y) => x + y, 0);
+    if (sum(mine) === sum(theirs)) { if (Math.random() < 0.5 + (S.mood - 2) * 0.1) mine[8]++; else theirs[8]++; }
+    win = sum(mine) > sum(theirs);
+    er = sum(theirs.slice(0, ip));
     await say(null, `${ip}回を投げて${er}失点。${er <= 1 ? 'ナイスピッチング！' : er >= 4 ? '打ち込まれてしまった……' : ''}`);
-    gotPts = 10 + Math.max(0, 6 - er) * 4;
+    gotPts = 10 + Math.max(0, 6 - er) * 4 + ks * 3 + (win ? 6 : 0);
   }
   board(mine, theirs, 9, opp);
   await wait(500);

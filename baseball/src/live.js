@@ -723,13 +723,14 @@ export class LivePlay {
       all = false;
       if (t < R.start) { R.act = R.slot === 0 ? 9 : ACT.idle; continue; }
       if (R.slot === 0 && R.state !== 'jog') R.state = 'jog';
-      R.s += R.spd * dt / BASE; R.act = ACT.jog;
+      // ダイヤモンド一周は少し早回しで見せる
+      R.s += R.spd * (t > this.hrInfo.t + 0.8 ? 1.9 : 1) * dt / BASE; R.act = ACT.jog;
       if (R.s >= 1) { R.seg++; R.s = 0; if (R.seg >= 4) { R.scored = true; R.scoreT = t; R.gone = t; } }
       this.placeRunner(R);
       const a = BP(R.seg), c = BP(R.seg + 1);
       R.dir = Math.atan2(c.x - a.x, c.z - a.z);
     }
-    if ((all && t > this.hrInfo.t + 2) || t > this.hrInfo.t + 4.5) {
+    if ((all && t > this.hrInfo.t + 2.5) || t > this.hrInfo.t + 14 || (this.skipHr && t > this.hrInfo.t + 1)) {
       const n = this.r.length;
       this.res = { kind: 'HR', outsAdd: 0, runs: n, bases: [null, null, null], hitBases: 4, text: n === 4 ? '満塁ホームラン！' : 'ホームラン！' };
       this.done = true;
@@ -779,6 +780,7 @@ export class LivePlay {
       a: this.human ? this.active : null,
       h: b.mode === 'held' ? b.holder.pos : null,
       lm,
+      hr: this.hr && this.hrInfo ? +(this.t - this.hrInfo.t).toFixed(2) : null,
     };
   }
 }

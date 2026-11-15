@@ -1,7 +1,9 @@
 // サクセスの3D舞台：学校のグラウンドで、自分の選手が練習する様子を見せる
 import * as THREE from 'three';
 import { Player3D } from './chars.js';
-import { buildBat } from './field.js';
+import { buildBat, buildZone, buildCursor, buildAim } from './field.js';
+import { makePitch, pitchPos, predictPlate, judgeSwing, cursorSize, inZone, simulateBall, sampleAt, ZONE, RUBBER_Z, SWING_LAG, BALL_R } from './baseball.js';
+import { PITCHES } from './data.js';
 import { sfxHit, sfxMitt, sfxCatch, sfxCheer } from './sound.js';
 
 const SKIN = '#f2c6a0';
@@ -136,7 +138,8 @@ export class Stage {
     m.holder.position.set(0, 0, 0); m.holder.rotation.set(0, 0, 0); m.holder.visible = true;
     m.setGear('cap');
     m.play('Idle_A', { fade: 0.25 });
-    this.bat.visible = false; this.ball.visible = false; this.batSwing = null;
+    this.bat.visible = false; this.ball.visible = false; this.batSwing = null; this.batOwner = null;
+    if (this.aim) this.aim.visible = false;
     this.hideMates();
     this.anim = null;
     this.goShot('home');
@@ -215,7 +218,8 @@ export class Stage {
   // バット：手の位置から、振りの角度で向きを決める（試合の打者と同じ考え方）
   updateBat() {
     if (!this.bat.visible || !this.me) return;
-    const left = this.left;
+    const who = this.batOwner || this.me;
+    const left = this.batOwner ? false : this.left;
     let th = 95, el = 50;
     const w = this.t;
     if (this.batSwing == null) { th += Math.sin(w * 2.6) * 7; el += Math.sin(w * 2.6 + 1.2) * 5; }
@@ -228,12 +232,274 @@ export class Stage {
     const t = th * Math.PI / 180, e = el * Math.PI / 180;
     const f = new THREE.Vector3(0, 0, 1), c = new THREE.Vector3(left ? 1 : -1, 0, 0);
     _d.copy(f).multiplyScalar(Math.cos(t)).addScaledVector(c, Math.sin(t)).multiplyScalar(Math.cos(e)).addScaledVector(_up, Math.sin(e)).normalize();
-    _d.applyQuaternion(this.me.holder.quaternion);
-    const hand = (left ? this.me.handL : this.me.handR) || this.me.root;
+    _d.applyQuaternion(who.holder.quaternion);
+    const hand = (left ? who.handL : who.handR) || who.root;
     hand.getWorldPosition(_v);
     this.bat.position.copy(_v).addScaledVector(_d, -0.08);
     _q.setFromUnitVectors(_up, _d);
     this.bat.quaternion.copy(_q);
+  }
+
+
+  // ---------- 実際に打つ打席（ミートカーソルを動かして、クリックで振る） ----------
+  // o: { batter:{meet,power,bats}, pitcher:{velo,control,throws,pitches}, oppColor, onCount(b,s), onCall(text,cls), seed }
+  atBatLive(o) {
+    const id = this.actId = (this.actId || 0) + 1;
+    this.reset(); this.fx = [];
+    const m = this.me, left = o.batter.bats === 'L', R = left ? 'L' : 'R';
+    this.left = left;
+    m.holder.position.set(left ? 1.25 : -1.25, 0, -0.05);
+    m.holder.rotation.y = left ? -Math.PI / 2 : Math.PI / 2;
+    m.setGear('helmet', { flapLeft: !left });
+    m.play('Stance' + R, { fade: 0.2 }); this.bat.visible = true;
+    const p = this.showMate('_op', 0, RUBBER_Z + 0.2, 0, 'Idle_A');
+    p.setLook({ ...SCHOOL_LOOK, shirt: o.oppColor || '#c0392b', cap: o.oppColor || '#c0392b', brim: o.oppColor || '#c0392b' });
+    p.setGear('cap', { glove: true });
+    const ct = this.showMate('_ct', 0, 0.95, Math.PI, 'Crouching');
+    ct.setLook({ ...SCHOOL_LOOK, shirt: o.oppColor || '#c0392b', cap: o.oppColor || '#c0392b', brim: o.oppColor || '#c0392b' });
+    ct.setGear('helmet', { glove: true });
+    ct.holder.visible = false; // カメラの前をふさぐので見せない
+    const fov0 = this.cam.fov; this.cam.fov = 40; this.cam.updateProjectionMatrix();
+    this.goShot({ p: new THREE.Vector3(0, 1.55, 4.2), t: new THREE.Vector3(0, 0.9, -18) }, 0.5);
+    if (!this.zone) { this.zone = buildZone(); this.cursor = buildCursor(); this.shadow = new THREE.Mesh(new THREE.CircleGeometry(BALL_R * 1.3, 16), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.45, depthTest: false })); this.shadow.renderOrder = 11; this.scene.add(this.zone, this.cursor, this.shadow); }
+    this.zone.visible = true; this.cursor.visible = true; this.shadow.visible = false;
+    const { rx, ry } = cursorSize(o.batter, false);
+    this.cursor.scale.set(rx, ry, 1);
+    const cur = { x: (ZONE.x0 + ZONE.x1) / 2, y: (ZONE.y0 + ZONE.y1) / 2 };
+    this.cursor.position.set(cur.x, cur.y, 0.02);
+    const ray = new THREE.Raycaster(), plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), hit = new THREE.Vector3(), ndc = new THREE.Vector2();
+    const move = (e) => {
+      const r = this.canvas.getBoundingClientRect();
+      ndc.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+      ray.setFromCamera(ndc, this.cam);
+      if (ray.ray.intersectPlane(plane, hit)) {
+        cur.x = Math.max(ZONE.x0 - 0.25, Math.min(ZONE.x1 + 0.25, hit.x));
+        cur.y = Math.max(ZONE.y0 - 0.25, Math.min(ZONE.y1 + 0.25, hit.y));
+        this.cursor.position.set(cur.x, cur.y, 0.02);
+      }
+    };
+    let pitch = null, rel = null, swingAt = null;
+    const down = (e) => { move(e); if (pitch && rel != null && swingAt == null) { swingAt = this.t - rel; m.play('Swing' + R, { loop: false, restart: true, speed: 1, fade: 0.04 }); this.batSwing = this.t; } };
+    const key = (e) => { if (e.code === 'Space') { e.preventDefault(); down({ clientX: -1, clientY: -1, fake: 1 }); } };
+    const down2 = (e) => { if (e.fake) { if (pitch && rel != null && swingAt == null) { swingAt = this.t - rel; m.play('Swing' + R, { loop: false, restart: true, speed: 1, fade: 0.04 }); this.batSwing = this.t; } } else down(e); };
+    this.canvas.addEventListener('pointermove', move);
+    this.canvas.addEventListener('pointerdown', down2);
+    window.addEventListener('keydown', key);
+    const cleanup = () => {
+      this.canvas.removeEventListener('pointermove', move); this.canvas.removeEventListener('pointerdown', down2); window.removeEventListener('keydown', key);
+      this.zone.visible = false; this.cursor.visible = false; this.shadow.visible = false;
+      this.cam.fov = fov0; this.cam.updateProjectionMatrix();
+    };
+    const T = async (ms) => { await wait(ms); if (id !== this.actId) { cleanup(); throw 'cancel'; } };
+    const types = Object.keys(o.pitcher.pitches);
+    let seed = o.seed || ((Math.random() * 1e9) | 0);
+    const run = async () => {
+      let b = 0, st = 0;
+      o.onCount && o.onCount(b, st);
+      for (;;) {
+        await T(900);
+        // 投手：球種とコース
+        seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+        const r = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+        const type = types[Math.floor(r() * types.length)] || 'ST';
+        const hw = (ZONE.x1 - ZONE.x0) / 2, hh = (ZONE.y1 - ZONE.y0) / 2, cx = (ZONE.x0 + ZONE.x1) / 2, cy = (ZONE.y0 + ZONE.y1) / 2;
+        const edge = b >= 3 ? 1.1 : st >= 2 ? 2.3 : 1.8;
+        const target = { x: cx + (r() * 2 - 1) * hw * edge, y: cy + (r() * 2 - 1) * hh * edge };
+        p.play(o.pitcher.throws === 'L' ? 'PitchL' : 'PitchR', { loop: false, restart: true, fade: 0.08 });
+        await T(1000);
+        pitch = makePitch(o.pitcher, type, target, seed, 0, 0.6 + r() * 0.3);
+        rel = this.t; swingAt = null;
+        o.onCall && o.onCall(`${PITCHES[type].name} ${pitch.velo}km`, 'info');
+        const ball = this.ball; ball.visible = true;
+        // 本塁を通るまで
+        await new Promise(res => {
+          const step = () => {
+            const t = this.t - rel;
+            const q = pitchPos(pitch, Math.min(t, pitch.T + 0.12));
+            ball.position.set(q.x, q.y, q.z);
+            const sh = predictPlate(pitch, t);
+            this.shadow.visible = t < pitch.T; this.shadow.position.set(sh.x, sh.y, 0.01);
+            if (t >= pitch.T + (swingAt != null ? 0 : 0.12)) { this.fx = this.fx.filter(x => x !== step); res(); }
+          };
+          this.fx.push(step);
+        });
+        this.shadow.visible = false;
+        let call = '', out = null;
+        if (swingAt != null) {
+          const h = judgeSwing(pitch, o.batter, { ts: swingAt, cx: cur.x, cy: cur.y, power: false }, seed);
+          if (h.miss) { st++; call = '空振り！'; sfxMitt(1); ball.visible = false; }
+          else if (h.foulTip || Math.abs(h.phi) > Math.PI / 4) { sfxHit(0.35); if (st < 2) st++; call = 'ファウル'; this.flyBall(ball.position.clone(), new THREE.Vector3(h.v.x, h.v.y, h.v.z), 1.2); }
+          else {
+            sfxHit(h.q);
+            out = this.classify(h);
+            await this.flyPath(h, out, T);
+          }
+        } else {
+          ball.visible = false; sfxMitt(0.9);
+          if (inZone(pitch.end)) { st++; call = 'ストライク！'; } else { b++; call = 'ボール'; }
+        }
+        pitch = null; rel = null;
+        if (!out && st >= 3) out = swingAt != null ? 'k' : 'look';
+        if (!out && b >= 4) out = 'bb';
+        if (out) { cleanup(); this.batSwing = null; return out; }
+        o.onCall && o.onCall(call, call === 'ボール' ? 'ball' : 'strike');
+        o.onCount && o.onCount(b, st);
+        await T(500);
+        this.batSwing = null; m.play('Stance' + R, { fade: 0.2 });
+      }
+    };
+    return run().catch(e => { if (e !== 'cancel') console.warn(e); cleanup(); return 'out'; });
+  }
+
+  // ---------- 実際に投げる打席（球種をえらび、コースをねらってクリック） ----------
+  // o: { pitcher:{velo,control,throws,pitches}, lv, oppColor, onCount(b,s), onCall(text,cls), onType(type) } ／ this.setType(type) で球種を変える
+  pitchLive(o) {
+    const id = this.actId = (this.actId || 0) + 1;
+    this.reset(); this.fx = [];
+    const m = this.me, R = o.pitcher.throws === 'L' ? 'L' : 'R';
+    m.holder.position.set(0, 0, RUBBER_Z + 0.2); m.holder.rotation.y = 0;
+    m.setGear('cap', { glove: true, gloveLeft: R === 'R' });
+    m.play('Idle_A');
+    const bt = this.showMate('_op', -1.25, -0.05, Math.PI / 2, 'StanceR');
+    bt.setLook({ ...SCHOOL_LOOK, shirt: o.oppColor || '#c0392b', cap: o.oppColor || '#c0392b', brim: o.oppColor || '#c0392b' });
+    bt.setGear('helmet', { flapLeft: true });
+    this.batOwner = bt; this.bat.visible = true;
+    const fov0 = this.cam.fov; this.cam.fov = 40; this.cam.updateProjectionMatrix();
+    this.goShot({ p: new THREE.Vector3(0, 1.55, 4.2), t: new THREE.Vector3(0, 0.9, -18) }, 0.5);
+    if (!this.zone) { this.zone = buildZone(); this.cursor = buildCursor(); this.shadow = new THREE.Mesh(new THREE.CircleGeometry(BALL_R * 1.3, 16), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.45, depthTest: false })); this.shadow.renderOrder = 11; this.scene.add(this.zone, this.cursor, this.shadow); }
+    if (!this.aim) { this.aim = buildAim(); this.aim.scale.setScalar(1.6); this.scene.add(this.aim); }
+    this.zone.visible = true; this.aim.visible = true; this.cursor.visible = false;
+    const cur = { x: (ZONE.x0 + ZONE.x1) / 2, y: (ZONE.y0 + ZONE.y1) / 2 };
+    this.aim.position.set(cur.x, cur.y, 0.02);
+    const ray = new THREE.Raycaster(), plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), hit = new THREE.Vector3(), ndc = new THREE.Vector2();
+    let ready = false, thrown = null;
+    const move = (e) => {
+      const r = this.canvas.getBoundingClientRect();
+      ndc.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+      ray.setFromCamera(ndc, this.cam);
+      if (ray.ray.intersectPlane(plane, hit)) {
+        cur.x = Math.max(ZONE.x0 - 0.3, Math.min(ZONE.x1 + 0.3, hit.x));
+        cur.y = Math.max(ZONE.y0 - 0.3, Math.min(ZONE.y1 + 0.3, hit.y));
+        this.aim.position.set(cur.x, cur.y, 0.02);
+      }
+    };
+    const types = Object.keys(o.pitcher.pitches);
+    let type = 'ST';
+    this.setType = (t) => { if (types.includes(t)) { type = t; o.onType && o.onType(t); } };
+    o.onType && o.onType(type);
+    const go = () => { if (ready && !thrown) thrown = { type, x: cur.x, y: cur.y }; };
+    const down = (e) => { move(e); go(); };
+    const key = (e) => { if (e.code === 'Space') { e.preventDefault(); go(); } const n = +e.key; if (n >= 1 && n <= types.length) this.setType(types[n - 1]); };
+    this.canvas.addEventListener('pointermove', move);
+    this.canvas.addEventListener('pointerdown', down);
+    window.addEventListener('keydown', key);
+    const cleanup = () => {
+      this.canvas.removeEventListener('pointermove', move); this.canvas.removeEventListener('pointerdown', down); window.removeEventListener('keydown', key);
+      this.zone.visible = false; this.aim.visible = false; this.shadow.visible = false; this.setType = null;
+      this.cam.fov = fov0; this.cam.updateProjectionMatrix();
+    };
+    const T = async (ms) => { await wait(ms); if (id !== this.actId) { cleanup(); throw 'cancel'; } };
+    let seed = (Math.random() * 1e9) | 0;
+    const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+    const run = async () => {
+      let b = 0, st = 0;
+      o.onCount && o.onCount(b, st);
+      for (;;) {
+        ready = true; thrown = null;
+        this.aim.visible = true;
+        while (!thrown) await T(50);
+        ready = false;
+        m.play('Pitch' + R, { loop: false, restart: true, fade: 0.08 });
+        await T(1000);
+        const pitch = makePitch(o.pitcher, thrown.type, { x: thrown.x, y: thrown.y }, seed, 0, 0.75);
+        const t0 = this.t;
+        o.onCall && o.onCall(`${PITCHES[thrown.type].name} ${pitch.velo}km`, 'info');
+        // 打者が振るか（ゾーンなら振りやすい。変化球のボール球にはつられることも）
+        const z = inZone(pitch.end);
+        const mid = Math.hypot((pitch.end.x - (ZONE.x0 + ZONE.x1) / 2) / 0.3, (pitch.end.y - (ZONE.y0 + ZONE.y1) / 2) / 0.36);
+        const brk = thrown.type !== 'ST' ? (o.pitcher.pitches[thrown.type] || 1) : 0;
+        const swing = z ? rnd() < 0.72 : rnd() < (brk ? 0.18 + brk * 0.05 : 0.1) * (st >= 2 ? 1.5 : 1);
+        const ball = this.ball; ball.visible = true;
+        let swung = false;
+        await new Promise(res => {
+          const step = () => {
+            const t = this.t - t0;
+            const q = pitchPos(pitch, Math.min(t, pitch.T + 0.1));
+            ball.position.set(q.x, q.y, q.z);
+            if (swing && !swung && t > pitch.T - 0.12) { swung = true; bt.play('SwingR', { loop: false, restart: true, fade: 0.04 }); this.batSwing = this.t; }
+            if (t >= pitch.T + 0.05) { this.fx = this.fx.filter(x => x !== step); res(); }
+          };
+          this.fx.push(step);
+        });
+        let call = '', out = null;
+        if (swing) {
+          // 当たるか：甘いほど・遅いほど当たる。変化球のレベルと球速で空振りが増える
+          const contact = 0.82 - (o.lv || 0) * -0.03 - brk * 0.05 - (pitch.velo - 125) * 0.007 - (z ? 0 : 0.3) - Math.min(1, mid) * 0.12;
+          if (rnd() > contact) { st++; call = '空振り！'; ball.visible = false; sfxMitt(1.1); }
+          else {
+            const fair = rnd() < 0.62;
+            if (!fair) { sfxHit(0.35); if (st < 2) st++; call = 'ファウル'; this.flyBall(ball.position.clone(), new THREE.Vector3((rnd() - 0.5) * 20, 8, 6), 1.2); }
+            else {
+              const good = (1 - Math.min(1, mid)) * 0.5 + (o.lv || 0) * 0.06 + 0.12 - brk * 0.02;
+              const r = rnd();
+              out = r < good * 0.18 ? 'hr' : r < good * 0.5 ? 'double' : r < good ? 'hit' : rnd() < 0.5 ? 'gout' : 'out';
+              sfxHit(out === 'hr' ? 1 : 0.6);
+              const v = { hr: [6, 24, -36], double: [-12, 10, -30], hit: [7, 5, -26], gout: [-4, -1, -20], out: [3, 17, -16] }[out];
+              this.zone.visible = false; this.aim.visible = false;
+              this.flyBall(ball.position.clone(), new THREE.Vector3(...v), 2.4);
+              this.goShot({ p: new THREE.Vector3(2, 3, 6), t: new THREE.Vector3(v[0] * 0.5, out === 'hr' ? 8 : 3, -22) }, 0.8);
+              if (out === 'hr') sfxCheer(0.8);
+              await T(1800);
+            }
+          }
+        } else {
+          ball.visible = false; sfxMitt(1);
+          if (z) { st++; call = st >= 3 ? '見逃し三振！' : 'ストライク！'; } else { b++; call = 'ボール'; }
+        }
+        if (!out && st >= 3) out = 'k';
+        if (!out && b >= 4) out = 'bb';
+        if (out) { cleanup(); this.batSwing = null; if (out === 'k') m.play('Cheering', { fade: 0.2 }); await T(out === 'k' ? 1200 : 300); return out; }
+        o.onCall && o.onCall(call, call === 'ボール' ? 'ball' : 'strike');
+        o.onCount && o.onCount(b, st);
+        await T(700);
+        this.batSwing = null; bt.play('StanceR', { fade: 0.2 }); m.play('Idle_A', { fade: 0.3 });
+      }
+    };
+    return run().catch(e => { if (e !== 'cancel') console.warn(e); cleanup(); return 'out'; });
+  }
+
+  // 打球の結果（守備は動かさず、打球の強さと角度から決める）
+  classify(h) {
+    const sim = simulateBall(h.v, { stopAtHr: true });
+    h.sim = sim;
+    if (sim.hr) return 'hr';
+    const fb = sim.firstBounce, d = fb ? Math.hypot(fb.x, fb.z) : 0, hang = fb ? fb.t : 0;
+    const r = Math.random();
+    if (h.la < 8) return r < 0.2 + h.q * 0.25 ? (d > 60 ? 'double' : 'hit') : 'gout';
+    if (h.la < 22) return r < 0.45 + h.q * 0.3 ? (d > 70 ? 'double' : 'hit') : 'lout';
+    if (d > 92) return r < 0.5 ? 'double' : 'out';
+    return r < 0.15 + (hang < 3 ? 0.25 : 0) ? 'hit' : 'out';
+  }
+  // 打球を飛ばして、カメラで追う
+  async flyPath(h, res, T) {
+    const path = h.sim.path, ball = this.ball, t0 = this.t;
+    ball.visible = true;
+    const dur = Math.min(res === 'hr' ? 4.2 : 2.8, path[path.length - 1].t);
+    const cam = { p: new THREE.Vector3(), t: new THREE.Vector3() };
+    const step = () => {
+      const t = this.t - t0;
+      const q = sampleAt(path, t);
+      ball.position.set(q.x, q.y, q.z);
+      const k = Math.min(1, t / 1.2);
+      cam.p.set(q.x * 0.25 * k, 1.55 + k * (6 + q.y * 0.2), 4.2 + k * 8);
+      cam.t.set(q.x, Math.max(0.5, q.y * 0.8), q.z);
+      this.camTo = cam; this.camFrom = null;
+      if (t > dur) { this.fx = this.fx.filter(x => x !== step); }
+    };
+    this.fx.push(step);
+    this.zone.visible = false; this.cursor.visible = false;
+    if (res === 'hr') { await T(900); sfxCheer(1); await T(2400); }
+    else { if (res === 'double' || res === 'hit') setTimeout(() => sfxCheer(0.6), 600); await T(dur * 1000 * 0.75); }
   }
 
   // 球を飛ばす（放物線）
