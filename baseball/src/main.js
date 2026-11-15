@@ -501,6 +501,15 @@ function playResult(pre, decision, out, next) {
     people.batter.play('Hit_A', { loop: false, restart: true });
     if (out.injury) setTimeout(() => toast(out.injury + ' がケガ… 能力が下がります', 2600), 700);
   }
+  if (out.kind === 'K' || /三振/.test(out.call || '')) {
+    // 三振：投手はガッツポーズ、打者はうなだれる
+    setTimeout(() => {
+      const P = people.fielders.P, B = people.batter;
+      if (P) P.play('Cheering', { fade: 0.15 });
+      if (B) B.play('Idle_B', { fade: 0.25 });
+      if (bat) bat.visible = false;
+    }, 350);
+  }
   showCall(out.call, out.kind === 'BALL' ? '#7dd3ff' : out.kind === 'K' ? '#ff6b6b' : out.kind === 'HBP' ? '#ff9f43' : '#ffe066', out.kind === 'K');
   if (out.steal) {
     // 投球のあと、キャッチャーからの送球で盗塁のプレー
