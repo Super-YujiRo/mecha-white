@@ -1149,6 +1149,11 @@ function endP(){
 let M=null;
 const VW=480,VH=360;
 let AC=null;
+/* 手応え：揺れは毎フレームのランダムではなく、なめらかに。2乗で効かせるので弱い揺れは控えめ、強い揺れはドンと */
+const JUICE={off:false,t0:performance.now()};try{JUICE.off=localStorage.getItem('hima_shake')==='0'}catch(_){}
+function jT(){return(performance.now()-JUICE.t0)/1000*30}
+function jCam(cam,k){if(JUICE.off||!(k>0))return;k=Math.min(1,k);const s=k*k,t=jT();cam.rotateY(.022*s*Math.sin(t*1.7));cam.rotateX(.016*s*Math.sin(t*2.3+1));cam.rotateZ(.03*s*Math.sin(t*1.1+2))}
+function jOff(v){if(JUICE.off||!(v>0))return[0,0];const k=Math.min(1,v/14),a=v*k*.8,t=jT();return[a*Math.sin(t*1.7),a*Math.sin(t*2.3+1)]}
 function beep(f,d,type='square',v=.05,when=0){try{if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();const t=AC.currentTime+when,o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+d+.02)}catch(e){}}
 const sfx={ok(){beep(660,.1);beep(990,.16,'square',.05,.1)},ng(){beep(150,.35,'sawtooth',.06)},go(){beep(520,.07);beep(780,.12,'square',.05,.08)},tap(){beep(300+Math.random()*90,.04,'triangle',.05)},tick(){beep(1200,.03,'square',.02)}};
 function seeded(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
@@ -1727,7 +1732,7 @@ function updY(dt){const y=Y;y.pt+=dt;if(MENU_PH.includes(y.ph)||y.ph==='final')r
   else if(y.ph==='stop'){if(y.pt>1){y.ph='res';y.pt=0;y.rank.forEach((p,k)=>y.coins[p]+=rkAw(y,k))}}
 }
 function renderY(){if(P3.ok&&p3Init()){p3Show(true);return renderY3()}const y=Y;pyLayout();if(MENU_PH.includes(y.ph)||y.ph==='final'){ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle='#1d2433';ctx.fillRect(0,0,W,H);return}ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle='#141821';ctx.fillRect(0,0,W,H);
-  const{s,ox,oy}=y.view,sx=(Math.random()-.5)*y.shake,sy=(Math.random()-.5)*y.shake;
+  const{s,ox,oy}=y.view,[sx,sy]=jOff(y.shake);
   ctx.setTransform(DPR*s,0,0,DPR*s,DPR*(ox+sx*s),DPR*(oy+sy*s));ctx.save();ctx.beginPath();ctx.rect(0,0,VW,VH);ctx.clip();
   const G2=y.list[y.gi];
   if(y.ph==='rules'){ctx.fillStyle='#1d2433';ctx.fillRect(0,0,VW,VH);
@@ -2949,7 +2954,7 @@ p3Render=function(){const r=P3.r,cw=Math.round(W*DPR),ch=Math.round(H*DPR);
 const _fxCam=p3Cam;p3Cam=function(gid,t){_fxCam(gid,t);const cam=P3.cam,y=Y;P3.punch=Math.max(0,(P3.punch||0)*.86-.004);
   let fov=38;if(y&&y.g&&y.g.rhy&&y.ph==='play'){const b=y.g.beat??-9;if(b>=0){const fr=b-Math.floor(b);fov-=Math.max(0,1-fr/.2)*.45}}
   fov-=P3.punch*1.4;if(Math.abs(cam.fov-fov)>.001){cam.fov=fov;cam.updateProjectionMatrix()}
-  const sh=((y&&y.shake)||0)*.025+P3.punch*.06;if(sh>0){cam.position.x+=(Math.random()-.5)*sh;cam.position.y+=(Math.random()-.5)*sh}};
+  jCam(cam,((y&&y.shake)||0)/14+P3.punch*.25)};
 const _fxJudge=rgJudgeTap;rgJudgeTap=function(g,i,at){const r=_fxJudge(g,i,at);if(i===PME){if(r===2){P3.punch=1;P3.cheer=Math.min(1.2,(P3.cheer||0)+.5)}else if(r===1)P3.punch=.4}return r};
 /* 3) テクスチャをその場で描く */
 function cvTex(w,h,draw,rep){const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');draw(x,w,h);const t=new THREE.CanvasTexture(c);t.anisotropy=4;if(rep){t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(rep[0],rep[1])}t._ctx=x;t._cv=c;return t}
@@ -3194,7 +3199,7 @@ const TM3={};
 function tmCam(hw,hh,dir,look){const a=W/H,cam=P3.cam;cam.aspect=a;const tn=Math.tan(cam.fov*Math.PI/360);const k=P3.sweep??1,orb=(1-k)*.9+(P3.spin||0),d=Math.max(hw/(tn*a),hh/tn)*1.05*(1+(1-k)*.45);
   const v=new THREE.Vector3(dir[0],dir[1],dir[2]).normalize();const ca=Math.cos(orb),sa=Math.sin(orb);const vx=v.x*ca+v.z*sa,vz=-v.x*sa+v.z*ca;v.x=vx;v.z=vz;v.y+=(1-k)*.25;v.normalize();
   const L=new THREE.Vector3(look[0],look[1],look[2]);cam.position.copy(L).add(v.multiplyScalar(d));cam.lookAt(L);cam.updateProjectionMatrix();
-  const y=Y,sh=((y&&y.shake)||0)*.025;if(sh>0){cam.position.x+=(Math.random()-.5)*sh;cam.position.y+=(Math.random()-.5)*sh}}
+  jCam(cam,((Y&&Y.shake)||0)/14)}
 function tmRings(s){P3.trings=[0,1,2,3].map(()=>{const r=p3Mesh(new THREE.RingGeometry(1.25,1.75,40),new THREE.MeshBasicMaterial({color:'#ffffff',transparent:true,opacity:.85,side:THREE.DoubleSide}),false);r.rotation.x=-Math.PI/2;s.add(r);return r})}
 function tmRingSync(g){if(!P3.trings)return;for(let i=0;i<4;i++){const r=P3.trings[i],c=P3.chars[i];if(!g.teams||!c||!c.visible){r.visible=false;continue}r.visible=true;r.material.color.set(TCOL[g.teams[i]]);r.position.set(c.position.x,Math.max(.05,c.position.y)+.06,c.position.z)}}
 function tmBuild(gid){p3Clear();P3.gid=gid;const s=p3Base('#8fc9ee');const chars=[0,1,2,3].map(p3Char);TM3[gid].build(s);chars.forEach(c=>s.add(c));P3.chars=chars;P3.scene=s;P3.floaters=[];
@@ -4010,6 +4015,18 @@ function previews(t){
   c3.font='26px "DotGothic16",monospace';c3.textAlign='center';c3.textBaseline='middle';c3.lineWidth=5;c3.strokeStyle='rgba(20,24,30,.9)';
   const sc=1+.08*Math.sin(t*8);c3.save();c3.translate(140,48);c3.scale(sc,sc);c3.strokeText(words[k],0,0);c3.fillStyle='#fff';c3.fillText(words[k],0,0);c3.restore();
 }
+/* 手応え：大きな衝撃の瞬間だけ一瞬止めて（ヒットストップ）グッと寄る。リズムゲームとゲストは止めない */
+const HSTOP={t:0,prev:0};
+const _hsUpd=updY;updY=function(dt){const y=Y;
+  if(!y||y.ph!=='play'||!y.g||y.g.rhy||(NET.role==='guest'&&NET.on)){HSTOP.t=0;if(y)HSTOP.prev=y.shake||0;return _hsUpd(dt)}
+  if(HSTOP.t>0){HSTOP.t-=dt;return}
+  const r=_hsUpd(dt);const inc=(y.shake||0)-HSTOP.prev;HSTOP.prev=y.shake||0;
+  if(inc>=6&&y.ph==='play'){HSTOP.t=Math.min(.12,.03+inc*.006);if(!JUICE.off)P3.punch=Math.max(P3.punch||0,Math.min(1,inc/12))}
+  return r};
+addEventListener('keydown',e=>{if(e.repeat||e.key.toLowerCase()!=='v')return;const y=Y;if(y&&y.ph==='play'&&y.g&&y.g.rhy)return;
+  JUICE.off=!JUICE.off;try{localStorage.setItem('hima_shake',JUICE.off?'0':'1')}catch(_){}
+  let el=document.getElementById('jToast');if(!el){el=document.createElement('div');el.id='jToast';el.style.cssText='position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:99;background:rgba(20,24,33,.9);color:#fff;font:800 13px "M PLUS Rounded 1c",sans-serif;padding:6px 14px;border-radius:999px;pointer-events:none;transition:opacity .3s';document.body.appendChild(el)}
+  el.textContent=JUICE.off?'画面の揺れ：オフ':'画面の揺れ：オン';el.style.opacity=1;clearTimeout(el._t);el._t=setTimeout(()=>el.style.opacity=0,1100)});
 let pvRun=true;(function pv(ts){if(!$('#menu').hidden)previews(ts/1000);requestAnimationFrame(pv)})(0);
 refreshChips();
 requestAnimationFrame(loop);
