@@ -11,6 +11,7 @@ import { buildField, buildZone, buildCursor, buildAim, buildBat, cheerCrowd, upd
 import { loadCharacters, Player3D } from './chars.js';
 const BAT_CAM = { pos: [0, 1.55, 4.2], look: [0, 0.9, -18], fov: 40, fovPortrait: 62 };
 import { Net } from './net.js';
+import { Feel, TIERS } from './feel.js';
 import { unlockAudio, sfxHit, sfxTip, sfxMitt, sfxCatch, sfxSwing, sfxRelease, sfxSlide, sfxCue, sfxCheer, sfxBounce, setMuted, isMuted, umpire } from './sound.js';
 
 // ================= 時計（?test のときはコマ送り） =================
@@ -62,6 +63,31 @@ const ball = new THREE.Mesh(new THREE.SphereGeometry(BALL_R * 1.5, 16, 12), ball
 ball.renderOrder = 20; ballMat.depthTest = false;
 ball.castShadow = true;
 scene.add(ball);
+// ボールの伸び縮み：速い球は進む向きに少し伸び、打った瞬間はつぶれて戻る
+let ballBase = 1, ballPrevOk = false;
+const _bp0 = new THREE.Vector3(), _bd = new THREE.Vector3(), _bz = new THREE.Vector3(0, 0, 1);
+function stretchBall(dt) {
+  if (!ball.visible) { ballPrevOk = false; return; }
+  const b = ballBase;
+  if (S.squash) {
+    const k = (nowMs() - S.squash.t0) / 160;
+    if (k < 1) {
+      const a = S.squash.q * (1 - k) * (1 - k);
+      ball.quaternion.identity();
+      ball.scale.set(b * (1 + 0.4 * a), b * (1 + 0.4 * a), b * (1 - 0.55 * a));
+      _bp0.copy(ball.position); ballPrevOk = true;
+      return;
+    }
+    S.squash = null;
+  }
+  _bd.subVectors(ball.position, _bp0);
+  const sp = ballPrevOk && dt > 0 ? _bd.length() / dt : 0;
+  _bp0.copy(ball.position); ballPrevOk = true;
+  if (sp < 8 || sp > 120) { ball.quaternion.identity(); ball.scale.setScalar(b); return; }
+  const st = 1 + Math.min(0.7, (sp - 8) / 70);
+  ball.quaternion.setFromUnitVectors(_bz, _bd.normalize());
+  ball.scale.set(b / Math.sqrt(st), b / Math.sqrt(st), b * st);
+}
 const ballShadow = new THREE.Mesh(new THREE.CircleGeometry(0.09, 16), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.3, depthWrite: false }));
 ballShadow.rotation.x = -Math.PI / 2;
 scene.add(ballShadow);
@@ -92,13 +118,13 @@ activeRing.rotation.x = -Math.PI / 2;
 activeRing.visible = false;
 scene.add(activeRing);
 
-let S_portrait = false;
+let S_portrait = false, camFov = 40;
 function resize() {
   const w = window.innerWidth, h = window.innerHeight;
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
   S_portrait = w / h < 1;
-  camera.fov = S_portrait ? 62 : 40;
+  camera.fov = S_portrait ? 62 : 40; camFov = camera.fov;
   camera.updateProjectionMatrix();
 }
 window.addEventListener('resize', resize);
@@ -127,6 +153,23 @@ function callSound(text) {
   else if (/ホームイン|ナイスキャッチ|スリーベース|ツーベース/.test(text)) { sfxCheer(0.7, 2.6); cheerCrowd(field, 0.8); }
   else if (/ヒット|サヨナラ|ゲームセット|三振/.test(text)) cheerCrowd(field, 0.5);
 }
+// 実況に合わせた手応え
+function callFeel(text) {
+  const v = S.live && S.live.view;
+  const bp = ball.position;
+  if (/ホームラン/.test(text) && !/ランニング/.test(text)) { feel.addTrauma(0.6); feel.kick(3.5); return; }
+  if (/ナイスキャッチ/.test(text)) { feedback('medium', null); feel.dust(bp, 8, Math.max(0.5, camera.position.distanceTo(bp) / 35)); return; }
+  if (/スライディング|ホームイン/.test(text) && v) {
+    // ボールに一番近い走者の足元に土ぼこり
+    let best = null, bd = 1e9;
+    for (const d of v.r) { if (d[4] === 9 || d[4] === ACT.hide) continue; const dd = Math.hypot(d[1] - bp.x, d[2] - bp.z); if (dd < bd) { bd = dd; best = d; } }
+    if (best) feel.dust({ x: best[1], z: best[2] }, 9, Math.max(0.5, Math.hypot(best[1] - camera.position.x, best[2] - camera.position.z) / 35));
+    feel.addTrauma(0.12);
+    return;
+  }
+  if (/ゲッツー/.test(text)) { feel.addTrauma(0.3); return; }
+  if (/アウト！|セーフ！/.test(text) && S.phase === 'play') feel.addTrauma(0.15);
+}
 // ホームランの一周はクリック・スペースで飛ばせる
 function skipHr() { const L = S.live; if (L && L.auth && L.sim && L.view && L.view.hr > 1.5) L.sim.skipHr = true; }
 // 花火（ホームラン）
@@ -140,6 +183,23 @@ function spark() {
   g.fillStyle = r; g.fillRect(0, 0, 32, 32);
   sparkTex = new THREE.CanvasTexture(c);
   return sparkTex;
+}
+const feel = new Feel(scene, spark());
+// 出来事の大きさ（small / medium / large）ごとに、揺れ・停止・ズーム・火花をまとめて出す
+function feedback(tier, pos, power = 1) {
+  const T = TIERS[tier];
+  feel.addTrauma(T.trauma); feel.kick(T.kick);
+  if (T.stop) S.hitStopUntil = Math.max(S.hitStopUntil || 0, nowMs() + T.stop);
+  if (pos) feel.sparks(pos, tier === 'large' ? 28 : tier === 'medium' ? 12 : 4, power);
+}
+function popExit(ev) {
+  const el = document.createElement('span');
+  el.className = 'ev'; el.innerHTML = `打球速度 ${Math.round(ev)}<small>km/h</small>`;
+  ui.speed.innerHTML = '';
+  ui.speed.appendChild(el);
+  ui.speed.classList.add('show');
+  clearTimeout(popExit.tm);
+  popExit.tm = setTimeout(() => { if (S.phase === 'play') ui.speed.classList.remove('show'); }, 1800);
 }
 function launchFireworks() {
   for (let i = 0; i < 8; i++) {
@@ -167,6 +227,7 @@ function updateFireworks(dt) {
 }
 function showCall(text, color = '#fff', big = false) {
   callSound(text);
+  callFeel(text);
   ui.call.innerHTML = '<span class="band"></span><span class="txt"></span>';
   ui.call.lastChild.textContent = text;
   ui.call.style.setProperty('--c', color);
@@ -364,7 +425,7 @@ function beginAtBat(first) {
   resetFielders();
   setBatterStance(currentBatter(s).player);
   placeRunners(s);
-  ball.visible = false; ballShadow.visible = false; ball.scale.setScalar(1); ballShadow.scale.setScalar(1);
+  ball.visible = false; ballShadow.visible = false; ballBase = 1; ball.scale.setScalar(1); ballPrevOk = false; ballShadow.scale.setScalar(1);
   clearTrail(); landMark.visible = false;
   ui.speed.classList.remove('show');
   // 球種の選択を初期化
@@ -631,7 +692,7 @@ function renderView(v, dt) {
   const bp = ball.position;
   if (k === 1) bp.set(bv[0], bv[1], bv[2]); else bp.lerp(new THREE.Vector3(bv[0], bv[1], bv[2]), k);
   const far = camera.position.distanceTo(bp);
-  ball.scale.setScalar(Math.max(1, far / 9));
+  ballBase = Math.max(1, far / 9);
   ballShadow.visible = ball.visible;
   ballShadow.position.set(bp.x, 0.02, bp.z);
   ballShadow.scale.setScalar(Math.max(1, far / 12));
@@ -655,7 +716,11 @@ function renderView(v, dt) {
     L.activePos = { x: af.x, z: af.z };
   } else { activeRing.visible = false; L.activePos = null; }
   updateRadar(v);
-  if (v.h && v.h !== L.holder) sfxCatch();
+  if (v.h && v.h !== L.holder) { sfxCatch(); if (L.wasAir) feel.addTrauma(0.1); }
+  // 打球が地面に落ちたら土ぼこり
+  if (bv[3] && L.prevBy != null && L.prevBy > 0.25 && bp.y <= 0.25 && !v.h) feel.dust(bp, 5, Math.max(0.35, far / 40));
+  L.prevBy = bv[3] ? bp.y : null;
+  L.wasAir = bp.y > 0.6;
   L.holder = v.h;
   // 走者（0 は打者）
   for (const d of v.r) {
@@ -712,19 +777,19 @@ function waitForHost() {
 
 function hitFx(h, dec) {
   if (!h) return;
-  if (h.foulTip) { sfxTip(); return; }
+  if (h.foulTip) { sfxTip(); feel.addTrauma(0.1); return; }
   const q = h.q || 0;
   sfxHit(q, dec && dec.power);
-  if (q > 0.85 && h.ev > 150) shake = 0.35; else if (q > 0.6) shake = 0.15;
-  // ヒットストップ：芯で捉えるほど一瞬止まる
-  S.hitStopUntil = nowMs() + 40 + q * 90;
+  // 芯で捉えて速い打球ほど大きく（弱い当たりは止めない）
+  const tier = q > 0.85 && h.ev > 150 ? 'large' : q > 0.55 ? 'medium' : 'small';
+  const e = S.pitch ? pitchPos(S.pitch, S.pitch.T) : { x: 0, y: 0.8 };
+  feedback(tier, { x: e.x, y: e.y, z: 0.05 }, q);
+  S.squash = { t0: nowMs(), q };
+  if (q > 0.5 && h.ev >= 110) popExit(h.ev);
   // 当たった場所に光の輪
-  if (S.pitch) {
-    const e = pitchPos(S.pitch, S.pitch.T);
-    flash.position.set(e.x, e.y, 0.05);
-    flash.userData.t0 = nowMs(); flash.userData.q = q;
-    flash.visible = true;
-  }
+  flash.position.set(e.x, e.y, 0.05);
+  flash.userData.t0 = nowMs(); flash.userData.q = q;
+  flash.visible = true;
 }
 
 // ================= バット（スイングに合わせて動かす） =================
@@ -819,6 +884,7 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'Space' && S.phase === 'play') skipHr();
   if (e.code === 'KeyM') { setMuted(!isMuted()); toast(isMuted() ? '音：オフ' : '音：オン', 1000); }
   if (e.code === 'KeyH') { S.helpOpen = !S.helpOpen; updateHelp(); }
+  if (e.code === 'KeyV') toast(feel.toggle() ? '画面の揺れ：オン' : '画面の揺れ：オフ', 1000);
   if (!S.state) return;
   if (S.phase === 'aim' && iPitch()) {
     const n = parseInt(e.key, 10);
@@ -1043,13 +1109,12 @@ function updateHelp() {
   else if (iPitch()) ui.help.innerHTML = '<b>投球</b>　マウス/WASD：コースをねらう<br><b>矢印キー</b>：曲がる方向で球種を選ぶ（同じ方向をもう一度でストレート）　<b>1〜' + pitchList().length + '</b>でも可<br><b>左クリック/スペース</b>：投げる（投球モーション中もコースを動かせる）';
   else if (iBat()) ui.help.innerHTML = '<b>打撃</b>　マウス：カーソル　<b>左クリック/スペース</b>：振る<br><b>右クリック/Shift</b>：ミート⇔強振　<b>B</b>：バントの構え（ボールに青いバットを合わせるだけ）<br><b>白い丸</b>：ボールが来る位置（変化球は曲がりに合わせて動く）<br><b>T</b>：盗塁　打ったあと <b>E</b>：進め　<b>Q</b>：戻れ<br>芯（カーソルの真ん中）の<b>上で打つとフライ・下で打つとゴロ</b>　WASD/矢印キーでも動かせます';
   else ui.help.innerHTML = '観戦中';
-  if (!S.helpOpen) ui.help.innerHTML = '<b>H</b>：操作説明　<b>M</b>：音のオン/オフ';
+  if (!S.helpOpen) ui.help.innerHTML = '<b>H</b>：操作説明　<b>M</b>：音のオン/オフ　<b>V</b>：画面の揺れ';
   // ミート/強振の表示は説明の上に
   ui.mode.style.bottom = (ui.help.offsetHeight + 22) + 'px';
 }
 
 // ================= カメラ =================
-let shake = 0;
 const camPos = new THREE.Vector3(...BAT_CAM.pos);
 const camLook = new THREE.Vector3(...BAT_CAM.look);
 function updateCamera(dt, now) {
@@ -1092,16 +1157,14 @@ function updateCamera(dt, now) {
   }
   const k = 1 - Math.exp(-dt * (S.phase === 'play' ? 4.5 : 6));
   const fv = S.phase === 'play' ? (S_portrait ? 62 : 40) : (S_portrait ? BAT_CAM.fovPortrait : BAT_CAM.fov);
-  if (Math.abs(camera.fov - fv) > 0.01) { camera.fov += (fv - camera.fov) * k; camera.updateProjectionMatrix(); }
+  camFov += (fv - camFov) * k;
+  const fNow = camFov - feel.kickV;
+  if (Math.abs(camera.fov - fNow) > 0.001) { camera.fov = fNow; camera.updateProjectionMatrix(); }
   camPos.lerp(tp, k);
   camLook.lerp(tl, k);
   camera.position.copy(camPos);
-  if (shake > 0) {
-    camera.position.x += (Math.random() - 0.5) * shake * 0.2;
-    camera.position.y += (Math.random() - 0.5) * shake * 0.2;
-    shake = Math.max(0, shake - dt * 1.4);
-  }
   camera.lookAt(camLook);
+  feel.apply(camera);
 }
 
 // ================= メインループ =================
@@ -1125,6 +1188,8 @@ function frame() {
     if (S.phase === 'over' && S.celebrate) updateCelebrate(dt);
     updateCamera(dt, now);
     updateFlash(now);
+    stretchBall(dt);
+    feel.update(dt);
     if (TEST && window.__holdFrame) break;
   }
   if (!window.__scOpen) renderer.render(scene, camera);
@@ -1186,7 +1251,7 @@ function step(now, dt) {
     if (t >= 0) {
       if (S.phase === 'windup') { S.phase = 'flight'; sfxRelease(); }
       const p = S.pitch;
-      if (!S.mittPlayed && t >= p.T + 0.03 && !S.decision) { S.mittPlayed = true; sfxMitt(p.velo > 145 ? 1.15 : 1); }
+      if (!S.mittPlayed && t >= p.T + 0.03 && !S.decision) { S.mittPlayed = true; sfxMitt(p.velo > 145 ? 1.15 : 1); feel.addTrauma(p.velo > 150 ? 0.22 : p.velo > 140 ? 0.15 : 0.08); }
       let pos;
       if (t <= p.T) pos = pitchPos(p, t);
       else {
@@ -1197,7 +1262,7 @@ function step(now, dt) {
       }
       ball.visible = t <= p.T + 0.02;
       ball.position.set(pos.x, pos.y, pos.z);
-      ball.scale.setScalar(Math.max(1.6, camera.position.distanceTo(ball.position) / 7));
+      ballBase = Math.max(1.6, camera.position.distanceTo(ball.position) / 7);
       ballShadow.visible = ball.visible;
       ballShadow.position.set(pos.x, 0.02, pos.z);
       // 目安マーカー

@@ -5,6 +5,7 @@ import { buildBat, buildZone, buildCursor, buildAim } from './field.js';
 import { makePitch, pitchPos, predictPlate, judgeSwing, cursorSize, inZone, simulateBall, sampleAt, ZONE, RUBBER_Z, SWING_LAG, BALL_R } from './baseball.js';
 import { PITCHES } from './data.js';
 import { sfxHit, sfxMitt, sfxCatch, sfxCheer } from './sound.js';
+import { Feel } from './feel.js';
 
 const SKIN = '#f2c6a0';
 export const SCHOOL_LOOK = { shirt: '#2a4d9b', sleeve: '#ffffff', pants: '#f4f1ea', skin: SKIN, cap: '#1d2f66', brim: '#1d2f66' };
@@ -25,6 +26,7 @@ export class Stage {
     this.scene = new THREE.Scene();
     this.cam = new THREE.PerspectiveCamera(38, 16 / 9, 0.1, 400);
     this.camFrom = null; this.camTo = this.shot('home');
+    this.feel = new Feel(this.scene);
     this.speed = 1;
     this.tags = [];
     this.fx = [];
@@ -198,7 +200,9 @@ export class Stage {
       this.cam.position.x += sw;
       this.cam.lookAt(this.lookAt);
       this.cam.position.x -= sw;
+      this.feel.apply(this.cam);
     }
+    this.feel.update(dt);
     for (const f of this.fx.slice()) f(dt);
     if (this.anim) this.anim(dt);
     if (this.me) { this.me.update(dt); this.me.holder.updateMatrixWorld(true); }
@@ -327,15 +331,20 @@ export class Stage {
         let call = '', out = null;
         if (swingAt != null) {
           const h = judgeSwing(pitch, o.batter, { ts: swingAt, cx: cur.x, cy: cur.y, power: false }, seed);
-          if (h.miss) { st++; call = '空振り！'; sfxMitt(1); ball.visible = false; }
-          else if (h.foulTip || Math.abs(h.phi) > Math.PI / 4) { sfxHit(0.35); if (st < 2) st++; call = 'ファウル'; this.flyBall(ball.position.clone(), new THREE.Vector3(h.v.x, h.v.y, h.v.z), 1.2); }
+          if (h.miss) { st++; call = '空振り！'; sfxMitt(1); this.feel.addTrauma(0.12); ball.visible = false; }
+          else if (h.foulTip || Math.abs(h.phi) > Math.PI / 4) { sfxHit(0.35); this.feel.addTrauma(0.12); this.feel.sparks(ball.position, 4, 0.4); if (st < 2) st++; call = 'ファウル'; this.flyBall(ball.position.clone(), new THREE.Vector3(h.v.x, h.v.y, h.v.z), 1.2); }
           else {
             sfxHit(h.q);
             out = this.classify(h);
+            // 芯を食うほど大きく揺れて火花が散る
+            const big = out === 'hr' || (h.q > 0.85 && h.ev > 150);
+            this.feel.addTrauma(big ? 0.8 : h.q > 0.55 ? 0.4 : 0.16);
+            this.feel.sparks(ball.position, big ? 26 : h.q > 0.55 ? 12 : 4, h.q);
+            await new Promise(r => setTimeout(r, big ? 110 : h.q > 0.55 ? 50 : 0));
             await this.flyPath(h, out, T);
           }
         } else {
-          ball.visible = false; sfxMitt(0.9);
+          ball.visible = false; sfxMitt(0.9); this.feel.addTrauma(pitch.velo > 145 ? 0.18 : 0.1);
           if (inZone(pitch.end)) { st++; call = 'ストライク！'; } else { b++; call = 'ボール'; }
         }
         pitch = null; rel = null;
@@ -435,7 +444,7 @@ export class Stage {
         if (swing) {
           // 当たるか：甘いほど・遅いほど当たる。変化球のレベルと球速で空振りが増える
           const contact = 0.82 - (o.lv || 0) * -0.03 - brk * 0.05 - (pitch.velo - 125) * 0.007 - (z ? 0 : 0.3) - Math.min(1, mid) * 0.12;
-          if (rnd() > contact) { st++; call = '空振り！'; ball.visible = false; sfxMitt(1.1); }
+          if (rnd() > contact) { st++; call = '空振り！'; ball.visible = false; sfxMitt(1.1); this.feel.addTrauma(0.15); }
           else {
             const fair = rnd() < 0.62;
             if (!fair) { sfxHit(0.35); if (st < 2) st++; call = 'ファウル'; this.flyBall(ball.position.clone(), new THREE.Vector3((rnd() - 0.5) * 20, 8, 6), 1.2); }
@@ -444,6 +453,7 @@ export class Stage {
               const r = rnd();
               out = r < good * 0.18 ? 'hr' : r < good * 0.5 ? 'double' : r < good ? 'hit' : rnd() < 0.5 ? 'gout' : 'out';
               sfxHit(out === 'hr' ? 1 : 0.6);
+              this.feel.addTrauma(out === 'hr' ? 0.75 : 0.35); this.feel.sparks(ball.position, out === 'hr' ? 22 : 10, out === 'hr' ? 1 : 0.6);
               const v = { hr: [6, 24, -36], double: [-12, 10, -30], hit: [7, 5, -26], gout: [-4, -1, -20], out: [3, 17, -16] }[out];
               this.zone.visible = false; this.aim.visible = false;
               this.flyBall(ball.position.clone(), new THREE.Vector3(...v), 2.4);
